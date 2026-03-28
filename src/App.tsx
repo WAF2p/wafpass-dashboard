@@ -12,6 +12,8 @@ import RunScanPage from './pages/RunScanPage'
 import SandboxPage from './pages/SandboxPage'
 import WaiversPage from './pages/WaiversPage'
 import RiskAcceptancePage from './pages/RiskAcceptancePage'
+import { CONTROLS } from './controls-data'
+import { ControlMeta } from './api'
 
 type Page = 'dashboard' | 'controls' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk'
 
@@ -27,7 +29,7 @@ const PAGE_TITLE: Record<Page, string> = {
   runscan:     'Run Scan',
   sandbox:     'Architect Sandbox',
   waivers:     'Waivers Manager',
-  risk:        'Risk Acceptance Register',
+  risk:        'Risk Acceptance',
 }
 
 const PAGE_SUBTITLE: Record<Page, string> = {
@@ -42,7 +44,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   runscan:     'Trigger a WAF++ scan from the UI or generate a CLI command',
   sandbox:     'Evaluate Terraform HCL snippets against WAF++ controls instantly',
   waivers:     'Suppress controls from failing · export as .wafpass-skip.yml',
-  risk:        'Formal risk acceptance decisions with approver, expiry, and traceability',
+  risk:        'Formally accept or mitigate risks — with approver, expiry and traceability',
 }
 
 function scoreColor(s: number) {
@@ -56,6 +58,8 @@ export default function App() {
   const [loadingRun, setLoadingRun] = useState(false)
   const [page, setPage] = useState<Page>('dashboard')
   const [runsError, setRunsError] = useState<string | null>(null)
+  const [waiverCount, setWaiverCount] = useState(0)
+  const [riskCount, setRiskCount] = useState(0)
 
   const initialMaturity = loadMaturityState()
   const [maturityLevel, setMaturityLevel] = useState(initialMaturity.level)
@@ -87,6 +91,17 @@ export default function App() {
   }, [selectedId])
 
   const failCount = run ? run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').length : 0
+
+  // Re-read localStorage counts whenever page changes
+  useEffect(() => {
+    try { setWaiverCount(Object.keys(JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}')).length) } catch {}
+    try { setRiskCount(Object.keys(JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}')).length) } catch {}
+  }, [page])
+
+  // Controls for dropdowns: live from run, or fall back to static reference set
+  const availableControls: Pick<ControlMeta, 'id' | 'title'>[] = run && run.controls_meta.length > 0
+    ? run.controls_meta.map(c => ({ id: c.id, title: c.title }))
+    : CONTROLS.map(c => ({ id: c.id, title: c.title }))
   const matMeta = getMaturityMeta(maturityLevel)
 
   const navItems: { page: Page; label: string; icon: string; badge?: { label: string; variant: 'fail' | 'neutral' } | null; danger?: boolean; divider?: boolean }[] = [
@@ -98,11 +113,11 @@ export default function App() {
     { page: 'exploitpath', label: 'Exploit Paths',     icon: 'M13 10V3L4 14h7v7l9-11h-7z', danger: true },
   ]
 
-  const toolItems: { page: Page; label: string; icon: string }[] = [
-    { page: 'runscan', label: 'Run Scan',     icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { page: 'sandbox', label: 'Sandbox',      icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
-    { page: 'waivers', label: 'Waivers',      icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-    { page: 'risk',    label: 'Risk Register', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  const toolItems: { page: Page; label: string; icon: string; count?: number }[] = [
+    { page: 'runscan', label: 'Run Scan',        icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { page: 'sandbox', label: 'Sandbox',         icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+    { page: 'waivers', label: 'Waivers',         icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', count: waiverCount },
+    { page: 'risk',    label: 'Risk Acceptance', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', count: riskCount },
   ]
 
   return (
@@ -240,6 +255,11 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
               </svg>
               {item.label}
+              {item.count != null && item.count > 0 && (
+                <span style={{ marginLeft: 'auto', fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'rgba(255,255,255,.08)', color: 'var(--sidebar-text)' }}>
+                  {item.count}
+                </span>
+              )}
             </button>
           ))}
 
@@ -317,9 +337,9 @@ export default function App() {
           ) : page === 'sandbox' ? (
             <SandboxPage />
           ) : page === 'waivers' ? (
-            <WaiversPage />
+            <WaiversPage controls={availableControls} />
           ) : page === 'risk' ? (
-            <RiskAcceptancePage />
+            <RiskAcceptancePage controls={availableControls} />
           ) : page === 'runs' ? (
             <RunsListPage runs={runs} onSelect={id => { setSelectedId(id); setPage('dashboard') }} />
           ) : page === 'controls' ? (
@@ -336,7 +356,7 @@ export default function App() {
               }
             </div>
           ) : page === 'dashboard' ? (
-            <DashboardPage run={run} />
+            <DashboardPage run={run} onNav={p => setPage(p as Page)} />
           ) : page === 'findings' ? (
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (

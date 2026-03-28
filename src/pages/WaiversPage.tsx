@@ -36,7 +36,11 @@ function exportYaml(waivers: Record<string, Waiver>): string {
 interface FormState { id: string; reason: string; owner: string; expires: string }
 const EMPTY_FORM: FormState = { id: '', reason: '', owner: '', expires: '' }
 
-export default function WaiversPage() {
+interface Props {
+  controls: { id: string; title: string }[]
+}
+
+export default function WaiversPage({ controls }: Props) {
   const [waivers, setWaivers] = useState<Record<string, Waiver>>(loadWaivers)
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -229,15 +233,22 @@ export default function WaiversPage() {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-                Control ID *
+                Control *
               </label>
-              <input
-                value={form.id}
-                onChange={e => setForm({ ...form, id: e.target.value })}
-                placeholder="e.g. WAF-SEC-030"
-                disabled={!!editId}
-                style={{ ...inputStyle, opacity: editId ? 0.6 : 1 }}
-              />
+              {editId ? (
+                <input value={form.id} disabled style={{ ...inputStyle, opacity: 0.6 }} />
+              ) : (
+                <select
+                  value={form.id}
+                  onChange={e => setForm({ ...form, id: e.target.value })}
+                  style={inputStyle}
+                >
+                  <option value="">— select a control —</option>
+                  {controls.map(c => (
+                    <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>
@@ -287,11 +298,11 @@ export default function WaiversPage() {
               </button>
               <button
                 onClick={submit}
-                disabled={!form.id.trim()}
+                disabled={!form.id}
                 style={{
-                  background: form.id.trim() ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
+                  background: form.id ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
                   border: 'none', borderRadius: '8px', padding: '0.45rem 1rem',
-                  fontSize: '0.82rem', fontWeight: 700, cursor: form.id.trim() ? 'pointer' : 'not-allowed',
+                  fontSize: '0.82rem', fontWeight: 700, cursor: form.id ? 'pointer' : 'not-allowed',
                 }}
               >
                 {editId ? 'Save Changes' : 'Add Waiver'}

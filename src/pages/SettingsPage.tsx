@@ -116,7 +116,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '700px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '700px', margin: '0 auto' }}>
 
       {/* Maturity level */}
       <div className="card">

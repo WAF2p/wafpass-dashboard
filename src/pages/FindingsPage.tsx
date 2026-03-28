@@ -33,9 +33,10 @@ function Pill({ label, color }: { label: string; color: string }) {
 function DetailPanel({ finding, onClose }: { finding: Finding; onClose: () => void }) {
   return (
     <div style={{
-      position: 'fixed', top: 0, right: 0, bottom: 0, width: '420px',
-      background: '#fff', borderLeft: '1px solid var(--border)',
-      boxShadow: '-4px 0 24px rgba(15,23,42,.1)',
+      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+      width: '600px', maxWidth: '92vw', maxHeight: '85vh',
+      background: '#fff', borderRadius: '14px',
+      boxShadow: '0 24px 64px rgba(15,23,42,.18)',
       display: 'flex', flexDirection: 'column', zIndex: 100,
       overflowY: 'auto',
     }}>

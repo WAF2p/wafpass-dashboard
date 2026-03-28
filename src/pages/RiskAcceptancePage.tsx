@@ -42,7 +42,11 @@ const LEVEL_COLOR: Record<string, string> = {
   accepted: '#a78bfa', mitigated: '#22c55e',
 }
 
-export default function RiskAcceptancePage() {
+interface Props {
+  controls: { id: string; title: string }[]
+}
+
+export default function RiskAcceptancePage({ controls }: Props) {
   const [data, setData] = useState<Record<string, RiskAcceptance>>(load)
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -220,9 +224,21 @@ export default function RiskAcceptancePage() {
             </h2>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>Control / Finding ID *</label>
-              <input value={idInput} onChange={e => setIdInput(e.target.value)} disabled={!!editId}
-                placeholder="e.g. WAF-SEC-030" style={{ ...inputStyle, opacity: editId ? 0.6 : 1 }} />
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>Control *</label>
+              {editId ? (
+                <input value={idInput} disabled style={{ ...inputStyle, opacity: 0.6 }} />
+              ) : (
+                <select
+                  value={idInput}
+                  onChange={e => setIdInput(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="">— select a control —</option>
+                  {controls.map(c => (
+                    <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>

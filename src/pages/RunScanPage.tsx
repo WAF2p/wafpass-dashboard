@@ -2,96 +2,156 @@ import { useState } from 'react'
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
+function CopyBlock({ code, lang = '' }: { code: string; lang?: string }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+  return (
+    <div style={{ position: 'relative', marginTop: '0.5rem' }}>
+      <pre style={{
+        background: '#0f172a', color: '#e2e8f0', borderRadius: '8px',
+        padding: '0.875rem 3rem 0.875rem 1rem', fontSize: '0.8rem',
+        overflowX: 'auto', lineHeight: 1.7, margin: 0, whiteSpace: 'pre',
+      }}>
+        {lang && <span style={{ position: 'absolute', top: '0.5rem', left: '0.75rem', fontSize: '0.62rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</span>}
+        {code}
+      </pre>
+      <button onClick={copy} style={{
+        position: 'absolute', top: '0.5rem', right: '0.5rem',
+        background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)',
+        borderRadius: '5px', color: copied ? '#22c55e' : '#94a3b8',
+        fontSize: '0.68rem', padding: '0.2rem 0.5rem', cursor: 'pointer',
+      }}>
+        {copied ? 'Copied!' : 'Copy'}
+      </button>
+    </div>
+  )
+}
+
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <div style={{
+        width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+        background: 'rgba(0,148,255,0.15)', border: '2px solid rgba(0,148,255,0.4)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '0.75rem', fontWeight: 800, color: 'var(--waf-brand)',
+      }}>{n}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text)', marginBottom: '0.5rem' }}>{title}</div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function RunScanPage() {
-  const [path, setPath] = useState('')
+  const serverUrl = `${window.location.origin}${API_BASE}`
+
+  const [path, setPath] = useState('/path/to/terraform')
   const [iac, setIac] = useState('terraform')
-  const [pillars, setPillars] = useState<string[]>([])
-  const [severity, setSeverity] = useState('')
-  const [push, setPush] = useState(true)
-  const [scanning, setScanning] = useState(false)
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [project, setProject] = useState('')
 
-  const PILLARS = ['security', 'cost', 'reliability', 'operations', 'sovereignty', 'sustainability', 'performance', 'governance']
-
-  function togglePillar(p: string) {
-    setPillars(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
-  }
-
-  async function runScan() {
-    if (!path.trim()) return
-    setScanning(true)
-    setResult(null)
-    try {
-      const args: string[] = ['wafpass', 'check', '--output', 'json']
-      if (push) args.push('--push', `${window.location.origin}${API_BASE}`)
-      if (iac !== 'terraform') args.push('--iac', iac)
-      if (pillars.length > 0) args.push('--pillars', pillars.join(','))
-      if (severity) args.push('--severity', severity)
-      args.push(path)
-
-      const res = await fetch(`${API_BASE}/scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path, iac, pillars, severity, push }),
-      })
-      if (res.ok) {
-        setResult({ success: true, message: 'Scan started successfully. Results will appear in Run History.' })
-      } else {
-        const err = await res.text()
-        setResult({ success: false, message: err || 'Scan endpoint returned an error. Run manually using the command below.' })
-      }
-    } catch {
-      setResult({ success: false, message: 'Could not reach scan endpoint. Run the command below in your terminal.' })
-    } finally {
-      setScanning(false)
-    }
-  }
-
-  const cmdParts = ['wafpass check --output json']
-  if (push) cmdParts.push(`--push ${window.location.origin}${API_BASE}`)
-  if (iac !== 'terraform') cmdParts.push(`--iac ${iac}`)
-  if (pillars.length > 0) cmdParts.push(`--pillars ${pillars.join(',')}`)
-  if (severity) cmdParts.push(`--severity ${severity}`)
-  if (path.trim()) cmdParts.push(path.trim())
-  const previewCmd = cmdParts.join(' \\\n  ')
+  const pushCmd = `wafpass check \\
+  --output json \\
+  --push ${serverUrl} \\
+  ${project ? `--project "${project}" \\\n  ` : ''}${iac !== 'terraform' ? `--iac ${iac} \\\n  ` : ''}${path}`
 
   const inputStyle = {
     background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
-    borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none',
-    width: '100%',
+    borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem', outline: 'none',
   }
 
-  const selectStyle = { ...inputStyle, width: 'auto', minWidth: '160px' }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '700px' }}>
+    <div style={{ maxWidth: '780px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
+      {/* Server info banner */}
+      <div style={{ padding: '0.875rem 1.1rem', borderRadius: '10px', background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--waf-brand)', flexShrink: 0 }}/>
+        <div>
+          <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Dashboard server: </span>
+          <code style={{ fontSize: '0.8rem', color: 'var(--waf-brand)', fontWeight: 700 }}>{serverUrl}</code>
+        </div>
+        <div style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--muted)' }}>
+          Results pushed here appear in Run History instantly
+        </div>
+      </div>
+
+      {/* Quick-start */}
+      <div className="card">
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1.25rem' }}>
+          Quick Start
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          <Step n={1} title="Install wafpass-core">
+            <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
+              Install from PyPI (Python 3.10+ required):
+            </div>
+            <CopyBlock code="pip install wafpass-core" lang="sh"/>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
+              Or from source: <code style={{ color: 'var(--text)', fontSize: '0.75rem' }}>git clone https://github.com/WAF2p/waf-plus-plus && cd waf-plus-plus/pass && pip install -e .</code>
+            </div>
+          </Step>
+
+          <Step n={2} title="Run a scan and push results">
+            <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
+              Point wafpass at your IaC directory and push results to this dashboard:
+            </div>
+            <CopyBlock code={`wafpass check --output json --push ${serverUrl} /path/to/terraform`} lang="sh"/>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
+              Results appear in <strong style={{ color: 'var(--text)' }}>Run History</strong> within seconds.
+            </div>
+          </Step>
+
+          <Step n={3} title="Add project metadata (optional)">
+            <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
+              Label your run with a project name and branch:
+            </div>
+            <CopyBlock code={`wafpass check \\
+  --output json \\
+  --push ${serverUrl} \\
+  --project "my-service" \\
+  --branch main \\
+  /path/to/terraform`} lang="sh"/>
+          </Step>
+
+          <Step n={4} title="CI/CD — GitHub Actions example">
+            <CopyBlock lang="yaml" code={`- name: WAF++ scan
+  run: |
+    pip install wafpass-core
+    wafpass check \\
+      --output json \\
+      --push ${serverUrl} \\
+      --project "\${{ github.repository }}" \\
+      --branch "\${{ github.ref_name }}" \\
+      ./terraform`}/>
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
+              Add <code style={{ color: 'var(--text)' }}>--fail-on fail</code> to break the pipeline on FAIL findings.
+            </div>
+          </Step>
+
+        </div>
+      </div>
+
+      {/* Command builder */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-          Target
+          Command Builder
         </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-              IaC Source Path
-            </label>
-            <input
-              value={path}
-              onChange={e => setPath(e.target.value)}
-              placeholder="/path/to/terraform"
-              style={inputStyle}
-            />
-            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
-              Absolute or relative path to your Terraform / CDK / Pulumi directory
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 2, minWidth: '200px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>IaC Source Path</label>
+              <input value={path} onChange={e => setPath(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="/path/to/terraform"/>
             </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-                IaC Framework
-              </label>
-              <select value={iac} onChange={e => setIac(e.target.value)} style={selectStyle}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Framework</label>
+              <select value={iac} onChange={e => setIac(e.target.value)} style={inputStyle}>
                 <option value="terraform">Terraform</option>
                 <option value="cdk">AWS CDK</option>
                 <option value="pulumi">Pulumi</option>
@@ -99,110 +159,77 @@ export default function RunScanPage() {
                 <option value="cfn">CloudFormation</option>
               </select>
             </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-                Min. Severity
-              </label>
-              <select value={severity} onChange={e => setSeverity(e.target.value)} style={selectStyle}>
-                <option value="">All</option>
-                <option value="critical">Critical</option>
-                <option value="high">High+</option>
-                <option value="medium">Medium+</option>
-              </select>
+            <div style={{ flex: 1, minWidth: '140px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Project name</label>
+              <input value={project} onChange={e => setProject(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="my-service"/>
             </div>
           </div>
         </div>
+        <CopyBlock code={pushCmd} lang="sh"/>
       </div>
 
+      {/* API reference */}
       <div className="card">
-        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
-          Pillar Filter
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
+          Direct API Push
         </h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-          {PILLARS.map(p => {
-            const active = pillars.includes(p)
-            return (
-              <button
-                key={p}
-                onClick={() => togglePillar(p)}
-                style={{
-                  padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid',
-                  borderColor: active ? 'var(--waf-brand)' : 'var(--border)',
-                  background: active ? 'rgba(0,148,255,0.1)' : 'var(--bg)',
-                  color: active ? 'var(--waf-brand)' : 'var(--muted)',
-                  fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {p}
-              </button>
-            )
-          })}
+        <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '0.75rem' }}>
+          You can also POST JSON results directly. wafpass-core generates this automatically with <code style={{ color: 'var(--text)' }}>--output json --push</code>, but you can call it manually:
         </div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
-          {pillars.length === 0 ? 'All pillars will be scanned' : `Scanning: ${pillars.join(', ')}`}
+        <CopyBlock lang="sh" code={`# Run and capture JSON
+wafpass check --output json ./terraform > results.json
+
+# Push to dashboard
+curl -X POST ${serverUrl}/runs \\
+  -H "Content-Type: application/json" \\
+  -d @results.json`}/>
+        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {[
+            ['POST', '/runs', 'Submit a new scan result'],
+            ['GET',  '/runs', 'List all scan runs'],
+            ['GET',  '/runs/{id}', 'Get full run detail including findings'],
+            ['GET',  '/runs/{id}/findings', 'Get findings (filter by ?status=FAIL&severity=critical)'],
+            ['GET',  '/runs/{id}/controls', 'Get controls metadata for run'],
+          ].map(([method, path, desc]) => (
+            <div key={path} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8rem' }}>
+              <span style={{
+                padding: '0.12rem 0.5rem', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 700,
+                background: method === 'POST' ? 'rgba(0,148,255,.12)' : 'rgba(34,197,94,.1)',
+                color: method === 'POST' ? 'var(--waf-brand)' : '#22c55e', flexShrink: 0,
+              }}>{method}</span>
+              <code style={{ fontSize: '0.78rem', color: 'var(--text)' }}>{serverUrl}{path}</code>
+              <span style={{ color: 'var(--muted)', fontSize: '0.75rem' }}>{desc}</span>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Common flags */}
       <div className="card">
-        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
-          Output
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.875rem' }}>
+          Common CLI Flags
         </h2>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-          <input type="checkbox" checked={push} onChange={e => setPush(e.target.checked)} style={{ width: '16px', height: '16px' }} />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>Push results to dashboard</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>POST results to {window.location.origin}{API_BASE}/runs</div>
-          </div>
-        </label>
-      </div>
-
-      {/* Command preview */}
-      <div className="card">
-        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
-          Generated Command
-        </h2>
-        <pre style={{
-          background: '#0f172a', color: '#e2e8f0', borderRadius: '8px',
-          padding: '0.875rem 1rem', fontSize: '0.78rem', overflowX: 'auto', lineHeight: 1.7, margin: 0,
-        }}>
-          {previewCmd}
-        </pre>
-        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
-          Run this command in your terminal, or click "Start Scan" to trigger it via the API.
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.4rem 1rem', fontSize: '0.8rem' }}>
+          {[
+            ['--push URL',           'POST results to dashboard server'],
+            ['--output json',        'Required for --push; outputs structured JSON'],
+            ['--project NAME',       'Label this run (shows in sidebar dropdown)'],
+            ['--branch NAME',        'Git branch name for the run'],
+            ['--iac FRAMEWORK',      'terraform | cdk | pulumi | bicep | cfn'],
+            ['--pillars LIST',       'Comma-separated: security,cost,reliability,…'],
+            ['--severity LEVEL',     'Minimum severity: critical | high | medium | low'],
+            ['--fail-on fail',       'Exit non-zero when FAIL findings exist (default)'],
+            ['--fail-on skip',       'Exit non-zero on FAIL + SKIP findings'],
+            ['--waiver-file PATH',   'Skip controls listed in .wafpass-skip.yml'],
+          ].map(([flag, desc]) => (
+            <>
+              <code key={`f-${flag}`} style={{ color: 'var(--waf-brand)', fontWeight: 600, padding: '0.15rem 0', alignSelf: 'start' }}>{flag}</code>
+              <span key={`d-${flag}`} style={{ color: 'var(--muted)', padding: '0.15rem 0', borderBottom: '1px solid var(--border)' }}>{desc}</span>
+            </>
+          ))}
         </div>
       </div>
 
-      {result && (
-        <div style={{
-          padding: '0.875rem 1rem', borderRadius: '10px',
-          background: result.success ? 'rgba(34,197,94,.08)' : 'rgba(218,44,56,.08)',
-          border: `1px solid ${result.success ? 'rgba(34,197,94,.25)' : 'rgba(218,44,56,.25)'}`,
-          color: result.success ? '#16a34a' : '#DA2C38',
-          fontSize: '0.85rem',
-        }}>
-          {result.message}
-        </div>
-      )}
-
-      <div>
-        <button
-          onClick={runScan}
-          disabled={scanning || !path.trim()}
-          style={{
-            background: scanning || !path.trim() ? '#94a3b8' : 'var(--waf-brand)',
-            color: '#fff', border: 'none', borderRadius: '8px',
-            padding: '0.65rem 1.5rem', fontSize: '0.875rem', fontWeight: 700,
-            cursor: scanning || !path.trim() ? 'not-allowed' : 'pointer',
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-          }}
-        >
-          {scanning ? (
-            <><span className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }} /> Scanning…</>
-          ) : 'Start Scan'}
-        </button>
-      </div>
     </div>
   )
 }
