@@ -10,6 +10,7 @@ export interface Finding {
   resource: string
   message: string
   remediation: string
+  example?: Record<string, unknown> | null
 }
 
 export interface RunSummary {
@@ -21,11 +22,38 @@ export interface RunSummary {
   iac_framework: string
   score: number
   pillar_scores: Record<string, number>
+  path: string
+  controls_loaded: number
+  controls_run: number
   created_at: string
+}
+
+export interface ControlCheckMeta {
+  id: string
+  title: string
+  severity: string
+  remediation: string
+  example?: { compliant?: string; non_compliant?: string } | null
+}
+
+export interface ControlMeta {
+  id: string
+  title: string
+  pillar: string
+  severity: string
+  category: string
+  description: string
+  rationale: string
+  threat: string[]
+  regulatory_mapping: { framework: string; controls: string[] }[]
+  checks: ControlCheckMeta[]
 }
 
 export interface RunDetail extends RunSummary {
   findings: Finding[]
+  detected_regions: string[][]
+  source_paths: string[]
+  controls_meta: ControlMeta[]
 }
 
 export async function fetchRuns(params?: {
@@ -46,6 +74,12 @@ export async function fetchRun(id: string): Promise<RunDetail> {
   const res = await fetch(`${API_BASE}/runs/${id}`)
   if (!res.ok) throw new Error(`Run not found: ${id}`)
   return res.json() as Promise<RunDetail>
+}
+
+export async function fetchControls(runId: string): Promise<ControlMeta[]> {
+  const res = await fetch(`${API_BASE}/runs/${runId}/controls`)
+  if (!res.ok) throw new Error(`Failed to fetch controls: ${res.status}`)
+  return res.json() as Promise<ControlMeta[]>
 }
 
 export async function fetchFindings(
