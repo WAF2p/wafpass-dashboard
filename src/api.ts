@@ -49,11 +49,35 @@ export interface ControlMeta {
   checks: ControlCheckMeta[]
 }
 
+export interface PlanChange {
+  address: string
+  module_address: string | null
+  type: string
+  name: string
+  provider: string
+  action: 'create' | 'update' | 'delete' | 'replace' | 'no-op' | string
+}
+
+export interface PlanChanges {
+  terraform_version: string
+  format_version: string
+  scanned_at: string
+  summary: {
+    add: number
+    change: number
+    destroy: number
+    replace: number
+    no_op: number
+  }
+  changes: PlanChange[]
+}
+
 export interface RunDetail extends RunSummary {
   findings: Finding[]
   detected_regions: string[][]
   source_paths: string[]
   controls_meta: ControlMeta[]
+  plan_changes: PlanChanges | null
 }
 
 export async function fetchRuns(params?: {

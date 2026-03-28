@@ -12,10 +12,11 @@ import RunScanPage from './pages/RunScanPage'
 import SandboxPage from './pages/SandboxPage'
 import WaiversPage from './pages/WaiversPage'
 import RiskAcceptancePage from './pages/RiskAcceptancePage'
+import ChangesPage from './pages/ChangesPage'
 import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
 
-type Page = 'dashboard' | 'controls' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk'
+type Page = 'dashboard' | 'controls' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
@@ -30,6 +31,7 @@ const PAGE_TITLE: Record<Page, string> = {
   sandbox:     'Architect Sandbox',
   waivers:     'Waivers Manager',
   risk:        'Risk Acceptance',
+  changes:     'Change Overview',
 }
 
 const PAGE_SUBTITLE: Record<Page, string> = {
@@ -37,6 +39,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   controls:    'Browse all WAF++ controls — description, checks, and regulatory mapping',
   findings:    'Detailed results from the selected run',
   compliance:  'Pillar coverage, pass rates and regulatory framework mapping',
+  changes:     'Terraform plan changes — adds, updates, replacements and destroys from this run',
   regions:     'Detected cloud deployment regions',
   exploitpath: 'Attack chain visualization · internet-facing surfaces are highest criticality',
   runs:        'All recorded WAF++ scan runs',
@@ -109,6 +112,7 @@ export default function App() {
     { page: 'controls',    label: 'Controls Library',  icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', badge: { label: run ? String(run.controls_meta.length || run.controls_loaded || 0) : '70+', variant: 'neutral' } },
     { page: 'findings',    label: 'Findings',          icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', badge: failCount > 0 ? { label: String(failCount), variant: 'fail' } : null },
     { page: 'compliance',  label: 'Compliance Matrix', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { page: 'changes',     label: 'Change Overview',   icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', badge: run?.plan_changes ? { label: String((run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0) + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0)), variant: 'neutral' as const } : null },
     { page: 'regions',     label: 'Deployed Regions',  icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { page: 'exploitpath', label: 'Exploit Paths',     icon: 'M13 10V3L4 14h7v7l9-11h-7z', danger: true },
   ]
@@ -361,6 +365,8 @@ export default function App() {
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
             <CompliancePage run={run} />
+          ) : page === 'changes' ? (
+            <ChangesPage run={run} />
           ) : page === 'regions' ? (
             <RegionsPage run={run} />
           ) : page === 'exploitpath' ? (
