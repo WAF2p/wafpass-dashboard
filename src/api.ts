@@ -118,3 +118,78 @@ export async function fetchFindings(
   if (!res.ok) throw new Error(`Failed to fetch findings: ${res.status}`)
   return res.json() as Promise<Finding[]>
 }
+
+// ── Controls catalogue (wafpass-server /controls) ─────────────────────────────
+
+export interface CatalogueCheck {
+  id: string
+  engine: string
+  description: string
+  expected: string
+}
+
+export interface CatalogueControl {
+  id: string
+  pillar: string
+  severity: string
+  type: string[]
+  description: string
+  checks: CatalogueCheck[]
+  source: string
+  created_at: string
+  updated_at: string
+}
+
+interface ApiMeta {
+  total?: number
+  page?: number
+  per_page?: number
+}
+
+interface ApiEnvelope<T> {
+  data: T
+  meta: ApiMeta
+}
+
+export async function fetchCatalogueControls(params?: {
+  pillar?: string
+  severity?: string
+  page?: number
+  per_page?: number
+}): Promise<{ controls: CatalogueControl[]; total: number; page: number; per_page: number }> {
+  const url = new URL(`${API_BASE}/controls`, window.location.origin)
+  if (params?.pillar) url.searchParams.set('pillar', params.pillar)
+  if (params?.severity) url.searchParams.set('severity', params.severity)
+  if (params?.page !== undefined) url.searchParams.set('page', String(params.page))
+  if (params?.per_page !== undefined) url.searchParams.set('per_page', String(params.per_page))
+  const res = await fetch(url.toString())
+  if (!res.ok) throw new Error(`Failed to fetch controls catalogue: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<CatalogueControl[]>
+  return {
+    controls: json.data,
+    total: json.meta.total ?? json.data.length,
+    page: json.meta.page ?? 1,
+    per_page: json.meta.per_page ?? json.data.length,
+  }
+}
+
+export async function fetchCatalogueControl(id: string): Promise<CatalogueControl> {
+  const res = await fetch(`${API_BASE}/controls/${encodeURIComponent(id)}`)
+  if (!res.ok) throw new Error(`Control not found: ${id}`)
+  const json = await res.json() as ApiEnvelope<CatalogueControl>
+  return json.data
+}
+
+export async function createCatalogueControl(payload: Omit<CatalogueControl, 'created_at' | 'updated_at'> & { source?: string }): Promise<CatalogueControl> {
+  const res = await fetch(`${API_BASE}/controls`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Failed to create control: ${res.status} ${text}`)
+  }
+  const json = await res.json() as ApiEnvelope<CatalogueControl>
+  return json.data
+}

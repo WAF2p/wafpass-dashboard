@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchRun, fetchRuns, RunDetail, RunSummary } from './api'
-import ControlsPage from './pages/ControlsPage'
+import ControlsCataloguePage from './pages/ControlsCataloguePage'
 import DashboardPage from './pages/DashboardPage'
 import FindingsPage from './pages/FindingsPage'
 import CompliancePage from './pages/CompliancePage'
@@ -16,11 +16,11 @@ import ChangesPage from './pages/ChangesPage'
 import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
 
-type Page = 'dashboard' | 'controls' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes'
+type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
-  controls:    'Controls Library',
+  catalogue:   'Controls Catalogue',
   findings:    'Scan Findings',
   compliance:  'Compliance Matrix',
   regions:     'Deployed Regions',
@@ -36,7 +36,7 @@ const PAGE_TITLE: Record<Page, string> = {
 
 const PAGE_SUBTITLE: Record<Page, string> = {
   dashboard:   'Risk posture overview across all WAF++ pillars',
-  controls:    'Browse all WAF++ controls — description, checks, and regulatory mapping',
+  catalogue:   'All WAF++ framework controls and your custom controls — browse, filter, author, and export',
   findings:    'Detailed results from the selected run',
   compliance:  'Pillar coverage, pass rates and regulatory framework mapping',
   changes:     'Terraform plan changes — adds, updates, replacements and destroys from this run',
@@ -109,7 +109,7 @@ export default function App() {
 
   const navItems: { page: Page; label: string; icon: string; badge?: { label: string; variant: 'fail' | 'neutral' } | null; danger?: boolean; divider?: boolean }[] = [
     { page: 'dashboard',   label: 'Dashboard',         icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { page: 'controls',    label: 'Controls Library',  icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', badge: { label: run ? String(run.controls_meta.length || run.controls_loaded || 0) : '70+', variant: 'neutral' } },
+    { page: 'catalogue',   label: 'Controls Catalogue', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', badge: { label: run ? String(run.controls_meta.length || run.controls_loaded || 0) : '73+', variant: 'neutral' } },
     { page: 'findings',    label: 'Findings',          icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', badge: failCount > 0 ? { label: String(failCount), variant: 'fail' } : null },
     { page: 'compliance',  label: 'Compliance Matrix', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
     { page: 'changes',     label: 'Change Overview',   icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', badge: run?.plan_changes ? { label: String((run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0) + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0)), variant: 'neutral' as const } : null },
@@ -323,7 +323,7 @@ export default function App() {
               {PAGE_SUBTITLE[page]}
             </p>
           </div>
-          {run && page !== 'runs' && page !== 'controls' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && (
+          {run && page !== 'runs' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && (
             <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
               {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
               {run.branch && <>{run.branch} · </>}
@@ -346,8 +346,8 @@ export default function App() {
             <RiskAcceptancePage controls={availableControls} />
           ) : page === 'runs' ? (
             <RunsListPage runs={runs} onSelect={id => { setSelectedId(id); setPage('dashboard') }} />
-          ) : page === 'controls' ? (
-            <ControlsPage controls={run?.controls_meta ?? []} findings={run?.findings ?? []} />
+          ) : page === 'catalogue' ? (
+            <ControlsCataloguePage coreControls={run?.controls_meta ?? []} />
           ) : loadingRun ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
               <div className="spinner" />
