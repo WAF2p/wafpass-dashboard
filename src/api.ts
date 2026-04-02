@@ -56,6 +56,9 @@ export interface PlanChange {
   name: string
   provider: string
   action: 'create' | 'update' | 'delete' | 'replace' | 'no-op' | string
+  before?: Record<string, unknown> | null
+  after?: Record<string, unknown> | null
+  after_unknown?: Record<string, unknown> | null
 }
 
 export interface PlanChanges {
