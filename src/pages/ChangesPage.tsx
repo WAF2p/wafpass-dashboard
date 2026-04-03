@@ -160,78 +160,48 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function NoAttrData() {
-  return (
+
+function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterLabel = 'After', diffOnly = true }: {
+  before: Attrs | null | undefined
+  after: Attrs | null | undefined
+  afterUnknown?: Attrs | null
+  beforeLabel?: string
+  afterLabel?: string
+  /** When false, show all keys (not just changed ones). Used for create/delete views. */
+  diffOnly?: boolean
+}) {
+  if (before == null && after == null) return (
     <div style={{ fontSize: '0.8rem', color: 'var(--muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
       Attribute data not available — re-run wafpass with a plan file using the latest version to see attribute-level details.
     </div>
   )
-}
-
-function AttrTable({ attrs, unknowns, skipNulls }: {
-  attrs: Attrs | null | undefined
-  unknowns?: Attrs | null
-  skipNulls?: boolean
-}) {
-  if (attrs == null) return <NoAttrData />
-  const entries = Object.entries(attrs)
-    .filter(([, v]) => !skipNulls || v !== null)
-    .sort(([a], [b]) => {
-      const as = SECURITY_ATTRS.has(a), bs = SECURITY_ATTRS.has(b)
-      if (as && !bs) return -1
-      if (!as && bs) return 1
-      return a.localeCompare(b)
-    })
-  if (!entries.length) return <div style={{ fontSize: '0.8rem', color: 'var(--muted)', fontStyle: 'italic' }}>No attributes to display.</div>
-  return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem' }}>
-      <tbody>
-        {entries.map(([key, val]) => (
-          <tr key={key} style={{ borderTop: '1px solid var(--border)', background: SECURITY_ATTRS.has(key) ? 'rgba(217,119,6,.03)' : undefined }}>
-            <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', color: SECURITY_ATTRS.has(key) ? '#d97706' : 'var(--muted)', verticalAlign: 'top', whiteSpace: 'nowrap', width: '36%' }}>
-              {SECURITY_ATTRS.has(key) && <span style={{ marginRight: '0.2rem' }}>⚠</span>}
-              {key}
-            </td>
-            <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', color: 'var(--text)', verticalAlign: 'top', wordBreak: 'break-word' }}>
-              {renderAttrValue(val, unknowns?.[key] === true)}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
-
-function DiffTable({ before, after, afterUnknown }: {
-  before: Attrs | null | undefined
-  after: Attrs | null | undefined
-  afterUnknown?: Attrs | null
-}) {
-  if (before == null && after == null) return <NoAttrData />
 
   const allKeys = new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])
-  const changed: Array<{ key: string; before: unknown; after: unknown; isUnknown: boolean; isSecurity: boolean }> = []
+  const rows: Array<{ key: string; before: unknown; after: unknown; isUnknown: boolean; isSecurity: boolean }> = []
 
   for (const key of allKeys) {
     const isUnknown = afterUnknown?.[key] === true
     const b = (before ?? {})[key]
     const a = (after ?? {})[key]
-    if (isUnknown || JSON.stringify(b) !== JSON.stringify(a)) {
-      changed.push({ key, before: b, after: a, isUnknown, isSecurity: SECURITY_ATTRS.has(key) })
+    const differs = isUnknown || JSON.stringify(b) !== JSON.stringify(a)
+    if (!diffOnly || differs) {
+      rows.push({ key, before: b, after: a, isUnknown, isSecurity: SECURITY_ATTRS.has(key) })
     }
   }
 
-  changed.sort((x, y) => {
+  rows.sort((x, y) => {
     if (x.isSecurity && !y.isSecurity) return -1
     if (!x.isSecurity && y.isSecurity) return 1
     return x.key.localeCompare(y.key)
   })
 
-  if (!changed.length) {
+  if (!rows.length) {
     return <div style={{ fontSize: '0.8rem', color: '#16a34a' }}>No attribute differences detected.</div>
   }
 
-  const securityChanges = changed.filter(c => c.isSecurity)
+  const securityChanges = rows.filter(c => c.isSecurity && diffOnly)
+  const beforeColor = before == null ? '#94a3b8' : '#dc2626'
+  const afterColor  = after  == null ? '#94a3b8' : '#16a34a'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -244,23 +214,23 @@ function DiffTable({ before, after, afterUnknown }: {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem' }}>
         <thead>
           <tr style={{ background: 'var(--bg)' }}>
-            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: 'var(--muted)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Attribute</th>
-            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: '#dc2626', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Before</th>
-            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: '#16a34a', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>After</th>
+            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: 'var(--muted)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, width: '22%' }}>Attribute</th>
+            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: beforeColor, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, width: '39%' }}>{beforeLabel}</th>
+            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: afterColor,  fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, width: '39%' }}>{afterLabel}</th>
           </tr>
         </thead>
         <tbody>
-          {changed.map(({ key, before: b, after: a, isUnknown, isSecurity }) => (
+          {rows.map(({ key, before: b, after: a, isUnknown, isSecurity }) => (
             <tr key={key} style={{ borderTop: '1px solid var(--border)', background: isSecurity ? 'rgba(217,119,6,.04)' : undefined }}>
               <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', color: isSecurity ? '#d97706' : 'var(--muted)', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
                 {isSecurity && <span style={{ marginRight: '0.2rem' }}>⚠</span>}
                 {key}
               </td>
               <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', verticalAlign: 'top', wordBreak: 'break-word', background: 'rgba(220,38,38,.04)', borderRight: '2px solid rgba(220,38,38,.12)' }}>
-                {renderAttrValue(b)}
+                {b !== undefined ? renderAttrValue(b) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
               </td>
               <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', verticalAlign: 'top', wordBreak: 'break-word', background: 'rgba(22,163,74,.04)' }}>
-                {renderAttrValue(a, isUnknown)}
+                {a !== undefined ? renderAttrValue(a, isUnknown) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
               </td>
             </tr>
           ))}
@@ -294,7 +264,14 @@ function CreateDetail({ after, afterUnknown }: { after: Attrs | null | undefined
       </div>
       <div>
         <SectionLabel>Attributes to be created</SectionLabel>
-        <AttrTable attrs={after} unknowns={afterUnknown} skipNulls />
+        <DiffTable
+          before={null}
+          after={after}
+          afterUnknown={afterUnknown}
+          diffOnly={false}
+          beforeLabel="Before (does not exist)"
+          afterLabel="After (planned values)"
+        />
       </div>
     </div>
   )
@@ -320,10 +297,13 @@ function DeleteDetail({ before, type }: { before: Attrs | null | undefined; type
       <TailbreakAlert type={type} />
       <div>
         <SectionLabel>Current state (will be destroyed)</SectionLabel>
-        {before !== undefined
-          ? <AttrTable attrs={before} skipNulls />
-          : <NoAttrData />
-        }
+        <DiffTable
+          before={before}
+          after={null}
+          diffOnly={false}
+          beforeLabel="Before (current values)"
+          afterLabel="After (will be destroyed)"
+        />
       </div>
     </div>
   )

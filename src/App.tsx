@@ -13,10 +13,11 @@ import SandboxPage from './pages/SandboxPage'
 import WaiversPage from './pages/WaiversPage'
 import RiskAcceptancePage from './pages/RiskAcceptancePage'
 import ChangesPage from './pages/ChangesPage'
+import FeedbackPage from './pages/FeedbackPage'
 import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
 
-type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes'
+type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
@@ -32,6 +33,7 @@ const PAGE_TITLE: Record<Page, string> = {
   waivers:     'Waivers Manager',
   risk:        'Risk Acceptance',
   changes:     'Change Overview',
+  feedback:    'Feedback',
 }
 
 const PAGE_SUBTITLE: Record<Page, string> = {
@@ -48,6 +50,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   sandbox:     'Evaluate Terraform HCL snippets against WAF++ controls instantly',
   waivers:     'Suppress controls from failing · export as .wafpass-skip.yml',
   risk:        'Formally accept or mitigate risks — with approver, expiry and traceability',
+  feedback:    'Share your thoughts with the WAF++ team — we read every message',
 }
 
 function scoreColor(s: number) {
@@ -279,6 +282,17 @@ export default function App() {
             </svg>
             Settings
           </button>
+
+          {/* Feedback */}
+          <button
+            onClick={() => setPage('feedback')}
+            className={`sidebar-link${page === 'feedback' ? ' active' : ''}`}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Feedback
+          </button>
         </nav>
 
         {/* Policy version / controls footer */}
@@ -323,7 +337,7 @@ export default function App() {
               {PAGE_SUBTITLE[page]}
             </p>
           </div>
-          {run && page !== 'runs' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && (
+          {run && page !== 'runs' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'feedback' && (
             <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
               {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
               {run.branch && <>{run.branch} · </>}
@@ -334,7 +348,9 @@ export default function App() {
 
         {/* Page content */}
         <main style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
-          {page === 'settings' ? (
+          {page === 'feedback' ? (
+            <FeedbackPage />
+          ) : page === 'settings' ? (
             <SettingsPage maturityLevel={maturityLevel} settings={settings} onChange={handleSettingsChange} />
           ) : page === 'runscan' ? (
             <RunScanPage />

@@ -55,11 +55,17 @@ export default function RunScanPage() {
   const [path, setPath] = useState('/path/to/terraform')
   const [iac, setIac] = useState('terraform')
   const [project, setProject] = useState('')
+  const [planFile, setPlanFile] = useState('')
 
-  const pushCmd = `wafpass check \\
-  --output json \\
-  --push ${serverUrl} \\
-  ${project ? `--project "${project}" \\\n  ` : ''}${iac !== 'terraform' ? `--iac ${iac} \\\n  ` : ''}${path}`
+  const pushCmd = [
+    'wafpass check \\',
+    '  --output json \\',
+    `  --push ${serverUrl} \\`,
+    ...(project ? [`  --project "${project}" \\`] : []),
+    ...(iac !== 'terraform' ? [`  --iac ${iac} \\`] : []),
+    ...(planFile ? [`  --plan-file ${planFile} \\`] : []),
+    `  ${path}`,
+  ].join('\n')
 
   const inputStyle = {
     background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
@@ -164,6 +170,25 @@ export default function RunScanPage() {
               <input value={project} onChange={e => setProject(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="my-service"/>
             </div>
           </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>
+              Terraform Plan File <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(optional — enables Change Overview)</span>
+            </label>
+            <input
+              value={planFile}
+              onChange={e => setPlanFile(e.target.value)}
+              style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }}
+              placeholder="plan.json"
+            />
+            {iac === 'terraform' && (
+              <div style={{ marginTop: '0.35rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                Generate with:{' '}
+                <code style={{ color: 'var(--text)', background: 'var(--bg)', padding: '0.1rem 0.3rem', borderRadius: '4px', fontSize: '0.72rem' }}>
+                  terraform plan -out=tfplan &amp;&amp; terraform show -json tfplan &gt; plan.json
+                </code>
+              </div>
+            )}
+          </div>
         </div>
         <CopyBlock code={pushCmd} lang="sh"/>
       </div>
@@ -220,6 +245,7 @@ curl -X POST ${serverUrl}/runs \\
             ['--severity LEVEL',     'Minimum severity: critical | high | medium | low'],
             ['--fail-on fail',       'Exit non-zero when FAIL findings exist (default)'],
             ['--fail-on skip',       'Exit non-zero on FAIL + SKIP findings'],
+            ['--plan-file PATH',      'Terraform plan JSON for Change Overview (terraform show -json)'],
             ['--waiver-file PATH',   'Skip controls listed in .wafpass-skip.yml'],
           ].map(([flag, desc]) => (
             <>
