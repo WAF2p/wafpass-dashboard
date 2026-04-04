@@ -270,6 +270,30 @@ a { color: var(--waf-brand); text-decoration: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-page { display: flex; align-items: center; justify-content: center; height: 100%; gap: 0.75rem; color: var(--muted); }
 
+/* ── Print / Share as PDF ────────────────────────────────────────── */
+@media print {
+  @page { margin: 1.5cm; size: A4; }
+
+  /* Force background colours and images to print */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Hide everything except the PDF report */
+  body > #root > div > aside,
+  body > #root > div > div:not(#wafpass-pdf-root),
+  body > #root > div > [class]:not(#wafpass-pdf-root),
+  body > #root > div > button { display: none !important; }
+
+  /* Show only the PDF report container */
+  #wafpass-pdf-root {
+    display: block !important;
+    position: static !important;
+  }
+
+  /* Reset root layout */
+  body, html, #root { height: auto !important; overflow: visible !important; background: #fff !important; }
+  #root > div { display: block !important; height: auto !important; overflow: visible !important; }
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }

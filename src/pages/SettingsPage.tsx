@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface ReportSections {
+  executiveSummary: boolean   // Score KPIs, run metadata
+  pillarBreakdown: boolean    // Pillar scores table
+  criticalFindings: boolean   // Critical & high failures
+  complianceMatrix: boolean   // Regulatory readiness + category pass rates
+  architecturalDebt: boolean  // Pillar × severity heatmap
+  allFindings: boolean        // Full findings table
+  remediationPlan: boolean    // Quick wins + remediation guidance
+  cloudFootprint: boolean     // Detected regions & providers
+  planChanges: boolean        // Terraform plan changes
+}
+
 export interface Settings {
   // Scan
   defaultIac: string
@@ -22,6 +34,8 @@ export interface Settings {
   multiCloudNormalization: boolean
   // UX
   pdfAutoOpen: boolean
+  // PDF Report
+  reportSections: ReportSections
 }
 
 export interface MaturityState {
@@ -65,6 +79,18 @@ function controlsForLevel(level: number): number {
   return Math.round(pillarCount * sevFraction)
 }
 
+const DEFAULT_REPORT_SECTIONS: ReportSections = {
+  executiveSummary: true,
+  pillarBreakdown: false,
+  criticalFindings: false,
+  complianceMatrix: false,
+  architecturalDebt: false,
+  allFindings: false,
+  remediationPlan: false,
+  cloudFootprint: false,
+  planChanges: false,
+}
+
 const DEFAULT_SETTINGS: Settings = {
   defaultIac: 'terraform',
   failOn: 'fail',
@@ -81,6 +107,7 @@ const DEFAULT_SETTINGS: Settings = {
   evidenceCollection: false,
   multiCloudNormalization: false,
   pdfAutoOpen: false,
+  reportSections: DEFAULT_REPORT_SECTIONS,
 }
 
 const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
@@ -91,6 +118,7 @@ const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
     multiCloudNormalization: false,
     failOn: 'fail', defaultSeverity: 'critical',
     activePillars: ['security'],
+    reportSections: { executiveSummary: true, pillarBreakdown: false, criticalFindings: false, complianceMatrix: false, architecturalDebt: false, allFindings: false, remediationPlan: false, cloudFootprint: false, planChanges: false },
   },
   2: {
     secretScanner: true, autoFix: false, blastRadius: true,
@@ -99,6 +127,7 @@ const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
     multiCloudNormalization: false,
     failOn: 'fail', defaultSeverity: 'high',
     activePillars: ['security', 'cost'],
+    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: false, architecturalDebt: false, allFindings: false, remediationPlan: false, cloudFootprint: false, planChanges: false },
   },
   3: {
     secretScanner: true, autoFix: true, blastRadius: true,
@@ -107,6 +136,7 @@ const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
     multiCloudNormalization: false,
     failOn: 'fail', defaultSeverity: 'medium',
     activePillars: ['security', 'cost', 'operations', 'reliability'],
+    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: false, cloudFootprint: false, planChanges: false },
   },
   4: {
     secretScanner: true, autoFix: true, blastRadius: true,
@@ -115,6 +145,7 @@ const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
     multiCloudNormalization: true,
     failOn: 'skip', defaultSeverity: '',
     activePillars: ALL_PILLARS.filter(p => p !== 'sustainability'),
+    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: true, cloudFootprint: true, planChanges: false },
   },
   5: {
     secretScanner: true, autoFix: true, blastRadius: true,
@@ -123,6 +154,7 @@ const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
     multiCloudNormalization: true,
     failOn: 'skip', defaultSeverity: '',
     activePillars: ALL_PILLARS,
+    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: true, cloudFootprint: true, planChanges: true },
   },
 }
 
@@ -562,6 +594,45 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               </div>
             )
           })}
+        </div>
+      </div>
+
+      {/* ── PDF Report Sections ────────────────────────────────────────────── */}
+      <div className="card">
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
+          PDF Report Sections
+        </h2>
+        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1.1rem', lineHeight: 1.55 }}>
+          Choose which sections are included when you export a run as PDF. Defaults follow your maturity level preset.
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 2rem' }}>
+          {([
+            ['executiveSummary', 'Executive Summary',    'Score, KPIs, run metadata — always recommended',         1],
+            ['pillarBreakdown',  'Pillar Breakdown',     'Scores per WAF++ pillar',                                2],
+            ['criticalFindings', 'Critical & High Findings', 'Table of critical and high severity failures',       2],
+            ['complianceMatrix', 'Compliance Matrix',    'Regulatory readiness and category pass rates',           3],
+            ['architecturalDebt','Architectural Debt',   'Failure heatmap by pillar and severity',                 3],
+            ['allFindings',      'All Findings',         'Complete findings table across all severities',          3],
+            ['remediationPlan',  'Remediation Plan',     'Quick wins and auto-fix guidance',                       4],
+            ['cloudFootprint',   'Cloud Footprint',      'Detected regions and cloud providers',                   4],
+            ['planChanges',      'Plan Changes',         'Terraform plan adds, updates, destroys, replacements',   5],
+          ] as [keyof ReportSections, string, string, number][]).map(([key, label, desc, minLevel]) => (
+            <div key={key} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)' }}>{label}</span>
+                  <span style={{ fontSize: '0.6rem', fontWeight: 700, padding: '0.05rem 0.35rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                    L{minLevel}+
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.45, marginTop: '0.1rem' }}>{desc}</div>
+              </div>
+              <Toggle
+                checked={s.reportSections?.[key] ?? false}
+                onChange={v => setS({ ...s, reportSections: { ...(s.reportSections ?? DEFAULT_REPORT_SECTIONS), [key]: v } })}
+              />
+            </div>
+          ))}
         </div>
       </div>
 

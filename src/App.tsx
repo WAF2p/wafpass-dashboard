@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchRun, fetchRuns, RunDetail, RunSummary } from './api'
+import RunSelectorModal from './components/RunSelectorModal'
+import PdfReport from './components/PdfReport'
 import ControlsCataloguePage from './pages/ControlsCataloguePage'
 import DashboardPage from './pages/DashboardPage'
 import FindingsPage from './pages/FindingsPage'
@@ -66,6 +68,10 @@ export default function App() {
   const [runsError, setRunsError] = useState<string | null>(null)
   const [waiverCount, setWaiverCount] = useState(0)
   const [riskCount, setRiskCount] = useState(0)
+  const [showRunModal, setShowRunModal] = useState(false)
+  function handleSharePdf() {
+    window.print()
+  }
 
   const initialMaturity = loadMaturityState()
   const [maturityLevel, setMaturityLevel] = useState(initialMaturity.level)
@@ -129,6 +135,14 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {showRunModal && (
+        <RunSelectorModal
+          runs={runs}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onClose={() => setShowRunModal(false)}
+        />
+      )}
       {/* Sidebar */}
       <aside style={{
         width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column',
@@ -153,21 +167,22 @@ export default function App() {
           ) : runs.length === 0 ? (
             <div style={{ fontSize: '0.75rem', color: 'var(--sidebar-muted)' }}>No runs yet</div>
           ) : (
-            <select
-              value={selectedId ?? ''}
-              onChange={e => setSelectedId(e.target.value)}
+            <button
+              onClick={() => setShowRunModal(true)}
               style={{
                 width: '100%', background: 'var(--sidebar-surf)', color: 'var(--sidebar-text)',
                 border: '1px solid var(--sidebar-border)', borderRadius: '8px',
-                padding: '0.35rem 0.5rem', fontSize: '0.75rem', outline: 'none',
+                padding: '0.4rem 0.6rem', fontSize: '0.75rem', cursor: 'pointer',
+                textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem',
               }}
             >
-              {runs.map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.project || 'unnamed'} · {new Date(r.created_at).toLocaleDateString()}
-                </option>
-              ))}
-            </select>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {run ? `${run.project || 'unnamed'} · ${new Date(run.created_at).toLocaleDateString()}` : 'Select run…'}
+              </span>
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0, opacity: 0.6 }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+              </svg>
+            </button>
           )}
         </div>
 
@@ -306,7 +321,7 @@ export default function App() {
                 borderRadius: '999px', padding: '0.18rem 0.6rem',
                 fontSize: '0.72rem', fontWeight: 700, color: '#60a5fa', letterSpacing: '0.02em',
               }}>
-                v0.3.0
+                v0.4.0
               </span>
               {run.controls_loaded > 0 && (
                 <span style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>{run.controls_loaded} controls</span>
@@ -316,7 +331,7 @@ export default function App() {
         )}
 
         <div style={{ padding: '0.5rem 1.25rem', borderTop: '1px solid var(--sidebar-border)', fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>
-          WAF++ PASS v0.3.0
+          WAF++ PASS v0.4.0
         </div>
       </aside>
 
@@ -337,13 +352,33 @@ export default function App() {
               {PAGE_SUBTITLE[page]}
             </p>
           </div>
-          {run && page !== 'runs' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'feedback' && (
-            <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-              {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
-              {run.branch && <>{run.branch} · </>}
-              {new Date(run.created_at).toLocaleString()}
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {run && page !== 'runs' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'feedback' && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
+                {run.branch && <>{run.branch} · </>}
+                {new Date(run.created_at).toLocaleString()}
+              </span>
+            )}
+            {run && page === 'dashboard' && (
+              <button
+                onClick={handleSharePdf}
+                title={settings.pdfAutoOpen ? 'Share as PDF (auto-open enabled in settings)' : 'Share as PDF'}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  padding: '0.4rem 0.875rem', borderRadius: '8px',
+                  background: 'var(--waf-brand)', color: '#fff',
+                  border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem',
+                  boxShadow: '0 2px 8px rgba(0,148,255,.30)',
+                }}
+              >
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Share as PDF
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Page content */}
@@ -390,6 +425,12 @@ export default function App() {
           ) : null}
         </main>
       </div>
+      {/* PDF report — hidden in normal view, shown only during print */}
+      {run && (
+        <div id="wafpass-pdf-root" style={{ display: 'none' }}>
+          <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} />
+        </div>
+      )}
     </div>
   )
 }
