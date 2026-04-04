@@ -16,11 +16,12 @@ import WaiversPage from './pages/WaiversPage'
 import RiskAcceptancePage from './pages/RiskAcceptancePage'
 import ChangesPage from './pages/ChangesPage'
 import BlastRadiusPage from './pages/BlastRadiusPage'
+import RemediationSprintPage from './pages/RemediationSprintPage'
 import FeedbackPage from './pages/FeedbackPage'
 import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
 
-type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'blastradius' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
+type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'blastradius' | 'remediation' | 'runs' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
@@ -30,6 +31,7 @@ const PAGE_TITLE: Record<Page, string> = {
   regions:     'Deployed Regions',
   exploitpath:  'Exploit Path Analysis',
   blastradius:  'Blast Radius',
+  remediation:  'Remediation Sprint',
   runs:        'Run History',
   settings:    'Settings',
   runscan:     'Run Scan',
@@ -49,6 +51,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   regions:     'Detected cloud deployment regions',
   exploitpath:  'Attack chain visualization · internet-facing surfaces are highest criticality',
   blastradius:  'Interactive dependency graph of all failing resources and their structural propagation paths',
+  remediation:  'Prioritised fix queue — select controls to form a sprint and see your projected score gain, resources fixed, and regulatory gaps closed',
   runs:        'All recorded WAF++ scan runs',
   settings:    'Configure scan defaults, maturity level, and feature toggles',
   runscan:     'Trigger a WAF++ scan from the UI or generate a CLI command',
@@ -128,6 +131,7 @@ export default function App() {
     { page: 'regions',     label: 'Deployed Regions',  icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { page: 'exploitpath',  label: 'Exploit Paths',     icon: 'M13 10V3L4 14h7v7l9-11h-7z', danger: true },
     { page: 'blastradius',  label: 'Blast Radius',      icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z', badge: run ? { label: String(new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.resource).filter(Boolean)).size), variant: 'fail' as const } : null },
+    { page: 'remediation',  label: 'Remediation Sprint', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
   ]
 
   const toolItems: { page: Page; label: string; icon: string; count?: number }[] = [
@@ -428,6 +432,8 @@ export default function App() {
             <ExploitPathsPage run={run} />
           ) : page === 'blastradius' ? (
             <BlastRadiusPage run={run} />
+          ) : page === 'remediation' ? (
+            <RemediationSprintPage run={run} />
           ) : null}
         </main>
       </div>
