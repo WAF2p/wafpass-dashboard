@@ -26,14 +26,16 @@ import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
 import { emitScanReceived, recordFirstSeenFailures } from './audit'
 import AuditLogPage from './pages/AuditLogPage'
+import GapAnalysisPage from './pages/GapAnalysisPage'
 
-type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'blastradius' | 'depgraph' | 'remediation' | 'secrets' | 'modules' | 'runs' | 'diff' | 'audit' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
+type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'gapanalysis' | 'regions' | 'exploitpath' | 'blastradius' | 'depgraph' | 'remediation' | 'secrets' | 'modules' | 'runs' | 'diff' | 'audit' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
   catalogue:   'Controls Catalogue',
   findings:    'Scan Findings',
   compliance:  'Compliance Matrix',
+  gapanalysis: 'Regulatory Gap Analysis',
   regions:     'Deployed Regions',
   exploitpath:  'Exploit Path Analysis',
   blastradius:  'Blast Radius',
@@ -58,6 +60,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   catalogue:   'All WAF++ framework controls and your custom controls — browse, filter, author, and export',
   findings:    'Detailed results from the selected run',
   compliance:  'Pillar coverage, pass rates and regulatory framework mapping',
+  gapanalysis: 'Shortest path to framework compliance — controls ranked by effort-per-requirement, with remediation steps and evidence export',
   changes:     'Terraform plan changes (adds, updates, replacements, destroys) and compliance drift — controls that regressed or recovered since the previous run',
   regions:     'Detected cloud deployment regions',
   exploitpath:  'Attack chain visualization · internet-facing surfaces are highest criticality',
@@ -147,6 +150,7 @@ export default function App() {
     { page: 'catalogue',   label: 'Controls Catalogue', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', badge: { label: run ? String(run.controls_meta.length || run.controls_loaded || 0) : '73+', variant: 'neutral' } },
     { page: 'findings',    label: 'Findings',          icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', badge: failCount > 0 ? { label: String(failCount), variant: 'fail' } : null },
     { page: 'compliance',  label: 'Compliance Matrix', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { page: 'gapanalysis', label: 'Gap Analysis',      icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', badge: (() => { if (!run) return null; const n = run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').length; return n > 0 ? { label: String(new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.control_id)).size), variant: 'fail' as const } : null })() },
     { page: 'changes',     label: 'Changes & Drift',   icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', badge: (() => { if (!run?.plan_changes) return null; const total = (run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0) + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0); if (total === 0) return null; const hasSec = run.plan_changes.changes.some(c => { const b = (c.before ?? {}) as Record<string, unknown>; const a = (c.after ?? {}) as Record<string, unknown>; return ['policy','assume_role_policy','ingress','egress','cidr_blocks','encryption_configuration','kms_key_id','kms_key_arn','acl'].some(k => JSON.stringify(b[k] ?? null) !== JSON.stringify(a[k] ?? null)) }); return { label: String(total), variant: (hasSec ? 'fail' : 'neutral') as 'fail' | 'neutral' } })() },
     { page: 'regions',     label: 'Deployed Regions',  icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { page: 'exploitpath',  label: 'Exploit Paths',     icon: 'M13 10V3L4 14h7v7l9-11h-7z', danger: true },
@@ -463,6 +467,8 @@ export default function App() {
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
             <CompliancePage run={run} />
+          ) : page === 'gapanalysis' ? (
+            <GapAnalysisPage run={run} />
           ) : page === 'changes' ? (
             <ChangesPage run={run} runs={runs} />
           ) : page === 'regions' ? (
