@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { SERVER_URL_KEY } from '../api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -280,6 +281,45 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
   const [s, setS] = useState<Settings>(settings)
   const [saved, setSaved] = useState(false)
 
+  // Server URL — stored independently, takes effect immediately
+  const [serverUrl, setServerUrl] = useState(() => {
+    try { return localStorage.getItem(SERVER_URL_KEY) ?? '' } catch { return '' }
+  })
+  const [serverStatus, setServerStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle')
+  const [serverStatusMsg, setServerStatusMsg] = useState('')
+  const checkTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function saveServerUrl(url: string) {
+    const trimmed = url.trim().replace(/\/$/, '')
+    setServerUrl(trimmed)
+    try { localStorage.setItem(SERVER_URL_KEY, trimmed) } catch {}
+  }
+
+  function checkConnection(url: string) {
+    const base = url.trim().replace(/\/$/, '')
+    if (!base) { setServerStatus('idle'); setServerStatusMsg(''); return }
+    setServerStatus('checking')
+    setServerStatusMsg('')
+    if (checkTimeout.current) clearTimeout(checkTimeout.current)
+    checkTimeout.current = setTimeout(() => {
+      fetch(`${base}/health`)
+        .then(async res => {
+          if (res.ok) {
+            const json = await res.json().catch(() => ({})) as Record<string, unknown>
+            setServerStatus('ok')
+            setServerStatusMsg(`Connected · ${json.status ?? 'ok'}`)
+          } else {
+            setServerStatus('error')
+            setServerStatusMsg(`HTTP ${res.status} ${res.statusText}`)
+          }
+        })
+        .catch(e => {
+          setServerStatus('error')
+          setServerStatusMsg(e instanceof Error ? e.message : 'Unreachable')
+        })
+    }, 400)
+  }
+
   useEffect(() => { setLevel(maturityLevel); setS(settings) }, [maturityLevel, settings])
 
   function applyMaturity(l: number) {
@@ -351,6 +391,66 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+
+      {/* ── Connection ────────────────────────────────────────────────────── */}
+      <div className="card">
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
+          Connection
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '520px' }}>
+          <div>
+            <label style={labelStyle}>Backend Server URL</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                value={serverUrl}
+                onChange={e => { setServerUrl(e.target.value); setServerStatus('idle') }}
+                onBlur={e => { saveServerUrl(e.target.value); checkConnection(e.target.value) }}
+                placeholder="http://localhost:8000"
+                style={{
+                  flex: 1, background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+                  borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem', outline: 'none',
+                }}
+              />
+              <button
+                onClick={() => { saveServerUrl(serverUrl); checkConnection(serverUrl) }}
+                style={{
+                  background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
+                  borderRadius: '8px', padding: '0.4rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                Test
+              </button>
+            </div>
+            <div style={{ marginTop: '0.3rem', fontSize: '0.71rem', color: 'var(--muted)' }}>
+              Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
+            </div>
+          </div>
+
+          {/* Status indicator */}
+          {serverStatus !== 'idle' && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.45rem 0.75rem', borderRadius: '8px', fontSize: '0.78rem',
+              background: serverStatus === 'ok' ? 'rgba(34,197,94,.08)' : serverStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'rgba(218,44,56,.08)',
+              border: `1px solid ${serverStatus === 'ok' ? 'rgba(34,197,94,.3)' : serverStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'rgba(218,44,56,.3)'}`,
+              color: serverStatus === 'ok' ? '#15803d' : serverStatus === 'checking' ? '#0369a1' : '#DA2C38',
+            }}>
+              <span style={{ fontSize: '0.6rem' }}>
+                {serverStatus === 'ok' ? '●' : serverStatus === 'checking' ? '○' : '✕'}
+              </span>
+              {serverStatus === 'checking' ? 'Checking…' : serverStatusMsg}
+            </div>
+          )}
+
+          {/* Active base URL display */}
+          <div style={{ fontSize: '0.71rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
+            Active base URL:{' '}
+            <strong style={{ color: 'var(--text)' }}>
+              {serverUrl.trim() || '(same origin)'}
+            </strong>
+          </div>
+        </div>
+      </div>
 
       {/* ── Maturity Level ─────────────────────────────────────────────────── */}
       <div className="card">

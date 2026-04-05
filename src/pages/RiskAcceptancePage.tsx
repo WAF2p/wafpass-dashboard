@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { appendAuditEvent } from '../audit'
+import { fetchRisks, upsertRisk, deleteRisk } from '../api'
 
 export interface RiskAcceptance {
   id: string
@@ -14,18 +15,19 @@ export interface RiskAcceptance {
   residual_risk: 'low' | 'medium' | 'high'
   expires: string
   accepted_at: string
+  project?: string
 }
 
 const STORAGE_KEY = 'wafpass_risk_acceptances'
 
-function load(): Record<string, RiskAcceptance> {
+function loadLocal(): Record<string, RiskAcceptance> {
   try {
     const s = localStorage.getItem(STORAGE_KEY)
     return s ? JSON.parse(s) : {}
   } catch { return {} }
 }
 
-function save(d: Record<string, RiskAcceptance>) {
+function saveLocal(d: Record<string, RiskAcceptance>) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)) } catch {}
 }
 
@@ -33,6 +35,7 @@ const EMPTY: Omit<RiskAcceptance, 'id'> = {
   reason: '', approver: '', owner: '', rfc: '', jira_link: '', other_link: '',
   notes: '', risk_level: 'accepted', residual_risk: 'medium', expires: '',
   accepted_at: new Date().toISOString().slice(0, 10),
+  project: '',
 }
 
 const RESIDUAL_COLOR: Record<string, string> = {
@@ -43,19 +46,50 @@ const LEVEL_COLOR: Record<string, string> = {
   accepted: '#a78bfa', mitigated: '#22c55e',
 }
 
+type SyncStatus = 'loading' | 'synced' | 'offline' | 'saving' | 'error'
+
 interface Props {
   controls: { id: string; title: string }[]
 }
 
 export default function RiskAcceptancePage({ controls }: Props) {
-  const [data, setData] = useState<Record<string, RiskAcceptance>>(load)
+  const [data, setData] = useState<Record<string, RiskAcceptance>>(loadLocal)
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [idInput, setIdInput] = useState('')
   const [form, setForm] = useState<Omit<RiskAcceptance, 'id'>>(EMPTY)
   const [search, setSearch] = useState('')
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('loading')
+  const [syncError, setSyncError] = useState<string | null>(null)
 
-  useEffect(() => { save(data) }, [data])
+  // Fetch from server on mount
+  useEffect(() => {
+    setSyncStatus('loading')
+    fetchRisks()
+      .then(records => {
+        const map: Record<string, RiskAcceptance> = {}
+        for (const r of records) {
+          map[r.id] = {
+            id: r.id, reason: r.reason, approver: r.approver, owner: r.owner,
+            rfc: r.rfc, jira_link: r.jira_link, other_link: r.other_link,
+            notes: r.notes, risk_level: r.risk_level as RiskAcceptance['risk_level'],
+            residual_risk: r.residual_risk as RiskAcceptance['residual_risk'],
+            expires: r.expires, accepted_at: r.accepted_at, project: r.project,
+          }
+        }
+        setData(map)
+        saveLocal(map)
+        setSyncStatus('synced')
+      })
+      .catch((e: unknown) => {
+        setSyncStatus('offline')
+        if (e instanceof TypeError) {
+          setSyncError(`Cannot reach server — using local cache. Check the server URL in Settings.`)
+        } else {
+          setSyncError(`Server error loading risks (${e instanceof Error ? e.message : String(e)}) — using local cache.`)
+        }
+      })
+  }, [])
 
   const entries = Object.values(data)
     .filter(r => !search || r.id.toLowerCase().includes(search.toLowerCase()) || r.reason.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase()))
@@ -76,11 +110,27 @@ export default function RiskAcceptancePage({ controls }: Props) {
     setShowModal(true)
   }
 
-  function submit() {
+  const submit = useCallback(async () => {
     const id = editId ?? idInput.trim()
     if (!id) return
     const existing = data[id]
-    const record = { id, ...form }
+    const record: RiskAcceptance = { id, ...form }
+    setSyncStatus('saving')
+    setSyncError(null)
+    try {
+      await upsertRisk(id, {
+        reason: form.reason, approver: form.approver, owner: form.owner,
+        rfc: form.rfc, jira_link: form.jira_link, other_link: form.other_link,
+        notes: form.notes, risk_level: form.risk_level, residual_risk: form.residual_risk,
+        expires: form.expires, accepted_at: form.accepted_at, project: form.project ?? '',
+      })
+      setSyncStatus('synced')
+    } catch (e) {
+      setSyncStatus('offline')
+      setSyncError(e instanceof TypeError
+        ? `Cannot reach server — saved locally only. Check the server URL in Settings.`
+        : `Server error saving risk (${e instanceof Error ? e.message : String(e)}) — saved locally only.`)
+    }
     appendAuditEvent({
       actor: form.approver || form.owner || 'unknown',
       category: 'risk',
@@ -93,12 +143,27 @@ export default function RiskAcceptancePage({ controls }: Props) {
       before: existing ?? undefined,
       after: record,
     })
-    setData(prev => ({ ...prev, [id]: record }))
+    setData(prev => {
+      const next = { ...prev, [id]: record }
+      saveLocal(next)
+      return next
+    })
     setShowModal(false)
-  }
+  }, [editId, idInput, form, data])
 
-  function remove(id: string) {
+  const remove = useCallback(async (id: string) => {
     const existing = data[id]
+    setSyncStatus('saving')
+    setSyncError(null)
+    try {
+      await deleteRisk(id)
+      setSyncStatus('synced')
+    } catch (e) {
+      setSyncStatus('offline')
+      setSyncError(e instanceof TypeError
+        ? `Cannot reach server — removed locally only. Check the server URL in Settings.`
+        : `Server error deleting risk (${e instanceof Error ? e.message : String(e)}) — removed locally only.`)
+    }
     if (existing) {
       appendAuditEvent({
         actor: existing.approver || existing.owner || 'unknown',
@@ -110,8 +175,13 @@ export default function RiskAcceptancePage({ controls }: Props) {
         before: existing,
       })
     }
-    setData(prev => { const d = { ...prev }; delete d[id]; return d })
-  }
+    setData(prev => {
+      const d = { ...prev }
+      delete d[id]
+      saveLocal(d)
+      return d
+    })
+  }, [data])
 
   const inputStyle = {
     background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
@@ -120,6 +190,14 @@ export default function RiskAcceptancePage({ controls }: Props) {
   }
 
   const isExpired = (expires: string) => expires && new Date(expires) < new Date()
+
+  const syncPill = (() => {
+    if (syncStatus === 'loading') return { label: 'Loading…', color: '#94a3b8' }
+    if (syncStatus === 'saving') return { label: 'Saving…', color: '#0094ff' }
+    if (syncStatus === 'synced') return { label: 'Synced', color: '#22c55e' }
+    if (syncStatus === 'offline') return { label: 'Offline — local cache', color: '#eab308' }
+    return { label: 'Sync error', color: '#DA2C38' }
+  })()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '900px' }}>
@@ -141,9 +219,31 @@ export default function RiskAcceptancePage({ controls }: Props) {
           style={{ ...inputStyle, width: '220px' }}
         />
         <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{entries.length} record{entries.length !== 1 ? 's' : ''}</span>
+        <span style={{
+          marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 600, color: syncPill.color,
+          background: `${syncPill.color}18`, border: `1px solid ${syncPill.color}40`,
+          borderRadius: '999px', padding: '0.2rem 0.7rem',
+        }}>
+          {syncPill.label}
+        </span>
       </div>
 
-      {entries.length === 0 ? (
+      {/* Sync error banner */}
+      {syncError && (
+        <div style={{
+          background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+          borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: '#DA2C38',
+        }}>
+          {syncError}
+        </div>
+      )}
+
+
+      {syncStatus === 'loading' ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+          <div className="spinner" />
+        </div>
+      ) : entries.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
           <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>No risk acceptances recorded</div>
           <div style={{ fontSize: '0.78rem' }}>
@@ -175,6 +275,11 @@ export default function RiskAcceptancePage({ controls }: Props) {
                       {expired && (
                         <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#DA2C38', background: 'rgba(218,44,56,.15)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
                           EXPIRED
+                        </span>
+                      )}
+                      {r.project && (
+                        <span style={{ fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
+                          {r.project}
                         </span>
                       )}
                     </div>
@@ -223,7 +328,7 @@ export default function RiskAcceptancePage({ controls }: Props) {
                       Edit
                     </button>
                     <button
-                      onClick={() => remove(r.id)}
+                      onClick={() => void remove(r.id)}
                       style={{ background: 'none', border: '1px solid rgba(218,44,56,.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: 'pointer', color: '#DA2C38' }}
                     >
                       Delete
@@ -255,11 +360,7 @@ export default function RiskAcceptancePage({ controls }: Props) {
               {editId ? (
                 <input value={idInput} disabled style={{ ...inputStyle, opacity: 0.6 }} />
               ) : (
-                <select
-                  value={idInput}
-                  onChange={e => setIdInput(e.target.value)}
-                  style={inputStyle}
-                >
+                <select value={idInput} onChange={e => setIdInput(e.target.value)} style={inputStyle}>
                   <option value="">— select a control —</option>
                   {controls.map(c => (
                     <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
@@ -333,7 +434,7 @@ export default function RiskAcceptancePage({ controls }: Props) {
                 Cancel
               </button>
               <button
-                onClick={submit}
+                onClick={() => void submit()}
                 disabled={!idInput.trim()}
                 style={{
                   background: idInput.trim() ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
