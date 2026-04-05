@@ -19,11 +19,12 @@ import BlastRadiusPage from './pages/BlastRadiusPage'
 import RemediationSprintPage from './pages/RemediationSprintPage'
 import RunDiffPage from './pages/RunDiffPage'
 import SecretScanPage from './pages/SecretScanPage'
+import ModuleScorePage from './pages/ModuleScorePage'
 import FeedbackPage from './pages/FeedbackPage'
 import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
 
-type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'blastradius' | 'remediation' | 'secrets' | 'runs' | 'diff' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
+type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'blastradius' | 'remediation' | 'secrets' | 'modules' | 'runs' | 'diff' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
@@ -35,6 +36,7 @@ const PAGE_TITLE: Record<Page, string> = {
   blastradius:  'Blast Radius',
   remediation:  'Remediation Sprint',
   secrets:      'Secret Scanner',
+  modules:      'Module Score Breakdown',
   runs:        'Run History',
   diff:        'Run Comparison',
   settings:    'Settings',
@@ -57,6 +59,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   blastradius:  'Interactive dependency graph of all failing resources and their structural propagation paths',
   remediation:  'Prioritised fix queue — select controls to form a sprint and see your projected score gain, resources fixed, and regulatory gaps closed',
   secrets:      'Hardcoded credential issues detected in IaC — passwords, API keys, tokens, and private keys that must be migrated to a secrets manager',
+  modules:      'Per-module pass rate and score drag — identify which Terraform module is pulling the overall score down',
   runs:        'All recorded WAF++ scan runs',
   diff:        'Finding-level diff between two runs — newly broken controls, fixed controls, score delta per pillar',
   settings:    'Configure scan defaults, maturity level, and feature toggles',
@@ -139,6 +142,7 @@ export default function App() {
     { page: 'blastradius',  label: 'Blast Radius',      icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z', badge: run ? { label: String(new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.resource).filter(Boolean)).size), variant: 'fail' as const } : null },
     { page: 'remediation',  label: 'Remediation Sprint', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
     { page: 'secrets', label: 'Secret Scanner', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', danger: true, badge: (() => { if (!run) return null; const SECRET_RE = [/hardcod/i, /plaintext/i, /no.hardcoded/i, /secret/i, /credential/i, /password/i, /api[_.\s-]?key/i, /private[_.\s-]?key/i, /access[_.\s-]?key/i, /token/i, /kms/i, /encrypt/i, /rotation/i]; const n = run.findings.filter(f => f.status?.toUpperCase() === 'FAIL' && SECRET_RE.some(re => re.test([f.control_id, f.check_id, f.check_title, f.message].join(' ')))).length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
+    { page: 'modules', label: 'Module Scores', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', badge: (() => { if (!run) return null; const paths = new Set(run.findings.map(f => { if (!f.resource?.startsWith('module.')) return '(root)'; const p = f.resource.split('.'); const s: string[] = []; let i = 0; while (i < p.length - 1 && p[i] === 'module') { s.push(`module.${p[i+1]}`); i += 2; } return s.join('.') || '(root)' })); return { label: String(paths.size), variant: 'neutral' as const } })() },
   ]
 
   const toolItems: { page: Page; label: string; icon: string; count?: number }[] = [
@@ -456,6 +460,8 @@ export default function App() {
             <RemediationSprintPage run={run} />
           ) : page === 'secrets' ? (
             <SecretScanPage run={run} />
+          ) : page === 'modules' ? (
+            <ModuleScorePage run={run} />
           ) : null}
         </main>
       </div>
