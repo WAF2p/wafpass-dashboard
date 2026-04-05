@@ -224,31 +224,36 @@ export default function App() {
     : CONTROLS.map(c => ({ id: c.id, title: c.title }))
   const matMeta = getMaturityMeta(maturityLevel)
 
-  const navItems: { page: Page; label: string; icon: string; badge?: { label: string; variant: 'fail' | 'neutral' } | null; danger?: boolean; divider?: boolean }[] = [
+  const navItems: { page: Page; label: string; icon: string; gate?: boolean; badge?: { label: string; variant: 'fail' | 'neutral' } | null; danger?: boolean }[] = [
     { page: 'dashboard',   label: 'Dashboard',         icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { page: 'catalogue',   label: 'Controls Catalogue', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', badge: { label: run ? String(run.controls_meta.length || run.controls_loaded || 0) : '73+', variant: 'neutral' } },
     { page: 'findings',    label: 'Findings',          icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', badge: failCount > 0 ? { label: String(failCount), variant: 'fail' } : null },
     { page: 'compliance',  label: 'Compliance Matrix', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
     { page: 'gapanalysis', label: 'Gap Analysis',      icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', badge: (() => { if (!run) return null; const n = run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').length; return n > 0 ? { label: String(new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.control_id)).size), variant: 'fail' as const } : null })() },
-    { page: 'changes',     label: 'Changes & Drift',   icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', badge: (() => { if (!run?.plan_changes) return null; const total = (run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0) + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0); if (total === 0) return null; const hasSec = run.plan_changes.changes.some(c => { const b = (c.before ?? {}) as Record<string, unknown>; const a = (c.after ?? {}) as Record<string, unknown>; return ['policy','assume_role_policy','ingress','egress','cidr_blocks','encryption_configuration','kms_key_id','kms_key_arn','acl'].some(k => JSON.stringify(b[k] ?? null) !== JSON.stringify(a[k] ?? null)) }); return { label: String(total), variant: (hasSec ? 'fail' : 'neutral') as 'fail' | 'neutral' } })() },
+    { page: 'changes',     label: 'Changes & Drift',   gate: settings.driftDetection, icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', badge: (() => { if (!run?.plan_changes) return null; const total = (run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0) + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0); if (total === 0) return null; const hasSec = run.plan_changes.changes.some(c => { const b = (c.before ?? {}) as Record<string, unknown>; const a = (c.after ?? {}) as Record<string, unknown>; return ['policy','assume_role_policy','ingress','egress','cidr_blocks','encryption_configuration','kms_key_id','kms_key_arn','acl'].some(k => JSON.stringify(b[k] ?? null) !== JSON.stringify(a[k] ?? null)) }); return { label: String(total), variant: (hasSec ? 'fail' : 'neutral') as 'fail' | 'neutral' } })() },
     { page: 'regions',     label: 'Deployed Regions',  icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { page: 'exploitpath',  label: 'Exploit Paths',     icon: 'M13 10V3L4 14h7v7l9-11h-7z', danger: true },
-    { page: 'blastradius',  label: 'Blast Radius',      icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z', badge: run ? { label: String(new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.resource).filter(Boolean)).size), variant: 'fail' as const } : null },
-    { page: 'depgraph',    label: 'Dependency Graph',  icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7', badge: run ? { label: String(new Set(run.findings.map(f => f.resource).filter(Boolean)).size), variant: 'neutral' as const } : null },
+    { page: 'exploitpath',  label: 'Exploit Paths',    icon: 'M13 10V3L4 14h7v7l9-11h-7z', danger: true },
+    { page: 'blastradius',  label: 'Blast Radius',     gate: settings.blastRadius, icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z', badge: run ? { label: String(new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.resource).filter(Boolean)).size), variant: 'fail' as const } : null },
+    { page: 'depgraph',    label: 'Dependency Graph',  gate: settings.dependencyGraph, icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7', badge: run ? { label: String(new Set(run.findings.map(f => f.resource).filter(Boolean)).size), variant: 'neutral' as const } : null },
     { page: 'remediation',  label: 'Remediation Sprint', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-    { page: 'secrets', label: 'Secret Scanner', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', danger: true, badge: (() => { if (!run) return null; const SECRET_RE = [/hardcod/i, /plaintext/i, /no.hardcoded/i, /secret/i, /credential/i, /password/i, /api[_.\s-]?key/i, /private[_.\s-]?key/i, /access[_.\s-]?key/i, /token/i, /kms/i, /encrypt/i, /rotation/i]; const n = run.findings.filter(f => f.status?.toUpperCase() === 'FAIL' && SECRET_RE.some(re => re.test([f.control_id, f.check_id, f.check_title, f.message].join(' ')))).length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
+    { page: 'secrets', label: 'Secret Scanner', gate: settings.secretScanner, icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', danger: true, badge: (() => { if (!run) return null; const SECRET_RE = [/hardcod/i, /plaintext/i, /no.hardcoded/i, /secret/i, /credential/i, /password/i, /api[_.\s-]?key/i, /private[_.\s-]?key/i, /access[_.\s-]?key/i, /token/i, /kms/i, /encrypt/i, /rotation/i]; const n = run.findings.filter(f => f.status?.toUpperCase() === 'FAIL' && SECRET_RE.some(re => re.test([f.control_id, f.check_id, f.check_title, f.message].join(' ')))).length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
     { page: 'modules', label: 'Module Scores', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', badge: (() => { if (!run) return null; const paths = new Set(run.findings.map(f => { if (!f.resource?.startsWith('module.')) return '(root)'; const p = f.resource.split('.'); const s: string[] = []; let i = 0; while (i < p.length - 1 && p[i] === 'module') { s.push(`module.${p[i+1]}`); i += 2; } return s.join('.') || '(root)' })); return { label: String(paths.size), variant: 'neutral' as const } })() },
-    { page: 'cost', label: 'Cost Impact', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', badge: (() => { if (!run) return null; const n = run.findings.filter(f => f.pillar?.toLowerCase() === 'cost' && f.status?.toUpperCase() === 'FAIL').length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
+    { page: 'cost', label: 'Cost Impact', gate: (settings.activePillars ?? []).includes('cost'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', badge: (() => { if (!run) return null; const n = run.findings.filter(f => f.pillar?.toLowerCase() === 'cost' && f.status?.toUpperCase() === 'FAIL').length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
   ]
 
-  const toolItems: { page: Page; label: string; icon: string; count?: number }[] = [
+  const hide = settings.hideDisabledMenuItems
+  const visibleNavItems = hide ? navItems.filter(i => i.gate === undefined || i.gate) : navItems
+
+  const toolItems: { page: Page; label: string; icon: string; gate?: boolean; count?: number }[] = [
     { page: 'runscan', label: 'Run Scan',        icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { page: 'sandbox', label: 'Sandbox',         icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
     { page: 'waivers', label: 'Waivers',         icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', count: waiverCount },
     { page: 'risk',    label: 'Risk Acceptance', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', count: riskCount },
     { page: 'audit',   label: 'Audit Log',       icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-    { page: 'evidence', label: 'Evidence Package', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+    { page: 'evidence', label: 'Evidence Package', gate: settings.evidenceCollection, icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
   ]
+
+  const visibleToolItems = hide ? toolItems.filter(i => i.gate === undefined || i.gate) : toolItems
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -337,7 +342,7 @@ export default function App() {
 
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '0.75rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          {navItems.map(item => (
+          {visibleNavItems.map(item => (
             <button
               key={item.page}
               onClick={() => navigate(item.page)}
@@ -395,7 +400,7 @@ export default function App() {
           <div style={{ fontSize: '0.58rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, padding: '0 0.5rem', marginBottom: '2px' }}>
             Tools
           </div>
-          {toolItems.map(item => (
+          {visibleToolItems.map(item => (
             <button
               key={item.page}
               onClick={() => navigate(item.page)}

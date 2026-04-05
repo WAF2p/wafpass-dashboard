@@ -35,6 +35,7 @@ export interface Settings {
   multiCloudNormalization: boolean
   // UX
   pdfAutoOpen: boolean
+  hideDisabledMenuItems: boolean
   // PDF Report
   reportSections: ReportSections
 }
@@ -108,6 +109,7 @@ const DEFAULT_SETTINGS: Settings = {
   evidenceCollection: false,
   multiCloudNormalization: false,
   pdfAutoOpen: false,
+  hideDisabledMenuItems: false,
   reportSections: DEFAULT_REPORT_SECTIONS,
 }
 
@@ -370,6 +372,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
     ['multiCloudNormalization','Multi-Cloud Normalization','Normalise findings across AWS, Azure, GCP, and other providers', 'visibility'],
     ['carbonTracking',        'Carbon Tracking',          'Estimate CO₂ footprint and surface high-emission resource patterns', 'sustainability'],
     ['pdfAutoOpen',           'Auto-open PDF Report',     'Open generated PDF report in browser immediately after creation', 'ux'],
+    ['hideDisabledMenuItems', 'Hide disabled menu items', 'Remove sidebar entries for features that are turned off in settings', 'ux'],
   ]
 
   // Group toggles by category for display
@@ -676,30 +679,6 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         </div>
       </div>
 
-      {/* ── Save ───────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem' }}>
-        <button
-          onClick={save}
-          style={{
-            background: 'var(--waf-brand)', color: '#fff', border: 'none', borderRadius: '8px',
-            padding: '0.6rem 1.75rem', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          Save Settings
-        </button>
-        <button
-          onClick={() => applyMaturity(level)}
-          style={{
-            background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)',
-            borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.82rem', fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          Reset to L{level} preset
-        </button>
-        {saved && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 600 }}>Saved!</span>}
-      </div>
-
       {/* ── Connection & Real Engine ───────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
@@ -813,6 +792,30 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Save ───────────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem' }}>
+        <button
+          onClick={save}
+          style={{
+            background: 'var(--waf-brand)', color: '#fff', border: 'none', borderRadius: '8px',
+            padding: '0.6rem 1.75rem', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          Save Settings
+        </button>
+        <button
+          onClick={() => applyMaturity(level)}
+          style={{
+            background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)',
+            borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.82rem', fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Reset to L{level} preset
+        </button>
+        {saved && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 600 }}>Saved!</span>}
       </div>
 
     </div>
