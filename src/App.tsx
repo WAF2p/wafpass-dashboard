@@ -27,8 +27,9 @@ import { ControlMeta } from './api'
 import { emitScanReceived, recordFirstSeenFailures } from './audit'
 import AuditLogPage from './pages/AuditLogPage'
 import GapAnalysisPage from './pages/GapAnalysisPage'
+import CostImpactPage from './pages/CostImpactPage'
 
-type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'gapanalysis' | 'regions' | 'exploitpath' | 'blastradius' | 'depgraph' | 'remediation' | 'secrets' | 'modules' | 'runs' | 'diff' | 'audit' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
+type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'gapanalysis' | 'regions' | 'exploitpath' | 'blastradius' | 'depgraph' | 'remediation' | 'secrets' | 'modules' | 'cost' | 'runs' | 'diff' | 'audit' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
@@ -43,6 +44,7 @@ const PAGE_TITLE: Record<Page, string> = {
   remediation:  'Remediation Sprint',
   secrets:      'Secret Scanner',
   modules:      'Module Score Breakdown',
+  cost:         'Cost Impact Estimation',
   runs:        'Run History',
   diff:        'Run Comparison',
   audit:       'Audit Log',
@@ -69,6 +71,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   remediation:  'Prioritised fix queue — select controls to form a sprint and see your projected score gain, resources fixed, and regulatory gaps closed',
   secrets:      'Hardcoded credential issues detected in IaC — passwords, API keys, tokens, and private keys that must be migrated to a secrets manager',
   modules:      'Per-module pass rate and score drag — identify which Terraform module is pulling the overall score down',
+  cost:         'Estimated $/month impact for failing WAF-COST controls — waste, savings opportunities, and financial governance risk',
   runs:        'All recorded WAF++ scan runs',
   diff:        'Finding-level diff between two runs — newly broken controls, fixed controls, score delta per pillar',
   audit:       'Tamper-evident record of every waiver, risk acceptance, and scan event — export for SOC2/ISO27001 evidence collection',
@@ -159,6 +162,7 @@ export default function App() {
     { page: 'remediation',  label: 'Remediation Sprint', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
     { page: 'secrets', label: 'Secret Scanner', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', danger: true, badge: (() => { if (!run) return null; const SECRET_RE = [/hardcod/i, /plaintext/i, /no.hardcoded/i, /secret/i, /credential/i, /password/i, /api[_.\s-]?key/i, /private[_.\s-]?key/i, /access[_.\s-]?key/i, /token/i, /kms/i, /encrypt/i, /rotation/i]; const n = run.findings.filter(f => f.status?.toUpperCase() === 'FAIL' && SECRET_RE.some(re => re.test([f.control_id, f.check_id, f.check_title, f.message].join(' ')))).length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
     { page: 'modules', label: 'Module Scores', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', badge: (() => { if (!run) return null; const paths = new Set(run.findings.map(f => { if (!f.resource?.startsWith('module.')) return '(root)'; const p = f.resource.split('.'); const s: string[] = []; let i = 0; while (i < p.length - 1 && p[i] === 'module') { s.push(`module.${p[i+1]}`); i += 2; } return s.join('.') || '(root)' })); return { label: String(paths.size), variant: 'neutral' as const } })() },
+    { page: 'cost', label: 'Cost Impact', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', badge: (() => { if (!run) return null; const n = run.findings.filter(f => f.pillar?.toLowerCase() === 'cost' && f.status?.toUpperCase() === 'FAIL').length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
   ]
 
   const toolItems: { page: Page; label: string; icon: string; count?: number }[] = [
@@ -485,6 +489,8 @@ export default function App() {
             <SecretScanPage run={run} />
           ) : page === 'modules' ? (
             <ModuleScorePage run={run} />
+          ) : page === 'cost' ? (
+            <CostImpactPage run={run} />
           ) : null}
         </main>
       </div>
