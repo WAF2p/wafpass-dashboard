@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fetchRun, fetchRuns, RunDetail, RunSummary } from './api'
 import RunSelectorModal from './components/RunSelectorModal'
 import PdfReport from './components/PdfReport'
@@ -29,7 +29,31 @@ import AuditLogPage from './pages/AuditLogPage'
 import GapAnalysisPage from './pages/GapAnalysisPage'
 import CostImpactPage from './pages/CostImpactPage'
 
-type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'gapanalysis' | 'regions' | 'exploitpath' | 'blastradius' | 'depgraph' | 'remediation' | 'secrets' | 'modules' | 'cost' | 'runs' | 'diff' | 'audit' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
+const ALL_PAGES = [
+  'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
+  'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
+  'cost', 'runs', 'diff', 'audit', 'settings', 'runscan', 'sandbox',
+  'waivers', 'risk', 'changes', 'feedback',
+] as const
+type Page = typeof ALL_PAGES[number]
+const PAGE_SET = new Set<string>(ALL_PAGES)
+
+// ── Hash routing ──────────────────────────────────────────────────────────────
+
+function parseHash(): { page: Page; runId: string | null } {
+  const raw = window.location.hash.replace(/^#\/?/, '')
+  const qi = raw.indexOf('?')
+  const slug = qi >= 0 ? raw.slice(0, qi) : raw
+  const query = qi >= 0 ? raw.slice(qi + 1) : ''
+  return {
+    page: PAGE_SET.has(slug) ? (slug as Page) : 'dashboard',
+    runId: new URLSearchParams(query).get('run'),
+  }
+}
+
+function buildHash(page: Page, runId: string | null): string {
+  return runId ? `#/${page}?run=${runId}` : `#/${page}`
+}
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
@@ -92,14 +116,58 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [run, setRun] = useState<RunDetail | null>(null)
   const [loadingRun, setLoadingRun] = useState(false)
-  const [page, setPage] = useState<Page>('dashboard')
+  const [page, setPage] = useState<Page>(() => parseHash().page)
   const [runsError, setRunsError] = useState<string | null>(null)
   const [waiverCount, setWaiverCount] = useState(0)
   const [riskCount, setRiskCount] = useState(0)
   const [showRunModal, setShowRunModal] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+  // Capture the runId from the initial URL so the runs-load effect can select it
+  const initialHashRunId = useRef(parseHash().runId)
+  // Track whether initial mount has completed (to avoid pushState on first render)
+  const mounted = useRef(false)
+
+  function navigate(newPage: Page) {
+    setPage(newPage)
+    window.history.pushState(null, '', buildHash(newPage, selectedId))
+  }
+
   function handleSharePdf() {
     window.print()
   }
+
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    }).catch(() => {})
+  }
+
+  // Keep URL in sync: page changes push a history entry, run changes replace
+  useEffect(() => {
+    if (!mounted.current) return
+    window.history.pushState(null, '', buildHash(page, selectedId))
+  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    window.history.replaceState(null, '', buildHash(page, selectedId))
+  }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle browser back/forward
+  useEffect(() => {
+    function onPopState() {
+      const { page: p, runId } = parseHash()
+      setPage(p)
+      if (runId) setSelectedId(runId)
+    }
+    window.addEventListener('popstate', onPopState)
+    mounted.current = true
+    // Initialise URL if landing on bare root
+    if (!window.location.hash || window.location.hash === '#') {
+      window.history.replaceState(null, '', buildHash(page, selectedId))
+    }
+    return () => window.removeEventListener('popstate', onPopState)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const initialMaturity = loadMaturityState()
   const [maturityLevel, setMaturityLevel] = useState(initialMaturity.level)
@@ -115,7 +183,12 @@ export default function App() {
     fetchRuns({ limit: 100 })
       .then(data => {
         setRuns(data)
-        if (data.length > 0) setSelectedId(data[0].id)
+        const hashRun = initialHashRunId.current
+        if (hashRun && data.some(r => r.id === hashRun)) {
+          setSelectedId(hashRun)
+        } else if (data.length > 0) {
+          setSelectedId(data[0].id)
+        }
       })
       .catch((e: Error) => setRunsError(e.message))
   }, [])
@@ -244,7 +317,7 @@ export default function App() {
         <div style={{ padding: '0.625rem 1.25rem', borderBottom: '1px solid var(--sidebar-border)' }}>
           <div style={{ fontSize: '0.62rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem', fontWeight: 600 }}>Maturity</div>
           <button
-            onClick={() => setPage('settings')}
+            onClick={() => navigate('settings')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
               background: `${matMeta.color}18`, border: `1px solid ${matMeta.color}40`,
@@ -263,7 +336,7 @@ export default function App() {
           {navItems.map(item => (
             <button
               key={item.page}
-              onClick={() => setPage(item.page)}
+              onClick={() => navigate(item.page)}
               className={`sidebar-link${page === item.page ? ' active' : ''}`}
               style={item.danger && page !== item.page ? { color: '#f87171' } : undefined}
             >
@@ -287,7 +360,7 @@ export default function App() {
 
           {/* Run History */}
           <button
-            onClick={() => setPage('runs')}
+            onClick={() => navigate('runs')}
             className={`sidebar-link${page === 'runs' ? ' active' : ''}`}
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -303,7 +376,7 @@ export default function App() {
 
           {/* Run Comparison */}
           <button
-            onClick={() => setPage('diff')}
+            onClick={() => navigate('diff')}
             className={`sidebar-link${page === 'diff' ? ' active' : ''}`}
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -321,7 +394,7 @@ export default function App() {
           {toolItems.map(item => (
             <button
               key={item.page}
-              onClick={() => setPage(item.page)}
+              onClick={() => navigate(item.page)}
               className={`sidebar-link${page === item.page ? ' active' : ''}`}
             >
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -340,7 +413,7 @@ export default function App() {
 
           {/* Settings */}
           <button
-            onClick={() => setPage('settings')}
+            onClick={() => navigate('settings')}
             className={`sidebar-link${page === 'settings' ? ' active' : ''}`}
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -351,7 +424,7 @@ export default function App() {
 
           {/* Feedback */}
           <button
-            onClick={() => setPage('feedback')}
+            onClick={() => navigate('feedback')}
             className={`sidebar-link${page === 'feedback' ? ' active' : ''}`}
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -411,6 +484,28 @@ export default function App() {
                 {new Date(run.created_at).toLocaleString()}
               </span>
             )}
+            {/* Copy deep-link button — always visible */}
+            <button
+              onClick={copyLink}
+              title="Copy link to this page"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.35rem',
+                padding: '0.35rem 0.7rem', borderRadius: '8px',
+                background: linkCopied ? 'rgba(34,197,94,.12)' : 'var(--bg)',
+                color: linkCopied ? '#15803d' : 'var(--muted)',
+                border: `1px solid ${linkCopied ? 'rgba(34,197,94,.4)' : 'var(--border)'}`,
+                cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
+                transition: 'all 0.15s',
+              }}
+            >
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {linkCopied
+                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                }
+              </svg>
+              {linkCopied ? 'Copied!' : 'Copy link'}
+            </button>
             {run && page === 'dashboard' && (
               <button
                 onClick={handleSharePdf}
@@ -449,7 +544,7 @@ export default function App() {
           ) : page === 'audit' ? (
             <AuditLogPage />
           ) : page === 'runs' ? (
-            <RunsListPage runs={runs} onSelect={id => { setSelectedId(id); setPage('dashboard') }} />
+            <RunsListPage runs={runs} onSelect={id => { setSelectedId(id); navigate('dashboard') }} />
           ) : page === 'diff' ? (
             <RunDiffPage runs={runs} />
           ) : page === 'catalogue' ? (
@@ -466,7 +561,7 @@ export default function App() {
               }
             </div>
           ) : page === 'dashboard' ? (
-            <DashboardPage run={run} onNav={p => setPage(p as Page)} />
+            <DashboardPage run={run} onNav={p => navigate(p as Page)} />
           ) : page === 'findings' ? (
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
