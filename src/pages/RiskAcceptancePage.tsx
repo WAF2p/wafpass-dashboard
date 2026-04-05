@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { appendAuditEvent } from '../audit'
 
 export interface RiskAcceptance {
   id: string
@@ -78,11 +79,37 @@ export default function RiskAcceptancePage({ controls }: Props) {
   function submit() {
     const id = editId ?? idInput.trim()
     if (!id) return
-    setData(prev => ({ ...prev, [id]: { id, ...form } }))
+    const existing = data[id]
+    const record = { id, ...form }
+    appendAuditEvent({
+      actor: form.approver || form.owner || 'unknown',
+      category: 'risk',
+      action: existing ? 'risk_updated' : 'risk_created',
+      subject_id: id,
+      subject_type: 'risk_acceptance',
+      summary: existing
+        ? `Risk acceptance updated for ${id} — level: ${form.risk_level}, residual: ${form.residual_risk}, approver: ${form.approver}`
+        : `Risk acceptance recorded for ${id} — level: ${form.risk_level}, approver: ${form.approver}, expires: ${form.expires}`,
+      before: existing ?? undefined,
+      after: record,
+    })
+    setData(prev => ({ ...prev, [id]: record }))
     setShowModal(false)
   }
 
   function remove(id: string) {
+    const existing = data[id]
+    if (existing) {
+      appendAuditEvent({
+        actor: existing.approver || existing.owner || 'unknown',
+        category: 'risk',
+        action: 'risk_deleted',
+        subject_id: id,
+        subject_type: 'risk_acceptance',
+        summary: `Risk acceptance removed for ${id} (approver: ${existing.approver}, level: ${existing.risk_level})`,
+        before: existing,
+      })
+    }
     setData(prev => { const d = { ...prev }; delete d[id]; return d })
   }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { appendAuditEvent } from '../audit'
 
 export interface Waiver {
   id: string
@@ -66,11 +67,36 @@ export default function WaiversPage({ controls }: Props) {
   function submit() {
     if (!form.id.trim()) return
     const waiver: Waiver = { id: form.id.trim(), reason: form.reason, owner: form.owner, expires: form.expires }
+    const existing = waivers[waiver.id]
+    appendAuditEvent({
+      actor: waiver.owner || 'unknown',
+      category: 'waiver',
+      action: existing ? 'waiver_updated' : 'waiver_created',
+      subject_id: waiver.id,
+      subject_type: 'waiver',
+      summary: existing
+        ? `Waiver updated for ${waiver.id} by ${waiver.owner} (expires ${waiver.expires})`
+        : `Waiver created for ${waiver.id} by ${waiver.owner} (expires ${waiver.expires})`,
+      before: existing ?? undefined,
+      after: waiver,
+    })
     setWaivers(prev => ({ ...prev, [waiver.id]: waiver }))
     setShowForm(false)
   }
 
   function remove(id: string) {
+    const existing = waivers[id]
+    if (existing) {
+      appendAuditEvent({
+        actor: existing.owner || 'unknown',
+        category: 'waiver',
+        action: 'waiver_deleted',
+        subject_id: id,
+        subject_type: 'waiver',
+        summary: `Waiver removed for ${id} (was owned by ${existing.owner})`,
+        before: existing,
+      })
+    }
     setWaivers(prev => { const w = { ...prev }; delete w[id]; return w })
   }
 

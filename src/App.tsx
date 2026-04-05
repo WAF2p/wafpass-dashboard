@@ -20,11 +20,14 @@ import RemediationSprintPage from './pages/RemediationSprintPage'
 import RunDiffPage from './pages/RunDiffPage'
 import SecretScanPage from './pages/SecretScanPage'
 import ModuleScorePage from './pages/ModuleScorePage'
+import DependencyGraphPage from './pages/DependencyGraphPage'
 import FeedbackPage from './pages/FeedbackPage'
 import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
+import { emitScanReceived, recordFirstSeenFailures } from './audit'
+import AuditLogPage from './pages/AuditLogPage'
 
-type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'blastradius' | 'remediation' | 'secrets' | 'modules' | 'runs' | 'diff' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
+type Page = 'dashboard' | 'catalogue' | 'findings' | 'compliance' | 'regions' | 'exploitpath' | 'blastradius' | 'depgraph' | 'remediation' | 'secrets' | 'modules' | 'runs' | 'diff' | 'audit' | 'settings' | 'runscan' | 'sandbox' | 'waivers' | 'risk' | 'changes' | 'feedback'
 
 const PAGE_TITLE: Record<Page, string> = {
   dashboard:   'Executive Dashboard',
@@ -34,17 +37,19 @@ const PAGE_TITLE: Record<Page, string> = {
   regions:     'Deployed Regions',
   exploitpath:  'Exploit Path Analysis',
   blastradius:  'Blast Radius',
+  depgraph:     'Dependency Graph',
   remediation:  'Remediation Sprint',
   secrets:      'Secret Scanner',
   modules:      'Module Score Breakdown',
   runs:        'Run History',
   diff:        'Run Comparison',
+  audit:       'Audit Log',
   settings:    'Settings',
   runscan:     'Run Scan',
   sandbox:     'Architect Sandbox',
   waivers:     'Waivers Manager',
   risk:        'Risk Acceptance',
-  changes:     'Change Overview',
+  changes:     'Changes & Drift',
   feedback:    'Feedback',
 }
 
@@ -53,15 +58,17 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   catalogue:   'All WAF++ framework controls and your custom controls — browse, filter, author, and export',
   findings:    'Detailed results from the selected run',
   compliance:  'Pillar coverage, pass rates and regulatory framework mapping',
-  changes:     'Terraform plan changes — adds, updates, replacements and destroys from this run',
+  changes:     'Terraform plan changes (adds, updates, replacements, destroys) and compliance drift — controls that regressed or recovered since the previous run',
   regions:     'Detected cloud deployment regions',
   exploitpath:  'Attack chain visualization · internet-facing surfaces are highest criticality',
   blastradius:  'Interactive dependency graph of all failing resources and their structural propagation paths',
+  depgraph:     'Full resource dependency graph — all resources colored by compliance status, with connected-subgraph highlighting',
   remediation:  'Prioritised fix queue — select controls to form a sprint and see your projected score gain, resources fixed, and regulatory gaps closed',
   secrets:      'Hardcoded credential issues detected in IaC — passwords, API keys, tokens, and private keys that must be migrated to a secrets manager',
   modules:      'Per-module pass rate and score drag — identify which Terraform module is pulling the overall score down',
   runs:        'All recorded WAF++ scan runs',
   diff:        'Finding-level diff between two runs — newly broken controls, fixed controls, score delta per pillar',
+  audit:       'Tamper-evident record of every waiver, risk acceptance, and scan event — export for SOC2/ISO27001 evidence collection',
   settings:    'Configure scan defaults, maturity level, and feature toggles',
   runscan:     'Trigger a WAF++ scan from the UI or generate a CLI command',
   sandbox:     'Evaluate Terraform HCL snippets against WAF++ controls instantly',
@@ -112,7 +119,11 @@ export default function App() {
     setLoadingRun(true)
     setRun(null)
     fetchRun(selectedId)
-      .then(setRun)
+      .then(r => {
+        setRun(r)
+        emitScanReceived(r)
+        recordFirstSeenFailures(r.findings, r)
+      })
       .catch(() => setRun(null))
       .finally(() => setLoadingRun(false))
   }, [selectedId])
@@ -136,10 +147,11 @@ export default function App() {
     { page: 'catalogue',   label: 'Controls Catalogue', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', badge: { label: run ? String(run.controls_meta.length || run.controls_loaded || 0) : '73+', variant: 'neutral' } },
     { page: 'findings',    label: 'Findings',          icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', badge: failCount > 0 ? { label: String(failCount), variant: 'fail' } : null },
     { page: 'compliance',  label: 'Compliance Matrix', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { page: 'changes',     label: 'Change Overview',   icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', badge: run?.plan_changes ? { label: String((run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0) + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0)), variant: 'neutral' as const } : null },
+    { page: 'changes',     label: 'Changes & Drift',   icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', badge: (() => { if (!run?.plan_changes) return null; const total = (run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0) + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0); if (total === 0) return null; const hasSec = run.plan_changes.changes.some(c => { const b = (c.before ?? {}) as Record<string, unknown>; const a = (c.after ?? {}) as Record<string, unknown>; return ['policy','assume_role_policy','ingress','egress','cidr_blocks','encryption_configuration','kms_key_id','kms_key_arn','acl'].some(k => JSON.stringify(b[k] ?? null) !== JSON.stringify(a[k] ?? null)) }); return { label: String(total), variant: (hasSec ? 'fail' : 'neutral') as 'fail' | 'neutral' } })() },
     { page: 'regions',     label: 'Deployed Regions',  icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { page: 'exploitpath',  label: 'Exploit Paths',     icon: 'M13 10V3L4 14h7v7l9-11h-7z', danger: true },
     { page: 'blastradius',  label: 'Blast Radius',      icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z', badge: run ? { label: String(new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.resource).filter(Boolean)).size), variant: 'fail' as const } : null },
+    { page: 'depgraph',    label: 'Dependency Graph',  icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7', badge: run ? { label: String(new Set(run.findings.map(f => f.resource).filter(Boolean)).size), variant: 'neutral' as const } : null },
     { page: 'remediation',  label: 'Remediation Sprint', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
     { page: 'secrets', label: 'Secret Scanner', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', danger: true, badge: (() => { if (!run) return null; const SECRET_RE = [/hardcod/i, /plaintext/i, /no.hardcoded/i, /secret/i, /credential/i, /password/i, /api[_.\s-]?key/i, /private[_.\s-]?key/i, /access[_.\s-]?key/i, /token/i, /kms/i, /encrypt/i, /rotation/i]; const n = run.findings.filter(f => f.status?.toUpperCase() === 'FAIL' && SECRET_RE.some(re => re.test([f.control_id, f.check_id, f.check_title, f.message].join(' ')))).length; return n > 0 ? { label: String(n), variant: 'fail' as const } : null })() },
     { page: 'modules', label: 'Module Scores', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', badge: (() => { if (!run) return null; const paths = new Set(run.findings.map(f => { if (!f.resource?.startsWith('module.')) return '(root)'; const p = f.resource.split('.'); const s: string[] = []; let i = 0; while (i < p.length - 1 && p[i] === 'module') { s.push(`module.${p[i+1]}`); i += 2; } return s.join('.') || '(root)' })); return { label: String(paths.size), variant: 'neutral' as const } })() },
@@ -150,6 +162,7 @@ export default function App() {
     { page: 'sandbox', label: 'Sandbox',         icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
     { page: 'waivers', label: 'Waivers',         icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', count: waiverCount },
     { page: 'risk',    label: 'Risk Acceptance', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', count: riskCount },
+    { page: 'audit',   label: 'Audit Log',       icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
   ]
 
   return (
@@ -383,7 +396,7 @@ export default function App() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {run && page !== 'runs' && page !== 'diff' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'feedback' && (
+            {run && page !== 'runs' && page !== 'diff' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'audit' && page !== 'feedback' && (
               <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                 {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
                 {run.branch && <>{run.branch} · </>}
@@ -425,6 +438,8 @@ export default function App() {
             <WaiversPage controls={availableControls} />
           ) : page === 'risk' ? (
             <RiskAcceptancePage controls={availableControls} />
+          ) : page === 'audit' ? (
+            <AuditLogPage />
           ) : page === 'runs' ? (
             <RunsListPage runs={runs} onSelect={id => { setSelectedId(id); setPage('dashboard') }} />
           ) : page === 'diff' ? (
@@ -449,13 +464,15 @@ export default function App() {
           ) : page === 'compliance' ? (
             <CompliancePage run={run} />
           ) : page === 'changes' ? (
-            <ChangesPage run={run} />
+            <ChangesPage run={run} runs={runs} />
           ) : page === 'regions' ? (
             <RegionsPage run={run} />
           ) : page === 'exploitpath' ? (
             <ExploitPathsPage run={run} />
           ) : page === 'blastradius' ? (
             <BlastRadiusPage run={run} />
+          ) : page === 'depgraph' ? (
+            <DependencyGraphPage run={run} />
           ) : page === 'remediation' ? (
             <RemediationSprintPage run={run} />
           ) : page === 'secrets' ? (
