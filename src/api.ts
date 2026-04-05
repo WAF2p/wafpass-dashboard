@@ -282,6 +282,58 @@ export async function deleteRisk(id: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete risk: ${res.status}`)
 }
 
+// ── Sandbox (real engine) ─────────────────────────────────────────────────────
+
+export interface SandboxCheckResult {
+  check_id: string
+  check_title: string
+  control_id: string
+  severity: string
+  status: string
+  resource: string
+  message: string
+  remediation: string
+}
+
+export interface SandboxControlResult {
+  control_id: string
+  control_title: string
+  pillar: string
+  severity: string
+  status: string
+  check_results: SandboxCheckResult[]
+}
+
+export interface SandboxResponse {
+  engine: string
+  controls_dir: string
+  controls_loaded: number
+  score: number
+  total_pass: number
+  total_fail: number
+  total_skip: number
+  results: SandboxControlResult[]
+}
+
+export async function sandboxScan(hcl: string, iac = 'terraform'): Promise<SandboxResponse> {
+  const res = await fetch(`${getApiBase()}/sandbox`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hcl, iac }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<SandboxResponse>
+}
+
+export async function sandboxStatus(): Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }> {
+  const res = await fetch(`${getApiBase()}/sandbox/status`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }>
+}
+
 export async function createCatalogueControl(payload: Omit<CatalogueControl, 'created_at' | 'updated_at'> & { source?: string }): Promise<CatalogueControl> {
   const res = await fetch(`${getApiBase()}/controls`, {
     method: 'POST',

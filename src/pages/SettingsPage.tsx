@@ -392,66 +392,6 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
 
-      {/* ── Connection ────────────────────────────────────────────────────── */}
-      <div className="card">
-        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-          Connection
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '520px' }}>
-          <div>
-            <label style={labelStyle}>Backend Server URL</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                value={serverUrl}
-                onChange={e => { setServerUrl(e.target.value); setServerStatus('idle') }}
-                onBlur={e => { saveServerUrl(e.target.value); checkConnection(e.target.value) }}
-                placeholder="http://localhost:8000"
-                style={{
-                  flex: 1, background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
-                  borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem', outline: 'none',
-                }}
-              />
-              <button
-                onClick={() => { saveServerUrl(serverUrl); checkConnection(serverUrl) }}
-                style={{
-                  background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
-                  borderRadius: '8px', padding: '0.4rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap',
-                }}
-              >
-                Test
-              </button>
-            </div>
-            <div style={{ marginTop: '0.3rem', fontSize: '0.71rem', color: 'var(--muted)' }}>
-              Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
-            </div>
-          </div>
-
-          {/* Status indicator */}
-          {serverStatus !== 'idle' && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.45rem 0.75rem', borderRadius: '8px', fontSize: '0.78rem',
-              background: serverStatus === 'ok' ? 'rgba(34,197,94,.08)' : serverStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'rgba(218,44,56,.08)',
-              border: `1px solid ${serverStatus === 'ok' ? 'rgba(34,197,94,.3)' : serverStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'rgba(218,44,56,.3)'}`,
-              color: serverStatus === 'ok' ? '#15803d' : serverStatus === 'checking' ? '#0369a1' : '#DA2C38',
-            }}>
-              <span style={{ fontSize: '0.6rem' }}>
-                {serverStatus === 'ok' ? '●' : serverStatus === 'checking' ? '○' : '✕'}
-              </span>
-              {serverStatus === 'checking' ? 'Checking…' : serverStatusMsg}
-            </div>
-          )}
-
-          {/* Active base URL display */}
-          <div style={{ fontSize: '0.71rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
-            Active base URL:{' '}
-            <strong style={{ color: 'var(--text)' }}>
-              {serverUrl.trim() || '(same origin)'}
-            </strong>
-          </div>
-        </div>
-      </div>
-
       {/* ── Maturity Level ─────────────────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
@@ -758,6 +698,121 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           Reset to L{level} preset
         </button>
         {saved && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 600 }}>Saved!</span>}
+      </div>
+
+      {/* ── Connection & Real Engine ───────────────────────────────────────── */}
+      <div className="card">
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
+          Connection & Real Engine
+        </h2>
+        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1.25rem', lineHeight: 1.55 }}>
+          Configure the backend server URL and enable the real WAF++ engine in the Architect Sandbox.
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+
+          {/* Left: server URL */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border)' }}>
+              Backend Server URL
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  value={serverUrl}
+                  onChange={e => { setServerUrl(e.target.value); setServerStatus('idle') }}
+                  onBlur={e => { saveServerUrl(e.target.value); checkConnection(e.target.value) }}
+                  placeholder="http://localhost:8000"
+                  style={{
+                    flex: 1, background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+                    borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem', outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={() => { saveServerUrl(serverUrl); checkConnection(serverUrl) }}
+                  style={{
+                    background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
+                    borderRadius: '8px', padding: '0.4rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >
+                  Test
+                </button>
+              </div>
+              <div style={{ marginTop: '0.3rem', fontSize: '0.71rem', color: 'var(--muted)' }}>
+                Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
+              </div>
+            </div>
+
+            {serverStatus !== 'idle' && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.45rem 0.75rem', borderRadius: '8px', fontSize: '0.78rem',
+                background: serverStatus === 'ok' ? 'rgba(34,197,94,.08)' : serverStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'rgba(218,44,56,.08)',
+                border: `1px solid ${serverStatus === 'ok' ? 'rgba(34,197,94,.3)' : serverStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'rgba(218,44,56,.3)'}`,
+                color: serverStatus === 'ok' ? '#15803d' : serverStatus === 'checking' ? '#0369a1' : '#DA2C38',
+              }}>
+                <span style={{ fontSize: '0.6rem' }}>
+                  {serverStatus === 'ok' ? '●' : serverStatus === 'checking' ? '○' : '✕'}
+                </span>
+                {serverStatus === 'checking' ? 'Checking…' : serverStatusMsg}
+              </div>
+            )}
+
+            <div style={{ fontSize: '0.71rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
+              Active:{' '}
+              <strong style={{ color: 'var(--text)' }}>
+                {serverUrl.trim() || '(same origin)'}
+              </strong>
+            </div>
+          </div>
+
+          {/* Right: real engine guide */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border)' }}>
+              Architect Sandbox — Real Engine
+            </div>
+
+            <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.6 }}>
+              The Sandbox can run the full WAF++ engine server-side instead of the browser-side regex mock.
+              The real engine evaluates all 70+ controls and returns exact check-level findings.
+            </div>
+
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--text)' }}>Requirements:</strong>
+              <ul style={{ margin: '0.35rem 0 0 1rem', padding: 0 }}>
+                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>wafpass-core</code> installed on the server</li>
+                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>WAFPASS_CONTROLS_DIR</code> pointing to control YAML files</li>
+              </ul>
+            </div>
+
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Docker Compose (bundled controls)</strong>
+              Controls are copied into the image automatically — no extra config needed:
+            </div>
+            <pre style={{
+              background: '#0f172a', color: '#e2e8f0', borderRadius: '6px',
+              padding: '0.6rem 0.75rem', fontSize: '0.72rem', lineHeight: 1.6, margin: 0, overflowX: 'auto',
+            }}>
+              {`docker compose up --build`}
+            </pre>
+
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>Custom controls or bare server</strong>
+              Override with your own controls directory:
+            </div>
+            <pre style={{
+              background: '#0f172a', color: '#e2e8f0', borderRadius: '6px',
+              padding: '0.6rem 0.75rem', fontSize: '0.72rem', lineHeight: 1.6, margin: 0, overflowX: 'auto',
+            }}>
+              {`# In docker-compose.yml — wafpass-server environment:\nWAFPASS_CONTROLS_DIR: /app/controls\n\n# Or mount a local directory:\nvolumes:\n  - ./my-controls:/app/controls:ro`}
+            </pre>
+
+            <div style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>
+              Status probe: <code style={{ color: 'var(--text)', fontSize: '0.71rem' }}>{(serverUrl.trim() || '') + '/sandbox/status'}</code>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
