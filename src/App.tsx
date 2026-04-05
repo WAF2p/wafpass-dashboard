@@ -28,11 +28,12 @@ import { emitScanReceived, recordFirstSeenFailures } from './audit'
 import AuditLogPage from './pages/AuditLogPage'
 import GapAnalysisPage from './pages/GapAnalysisPage'
 import CostImpactPage from './pages/CostImpactPage'
+import EvidencePage from './pages/EvidencePage'
 
 const ALL_PAGES = [
   'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
-  'cost', 'runs', 'diff', 'audit', 'settings', 'runscan', 'sandbox',
+  'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback',
 ] as const
 type Page = typeof ALL_PAGES[number]
@@ -72,6 +73,7 @@ const PAGE_TITLE: Record<Page, string> = {
   runs:        'Run History',
   diff:        'Run Comparison',
   audit:       'Audit Log',
+  evidence:    'Evidence Package',
   settings:    'Settings',
   runscan:     'Run Scan',
   sandbox:     'Architect Sandbox',
@@ -99,6 +101,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   runs:        'All recorded WAF++ scan runs',
   diff:        'Finding-level diff between two runs — newly broken controls, fixed controls, score delta per pillar',
   audit:       'Tamper-evident record of every waiver, risk acceptance, and scan event — export for SOC2/ISO27001 evidence collection',
+  evidence:    'Generate a timestamped, auditor-ready evidence package — passing controls, waivers, risk acceptances, and audit trail',
   settings:    'Configure scan defaults, maturity level, and feature toggles',
   runscan:     'Trigger a WAF++ scan from the UI or generate a CLI command',
   sandbox:     'Evaluate Terraform HCL snippets against WAF++ controls instantly',
@@ -244,6 +247,7 @@ export default function App() {
     { page: 'waivers', label: 'Waivers',         icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', count: waiverCount },
     { page: 'risk',    label: 'Risk Acceptance', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', count: riskCount },
     { page: 'audit',   label: 'Audit Log',       icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+    { page: 'evidence', label: 'Evidence Package', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
   ]
 
   return (
@@ -477,7 +481,7 @@ export default function App() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {run && page !== 'runs' && page !== 'diff' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'audit' && page !== 'feedback' && (
+            {run && page !== 'runs' && page !== 'diff' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'audit' && page !== 'evidence' && page !== 'feedback' && (
               <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                 {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
                 {run.branch && <>{run.branch} · </>}
@@ -543,6 +547,8 @@ export default function App() {
             <RiskAcceptancePage controls={availableControls} />
           ) : page === 'audit' ? (
             <AuditLogPage />
+          ) : page === 'evidence' ? (
+            <EvidencePage run={run} />
           ) : page === 'runs' ? (
             <RunsListPage runs={runs} onSelect={id => { setSelectedId(id); navigate('dashboard') }} />
           ) : page === 'diff' ? (
