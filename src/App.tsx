@@ -553,12 +553,38 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
               <div className="spinner" />
             </div>
+          ) : !run && runs.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* First-run welcome banner */}
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: '1.25rem',
+                padding: '1.25rem 1.5rem', borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(0,148,255,.08) 0%, rgba(124,58,237,.06) 100%)',
+                border: '1px solid rgba(0,148,255,.25)',
+              }}>
+                <div style={{
+                  flexShrink: 0, width: '40px', height: '40px', borderRadius: '10px',
+                  background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width="20" height="20" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.3rem' }}>
+                    Welcome to WAF++ PASS
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+                    No scan results yet. Run your first <code style={{ color: 'var(--waf-brand)', background: 'rgba(0,148,255,.08)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.78rem' }}>wafpass check</code> and push the results here to see your compliance dashboard — follow the guide below to get started in under 2 minutes.
+                  </div>
+                </div>
+              </div>
+              <RunScanPage />
+            </div>
           ) : !run ? (
             <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem' }}>
-              {runs.length === 0
-                ? <>No runs yet. Run <code>wafpass check --push http://localhost:8000</code> to get started.</>
-                : 'Select a run to view results.'
-              }
+              Select a run to view results.
             </div>
           ) : page === 'dashboard' ? (
             <DashboardPage run={run} onNav={p => navigate(p as Page)} />
