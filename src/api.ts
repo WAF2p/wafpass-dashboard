@@ -75,11 +75,22 @@ export interface PlanChanges {
   changes: PlanChange[]
 }
 
+export interface SecretFinding {
+  file: string        // relative path to the source file
+  line_no: number     // 1-based line number
+  pattern_name: string // e.g. "Hardcoded password", "AWS access key ID"
+  severity: string    // critical | high
+  matched_key: string // attribute name, e.g. "password" (empty for format patterns)
+  masked_value: string // first 4 chars + *** — raw value is never stored
+  suppressed: boolean
+}
+
 export interface RunDetail extends RunSummary {
   findings: Finding[]
   detected_regions: string[][]
   source_paths: string[]
   controls_meta: ControlMeta[]
+  secret_findings: SecretFinding[]
   plan_changes: PlanChanges | null
 }
 
