@@ -1,89 +1,62 @@
 /**
- * BlastRadiusPage — interactive dependency graph of all failing resources.
+ * BlastRadiusPage — progressive-disclosure view of failing resources.
  *
- * Nodes are every resource address that has at least one FAIL finding.
- * Edges are inferred from Terraform naming conventions:
- *   if resourceB.type starts with resourceA.type + "_" and they share the same
- *   instance name, B is structurally dependent on A
- *   (e.g. aws_s3_bucket.x → aws_s3_bucket_versioning.x).
- *
- * Layout: force-directed simulation seeded by concentric severity rings.
- * Runs synchronously in useMemo — ~5 ms for 70 nodes.
+ * Resources are listed as compact cards sorted by severity.
+ * Clicking a card expands it to reveal:
+ *  - Failing controls with severity + description
+ *  - A mini radial dependency graph showing immediate connections
+ *  - Clickable connection chips that jump to related resources
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { RunDetail, Finding } from '../api'
 
 interface Props { run: RunDetail }
 
-// ── Severity constants ───────────────────────────────────────────────────────
 const SEV_COLOR: Record<string, string> = {
   CRITICAL: '#DA2C38', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e',
 }
 const SEV_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
 
-// ── Resource type short labels ───────────────────────────────────────────────
-const ABBR: Record<string, string> = {
-  aws_s3_bucket: 'S3',
-  aws_s3_bucket_versioning: 'S3V',
-  aws_s3_bucket_lifecycle_configuration: 'S3LC',
-  aws_s3_bucket_server_side_encryption_configuration: 'SSE',
-  aws_s3_bucket_public_access_block: 'S3P',
-  aws_s3_bucket_acl: 'ACL',
-  aws_s3_bucket_policy: 'S3Pol',
-  aws_kms_key: 'KMS',
-  aws_kms_alias: 'KMSa',
-  aws_instance: 'EC2',
-  aws_launch_template: 'LT',
-  aws_lambda_function: 'λ',
-  aws_db_instance: 'RDS',
-  aws_dynamodb_table: 'DDB',
-  aws_eks_cluster: 'EKS',
-  aws_eks_node_group: 'ENG',
-  aws_cloudwatch_log_group: 'CWL',
-  aws_cloudwatch_metric_alarm: 'CWA',
-  aws_cloudwatch_log_metric_filter: 'CWF',
-  aws_security_group: 'SG',
-  aws_iam_account_password_policy: 'IAM',
-  aws_iam_role: 'IAMr',
-  aws_iam_policy: 'IAMp',
-  aws_secretsmanager_secret: 'SM',
-  aws_cloudtrail: 'CT',
-  aws_kinesis_stream: 'KNS',
-  aws_flow_log: 'VFL',
-  aws_vpc_endpoint: 'VPCe',
-  aws_elasticache_cluster: 'Elc',
-  azurerm_resource_group: 'RG',
-  google_storage_bucket: 'GCS',
-  google_compute_instance: 'GCE',
-  provider: 'PROV',
-  terraform: 'TF',
+const TYPE_LABEL: Record<string, string> = {
+  aws_s3_bucket: 'S3 Bucket', aws_s3_bucket_versioning: 'S3 Versioning',
+  aws_s3_bucket_server_side_encryption_configuration: 'S3 Encryption',
+  aws_s3_bucket_public_access_block: 'S3 Public Access',
+  aws_s3_bucket_lifecycle_configuration: 'S3 Lifecycle',
+  aws_s3_bucket_acl: 'S3 ACL', aws_s3_bucket_policy: 'S3 Bucket Policy',
+  aws_kms_key: 'KMS Key', aws_kms_alias: 'KMS Alias',
+  aws_instance: 'EC2 Instance', aws_launch_template: 'Launch Template',
+  aws_lambda_function: 'Lambda Function', aws_db_instance: 'RDS Instance',
+  aws_dynamodb_table: 'DynamoDB Table', aws_eks_cluster: 'EKS Cluster',
+  aws_eks_node_group: 'EKS Node Group', aws_cloudwatch_log_group: 'CloudWatch Log Group',
+  aws_cloudwatch_metric_alarm: 'CloudWatch Alarm',
+  aws_cloudwatch_log_metric_filter: 'CloudWatch Metric Filter',
+  aws_security_group: 'Security Group', aws_iam_account_password_policy: 'IAM Password Policy',
+  aws_iam_role: 'IAM Role', aws_iam_policy: 'IAM Policy',
+  aws_secretsmanager_secret: 'Secrets Manager Secret', aws_cloudtrail: 'CloudTrail',
+  aws_kinesis_stream: 'Kinesis Stream', aws_flow_log: 'VPC Flow Log',
+  aws_vpc_endpoint: 'VPC Endpoint', aws_elasticache_cluster: 'ElastiCache',
+  azurerm_resource_group: 'Resource Group', azurerm_storage_account: 'Storage Account',
+  azurerm_key_vault: 'Key Vault', azurerm_virtual_machine: 'Virtual Machine',
+  google_storage_bucket: 'GCS Bucket', google_compute_instance: 'Compute Instance',
+  google_sql_database_instance: 'Cloud SQL', provider: 'Provider', terraform: 'Terraform Block',
 }
 
-function getAbbr(rtype: string): string {
-  if (ABBR[rtype]) return ABBR[rtype]
+function humanType(rtype: string): string {
+  if (TYPE_LABEL[rtype]) return TYPE_LABEL[rtype]
   const noProvider = rtype.replace(/^(aws|azurerm|google|oci|yandex|alicloud)_/, '')
-  const parts = noProvider.split('_').filter(Boolean)
-  if (parts.length === 0) return rtype.slice(0, 3).toUpperCase()
-  if (parts.length === 1) return parts[0].slice(0, 4).toUpperCase()
-  return parts.map(p => p[0].toUpperCase()).join('').slice(0, 4)
+  return noProvider.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
-// ── Graph types ──────────────────────────────────────────────────────────────
+function trunc(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max - 1) + '…' : s
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface GNode {
-  id: string
-  rtype: string
-  name: string
-  abbr: string
-  provider: string
-  severity: string
-  failCount: number
-  controlIds: string[]
-  pillar: string
-  findings: Finding[]
-  x: number
-  y: number
-  r: number
+  id: string; rtype: string; rtypeLabel: string; name: string
+  provider: string; severity: string; failCount: number
+  controlIds: string[]; pillar: string; findings: Finding[]
 }
 interface GEdge { src: string; tgt: string }
 
@@ -103,151 +76,140 @@ function inferEdges(nodes: GNode[]): GEdge[] {
   return edges
 }
 
-// ── Force layout ──────────────────────────────────────────────────────────────
-function applyForceLayout(nodes: GNode[], edges: GEdge[], W: number, H: number): void {
-  if (nodes.length === 0) return
-
-  // Seed: concentric severity rings
-  const rings: Record<string, number> = { CRITICAL: 60, HIGH: 145, MEDIUM: 235, LOW: 315 }
-  const sevIdx: Record<string, number> = {}
-  const sevCnt: Record<string, number> = {}
-  for (const n of nodes) sevCnt[n.severity] = (sevCnt[n.severity] ?? 0) + 1
-  for (const sev in sevCnt) sevIdx[sev] = 0
-
-  for (const n of nodes) {
-    const ring = rings[n.severity] ?? 315
-    const count = sevCnt[n.severity] || 1
-    const idx = sevIdx[n.severity]++
-    const angle = (idx / count) * 2 * Math.PI - Math.PI / 2
-    n.x = W / 2 + ring * Math.cos(angle)
-    n.y = H / 2 + ring * Math.sin(angle)
-  }
-
-  const nodeIdx = new Map(nodes.map((n, i) => [n.id, i]))
-  const vx = new Array(nodes.length).fill(0)
-  const vy = new Array(nodes.length).fill(0)
-
-  for (let iter = 0; iter < 280; iter++) {
-    const cool = 1 - iter / 280
-
-    // Repulsion between every pair
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const dx = nodes[j].x - nodes[i].x
-        const dy = nodes[j].y - nodes[i].y
-        const d = Math.sqrt(dx * dx + dy * dy) || 0.01
-        const minD = nodes[i].r + nodes[j].r + 14
-        if (d < minD) {
-          const f = (minD - d) / d * 0.55
-          vx[i] -= f * dx; vy[i] -= f * dy
-          vx[j] += f * dx; vy[j] += f * dy
-        } else {
-          const f = 2200 / (d * d) * cool
-          vx[i] -= f * dx / d; vy[i] -= f * dy / d
-          vx[j] += f * dx / d; vy[j] += f * dy / d
-        }
-      }
-    }
-
-    // Spring along inferred edges
-    for (const e of edges) {
-      const ai = nodeIdx.get(e.src) ?? -1
-      const bi = nodeIdx.get(e.tgt) ?? -1
-      if (ai < 0 || bi < 0) continue
-      const dx = nodes[bi].x - nodes[ai].x
-      const dy = nodes[bi].y - nodes[ai].y
-      const d = Math.sqrt(dx * dx + dy * dy) || 0.01
-      const ideal = nodes[ai].r + nodes[bi].r + 28
-      const f = (d - ideal) * 0.045
-      vx[ai] += f * dx / d; vy[ai] += f * dy / d
-      vx[bi] -= f * dx / d; vy[bi] -= f * dy / d
-    }
-
-    // Integrate + damp + clamp
-    for (let i = 0; i < nodes.length; i++) {
-      nodes[i].x = Math.max(nodes[i].r + 10, Math.min(W - nodes[i].r - 10, nodes[i].x + vx[i]))
-      nodes[i].y = Math.max(nodes[i].r + 14, Math.min(H - nodes[i].r - 14, nodes[i].y + vy[i]))
-      vx[i] *= 0.78; vy[i] *= 0.78
-    }
-  }
-}
-
-// ── Graph computation ─────────────────────────────────────────────────────────
-const SVG_W = 980
-const SVG_H = 560
-
-function computeGraph(findings: Finding[]): { nodes: GNode[]; edges: GEdge[] } {
+// ── Compute nodes (no force layout needed) ────────────────────────────────────
+function computeNodes(findings: Finding[]): GNode[] {
   const byRes = new Map<string, Finding[]>()
   for (const f of findings) {
     if (!f.resource || f.status?.toUpperCase() !== 'FAIL') continue
     const arr = byRes.get(f.resource) ?? []; arr.push(f); byRes.set(f.resource, arr)
   }
-
   const nodes: GNode[] = []
   for (const [addr, ff] of byRes) {
     const dot = addr.indexOf('.')
     const rtype = dot > 0 ? addr.slice(0, dot) : addr
     const name  = dot > 0 ? addr.slice(dot + 1) : ''
-
     const provider =
-      rtype === 'provider'   ? name.split('.')[0] :
-      rtype === 'terraform'  ? 'terraform' :
-      rtype.startsWith('azurerm_')  ? 'azure' :
-      rtype.startsWith('google_')   ? 'gcp' :
-      rtype.startsWith('oci_')      ? 'oci' :
-      rtype.startsWith('alicloud_') ? 'alicloud' :
-      rtype.startsWith('yandex_')   ? 'yandex' :
-                                      'aws'
-
+      rtype === 'provider' ? name.split('.')[0] : rtype === 'terraform' ? 'terraform' :
+      rtype.startsWith('azurerm_') ? 'azure' : rtype.startsWith('google_') ? 'gcp' :
+      rtype.startsWith('oci_') ? 'oci' : 'aws'
     const sevs = ff.map(f => f.severity?.toUpperCase()).filter(Boolean)
     const severity = sevs.sort((a, b) => (SEV_RANK[b] ?? 0) - (SEV_RANK[a] ?? 0))[0] ?? 'LOW'
     const controlIds = [...new Set(ff.map(f => f.control_id).filter(Boolean))]
-
     const pillarCnt: Record<string, number> = {}
     for (const f of ff) if (f.pillar) pillarCnt[f.pillar] = (pillarCnt[f.pillar] ?? 0) + 1
     const pillar = Object.entries(pillarCnt).sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
-
-    const r = Math.max(18, Math.min(36, 14 + controlIds.length * 2.4))
-
-    nodes.push({ id: addr, rtype, name, abbr: getAbbr(rtype), provider, severity, failCount: controlIds.length, controlIds, pillar, findings: ff, x: 0, y: 0, r })
+    nodes.push({ id: addr, rtype, rtypeLabel: humanType(rtype), name, provider, severity, failCount: controlIds.length, controlIds, pillar, findings: ff })
   }
+  return nodes
+}
 
-  const edges = inferEdges(nodes)
-  applyForceLayout(nodes, edges, SVG_W, SVG_H)
-  return { nodes, edges }
+// ── Mini radial dependency graph ──────────────────────────────────────────────
+interface MiniNode extends GNode { x: number; y: number; dir: 'up' | 'down' }
+
+function MiniGraph({ center, upstream, downstream, onNavigate }: {
+  center: GNode
+  upstream: GNode[]
+  downstream: GNode[]
+  onNavigate: (id: string) => void
+}) {
+  const W = 320, H = 220, CX = 160, CY = 110, R = 80
+  const col = SEV_COLOR[center.severity] ?? '#64748b'
+
+  const all: MiniNode[] = [
+    ...upstream.slice(0, 4).map(n => ({ ...n, dir: 'up' as const, x: 0, y: 0 })),
+    ...downstream.slice(0, 4).map(n => ({ ...n, dir: 'down' as const, x: 0, y: 0 })),
+  ]
+  all.forEach((n, i) => {
+    const angle = (i / Math.max(all.length, 1)) * 2 * Math.PI - Math.PI / 2
+    n.x = CX + R * Math.cos(angle)
+    n.y = CY + R * Math.sin(angle)
+  })
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      <defs>
+        <marker id="mini-arr" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+          <polygon points="0 0, 6 2.5, 0 5" fill="#94a3b8" opacity="0.8" />
+        </marker>
+      </defs>
+
+      {/* Edges */}
+      {all.map((n, i) => {
+        const dx = n.x - CX, dy = n.y - CY
+        const len = Math.sqrt(dx * dx + dy * dy) || 1
+        const ux = dx / len, uy = dy / len
+        // upstream: arrow from neighbor → center; downstream: center → neighbor
+        const [x1, y1, x2, y2] = n.dir === 'up'
+          ? [n.x - ux * 20, n.y - uy * 20, CX + ux * 27, CY + uy * 27]
+          : [CX + ux * 27, CY + uy * 27, n.x - ux * 20, n.y - uy * 20]
+        return (
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke="#94a3b8" strokeWidth="1.4" strokeOpacity="0.55"
+            strokeDasharray={n.dir === 'up' ? '4 2' : undefined}
+            markerEnd="url(#mini-arr)" />
+        )
+      })}
+
+      {/* Center node */}
+      <circle cx={CX} cy={CY} r={27} fill={`${col}18`} stroke={col} strokeWidth="2.2" />
+      <text x={CX} y={CY - 5} textAnchor="middle" fontSize="9" fontWeight="700" fill={col}
+        style={{ userSelect: 'none' }}>
+        {trunc(center.rtypeLabel.split(' ').slice(0, 2).join(' '), 14)}
+      </text>
+      <text x={CX} y={CY + 9} textAnchor="middle" fontSize="8" fill={col}
+        style={{ userSelect: 'none', fontFamily: 'ui-monospace, monospace' }}>
+        {trunc(center.name, 14)}
+      </text>
+
+      {/* Neighbor nodes */}
+      {all.map((n, i) => {
+        const nc = SEV_COLOR[n.severity] ?? '#64748b'
+        return (
+          <g key={`nb${i}`} style={{ cursor: 'pointer' }} onClick={() => onNavigate(n.id)}>
+            <circle cx={n.x} cy={n.y} r={20} fill={`${nc}18`} stroke={nc} strokeWidth="1.5" />
+            <text x={n.x} y={n.y - 3} textAnchor="middle" fontSize="7.5" fontWeight="600" fill={nc}
+              style={{ userSelect: 'none', pointerEvents: 'none' }}>
+              {trunc(humanType(n.rtype).split(' ')[0], 9)}
+            </text>
+            <text x={n.x} y={n.y + 9} textAnchor="middle" fontSize="6.5" fill="#94a3b8"
+              style={{ userSelect: 'none', pointerEvents: 'none' }}>
+              {trunc(n.name, 10)}
+            </text>
+            <title>{n.id}{'\n'}Click to navigate</title>
+          </g>
+        )
+      })}
+
+      {/* Legend */}
+      <text x={8} y={H - 8} fontSize="7.5" fill="#94a3b8" style={{ userSelect: 'none' }}>
+        — — depends on  ——→ used by
+      </text>
+    </svg>
+  )
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function BlastRadiusPage({ run }: Props) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [search, setSearch]         = useState('')
   const [sevFilter, setSevFilter]   = useState('')
-  const [pillarFilter, setPillarFilter] = useState('')
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const failFindings = useMemo(
     () => run.findings.filter(f => f.status?.toUpperCase() === 'FAIL'),
     [run.findings]
   )
 
-  const allPillars = useMemo(
-    () => [...new Set(failFindings.map(f => f.pillar).filter(Boolean))].sort(),
-    [failFindings]
-  )
-
-  const { nodes: allNodes, edges } = useMemo(() => computeGraph(failFindings), [failFindings])
+  const allNodes = useMemo(() => computeNodes(failFindings), [failFindings])
+  const edges    = useMemo(() => inferEdges(allNodes), [allNodes])
+  const nodeMap  = useMemo(() => new Map(allNodes.map(n => [n.id, n])), [allNodes])
 
   const nodes = useMemo(() => {
     let n = allNodes
-    if (sevFilter)    n = n.filter(x => x.severity === sevFilter)
-    if (pillarFilter) n = n.filter(x => x.pillar === pillarFilter)
+    if (sevFilter) n = n.filter(x => x.severity === sevFilter)
     if (search) { const q = search.toLowerCase(); n = n.filter(x => x.id.toLowerCase().includes(q)) }
-    return n
-  }, [allNodes, sevFilter, pillarFilter, search])
-
-  const visibleIds = useMemo(() => new Set(nodes.map(n => n.id)), [nodes])
-  const visEdges   = useMemo(() => edges.filter(e => visibleIds.has(e.src) && visibleIds.has(e.tgt)), [edges, visibleIds])
-  const nodeMap    = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes])
-  const selectedNode = useMemo(() => nodes.find(n => n.id === selectedId) ?? null, [nodes, selectedId])
+    return [...n].sort((a, b) => (SEV_RANK[b.severity] ?? 0) - (SEV_RANK[a.severity] ?? 0) || b.failCount - a.failCount)
+  }, [allNodes, sevFilter, search])
 
   const sevCounts = useMemo(() => {
     const c: Record<string, number> = {}
@@ -255,14 +217,25 @@ export default function BlastRadiusPage({ run }: Props) {
     return c
   }, [allNodes])
 
+  function toggle(id: string) {
+    setExpandedId(prev => prev === id ? null : id)
+  }
+
+  function navigateTo(id: string) {
+    setExpandedId(id)
+    setTimeout(() => {
+      cardRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 60)
+  }
+
   // ── Empty state ────────────────────────────────────────────────────────────
   if (failFindings.length === 0) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--muted)' }}>
-        <svg width="52" height="52" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"
           style={{ margin: '0 auto 1rem', display: 'block', opacity: 0.25 }}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div style={{ fontWeight: 700, fontSize: '1rem' }}>No failing resources</div>
         <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>All controls are passing in this run.</div>
@@ -270,11 +243,10 @@ export default function BlastRadiusPage({ run }: Props) {
     )
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-      {/* ── Stats header ── */}
+      {/* ── Stats strip ── */}
       <div className="card" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
         <div>
           <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--waf-danger)', lineHeight: 1 }}>{allNodes.length}</span>
@@ -283,284 +255,193 @@ export default function BlastRadiusPage({ run }: Props) {
         <div style={{ width: '1px', height: '32px', background: 'var(--border)', flexShrink: 0 }} />
         <div>
           <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{edges.length}</span>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>structural edges</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>inferred dependencies</span>
         </div>
         <div style={{ width: '1px', height: '32px', background: 'var(--border)', flexShrink: 0 }} />
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).filter(s => sevCounts[s]).map(s => (
-            <button key={s} onClick={() => setSevFilter(sevFilter === s ? '' : s)}
-              style={{
-                fontSize: '0.7rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: '999px', cursor: 'pointer',
-                background: sevFilter === s ? SEV_COLOR[s] : `${SEV_COLOR[s]}20`,
-                color: sevFilter === s ? '#fff' : SEV_COLOR[s],
-                border: `1px solid ${SEV_COLOR[s]}50`,
-              }}>
+            <button key={s} onClick={() => setSevFilter(sevFilter === s ? '' : s)} style={{
+              fontSize: '0.7rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: '999px', cursor: 'pointer',
+              background: sevFilter === s ? SEV_COLOR[s] : `${SEV_COLOR[s]}20`,
+              color: sevFilter === s ? '#fff' : SEV_COLOR[s], border: `1px solid ${SEV_COLOR[s]}50`,
+            }}>
               {sevCounts[s]} {s}
             </button>
           ))}
         </div>
-        <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', maxWidth: '260px', lineHeight: 1.45 }}>
-          Node size = failing controls count · edges = inferred structural dependencies
+        <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.45 }}>
+          Click a resource to inspect failures and dependencies
         </div>
       </div>
 
       {/* ── Filter bar ── */}
       <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <input
-          type="text" placeholder="Search resource address…" value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{
-            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px',
-            padding: '0.375rem 0.75rem', fontSize: '0.82rem', color: 'var(--text)',
-            outline: 'none', width: '240px',
-          }}
-        />
+        <input type="text" placeholder="Search resource…" value={search} onChange={e => setSearch(e.target.value)}
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.375rem 0.75rem', fontSize: '0.82rem', color: 'var(--text)', outline: 'none', width: '240px' }} />
         <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} className="filter-select">
           <option value="">All severities</option>
           {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)} className="filter-select">
-          <option value="">All pillars</option>
-          {allPillars.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-        {(search || sevFilter || pillarFilter) && (
-          <button onClick={() => { setSearch(''); setSevFilter(''); setPillarFilter('') }}
+        {(search || sevFilter) && (
+          <button onClick={() => { setSearch(''); setSevFilter('') }}
             style={{ fontSize: '0.78rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0.5rem' }}>
             Clear
           </button>
         )}
         <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--muted)' }}>
-          {nodes.length} of {allNodes.length} shown
+          {nodes.length} of {allNodes.length} resources
         </span>
       </div>
 
-      {/* ── Graph + detail panel ── */}
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+      {/* ── Resource accordion ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {nodes.map(n => {
+          const isOpen = expandedId === n.id
+          const col = SEV_COLOR[n.severity] ?? '#64748b'
+          const upstream   = edges.filter(e => e.tgt === n.id).map(e => nodeMap.get(e.src)).filter((x): x is GNode => !!x)
+          const downstream = edges.filter(e => e.src === n.id).map(e => nodeMap.get(e.tgt)).filter((x): x is GNode => !!x)
+          const hasLinks = upstream.length > 0 || downstream.length > 0
 
-        {/* SVG graph */}
-        <div className="card" style={{ flex: 1, padding: 0, overflow: 'hidden', minWidth: 0 }}>
-          {/* Graph header / legend */}
-          <div style={{ padding: '0.625rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Dependency Graph
-            </span>
-            <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto', flexWrap: 'wrap' }}>
-              {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map(s => (
-                <span key={s} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.68rem', color: 'var(--muted)' }}>
-                  <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: SEV_COLOR[s], display: 'inline-block', flexShrink: 0 }} />
-                  {s.charAt(0) + s.slice(1).toLowerCase()}
+          return (
+            <div key={n.id} ref={el => { cardRefs.current[n.id] = el }}
+              className="card" style={{ padding: 0, overflow: 'hidden', borderLeft: `4px solid ${col}`, transition: 'box-shadow 0.2s', boxShadow: isOpen ? `0 0 0 1px ${col}40` : undefined }}>
+
+              {/* ── Card header (always visible) ── */}
+              <div onClick={() => toggle(n.id)} style={{ cursor: 'pointer', padding: '0.875rem 1rem', display: 'flex', alignItems: 'center', gap: '0.875rem', userSelect: 'none' }}>
+                {/* Severity badge */}
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '0.22rem 0.6rem', borderRadius: '999px', background: `${col}20`, color: col, flexShrink: 0, letterSpacing: '.04em' }}>
+                  {n.severity}
                 </span>
-              ))}
-              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.68rem', color: 'var(--muted)' }}>
-                <svg width="18" height="8" viewBox="0 0 18 8" style={{ flexShrink: 0 }}>
-                  <line x1="0" y1="4" x2="12" y2="4" stroke="#94a3b8" strokeWidth="1.5" />
-                  <polygon points="12,1 18,4 12,7" fill="#94a3b8" />
-                </svg>
-                dependency
-              </span>
-            </div>
-          </div>
 
-          <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-            <defs>
-              <marker id="br-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
-              </marker>
-            </defs>
-
-            {/* Click-to-deselect background */}
-            <rect x="0" y="0" width={SVG_W} height={SVG_H} fill="transparent" onClick={() => setSelectedId(null)} />
-
-            {/* Edges */}
-            {visEdges.map((e, i) => {
-              const s = nodeMap.get(e.src); const t = nodeMap.get(e.tgt)
-              if (!s || !t) return null
-              const dx = t.x - s.x; const dy = t.y - s.y
-              const d = Math.sqrt(dx * dx + dy * dy) || 1
-              return (
-                <line key={i}
-                  x1={s.x + (dx / d) * s.r} y1={s.y + (dy / d) * s.r}
-                  x2={t.x - (dx / d) * (t.r + 8)} y2={t.y - (dy / d) * (t.r + 8)}
-                  stroke="#94a3b8" strokeWidth="1.5" strokeOpacity="0.55"
-                  markerEnd="url(#br-arrow)" />
-              )
-            })}
-
-            {/* Nodes */}
-            {nodes.map(n => {
-              const sel = n.id === selectedId
-              const col = SEV_COLOR[n.severity] ?? '#64748b'
-              return (
-                <g key={n.id} style={{ cursor: 'pointer' }}
-                  onClick={e => { e.stopPropagation(); setSelectedId(sel ? null : n.id) }}>
-                  {sel && <circle cx={n.x} cy={n.y} r={n.r + 6} fill="none" stroke="#0094FF" strokeWidth="2.5" opacity="0.65" />}
-                  <circle cx={n.x} cy={n.y} r={n.r} fill={`${col}26`} stroke={col} strokeWidth={sel ? 2.5 : 1.5} />
-                  <text x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central"
-                    fontSize={n.abbr.length > 3 ? '8' : n.r > 28 ? '11' : '9'}
-                    fontWeight="700" fill={col}
-                    style={{ pointerEvents: 'none', userSelect: 'none', fontFamily: 'ui-monospace, monospace' }}>
-                    {n.abbr}
-                  </text>
-                  <text x={n.x} y={n.y + n.r + 11} textAnchor="middle"
-                    fontSize="7.5" fill="#64748b"
-                    style={{ pointerEvents: 'none', userSelect: 'none' }}>
-                    {n.name.length > 15 ? n.name.slice(0, 14) + '…' : n.name}
-                  </text>
-                  <title>{n.id}{'\n'}{n.severity} · {n.failCount} control{n.failCount !== 1 ? 's' : ''} failing{'\n'}Click to inspect</title>
-                </g>
-              )
-            })}
-          </svg>
-        </div>
-
-        {/* Detail panel */}
-        {selectedNode && (
-          <div className="card" style={{ width: '340px', flexShrink: 0, maxHeight: '600px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem', fontWeight: 600 }}>Resource</div>
-                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.78rem', fontWeight: 700, wordBreak: 'break-all', color: 'var(--text)' }}>{selectedNode.id}</div>
-              </div>
-              <button onClick={() => setSelectedId(null)}
-                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.3rem', lineHeight: 1, padding: 0, flexShrink: 0, marginTop: '1px' }}>
-                ×
-              </button>
-            </div>
-
-            {/* Badges */}
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px', background: `${SEV_COLOR[selectedNode.severity]}22`, color: SEV_COLOR[selectedNode.severity] }}>
-                {selectedNode.severity}
-              </span>
-              <span style={{ fontSize: '0.68rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
-                {selectedNode.provider.toUpperCase()}
-              </span>
-              {selectedNode.pillar && (
-                <span style={{ fontSize: '0.68rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
-                  {selectedNode.pillar}
-                </span>
-              )}
-            </div>
-
-            {/* Failing controls */}
-            <div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem', fontWeight: 600 }}>
-                Failing Controls ({selectedNode.controlIds.length})
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {selectedNode.controlIds.map(cid => {
-                  const ff = selectedNode.findings.filter(f => f.control_id === cid)
-                  const sev = ff[0]?.severity?.toUpperCase() ?? 'LOW'
-                  return (
-                    <div key={cid} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem 0.625rem', background: 'var(--bg)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: ff[0]?.check_title ? '0.2rem' : 0 }}>
-                        <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)' }}>{cid}</span>
-                        <span style={{ marginLeft: 'auto', fontSize: '0.6rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '999px', background: `${SEV_COLOR[sev] ?? '#888'}22`, color: SEV_COLOR[sev] ?? '#888', flexShrink: 0 }}>
-                          {sev}
-                        </span>
-                      </div>
-                      {ff[0]?.check_title && (
-                        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.4 }}>{ff[0].check_title}</div>
-                      )}
-                      {ff[0]?.message && (
-                        <div style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '0.2rem', lineHeight: 1.35 }}>{ff[0].message}</div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Dependencies / dependents */}
-            {(() => {
-              const upstream   = edges.filter(e => e.tgt === selectedNode.id).map(e => nodeMap.get(e.src)).filter((n): n is GNode => !!n)
-              const downstream = edges.filter(e => e.src === selectedNode.id).map(e => nodeMap.get(e.tgt)).filter((n): n is GNode => !!n)
-              if (!upstream.length && !downstream.length) return null
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {upstream.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem', fontWeight: 600 }}>
-                        Depends on ({upstream.length})
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                        {upstream.map(n => (
-                          <button key={n.id} onClick={() => setSelectedId(n.id)}
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.68rem', padding: '0.2rem 0.5rem', borderRadius: '6px', background: `${SEV_COLOR[n.severity]}18`, border: `1px solid ${SEV_COLOR[n.severity]}40`, color: SEV_COLOR[n.severity], cursor: 'pointer' }}>
-                            {n.name || n.id}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {downstream.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem', fontWeight: 600 }}>
-                        Dependents ({downstream.length})
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                        {downstream.map(n => (
-                          <button key={n.id} onClick={() => setSelectedId(n.id)}
-                            style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.68rem', padding: '0.2rem 0.5rem', borderRadius: '6px', background: `${SEV_COLOR[n.severity]}18`, border: `1px solid ${SEV_COLOR[n.severity]}40`, color: SEV_COLOR[n.severity], cursor: 'pointer' }}>
-                            {n.name || n.id}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                {/* Type + name */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: '0.12rem', fontWeight: 500 }}>
+                    {n.rtypeLabel}
+                    {n.provider !== 'aws' && (
+                      <span style={{ marginLeft: '0.4rem', fontSize: '0.62rem', fontWeight: 700, opacity: 0.6 }}>{n.provider.toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: 'var(--text)', fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {n.name || n.id}
+                  </div>
                 </div>
-              )
-            })()}
-          </div>
-        )}
-      </div>
 
-      {/* ── Resource table ── */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '0.625rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Affected Resources
-          </span>
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>· sorted by severity · click row to highlight in graph</span>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                {['Resource', 'Type', 'Provider', 'Severity', 'Controls', 'Pillar'].map(h => <th key={h}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {[...nodes]
-                .sort((a, b) => (SEV_RANK[b.severity] ?? 0) - (SEV_RANK[a.severity] ?? 0) || b.failCount - a.failCount)
-                .map(n => (
-                  <tr key={n.id}
-                    onClick={() => setSelectedId(n.id === selectedId ? null : n.id)}
-                    style={{ cursor: 'pointer', background: n.id === selectedId ? 'rgba(0,148,255,.06)' : undefined }}>
-                    <td className="mono" style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {n.id}
-                    </td>
-                    <td className="mono" style={{ color: 'var(--muted)', fontSize: '0.72rem', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {n.rtype}
-                    </td>
-                    <td>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.12rem 0.45rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
-                        {n.provider.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.12rem 0.5rem', borderRadius: '999px', background: `${SEV_COLOR[n.severity]}22`, color: SEV_COLOR[n.severity] }}>
-                        {n.severity}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 700 }}>{n.failCount}</td>
-                    <td style={{ color: 'var(--muted)', fontSize: '0.78rem', textTransform: 'capitalize' }}>{n.pillar || '—'}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+                {/* Meta: pill count + dependency indicator */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexShrink: 0 }}>
+                  {hasLinks && (
+                    <span title="Has inferred dependencies" style={{ fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      {upstream.length + downstream.length}
+                    </span>
+                  )}
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 800, color: col }}>{n.failCount}</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
+                      {n.failCount === 1 ? 'control' : 'controls'}
+                    </span>
+                  </div>
+                  <span style={{ color: 'var(--muted)', fontSize: '1rem', transition: 'transform 0.22s ease', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                    ▾
+                  </span>
+                </div>
+              </div>
+
+              {/* ── Expanded content ── */}
+              <div style={{
+                maxHeight: isOpen ? '900px' : '0',
+                opacity: isOpen ? 1 : 0,
+                overflow: 'hidden',
+                transition: 'max-height 0.38s ease, opacity 0.25s ease',
+              }}>
+                <div style={{ borderTop: `1px solid ${col}30`, padding: '1.125rem 1rem 1rem', display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
+
+                  {/* Left: details */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Failing controls */}
+                    <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
+                      Failing Controls ({n.controlIds.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
+                      {n.controlIds.map(cid => {
+                        const ff = n.findings.filter(f => f.control_id === cid)
+                        const sev = ff[0]?.severity?.toUpperCase() ?? 'LOW'
+                        const sc = SEV_COLOR[sev] ?? '#888'
+                        return (
+                          <div key={cid} style={{ padding: '0.5rem 0.625rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: ff[0]?.check_title ? '0.18rem' : 0 }}>
+                              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)' }}>{cid}</span>
+                              <span style={{ marginLeft: 'auto', fontSize: '0.6rem', fontWeight: 700, padding: '0.1rem 0.35rem', borderRadius: '999px', background: `${sc}22`, color: sc, flexShrink: 0 }}>{sev}</span>
+                            </div>
+                            {ff[0]?.check_title && <div style={{ fontSize: '0.73rem', color: 'var(--muted)', lineHeight: 1.4 }}>{ff[0].check_title}</div>}
+                            {ff[0]?.message && <div style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '0.15rem', lineHeight: 1.35 }}>{ff[0].message}</div>}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Connections list */}
+                    {hasLinks && (
+                      <div>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
+                          Structural Connections
+                        </div>
+                        {upstream.length > 0 && (
+                          <div style={{ marginBottom: '0.35rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>Depends on:</span>
+                            <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                              {upstream.map(dep => (
+                                <button key={dep.id} onClick={e => { e.stopPropagation(); navigateTo(dep.id) }}
+                                  style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: `${SEV_COLOR[dep.severity] ?? '#888'}18`, border: `1px solid ${SEV_COLOR[dep.severity] ?? '#888'}40`, color: SEV_COLOR[dep.severity] ?? '#888', cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
+                                  {dep.name || dep.rtypeLabel}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {downstream.length > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>Used by:</span>
+                            <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                              {downstream.map(dep => (
+                                <button key={dep.id} onClick={e => { e.stopPropagation(); navigateTo(dep.id) }}
+                                  style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: `${SEV_COLOR[dep.severity] ?? '#888'}18`, border: `1px solid ${SEV_COLOR[dep.severity] ?? '#888'}40`, color: SEV_COLOR[dep.severity] ?? '#888', cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
+                                  {dep.name || dep.rtypeLabel}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: mini dependency graph (only when there are connections) */}
+                  {hasLinks && (
+                    <div style={{ width: '240px', flexShrink: 0 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
+                        Dependency Map
+                      </div>
+                      <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg)' }}>
+                        <MiniGraph
+                          center={n}
+                          upstream={upstream}
+                          downstream={downstream}
+                          onNavigate={navigateTo}
+                        />
+                      </div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.35rem', lineHeight: 1.4, textAlign: 'center' }}>
+                        Click a node to jump to that resource
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
     </div>
