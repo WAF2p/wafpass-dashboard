@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { sandboxScan, sandboxStatus, SandboxResponse, SandboxControlResult } from '../api'
+
+// ── Types shared between mock and real engine ─────────────────────────────────
 
 interface CheckResult {
   check_id: string
@@ -20,14 +23,17 @@ interface SandboxResult {
 }
 
 interface SandboxOutput {
-  path: string
+  engine: 'mock' | 'real'
+  controls_loaded?: number
+  controls_dir?: string
   score: number
   total_pass: number
   total_fail: number
   total_skip: number
-  controls_run: number
   results: SandboxResult[]
 }
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const SEV_COLOR: Record<string, string> = {
   critical: '#DA2C38', high: '#f97316', medium: '#eab308', low: '#22c55e',
@@ -149,6 +155,8 @@ resource "aws_s3_bucket_public_access_block" "secure" {
   },
 }
 
+// ── Mock engine ───────────────────────────────────────────────────────────────
+
 function simulateScan(code: string): SandboxOutput {
   const c = code.toLowerCase()
   const res: SandboxResult[] = []
@@ -218,7 +226,6 @@ function simulateScan(code: string): SandboxOutput {
     const enc = c.match(/storage_encrypted\s*=\s*true/)
     const bk = c.match(/backup_retention_period\s*=\s*([7-9]|[1-9]\d+)/)
     const maz = c.match(/multi_az\s*=\s*true/)
-
     res.push({
       control_id: 'WAF-SEC-020-rds', control_title: 'Data Encryption at Rest (RDS)',
       pillar: 'security', severity: 'critical',
@@ -234,26 +241,20 @@ function simulateScan(code: string): SandboxOutput {
     })
     if (!bk) res.push({
       control_id: 'WAF-REL-030', control_title: 'Backup & Recovery Strategy',
-      pillar: 'reliability', severity: 'high',
-      status: 'FAIL',
+      pillar: 'reliability', severity: 'high', status: 'FAIL',
       check_results: [{
-        check_id: 'waf-rel-030.tf.aws.rds-backup',
-        check_title: 'RDS backup retention period >= 7 days',
-        severity: 'high', resource: 'aws_db_instance',
-        status: 'FAIL',
+        check_id: 'waf-rel-030.tf.aws.rds-backup', check_title: 'RDS backup retention period >= 7 days',
+        severity: 'high', resource: 'aws_db_instance', status: 'FAIL',
         message: 'backup_retention_period is not set or < 7 days',
         remediation: 'Set backup_retention_period to at least 7.',
       }],
     })
     if (!maz) res.push({
       control_id: 'WAF-REL-010', control_title: 'Multi-AZ Deployment',
-      pillar: 'reliability', severity: 'high',
-      status: 'FAIL',
+      pillar: 'reliability', severity: 'high', status: 'FAIL',
       check_results: [{
-        check_id: 'waf-rel-010.tf.aws.rds-multi-az',
-        check_title: 'RDS must be deployed Multi-AZ',
-        severity: 'high', resource: 'aws_db_instance',
-        status: 'FAIL',
+        check_id: 'waf-rel-010.tf.aws.rds-multi-az', check_title: 'RDS must be deployed Multi-AZ',
+        severity: 'high', resource: 'aws_db_instance', status: 'FAIL',
         message: "'multi_az' is not set or is false",
         remediation: 'Set multi_az = true on aws_db_instance.',
       }],
@@ -261,31 +262,96 @@ function simulateScan(code: string): SandboxOutput {
   }
 
   if (res.length === 0) {
-    return { path: 'sandbox', score: 100, total_pass: 0, total_fail: 0, total_skip: 1, controls_run: 0, results: [] }
+    return { engine: 'mock', score: 100, total_pass: 0, total_fail: 0, total_skip: 1, results: [] }
   }
-
   const pass = res.filter(r => r.status === 'PASS').length
   const fail = res.filter(r => r.status === 'FAIL').length
   const scored = pass + fail
-  return { path: 'sandbox', score: scored ? Math.round(pass / scored * 100) : 100, total_pass: pass, total_fail: fail, total_skip: 0, controls_run: res.length, results: res }
+  return { engine: 'mock', score: scored ? Math.round(pass / scored * 100) : 100, total_pass: pass, total_fail: fail, total_skip: 0, results: res }
 }
+
+// ── Adapter: real engine response → SandboxOutput ────────────────────────────
+
+function fromRealEngine(r: SandboxResponse): SandboxOutput {
+  return {
+    engine: 'real',
+    controls_loaded: r.controls_loaded,
+    controls_dir: r.controls_dir,
+    score: r.score,
+    total_pass: r.total_pass,
+    total_fail: r.total_fail,
+    total_skip: r.total_skip,
+    results: r.results.map((cr: SandboxControlResult) => ({
+      control_id: cr.control_id,
+      control_title: cr.control_title,
+      pillar: cr.pillar,
+      severity: cr.severity,
+      status: cr.status,
+      check_results: cr.check_results,
+    })),
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function scoreColor(s: number) {
   return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
 }
+
+type EngineMode = 'mock' | 'real'
+type RealEngineStatus = 'unknown' | 'checking' | 'available' | 'unavailable'
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SandboxPage() {
   const [code, setCode] = useState('')
   const [scanning, setScanning] = useState(false)
   const [output, setOutput] = useState<SandboxOutput | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [engineMode, setEngineMode] = useState<EngineMode>('mock')
+  const [realStatus, setRealStatus] = useState<RealEngineStatus>('unknown')
+  const [realStatusDetail, setRealStatusDetail] = useState('')
+  const [scanError, setScanError] = useState<string | null>(null)
+
+  // Probe real engine availability once on mount
+  useEffect(() => {
+    setRealStatus('checking')
+    sandboxStatus()
+      .then(s => {
+        if (s.engine_available && s.controls_dir_exists) {
+          setRealStatus('available')
+          setRealStatusDetail(`${s.controls_dir}`)
+        } else if (!s.engine_available) {
+          setRealStatus('unavailable')
+          setRealStatusDetail('wafpass-core not installed on server')
+        } else {
+          setRealStatus('unavailable')
+          setRealStatusDetail(`Controls dir not found: ${s.controls_dir}`)
+        }
+      })
+      .catch(() => {
+        setRealStatus('unavailable')
+        setRealStatusDetail('Server unreachable — check server URL in Settings')
+      })
+  }, [])
 
   async function runScan() {
     if (!code.trim()) return
     setScanning(true)
     setOutput(null)
-    await new Promise(r => setTimeout(r, 700))
-    setOutput(simulateScan(code))
+    setScanError(null)
+
+    if (engineMode === 'real') {
+      try {
+        const result = await sandboxScan(code)
+        setOutput(fromRealEngine(result))
+      } catch (e) {
+        setScanError(e instanceof Error ? e.message : String(e))
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 500))
+      setOutput(simulateScan(code))
+    }
     setScanning(false)
   }
 
@@ -299,8 +365,68 @@ export default function SandboxPage() {
     setCode(ta.value)
   }
 
+  const realAvailable = realStatus === 'available'
+
+  const enginePill = (() => {
+    if (realStatus === 'checking') return { label: 'Checking…', color: '#94a3b8' }
+    if (realStatus === 'available') return { label: 'Real engine ready', color: '#22c55e' }
+    return { label: 'Real engine unavailable', color: '#eab308' }
+  })()
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+      {/* Engine mode selector */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
+        padding: '0.75rem 1rem', borderRadius: '10px',
+        background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+      }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Engine
+        </span>
+        <div style={{ display: 'flex', gap: '0.4rem' }}>
+          {(['mock', 'real'] as EngineMode[]).map(mode => (
+            <button
+              key={mode}
+              onClick={() => { if (mode === 'real' && !realAvailable) return; setEngineMode(mode); setOutput(null); setScanError(null) }}
+              style={{
+                padding: '0.35rem 0.875rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600,
+                border: `1px solid ${engineMode === mode ? 'var(--waf-brand)' : 'var(--border)'}`,
+                background: engineMode === mode ? 'rgba(0,148,255,.1)' : 'var(--bg)',
+                color: engineMode === mode ? 'var(--waf-brand)' : mode === 'real' && !realAvailable ? 'var(--muted)' : 'var(--text)',
+                cursor: mode === 'real' && !realAvailable ? 'not-allowed' : 'pointer',
+                opacity: mode === 'real' && !realAvailable ? 0.6 : 1,
+              }}
+            >
+              {mode === 'mock' ? 'Mock (regex)' : 'Real engine'}
+            </button>
+          ))}
+        </div>
+
+        <span style={{
+          fontSize: '0.72rem', fontWeight: 600, color: enginePill.color,
+          background: `${enginePill.color}18`, border: `1px solid ${enginePill.color}40`,
+          borderRadius: '999px', padding: '0.18rem 0.65rem',
+        }}>
+          {enginePill.label}
+        </span>
+
+        {realStatusDetail && (
+          <span style={{ fontSize: '0.71rem', color: 'var(--muted)', marginLeft: 'auto', fontFamily: 'monospace' }}>
+            {realStatusDetail}
+          </span>
+        )}
+
+        {!realAvailable && realStatus !== 'checking' && (
+          <span style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>
+            {realStatus === 'unavailable'
+              ? 'To enable: install wafpass-core and set WAFPASS_CONTROLS_DIR on the server'
+              : ''}
+          </span>
+        )}
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
         {/* Editor panel */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -312,7 +438,7 @@ export default function SandboxPage() {
               {Object.entries(TEMPLATES).map(([key, tpl]) => (
                 <button
                   key={key}
-                  onClick={() => { setCode(tpl.code); setOutput(null) }}
+                  onClick={() => { setCode(tpl.code); setOutput(null); setScanError(null) }}
                   style={{
                     fontSize: '0.68rem', padding: '0.2rem 0.55rem', borderRadius: '6px',
                     border: '1px solid var(--border)', background: 'var(--bg)',
@@ -323,7 +449,7 @@ export default function SandboxPage() {
                 </button>
               ))}
               <button
-                onClick={() => { setCode(''); setOutput(null) }}
+                onClick={() => { setCode(''); setOutput(null); setScanError(null) }}
                 style={{
                   fontSize: '0.68rem', padding: '0.2rem 0.55rem', borderRadius: '6px',
                   border: '1px solid var(--border)', background: 'var(--bg)',
@@ -348,31 +474,41 @@ export default function SandboxPage() {
             }}
           />
 
-          <button
-            onClick={runScan}
-            disabled={scanning || !code.trim()}
-            style={{
-              background: scanning || !code.trim() ? '#94a3b8' : 'var(--waf-brand)',
-              color: '#fff', border: 'none', borderRadius: '8px',
-              padding: '0.6rem 1.25rem', fontSize: '0.85rem', fontWeight: 700,
-              cursor: scanning || !code.trim() ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'flex-start',
-            }}
-          >
-            {scanning ? (
-              <><span className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }} /> Analysing…</>
-            ) : 'Analyse'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              onClick={() => void runScan()}
+              disabled={scanning || !code.trim()}
+              style={{
+                background: scanning || !code.trim() ? '#94a3b8' : 'var(--waf-brand)',
+                color: '#fff', border: 'none', borderRadius: '8px',
+                padding: '0.6rem 1.25rem', fontSize: '0.85rem', fontWeight: 700,
+                cursor: scanning || !code.trim() ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+              }}
+            >
+              {scanning ? (
+                <><span className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }} /> Analysing…</>
+              ) : `Analyse with ${engineMode === 'real' ? 'Real Engine' : 'Mock Engine'}`}
+            </button>
+            {engineMode === 'real' && (
+              <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+                Runs all {'{'}N{'}'} controls against your HCL via the server
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Results panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {!output && !scanning && (
+          {!output && !scanning && !scanError && (
             <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔬</div>
               <div style={{ fontWeight: 600 }}>Architect Sandbox</div>
               <div style={{ fontSize: '0.78rem', marginTop: '0.3rem' }}>
-                Paste Terraform HCL and click Analyse for instant WAF++ feedback
+                {engineMode === 'real'
+                  ? 'Runs the full WAF++ engine server-side against your HCL'
+                  : 'Paste Terraform HCL and click Analyse for instant WAF++ feedback'
+                }
               </div>
             </div>
           )}
@@ -380,7 +516,19 @@ export default function SandboxPage() {
           {scanning && (
             <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
               <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-              <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>Evaluating controls…</div>
+              <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
+                {engineMode === 'real' ? 'Running WAF++ engine on server…' : 'Evaluating controls…'}
+              </div>
+            </div>
+          )}
+
+          {scanError && (
+            <div style={{
+              background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+              borderRadius: '10px', padding: '1rem 1.25rem', fontSize: '0.82rem', color: '#DA2C38',
+            }}>
+              <div style={{ fontWeight: 700, marginBottom: '0.3rem' }}>Engine error</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{scanError}</div>
             </div>
           )}
 
@@ -416,50 +564,82 @@ export default function SandboxPage() {
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Results list */}
-              {output.results.filter(r => r.status !== 'SKIP').map(r => (
-                <div key={r.control_id} className="card" style={{ padding: '0.75rem', borderLeft: `3px solid ${STATUS_COLOR[r.status] ?? '#94a3b8'}` }}>
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
-                    onClick={() => setExpanded(expanded === r.control_id ? null : r.control_id)}
-                  >
-                    <span style={{
-                      padding: '0.1rem 0.45rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
-                      background: `${STATUS_COLOR[r.status]}22`, color: STATUS_COLOR[r.status],
-                    }}>{r.status}</span>
-                    <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', flex: 1 }}>{r.control_title}</span>
-                    <span style={{
-                      padding: '0.1rem 0.4rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
-                      background: `${SEV_COLOR[r.severity]}22`, color: SEV_COLOR[r.severity],
-                    }}>{r.severity}</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{expanded === r.control_id ? '▲' : '▼'}</span>
-                  </div>
-
-                  {expanded === r.control_id && (
-                    <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {r.check_results.map((chk, i) => (
-                        <div key={i} style={{ background: 'var(--bg)', borderRadius: '6px', padding: '0.625rem 0.75rem', border: '1px solid var(--border)' }}>
-                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
-                            <span style={{
-                              padding: '0.08rem 0.4rem', borderRadius: '999px', fontSize: '0.62rem', fontWeight: 700,
-                              background: `${STATUS_COLOR[chk.status]}22`, color: STATUS_COLOR[chk.status], flexShrink: 0,
-                            }}>{chk.status}</span>
-                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>{chk.check_title}</span>
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: chk.remediation ? '0.35rem' : 0 }}>{chk.message}</div>
-                          {chk.remediation && (
-                            <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontStyle: 'italic' }}>
-                              Fix: {chk.remediation}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                {/* Engine metadata */}
+                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                  <span>
+                    Engine:{' '}
+                    <strong style={{ color: output.engine === 'real' ? '#22c55e' : 'var(--text)' }}>
+                      {output.engine === 'real' ? 'Real WAF++ engine' : 'Mock (regex)'}
+                    </strong>
+                  </span>
+                  {output.controls_loaded != null && (
+                    <span>Controls evaluated: <strong style={{ color: 'var(--text)' }}>{output.controls_loaded}</strong></span>
+                  )}
+                  {output.results.length > 0 && (
+                    <span>With findings: <strong style={{ color: 'var(--text)' }}>{output.results.length}</strong></span>
                   )}
                 </div>
-              ))}
+              </div>
+
+              {/* Results list — FAIL first, then PASS, skip SKIP */}
+              {[...output.results]
+                .sort((a, b) => {
+                  if (a.status === b.status) return 0
+                  if (a.status === 'FAIL') return -1
+                  if (b.status === 'FAIL') return 1
+                  return 0
+                })
+                .filter(r => r.status !== 'SKIP')
+                .map(r => (
+                  <div key={r.control_id} className="card" style={{ padding: '0.75rem', borderLeft: `3px solid ${STATUS_COLOR[r.status] ?? '#94a3b8'}` }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                      onClick={() => setExpanded(expanded === r.control_id ? null : r.control_id)}
+                    >
+                      <span style={{
+                        padding: '0.1rem 0.45rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
+                        background: `${STATUS_COLOR[r.status]}22`, color: STATUS_COLOR[r.status],
+                      }}>{r.status}</span>
+                      <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', flex: 1 }}>{r.control_title}</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
+                        {r.pillar}
+                      </span>
+                      <span style={{
+                        padding: '0.1rem 0.4rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
+                        background: `${SEV_COLOR[r.severity]}22`, color: SEV_COLOR[r.severity],
+                      }}>{r.severity}</span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{expanded === r.control_id ? '▲' : '▼'}</span>
+                    </div>
+
+                    {expanded === r.control_id && (
+                      <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {r.check_results.map((chk, i) => (
+                          <div key={i} style={{ background: 'var(--bg)', borderRadius: '6px', padding: '0.625rem 0.75rem', border: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
+                              <span style={{
+                                padding: '0.08rem 0.4rem', borderRadius: '999px', fontSize: '0.62rem', fontWeight: 700,
+                                background: `${STATUS_COLOR[chk.status]}22`, color: STATUS_COLOR[chk.status], flexShrink: 0,
+                              }}>{chk.status}</span>
+                              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>{chk.check_title}</span>
+                            </div>
+                            {chk.resource && (
+                              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.2rem', fontFamily: 'monospace' }}>
+                                {chk.resource}
+                              </div>
+                            )}
+                            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: chk.remediation ? '0.35rem' : 0 }}>{chk.message}</div>
+                            {chk.remediation && (
+                              <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontStyle: 'italic' }}>
+                                Fix: {chk.remediation}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
             </>
           )}
         </div>
