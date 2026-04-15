@@ -25,16 +25,17 @@ import FeedbackPage from './pages/FeedbackPage'
 import { CONTROLS } from './controls-data'
 import { ControlMeta } from './api'
 import { emitScanReceived, recordFirstSeenFailures } from './audit'
+import EvidencePage from './pages/EvidencePage'
+import SkippedControlsPage from './pages/SkippedControlsPage'
 import AuditLogPage from './pages/AuditLogPage'
 import GapAnalysisPage from './pages/GapAnalysisPage'
 import CostImpactPage from './pages/CostImpactPage'
-import EvidencePage from './pages/EvidencePage'
 
 const ALL_PAGES = [
   'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
-  'waivers', 'risk', 'changes', 'feedback',
+  'waivers', 'risk', 'changes', 'feedback', 'skipped',
 ] as const
 type Page = typeof ALL_PAGES[number]
 const PAGE_SET = new Set<string>(ALL_PAGES)
@@ -81,6 +82,7 @@ const PAGE_TITLE: Record<Page, string> = {
   risk:        'Risk Acceptance',
   changes:     'Changes & Drift',
   feedback:    'Feedback',
+  skipped:     'Skipped Controls',
 }
 
 const PAGE_SUBTITLE: Record<Page, string> = {
@@ -108,6 +110,7 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   waivers:     'Suppress controls from failing · export as .wafpass-skip.yml',
   risk:        'Formally accept or mitigate risks — with approver, expiry and traceability',
   feedback:    'Share your thoughts with the WAF++ team — we read every message',
+  skipped:     'Controls skipped by the engine, waived, or risk-accepted — review your coverage gaps',
 }
 
 function scoreColor(s: number) {
@@ -249,6 +252,7 @@ export default function App() {
     { page: 'sandbox', label: 'Sandbox',         icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
     { page: 'waivers', label: 'Waivers',         icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', count: waiverCount },
     { page: 'risk',    label: 'Risk Acceptance', icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', count: riskCount },
+    { page: 'skipped', label: 'Skipped Controls', icon: 'M13 10V3L4 14h7v7l9-11h-7z', count: run ? (() => { const active = new Set(run.findings.filter(f => { const s = f.status?.toUpperCase(); return s === 'PASS' || s === 'FAIL'; }).map(f => f.control_id)); return run.controls_meta.filter(c => !active.has(c.id)).length })() : undefined },
     { page: 'audit',   label: 'Audit Log',       icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
     { page: 'evidence', label: 'Evidence Package', gate: settings.evidenceCollection, icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
   ]
@@ -560,6 +564,8 @@ export default function App() {
             <RunDiffPage runs={runs} />
           ) : page === 'catalogue' ? (
             <ControlsCataloguePage coreControls={run?.controls_meta ?? []} />
+          ) : page === 'skipped' ? (
+            <SkippedControlsPage run={run} />
           ) : loadingRun ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
               <div className="spinner" />
@@ -594,7 +600,7 @@ export default function App() {
               <RunScanPage />
             </div>
           ) : !run ? (
-            <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem' }}>
+            <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
               Select a run to view results.
             </div>
           ) : page === 'dashboard' ? (
