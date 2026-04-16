@@ -177,20 +177,23 @@ function buildControlItems(findings: Finding[]): ControlCostItem[] {
 
 function CostBar({ min, max, maxVal }: { min: number; max: number; maxVal: number }) {
   if (maxVal === 0) return null
-  const startPct = (min / maxVal) * 100
-  const widthPct = ((max - min) / maxVal) * 100
-  const midPct   = ((min + (max - min) / 2) / maxVal) * 100
+  // Cap percentages to 100 so the bar never overflows its container
+  const cap = (v: number) => Math.min(100, Math.max(0, (v / maxVal) * 100))
+  const startPct = cap(min)
+  const endPct   = cap(max)
+  const widthPct = Math.max(endPct - startPct, 0.5)
+  const midPct   = cap((min + max) / 2)
   return (
-    <div style={{ position: 'relative', height: 10, background: 'var(--bg-secondary)', borderRadius: 5, overflow: 'visible' }}>
+    <div style={{ position: 'relative', height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
       {/* Range band */}
       <div style={{
-        position: 'absolute', top: 0, height: '100%', borderRadius: 5,
-        left: `${startPct}%`, width: `${Math.max(widthPct, 1)}%`,
-        background: 'rgba(220,38,38,.25)',
+        position: 'absolute', top: 0, height: '100%', borderRadius: 4,
+        left: `${startPct}%`, width: `${widthPct}%`,
+        background: 'rgba(220,38,38,.28)',
       }} />
       {/* Midpoint marker */}
       <div style={{
-        position: 'absolute', top: -2, width: 3, height: 14, borderRadius: 2,
+        position: 'absolute', top: 0, width: 2, height: '100%',
         left: `${midPct}%`, background: '#dc2626',
       }} />
     </div>
@@ -199,7 +202,7 @@ function CostBar({ min, max, maxVal }: { min: number; max: number; maxVal: numbe
 
 // ─── Control card ─────────────────────────────────────────────────────────────
 
-function ControlCostCard({ item, maxMid }: { item: ControlCostItem; maxMid: number }) {
+function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: number }) {
   const [open, setOpen] = useState(false)
   const cat  = CATEGORY_META[item.dominantCategory]
   const conf = CONF_META[item.dominantConf]
@@ -210,88 +213,97 @@ function ControlCostCard({ item, maxMid }: { item: ControlCostItem; maxMid: numb
       border: `1px solid ${cat.color}33`, borderRadius: 10, marginBottom: 10,
       background: cat.bg, overflow: 'hidden',
     }}>
+      {/* ── Card header (always visible) ─────────────────────────────── */}
       <div style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 12 }}
         onClick={() => setOpen(o => !o)}>
 
         {/* Category icon */}
-        <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0, marginTop: 2 }}>{cat.icon}</span>
+        <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: 3 }}>{cat.icon}</span>
 
         {/* Content */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-            <span style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-muted)' }}>{item.controlId}</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{item.controlTitle}</span>
+            <span style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 700, color: 'var(--muted)' }}>{item.controlId}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{item.controlTitle}</span>
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: cat.color, background: `${cat.color}18`, border: `1px solid ${cat.color}33`, borderRadius: 4, padding: '1px 6px' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: hasEstimate ? 8 : 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: cat.color, background: `${cat.color}18`, border: `1px solid ${cat.color}33`, borderRadius: 4, padding: '2px 7px' }}>
               {cat.label}
             </span>
-            <span style={{ fontSize: 10, color: conf.color, background: 'var(--bg-secondary)', borderRadius: 4, padding: '1px 6px' }}>
+            <span style={{ fontSize: 10, color: conf.color, background: '#f1f5f9', borderRadius: 4, padding: '2px 7px', fontWeight: 600 }}>
               {conf.label}
             </span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
               {item.resourceBands.length} resource{item.resourceBands.length !== 1 ? 's' : ''}
             </span>
           </div>
           {hasEstimate && (
-            <CostBar min={item.totalMin} max={item.totalMax} maxVal={maxMid} />
+            <CostBar min={item.totalMin} max={item.totalMax} maxVal={maxMax} />
           )}
         </div>
 
-        {/* Cost display */}
-        <div style={{ flexShrink: 0, textAlign: 'right', minWidth: 90 }}>
+        {/* Cost + toggle */}
+        <div style={{ flexShrink: 0, textAlign: 'right', minWidth: 100 }}>
           {hasEstimate ? (
             <>
-              <div style={{ fontSize: 20, fontWeight: 800, color: cat.color }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: cat.color, lineHeight: 1 }}>
                 ~{fmtDollar(item.totalMid)}
               </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>/month</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+              <div style={{ fontSize: 10, color: 'var(--muted)' }}>/month</div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
                 range: {fmtRange(item.totalMin, item.totalMax)}
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+            <div style={{ fontSize: 11, color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.4 }}>
               governance<br />risk only
             </div>
           )}
-          <div style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 4 }}>{open ? '▲' : '▼'}</div>
+          <div style={{ color: 'var(--muted)', fontSize: 10, marginTop: 6, userSelect: 'none' }}>{open ? '▲' : '▼'}</div>
         </div>
       </div>
 
+      {/* ── Expanded detail ───────────────────────────────────────────── */}
       {open && (
-        <div style={{ padding: '0 16px 14px 52px', borderTop: `1px solid ${cat.color}22` }}>
-          <div style={{ marginTop: 10, overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <div style={{ borderTop: `1px solid ${cat.color}22` }}>
+
+          {/* Resource table */}
+          <div style={{ overflowX: 'auto', padding: '0 16px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 10 }}>
               <thead>
-                <tr style={{ background: 'var(--bg-secondary)' }}>
-                  {['Resource', 'Type', 'Category', 'Est. $/mo', 'Basis'].map(h => (
-                    <th key={h} style={{ padding: '5px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
+                <tr style={{ background: 'rgba(0,0,0,.03)' }}>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '22%' }}>Resource</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '16%' }}>Type</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '14%' }}>Category</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '12%' }}>Est. $/mo</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', width: '36%' }}>Basis</th>
                 </tr>
               </thead>
               <tbody>
                 {item.resourceBands.map(({ finding, band }, i) => {
-                  const mid = Math.round((band.min + band.max) / 2)
+                  const mid   = Math.round((band.min + band.max) / 2)
                   const rtype = finding.resource ? extractResourceType(finding.resource) : '—'
-                  const cm = CATEGORY_META[band.category]
+                  const cm    = CATEGORY_META[band.category]
                   return (
-                    <tr key={i} style={{ borderTop: '1px solid var(--card-border)' }}>
-                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
+                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 10, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }} title={finding.resource || ''}>
                         {finding.resource || '—'}
                       </td>
-                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 10, color: '#374151', whiteSpace: 'nowrap' }}>
                         {rtype}
                       </td>
                       <td style={{ padding: '6px 10px' }}>
-                        <span style={{ fontSize: 10, color: cm.color, background: `${cm.color}15`, border: `1px solid ${cm.color}22`, borderRadius: 4, padding: '1px 5px' }}>
+                        <span style={{ fontSize: 10, color: cm.color, background: `${cm.color}15`, border: `1px solid ${cm.color}25`, borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap', fontWeight: 600 }}>
                           {cm.icon} {cm.label}
                         </span>
                       </td>
-                      <td style={{ padding: '6px 10px', fontWeight: 700, color: cm.color, whiteSpace: 'nowrap' }}>
-                        {band.min === 0 && band.max === 0 ? '—' : `~${fmtDollar(mid)} (${fmtRange(band.min, band.max)})`}
+                      <td style={{ padding: '6px 10px', fontWeight: 700, color: cm.color, whiteSpace: 'nowrap', fontSize: 11 }}>
+                        {band.min === 0 && band.max === 0 ? '—' : `~${fmtDollar(mid)}`}
+                        {band.min !== band.max && band.max > 0 && (
+                          <div style={{ fontSize: 9, fontWeight: 400, color: 'var(--muted)' }}>{fmtRange(band.min, band.max)}</div>
+                        )}
                       </td>
-                      <td style={{ padding: '6px 10px', fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                      <td style={{ padding: '6px 10px', fontSize: 10, color: 'var(--muted)', lineHeight: 1.5 }}>
                         {band.basis}
                       </td>
                     </tr>
@@ -301,17 +313,19 @@ function ControlCostCard({ item, maxMid }: { item: ControlCostItem; maxMid: numb
             </table>
           </div>
 
-          {/* Top finding message */}
-          {item.findings[0]?.message && (
-            <div style={{ marginTop: 10, padding: '8px 10px', background: 'var(--bg-secondary)', borderRadius: 6, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-secondary)' }}>Finding: </strong>{item.findings[0].message}
-            </div>
-          )}
-          {item.findings[0]?.remediation && (
-            <div style={{ marginTop: 6, padding: '8px 10px', background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.15)', borderRadius: 6, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <strong>Fix: </strong>{item.findings[0].remediation}
-            </div>
-          )}
+          {/* Finding + Fix messages */}
+          <div style={{ padding: '10px 16px 14px' }}>
+            {item.findings[0]?.message && (
+              <div style={{ padding: '8px 10px', background: 'rgba(0,0,0,.03)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 11, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 6 }}>
+                <strong style={{ color: 'var(--text)' }}>Finding: </strong>{item.findings[0].message}
+              </div>
+            )}
+            {item.findings[0]?.remediation && (
+              <div style={{ padding: '8px 10px', background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.18)', borderRadius: 6, fontSize: 11, color: '#374151', lineHeight: 1.5 }}>
+                <strong style={{ color: '#059669' }}>Fix: </strong>{item.findings[0].remediation}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -330,7 +344,8 @@ export default function CostImpactPage({ run }: Props) {
     [controlItems, catFilter]
   )
 
-  const maxMid = useMemo(() => Math.max(...controlItems.map(i => i.totalMid), 1), [controlItems])
+  // Use totalMax (not totalMid) as the bar scale so bars never overflow their container
+  const maxMax = useMemo(() => Math.max(...controlItems.map(i => i.totalMax), 1), [controlItems])
 
   // Totals
   const totals = useMemo(() => {
@@ -361,12 +376,12 @@ export default function CostImpactPage({ run }: Props) {
         <div style={{ fontSize: 40, lineHeight: 1 }}>💸</div>
 
         <div style={{ flex: 1, minWidth: 220 }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
             {hasCostFindings
               ? `${totals.failingControls} failing cost controls — estimated ~${fmtDollar(totals.allMid)}/month`
               : 'No failing cost controls detected'}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
             {hasCostFindings
               ? `Range: ${fmtRange(totals.allMin, totals.allMax)}/month across ${totals.failingResources} resources. ` +
                 `These are estimates based on AWS public pricing and industry benchmarks — actual figures require AWS Cost Explorer.`
@@ -383,7 +398,7 @@ export default function CostImpactPage({ run }: Props) {
               return (
                 <div key={cat} style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 22, fontWeight: 800, color: cm.color }}>~{fmtDollar(mid)}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{cm.icon} {cm.label.split(' ')[0].toLowerCase()}</div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)' }}>{cm.icon} {cm.label.split(' ')[0].toLowerCase()}</div>
                 </div>
               )
             })}
@@ -392,7 +407,7 @@ export default function CostImpactPage({ run }: Props) {
       </div>
 
       {!hasCostFindings ? (
-        <div style={{ textAlign: 'center', padding: '48px 20px', border: '1px dashed var(--card-border)', borderRadius: 10, color: '#059669', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: '48px 20px', border: '1px dashed var(--border)', borderRadius: 10, color: '#059669', fontSize: 14 }}>
           ✅ No failing cost findings — all WAF-COST controls passing
         </div>
       ) : (
@@ -401,9 +416,9 @@ export default function CostImpactPage({ run }: Props) {
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={() => setCatFilter('all')} style={{
               padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              border: `1px solid ${catFilter === 'all' ? 'var(--waf-brand)' : 'var(--card-border)'}`,
+              border: `1px solid ${catFilter === 'all' ? 'var(--waf-brand)' : 'var(--border)'}`,
               background: catFilter === 'all' ? 'rgba(0,148,255,.08)' : 'none',
-              color: catFilter === 'all' ? 'var(--waf-brand)' : 'var(--text-muted)',
+              color: catFilter === 'all' ? 'var(--waf-brand)' : 'var(--muted)',
             }}>All ({controlItems.length})</button>
             {(Object.keys(CATEGORY_META) as CostCategory[]).map(cat => {
               const count = controlItems.filter(i => i.dominantCategory === cat).length
@@ -412,32 +427,32 @@ export default function CostImpactPage({ run }: Props) {
               return (
                 <button key={cat} onClick={() => setCatFilter(cat)} style={{
                   padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  border: `1px solid ${catFilter === cat ? cm.color : 'var(--card-border)'}`,
+                  border: `1px solid ${catFilter === cat ? cm.color : 'var(--border)'}`,
                   background: catFilter === cat ? `${cm.color}12` : 'none',
-                  color: catFilter === cat ? cm.color : 'var(--text-muted)',
+                  color: catFilter === cat ? cm.color : 'var(--muted)',
                 }}>
                   {cm.icon} {cm.label} ({count})
                 </button>
               )
             })}
 
-            <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-muted)' }}>
+            <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)' }}>
               Sorted by estimated monthly impact (highest first)
             </span>
           </div>
 
           {/* ── Control cards ──────────────────────────────────────────── */}
           {filtered.map(item => (
-            <ControlCostCard key={item.controlId} item={item} maxMid={maxMid} />
+            <ControlCostCard key={item.controlId} item={item} maxMax={maxMax} />
           ))}
 
           {/* ── Methodology note ───────────────────────────────────────── */}
           <div style={{
             marginTop: 20, padding: '14px 16px', borderRadius: 8,
-            background: 'var(--bg-secondary)', border: '1px solid var(--card-border)',
-            fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.7,
+            background: 'var(--bg)', border: '1px solid var(--border)',
+            fontSize: 11, color: 'var(--muted)', lineHeight: 1.7,
           }}>
-            <strong style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>📌 Methodology</strong>
+            <strong style={{ color: '#374151', display: 'block', marginBottom: 4 }}>📌 Methodology</strong>
             Estimates are derived from <strong>AWS public pricing</strong> and industry benchmarks (AWS Well-Architected, Cloud FinOps Foundation).
             {' '}<strong>Waste</strong> = spend occurring now that could be eliminated.
             {' '}<strong>Savings opportunity</strong> = on-demand spend that reserved/committed pricing would reduce by 35–72%.

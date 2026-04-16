@@ -604,7 +604,7 @@ export default function App() {
               Select a run to view results.
             </div>
           ) : page === 'dashboard' ? (
-            <DashboardPage run={run} onNav={p => navigate(p as Page)} />
+            <DashboardPage run={run} onNav={p => navigate(p as Page)} waiverCount={waiverCount} riskCount={riskCount} runCount={runs.length} />
           ) : page === 'findings' ? (
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
