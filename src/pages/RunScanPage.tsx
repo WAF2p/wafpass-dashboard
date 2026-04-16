@@ -1,6 +1,10 @@
 import { useState } from 'react'
+import { getApiBase } from '../api'
 
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+function getServerUrl(): string {
+  const base = getApiBase().trim().replace(/\/$/, '')
+  return base || 'http://localhost:8000'
+}
 
 function CopyBlock({ code, lang = '' }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false)
@@ -50,7 +54,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 }
 
 export default function RunScanPage() {
-  const serverUrl = `${window.location.origin}${API_BASE}`
+  const serverUrl = getServerUrl()
 
   const [path, setPath] = useState('/path/to/terraform')
   const [iac, setIac] = useState('terraform')
@@ -60,7 +64,7 @@ export default function RunScanPage() {
   const pushCmd = [
     'wafpass check \\',
     '  --output json \\',
-    `  --push ${serverUrl} \\`,
+    `  --push ${serverUrl}/runs \\`,
     ...(project ? [`  --project "${project}" \\`] : []),
     ...(iac !== 'terraform' ? [`  --iac ${iac} \\`] : []),
     ...(planFile ? [`  --plan-file ${planFile} \\`] : []),
@@ -108,7 +112,7 @@ export default function RunScanPage() {
             <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
               Point wafpass at your IaC directory and push results to this dashboard:
             </div>
-            <CopyBlock code={`wafpass check --output json --push ${serverUrl} /path/to/terraform`} lang="sh"/>
+            <CopyBlock code={`wafpass check --output json --push ${serverUrl}/runs /path/to/terraform`} lang="sh"/>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
               Results appear in <strong style={{ color: 'var(--text)' }}>Run History</strong> within seconds.
             </div>
@@ -120,7 +124,7 @@ export default function RunScanPage() {
             </div>
             <CopyBlock code={`wafpass check \\
   --output json \\
-  --push ${serverUrl} \\
+  --push ${serverUrl}/runs \\
   --project "my-service" \\
   --branch main \\
   /path/to/terraform`} lang="sh"/>
@@ -132,7 +136,7 @@ export default function RunScanPage() {
     pip install wafpass-core
     wafpass check \\
       --output json \\
-      --push ${serverUrl} \\
+      --push ${serverUrl}/runs \\
       --project "\${{ github.repository }}" \\
       --branch "\${{ github.ref_name }}" \\
       ./terraform`}/>
@@ -236,7 +240,7 @@ curl -X POST ${serverUrl}/runs \\
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.4rem 1rem', fontSize: '0.8rem' }}>
           {[
-            ['--push URL',           'POST results to dashboard server'],
+            ['--push URL',           'POST results to dashboard server — use the /runs endpoint (e.g. http://localhost:8000/runs)'],
             ['--output json',        'Required for --push; outputs structured JSON'],
             ['--project NAME',       'Label this run (shows in sidebar dropdown)'],
             ['--branch NAME',        'Git branch name for the run'],

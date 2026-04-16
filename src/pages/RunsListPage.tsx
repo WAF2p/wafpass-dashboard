@@ -398,7 +398,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   if (runs.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        No runs yet. Run <code>wafpass check --push http://localhost:8000</code> to record your first scan.
+        No runs yet. Run <code>wafpass check --push http://localhost:8000/runs</code> to record your first scan.
       </div>
     )
   }
