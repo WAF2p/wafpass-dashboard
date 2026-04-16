@@ -719,7 +719,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 </button>
               </div>
               <div style={{ marginTop: '0.3rem', fontSize: '0.71rem', color: 'var(--muted)' }}>
-                Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
+                Enter the base URL only — no <code style={{ fontSize: '0.68rem' }}>/runs</code> suffix (e.g. <code style={{ fontSize: '0.68rem' }}>http://localhost:8000</code> when running locally). Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
               </div>
             </div>
 
@@ -743,6 +743,14 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <strong style={{ color: 'var(--text)' }}>
                 {serverUrl.trim() || '(same origin)'}
               </strong>
+            </div>
+
+            <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6, marginTop: '0.25rem' }}>
+              To set a persistent default without rebuilding, add{' '}
+              <code style={{ color: 'var(--waf-brand)', fontSize: '0.68rem' }}>VITE_API_URL=http://localhost:8000</code>{' '}
+              to <code style={{ color: 'var(--text)', fontSize: '0.68rem' }}>.env.local</code>{' '}
+              (copy from <code style={{ color: 'var(--text)', fontSize: '0.68rem' }}>.env.example</code>).
+              The runtime value above takes precedence.
             </div>
           </div>
 

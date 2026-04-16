@@ -28,6 +28,10 @@ Dashboard at `http://localhost:3000`, API at `http://localhost:8000`.
 ### Development server
 
 ```bash
+# Copy and edit the environment file (Vite reads .env.local automatically)
+cp .env.example .env.local
+# Edit .env.local — set VITE_API_URL=http://localhost:8000 to point at a local wafpass-server
+
 npm install
 npm run dev
 ```
@@ -38,13 +42,15 @@ Opens at `http://localhost:5173`. In dev mode, Vite proxies `/runs`, `/controls`
 
 ## Environment variables
 
+Copy `.env.example` to `.env.local` for local development — Vite reads `.env.local` automatically and it is git-ignored by default.
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_API_URL` | `""` (same origin) | Base URL of wafpass-server, e.g. `http://localhost:8000` |
+| `VITE_API_URL` | `""` (same origin) | Base URL of wafpass-server — no trailing slash, no `/runs` suffix, e.g. `http://localhost:8000` |
 
-In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:8000` automatically, so `VITE_API_URL` is only needed for cross-origin setups.
+In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:8000` automatically, so `VITE_API_URL` is only needed for cross-origin or local dev setups.
 
-**Runtime override:** You can also set the server URL at runtime in **Settings → Connection & Real Engine** without rebuilding the image. This is stored in `localStorage` and takes effect immediately.
+**Runtime override:** You can also set the server URL at runtime in **Settings → Connection & Real Engine** without rebuilding the image. This is stored in `localStorage`, takes effect immediately, and takes precedence over `VITE_API_URL`. The default when nothing is configured is `http://localhost:8000`.
 
 ---
 
