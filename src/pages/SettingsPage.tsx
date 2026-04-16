@@ -744,6 +744,14 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 {serverUrl.trim() || '(same origin)'}
               </strong>
             </div>
+
+            <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6, marginTop: '0.25rem' }}>
+              To set a persistent default without rebuilding, add{' '}
+              <code style={{ color: 'var(--waf-brand)', fontSize: '0.68rem' }}>VITE_API_URL=http://localhost:8000</code>{' '}
+              to <code style={{ color: 'var(--text)', fontSize: '0.68rem' }}>.env.local</code>{' '}
+              (copy from <code style={{ color: 'var(--text)', fontSize: '0.68rem' }}>.env.example</code>).
+              The runtime value above takes precedence.
+            </div>
           </div>
 
           {/* Right: real engine guide */}

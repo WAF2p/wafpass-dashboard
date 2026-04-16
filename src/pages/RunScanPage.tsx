@@ -91,6 +91,15 @@ export default function RunScanPage() {
         </div>
       </div>
 
+      {/* Env config hint */}
+      <div style={{ padding: '0.65rem 1rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--text)' }}>Configuring the server URL:</strong>{' '}
+        change it at runtime in <strong style={{ color: 'var(--text)' }}>Settings → Connection & Real Engine</strong>, or set{' '}
+        <code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>VITE_API_URL=http://localhost:8000</code> in{' '}
+        <code style={{ color: 'var(--text)', fontSize: '0.72rem' }}>.env.local</code> before building.
+        See <code style={{ color: 'var(--text)', fontSize: '0.72rem' }}>.env.example</code> in the dashboard repo for all options.
+      </div>
+
       {/* Quick-start */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1.25rem' }}>

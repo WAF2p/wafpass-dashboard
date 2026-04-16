@@ -130,6 +130,20 @@ export function getApiBase(): string {
 
 This is called on every request, so changing the server URL in Settings takes effect immediately without a page reload.
 
+**Fallback chain (highest to lowest priority):**
+1. `localStorage` key `wafpass_server_url` — set via Settings → Connection & Real Engine
+2. `VITE_API_URL` build-time env var — set in `.env.local` (local dev) or Docker build args
+3. Empty string — resolves to same origin (correct for Docker Compose with nginx proxy)
+
+**`.env.example`** (in `wafpass-dashboard/`) documents `VITE_API_URL`. Copy to `.env.local` for local development:
+
+```bash
+cp .env.example .env.local
+# VITE_API_URL=http://localhost:8000
+```
+
+Pages that need the server URL at render time (e.g. `RunScanPage`) call `getApiBase()` directly with a fallback to `http://localhost:8000` when the result is empty.
+
 ### Error handling convention
 
 Functions throw `Error` on non-OK responses. They distinguish `TypeError` (network unreachable — fetch throws synchronously) from HTTP errors (server responded with 4xx/5xx) so pages can show appropriate messages:
