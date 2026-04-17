@@ -337,6 +337,44 @@ export async function sandboxStatus(): Promise<{ engine_available: boolean; cont
   return res.json() as Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }>
 }
 
+// ── Server-side scan ──────────────────────────────────────────────────────────
+
+export interface ScanStatus {
+  enabled: boolean
+  engine_available: boolean
+  controls_dir: string
+  controls_dir_exists: boolean
+  scan_base_dir: string | null
+}
+
+export interface ScanRequest {
+  path: string
+  iac?: string
+  project?: string
+  branch?: string
+  stage?: string
+  triggered_by?: string
+}
+
+export async function fetchScanStatus(): Promise<ScanStatus> {
+  const res = await fetch(`${getApiBase()}/scan/status`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<ScanStatus>
+}
+
+export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
+  const res = await fetch(`${getApiBase()}/scan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<RunSummary>
+}
+
 export async function createCatalogueControl(payload: Omit<CatalogueControl, 'created_at' | 'updated_at'> & { source?: string }): Promise<CatalogueControl> {
   const res = await fetch(`${getApiBase()}/controls`, {
     method: 'POST',
