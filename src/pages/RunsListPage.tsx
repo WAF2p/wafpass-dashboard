@@ -342,7 +342,33 @@ function ScoreBadge({ score }: { score: number }) {
   )
 }
 
-const COL_HEADERS = ['Project', 'Branch', 'Score', 'Framework', 'Triggered by', 'Controls', 'Date']
+const STAGE_COLORS: Record<string, { bg: string; text: string }> = {
+  prod:       { bg: '#fef2f2', text: '#b91c1c' },
+  production: { bg: '#fef2f2', text: '#b91c1c' },
+  staging:    { bg: '#fff7ed', text: '#c2410c' },
+  stage:      { bg: '#fff7ed', text: '#c2410c' },
+  dev:        { bg: '#f0fdf4', text: '#15803d' },
+  development:{ bg: '#f0fdf4', text: '#15803d' },
+  test:       { bg: '#eff6ff', text: '#1d4ed8' },
+  qa:         { bg: '#faf5ff', text: '#7e22ce' },
+}
+
+function StageBadge({ stage }: { stage: string }) {
+  if (!stage) return <span style={{ color: 'var(--muted)' }}>—</span>
+  const colors = STAGE_COLORS[stage.toLowerCase()] ?? { bg: '#f1f5f9', text: '#475569' }
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '0.15rem 0.5rem', borderRadius: '999px',
+      background: colors.bg, color: colors.text,
+      fontWeight: 600, fontSize: '0.75rem', whiteSpace: 'nowrap',
+    }}>
+      {stage}
+    </span>
+  )
+}
+
+const COL_HEADERS = ['Project', 'Branch', 'Stage', 'Score', 'Framework', 'Triggered by', 'Controls', 'Date']
 
 function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void }) {
   return (
@@ -357,6 +383,7 @@ function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void
         {r.git_sha && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>{r.git_sha.slice(0, 7)}</div>}
       </td>
       <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{r.branch || '—'}</td>
+      <td style={{ padding: '0.75rem 1rem' }}><StageBadge stage={r.stage} /></td>
       <td style={{ padding: '0.75rem 1rem' }}><ScoreBadge score={r.score} /></td>
       <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)', fontFamily: 'monospace', fontSize: '0.78rem' }}>{r.iac_framework}</td>
       <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{r.triggered_by}</td>
@@ -394,6 +421,7 @@ function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: stri
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function RunsListPage({ runs, onSelect }: Props) {
   const [viewMode, setViewMode] = useState<'all' | 'project' | 'trend'>('all')
+  const [stageFilter, setStageFilter] = useState('')
 
   if (runs.length === 0) {
     return (
@@ -403,6 +431,16 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     )
   }
 
+  const stages = useMemo(
+    () => [...new Set(runs.map(r => r.stage).filter(Boolean))].sort(),
+    [runs]
+  )
+
+  const filteredRuns = useMemo(
+    () => stageFilter ? runs.filter(r => r.stage === stageFilter) : runs,
+    [runs, stageFilter]
+  )
+
   const btnBase: React.CSSProperties = {
     padding: '0.3rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem',
     fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)',
@@ -411,8 +449,23 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   const btnInactive: React.CSSProperties = { ...btnBase, background: '#fff', color: 'var(--muted)' }
 
   const vm = viewMode as string
+  const stageSelect = stages.length > 0 ? (
+    <>
+      <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
+      <select
+        value={stageFilter} onChange={e => setStageFilter(e.target.value)}
+        className="filter-select" style={{ fontSize: '0.75rem' }}
+      >
+        <option value="">All stages</option>
+        {stages.map(s => <option key={s} value={s}>{s}</option>)}
+      </select>
+    </>
+  ) : null
+
   const toolbar = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)', gap: '0.4rem' }}>
+      {stageSelect}
+      <div style={{ flex: 1 }} />
       <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}>View:</span>
       <button style={vm === 'all'     ? btnActive : btnInactive} onClick={() => setViewMode('all')}>All runs</button>
       <button style={vm === 'project' ? btnActive : btnInactive} onClick={() => setViewMode('project')}>Project</button>
@@ -423,13 +476,25 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   if (viewMode === 'trend') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', alignSelf: 'center', marginRight: '0.35rem' }}>View:</span>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', alignItems: 'center' }}>
+          {stages.length > 0 && (
+            <>
+              <select
+                value={stageFilter} onChange={e => setStageFilter(e.target.value)}
+                className="filter-select" style={{ fontSize: '0.75rem' }}
+              >
+                <option value="">All stages</option>
+                {stages.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
+            </>
+          )}
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}>View:</span>
           <button style={btnInactive} onClick={() => setViewMode('all')}>All runs</button>
           <button style={btnInactive} onClick={() => setViewMode('project')}>Project</button>
           <button style={btnActive}   onClick={() => setViewMode('trend')}>Trend</button>
         </div>
-        <TrendView runs={runs} onSelect={onSelect} />
+        <TrendView runs={filteredRuns} onSelect={onSelect} />
       </div>
     )
   }
@@ -438,14 +503,14 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     return (
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {toolbar}
-        <RunsTable runs={runs} onSelect={onSelect} />
+        <RunsTable runs={filteredRuns} onSelect={onSelect} />
       </div>
     )
   }
 
   // Group by project
   const groupMap = new Map<string, RunSummary[]>()
-  for (const r of runs) {
+  for (const r of filteredRuns) {
     const key = r.project || '(no project)'
     if (!groupMap.has(key)) groupMap.set(key, [])
     groupMap.get(key)!.push(r)

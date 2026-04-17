@@ -30,6 +30,7 @@ export interface RunSummary {
   git_sha: string
   triggered_by: string
   iac_framework: string
+  stage: string
   score: number
   pillar_scores: Record<string, number>
   path: string
@@ -108,11 +109,13 @@ export async function fetchRuns(params?: {
   limit?: number
   offset?: number
   project?: string
+  stage?: string
 }): Promise<RunSummary[]> {
   const url = new URL(`${getApiBase()}/runs`, window.location.origin)
   if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
   if (params?.offset !== undefined) url.searchParams.set('offset', String(params.offset))
   if (params?.project) url.searchParams.set('project', params.project)
+  if (params?.stage) url.searchParams.set('stage', params.stage)
   const res = await fetch(url.toString())
   if (!res.ok) throw new Error(`Failed to fetch runs: ${res.status}`)
   return res.json() as Promise<RunSummary[]>
