@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchRun, fetchRuns, RunDetail, RunSummary } from './api'
+import { hasMinRole, useAuth } from './AuthContext'
+import LoginPage from './pages/LoginPage'
 import RunSelectorModal from './components/RunSelectorModal'
 import PdfReport from './components/PdfReport'
 import ControlsCataloguePage from './pages/ControlsCataloguePage'
@@ -121,6 +123,24 @@ function scoreColor(s: number) {
 }
 
 export default function App() {
+  const { user, role, isLoading, logout } = useAuth()
+
+  // Show nothing while restoring session (avoids flicker to login then dashboard)
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg)' }}>
+        <div className="spinner" />
+      </div>
+    )
+  }
+
+  // Not authenticated — show login page
+  if (!user) return <LoginPage />
+
+  return <AuthenticatedApp user={user} role={role ?? 'clevel'} onLogout={logout} />
+}
+
+function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; display_name: string; role: string }; role: string; onLogout(): Promise<void> }) {
   const [runs, setRuns] = useState<RunSummary[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [run, setRun] = useState<RunDetail | null>(null)
@@ -231,6 +251,9 @@ export default function App() {
   const matMeta = getMaturityMeta(maturityLevel)
 
   // ── Role-based navigation ─────────────────────────────────────────────────
+  // Filter nav sections: a user only sees sections at or below their own role level
+  // (engineer sees all, clevel sees only their own section)
+
   type NavEntry = {
     page: Page; label: string; icon: string
     gate?: boolean; danger?: boolean
@@ -286,6 +309,9 @@ export default function App() {
       ],
     },
   ]
+
+  // Only show sections the user's role has access to
+  const visibleSections = navSections.filter(s => hasMinRole(role, s.id))
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -374,7 +400,7 @@ export default function App() {
 
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '0.5rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '1px' }}>
-          {navSections.map((section, si) => {
+          {visibleSections.map((section, si) => {
             const items = hide ? section.items.filter(i => i.gate === undefined || i.gate) : section.items
             if (items.length === 0) return null
             return (
@@ -463,6 +489,33 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* User widget */}
+        <div style={{ padding: '0.625rem 1rem', borderTop: '1px solid var(--sidebar-border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{
+            width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+            background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.65rem', fontWeight: 700, color: 'var(--waf-brand)',
+          }}>
+            {(user.display_name || user.username).charAt(0).toUpperCase()}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--sidebar-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.display_name || user.username}
+            </div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{role}</div>
+          </div>
+          <button
+            onClick={onLogout}
+            title="Sign out"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sidebar-muted)', padding: '0.2rem', borderRadius: '4px', flexShrink: 0 }}
+          >
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
 
         <div style={{ padding: '0.5rem 1.25rem', borderTop: '1px solid var(--sidebar-border)', fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>
           WAF++ PASS v0.4.0

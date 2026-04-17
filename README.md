@@ -40,6 +40,25 @@ Opens at `http://localhost:5173`. In dev mode, Vite proxies `/runs`, `/controls`
 
 ---
 
+## Authentication
+
+The dashboard requires login. On first visit you will be shown a sign-in form.
+
+The **admin** account is seeded automatically by `wafpass-server` on its first startup — set `WAFPASS_ADMIN_PASSWORD` in the server's `.env` to enable this.
+
+### Roles
+
+| Role | Access |
+|------|--------|
+| `clevel` | Read-only: dashboard, compliance, cost, gap analysis |
+| `ciso` | Above + waivers, risk acceptance, audit log, evidence |
+| `architect` | Above + controls catalogue, exploit paths, blast radius, sandbox |
+| `engineer` | Full access including run scan, findings, secret scanner, user management |
+
+The sidebar automatically hides sections the signed-in user cannot access.
+
+---
+
 ## Environment variables
 
 Copy `.env.example` to `.env.local` for local development — Vite reads `.env.local` automatically and it is git-ignored by default.

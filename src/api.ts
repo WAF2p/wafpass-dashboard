@@ -10,6 +10,18 @@ export function getApiBase(): string {
   return ENV_API_BASE
 }
 
+// ── Auth token helpers ────────────────────────────────────────────────────────
+
+export function getAccessToken(): string | null {
+  try { return localStorage.getItem('wafpass_access_token') } catch { return null }
+}
+
+/** Returns an Authorization header object if a token is stored, else empty object. */
+function _authHeaders(): Record<string, string> {
+  const t = getAccessToken()
+  return t ? { Authorization: `Bearer ${t}` } : {}
+}
+
 export interface Finding {
   check_id: string
   check_title: string
@@ -116,19 +128,19 @@ export async function fetchRuns(params?: {
   if (params?.offset !== undefined) url.searchParams.set('offset', String(params.offset))
   if (params?.project) url.searchParams.set('project', params.project)
   if (params?.stage) url.searchParams.set('stage', params.stage)
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch runs: ${res.status}`)
   return res.json() as Promise<RunSummary[]>
 }
 
 export async function fetchRun(id: string): Promise<RunDetail> {
-  const res = await fetch(`${getApiBase()}/runs/${id}`)
+  const res = await fetch(`${getApiBase()}/runs/${id}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Run not found: ${id}`)
   return res.json() as Promise<RunDetail>
 }
 
 export async function fetchControls(runId: string): Promise<ControlMeta[]> {
-  const res = await fetch(`${getApiBase()}/runs/${runId}/controls`)
+  const res = await fetch(`${getApiBase()}/runs/${runId}/controls`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch controls: ${res.status}`)
   return res.json() as Promise<ControlMeta[]>
 }
@@ -141,7 +153,7 @@ export async function fetchFindings(
   if (filters?.severity) url.searchParams.set('severity', filters.severity)
   if (filters?.pillar) url.searchParams.set('pillar', filters.pillar)
   if (filters?.status) url.searchParams.set('status', filters.status)
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch findings: ${res.status}`)
   return res.json() as Promise<Finding[]>
 }
@@ -189,7 +201,7 @@ export async function fetchCatalogueControls(params?: {
   if (params?.severity) url.searchParams.set('severity', params.severity)
   if (params?.page !== undefined) url.searchParams.set('page', String(params.page))
   if (params?.per_page !== undefined) url.searchParams.set('per_page', String(params.per_page))
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch controls catalogue: ${res.status}`)
   const json = await res.json() as ApiEnvelope<CatalogueControl[]>
   return {
@@ -201,7 +213,7 @@ export async function fetchCatalogueControls(params?: {
 }
 
 export async function fetchCatalogueControl(id: string): Promise<CatalogueControl> {
-  const res = await fetch(`${getApiBase()}/controls/${encodeURIComponent(id)}`)
+  const res = await fetch(`${getApiBase()}/controls/${encodeURIComponent(id)}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Control not found: ${id}`)
   const json = await res.json() as ApiEnvelope<CatalogueControl>
   return json.data
@@ -222,7 +234,7 @@ export interface WaiverRecord {
 export async function fetchWaivers(project?: string): Promise<WaiverRecord[]> {
   const url = new URL(`${getApiBase()}/waivers`, window.location.origin)
   if (project) url.searchParams.set('project', project)
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch waivers: ${res.status}`)
   return res.json() as Promise<WaiverRecord[]>
 }
@@ -230,7 +242,7 @@ export async function fetchWaivers(project?: string): Promise<WaiverRecord[]> {
 export async function upsertWaiver(id: string, payload: Omit<WaiverRecord, 'id' | 'created_at' | 'updated_at'>): Promise<WaiverRecord> {
   const res = await fetch(`${getApiBase()}/waivers/${encodeURIComponent(id)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`Failed to save waiver: ${res.status}`)
@@ -238,7 +250,7 @@ export async function upsertWaiver(id: string, payload: Omit<WaiverRecord, 'id' 
 }
 
 export async function deleteWaiver(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/waivers/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  const res = await fetch(`${getApiBase()}/waivers/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete waiver: ${res.status}`)
 }
 
@@ -265,7 +277,7 @@ export interface RiskRecord {
 export async function fetchRisks(project?: string): Promise<RiskRecord[]> {
   const url = new URL(`${getApiBase()}/risks`, window.location.origin)
   if (project) url.searchParams.set('project', project)
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch risks: ${res.status}`)
   return res.json() as Promise<RiskRecord[]>
 }
@@ -273,7 +285,7 @@ export async function fetchRisks(project?: string): Promise<RiskRecord[]> {
 export async function upsertRisk(id: string, payload: Omit<RiskRecord, 'id' | 'created_at' | 'updated_at'>): Promise<RiskRecord> {
   const res = await fetch(`${getApiBase()}/risks/${encodeURIComponent(id)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`Failed to save risk: ${res.status}`)
@@ -281,7 +293,7 @@ export async function upsertRisk(id: string, payload: Omit<RiskRecord, 'id' | 'c
 }
 
 export async function deleteRisk(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/risks/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  const res = await fetch(`${getApiBase()}/risks/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete risk: ${res.status}`)
 }
 
@@ -321,7 +333,7 @@ export interface SandboxResponse {
 export async function sandboxScan(hcl: string, iac = 'terraform'): Promise<SandboxResponse> {
   const res = await fetch(`${getApiBase()}/sandbox`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify({ hcl, iac }),
   })
   if (!res.ok) {
@@ -332,7 +344,7 @@ export async function sandboxScan(hcl: string, iac = 'terraform'): Promise<Sandb
 }
 
 export async function sandboxStatus(): Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }> {
-  const res = await fetch(`${getApiBase()}/sandbox/status`)
+  const res = await fetch(`${getApiBase()}/sandbox/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }>
 }
@@ -357,7 +369,7 @@ export interface ScanRequest {
 }
 
 export async function fetchScanStatus(): Promise<ScanStatus> {
-  const res = await fetch(`${getApiBase()}/scan/status`)
+  const res = await fetch(`${getApiBase()}/scan/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<ScanStatus>
 }
@@ -365,7 +377,7 @@ export async function fetchScanStatus(): Promise<ScanStatus> {
 export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
   const res = await fetch(`${getApiBase()}/scan`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -378,7 +390,7 @@ export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
 export async function createCatalogueControl(payload: Omit<CatalogueControl, 'created_at' | 'updated_at'> & { source?: string }): Promise<CatalogueControl> {
   const res = await fetch(`${getApiBase()}/controls`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -387,4 +399,90 @@ export async function createCatalogueControl(payload: Omit<CatalogueControl, 'cr
   }
   const json = await res.json() as ApiEnvelope<CatalogueControl>
   return json.data
+}
+
+// ── Authentication API ────────────────────────────────────────────────────────
+
+export interface UserOut {
+  id: string
+  username: string
+  display_name: string
+  role: string
+  auth_provider: string
+  is_active: boolean
+}
+
+export interface LoginResponse {
+  access_token: string
+  refresh_token: string
+  token_type: string
+  user: UserOut
+}
+
+export async function loginUser(username: string, password: string): Promise<LoginResponse> {
+  const res = await fetch(`${getApiBase()}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Login failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Login failed')
+  }
+  return res.json() as Promise<LoginResponse>
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; token_type: string }> {
+  const res = await fetch(`${getApiBase()}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+  if (!res.ok) throw new Error('Token refresh failed')
+  return res.json() as Promise<{ access_token: string; token_type: string }>
+}
+
+export async function logoutUser(refreshToken: string): Promise<void> {
+  await fetch(`${getApiBase()}/auth/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+}
+
+export async function fetchUsers(): Promise<UserOut[]> {
+  const res = await fetch(`${getApiBase()}/auth/users`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<UserOut[]>
+}
+
+export async function createUser(payload: { username: string; password: string; display_name?: string; role?: string }): Promise<UserOut> {
+  const res = await fetch(`${getApiBase()}/auth/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  return res.json() as Promise<UserOut>
+}
+
+export async function updateUser(id: string, payload: { display_name?: string; role?: string; is_active?: boolean; password?: string }): Promise<UserOut> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Update failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Update failed')
+  }
+  return res.json() as Promise<UserOut>
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }

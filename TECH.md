@@ -23,14 +23,15 @@ No state management library (no Redux, no Zustand). No CSS framework. No compone
 
 ```
 src/
-├── main.tsx              # ReactDOM.createRoot, mounts App
+├── main.tsx              # ReactDOM.createRoot, wraps App in <AuthProvider>
 ├── index.css             # Global CSS custom properties + utility classes
-├── App.tsx               # Root: routing, sidebar, header, page dispatch
-├── api.ts                # All fetch() calls + TypeScript interfaces
+├── App.tsx               # Root: auth guard, routing, sidebar, header, page dispatch
+├── AuthContext.tsx        # Token storage, login/logout/refresh, useAuth() hook
+├── api.ts                # All fetch() calls + TypeScript interfaces (auth-gated)
 ├── audit.ts              # localStorage audit log + first-seen tracking
 ├── controls-data.ts      # Hardcoded metadata for all 73 controls
 ├── region-data.ts        # Cloud region coordinates and metadata
-├── pages/                # One file per page (27 pages)
+├── pages/                # One file per page (28 pages, incl. LoginPage)
 └── components/
     ├── RunSelectorModal.tsx   # Run picker modal
     └── PdfReport.tsx          # Print-to-PDF report layout
@@ -77,9 +78,77 @@ On mount, `parseHash().runId` is captured in `initialHashRunId` (a `useRef`). Af
 
 ---
 
+## Authentication (`AuthContext.tsx`)
+
+### Token flow
+
+```
+LoginPage
+    │  login(username, password)
+    ▼
+api.ts: POST /auth/login
+    │
+    │  {access_token, refresh_token, user}
+    ▼
+AuthContext
+    ├─ localStorage.setItem('wafpass_access_token', ...)
+    ├─ localStorage.setItem('wafpass_refresh_token', ...)
+    ├─ localStorage.setItem('wafpass_auth_user', JSON.stringify(user))
+    └─ setState({ user, accessToken, role })
+
+App.tsx checks: if (!user) → <LoginPage />
+               else       → <AuthenticatedApp />
+```
+
+### On-mount session restore
+
+1. Read `wafpass_access_token` from localStorage
+2. Decode the JWT payload (`atob(token.split('.')[1])`) — check `exp`
+3. If valid → restore session immediately (no network round-trip)
+4. If expired but `wafpass_refresh_token` exists → `POST /auth/refresh` → store new access token
+5. If refresh fails → clear all tokens → show LoginPage
+
+### `useAuth()` hook
+
+```typescript
+const { user, role, accessToken, isLoading, login, logout } = useAuth()
+```
+
+### Role-filtered nav
+
+`App.tsx` computes `visibleSections` by filtering `navSections` with:
+
+```typescript
+const visibleSections = navSections.filter(s => hasMinRole(role, s.id))
+```
+
+`hasMinRole(userRole, minimum)` returns true when `ROLE_HIERARCHY.indexOf(userRole) >= ROLE_HIERARCHY.indexOf(minimum)`. Section IDs (`clevel`, `ciso`, `architect`, `engineer`) map directly to the role names so no separate mapping is needed.
+
+| User role | Visible sections |
+|---|---|
+| `clevel` | C-Level only |
+| `ciso` | C-Level, CISO |
+| `architect` | C-Level, CISO, Architect |
+| `engineer` | All sections |
+
+### Auth headers in api.ts
+
+Every `fetch()` call in `api.ts` passes `_authHeaders()`:
+
+```typescript
+function _authHeaders(): Record<string, string> {
+  const t = localStorage.getItem('wafpass_access_token')
+  return t ? { Authorization: `Bearer ${t}` } : {}
+}
+```
+
+This reads directly from localStorage rather than React state so it works outside component render cycles (e.g. in event handlers and `useEffect`).
+
+---
+
 ## State management
 
-All state lives in `App.tsx` and is passed down as props. There is no context API or shared store.
+All state lives in `App.tsx` and is passed down as props. Auth state lives in `AuthContext` (React context).
 
 ### App-level state
 
@@ -317,6 +386,10 @@ The nginx config (`nginx.conf`) proxies API paths to `wafpass-server:8000` (Dock
 ---
 
 ## Technical debt
+
+### 401 not automatically handled
+
+When a server returns 401 (expired token, not refreshed), api.ts throws `Error('HTTP 401')`. The page shows an error message but doesn't redirect to login. A centralised 401 interceptor (e.g. `authedFetch()` wrapper that calls `AuthContext.logout()` on 401) would improve the UX, but requires injecting the React context into api.ts — deferred to Phase 2.
 
 ### No tests
 

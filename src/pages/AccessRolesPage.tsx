@@ -1,7 +1,9 @@
 /**
- * Access & Roles — role-based navigation model and planned auth integrations.
- * Layout mirrors the compact full-width grid used by the rest of the dashboard.
+ * Access & Roles — role definitions, auth provider roadmap, and admin user management.
  */
+import { useEffect, useState } from 'react'
+import { useAuth } from '../AuthContext'
+import { fetchUsers, createUser, updateUser, deleteUser, type UserOut } from '../api'
 
 // ── Role definitions ──────────────────────────────────────────────────────────
 
@@ -104,7 +106,30 @@ const ROLES = [
       { name: 'Run History',        note: 'All recorded runs with stage & branch' },
       { name: 'Run Comparison',     note: 'Finding-level diff between runs' },
     ],
-    restriction: 'Cannot approve risk acceptances or generate evidence packages.',
+    restriction: 'Cannot approve risk acceptances or manage users.',
+  },
+  {
+    id: 'admin',
+    label: 'Admin',
+    subtitle: 'System Administrator',
+    color: '#DA2C38',
+    bg: 'rgba(218,44,56,0.08)',
+    border: 'rgba(218,44,56,0.30)',
+    access: 'Full Access',
+    accessColor: '#DA2C38',
+    icon: (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+        <path d="M16 11l1.5 1.5L21 9" />
+      </svg>
+    ),
+    description: 'Full system access plus user lifecycle management. Exclusive right to create accounts, reset passwords, assign any role, and grant or revoke admin privileges.',
+    pages: [
+      { name: 'All pages',        note: 'Inherits full engineer access' },
+      { name: 'User Management',  note: 'Create, edit, activate/deactivate, delete users' },
+      { name: 'Role Assignment',  note: 'Exclusive right to grant the admin role' },
+    ],
+    restriction: 'Only admins can modify other admin accounts.',
   },
 ]
 
@@ -162,17 +187,349 @@ const AUTH_PROVIDERS = [
 // ── Implementation notes ──────────────────────────────────────────────────────
 
 const IMPL_NOTES = [
-  { label: 'Role claim source',     body: 'Roles come from the IdP — JWT claim, LDAP group, or SAML attribute. Mapping from IdP group to WAF++ role is configured server-side and requires no frontend deploy to change.' },
+  { label: 'Current state',         body: 'Phase 1 live — local JWT authentication with bcrypt passwords. Roles are enforced on every API request by wafpass-server. The dashboard sidebar adapts to the signed-in user\'s role.' },
+  { label: 'Role claim source',     body: 'In Phase 1 roles are stored in the users table. In future LDAP/OIDC phases, roles will come from the IdP — JWT claim, LDAP group, or SAML attribute — mapped server-side.' },
   { label: 'Enforcement boundary',  body: 'wafpass-server enforces roles via middleware on every request. The dashboard reflects roles returned by the server after token exchange — no role logic lives in the frontend.' },
-  { label: 'Session model',         body: 'Short-lived JWT access tokens (15 min) with silent refresh. Tokens are stored in memory only — not localStorage — to reduce XSS exposure.' },
+  { label: 'Session model',         body: 'Short-lived JWT access tokens (60 min default) with silent refresh via a long-lived refresh token. Both stored in localStorage for session persistence across page reloads.' },
   { label: 'Multi-provider',        body: 'One primary provider per deployment, configured via environment variables. Provider federation (e.g. Entra ID + Keycloak in parallel) is out of scope for v1.' },
-  { label: 'Service accounts',      body: 'CI/CD pipelines use client credentials grant or API keys scoped to the Engineer role, bypassing the interactive browser login flow entirely.' },
-  { label: 'Current state',         body: 'Authentication is not enforced yet. All pages are visible to everyone. This page is the living spec the future login implementation targets.' },
+  { label: 'Service accounts',      body: 'CI/CD pipelines use the X-Api-Key header (set WAFPASS_API_KEY on the server), bypassing the interactive browser login flow entirely.' },
 ]
+
+// ── Role badge colours ────────────────────────────────────────────────────────
+
+const ROLE_COLOR: Record<string, { bg: string; text: string; border: string }> = {
+  admin:    { bg: 'rgba(218,44,56,0.15)',   text: '#DA2C38', border: 'rgba(218,44,56,0.35)' },
+  engineer: { bg: 'rgba(34,197,94,0.12)',   text: '#16a34a', border: 'rgba(34,197,94,0.30)' },
+  architect:{ bg: 'rgba(139,92,246,0.12)',  text: '#7c3aed', border: 'rgba(139,92,246,0.30)' },
+  ciso:     { bg: 'rgba(0,148,255,0.12)',   text: '#0094ff', border: 'rgba(0,148,255,0.30)' },
+  clevel:   { bg: 'rgba(245,158,11,0.12)',  text: '#b45309', border: 'rgba(245,158,11,0.30)' },
+}
+
+function RoleBadge({ role }: { role: string }) {
+  const c = ROLE_COLOR[role] ?? { bg: 'rgba(100,116,139,.1)', text: '#64748b', border: 'rgba(100,116,139,.2)' }
+  return (
+    <span style={{
+      display: 'inline-flex', padding: '0.1rem 0.5rem', borderRadius: '999px',
+      background: c.bg, color: c.text, border: `1px solid ${c.border}`,
+      fontWeight: 700, fontSize: '0.68rem', whiteSpace: 'nowrap',
+    }}>
+      {role}
+    </span>
+  )
+}
+
+// ── User management (admin only) ──────────────────────────────────────────────
+
+const ALL_ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
+
+interface UserFormState {
+  username: string
+  display_name: string
+  role: string
+  password: string
+  is_active: boolean
+}
+
+const EMPTY_FORM: UserFormState = { username: '', display_name: '', role: 'engineer', password: '', is_active: true }
+
+function UserManagement({ currentUserId }: { currentUserId: string }) {
+  const [users, setUsers]       = useState<UserOut[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState<string | null>(null)
+  const [editId, setEditId]     = useState<string | null>(null)   // null = create mode
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm]         = useState<UserFormState>(EMPTY_FORM)
+  const [saving, setSaving]     = useState(false)
+  const [saveErr, setSaveErr]   = useState<string | null>(null)
+
+  function loadUsers() {
+    setLoading(true)
+    fetchUsers()
+      .then(setUsers)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { loadUsers() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function openCreate() {
+    setEditId(null)
+    setForm(EMPTY_FORM)
+    setSaveErr(null)
+    setShowForm(true)
+  }
+
+  function openEdit(u: UserOut) {
+    setEditId(u.id)
+    setForm({ username: u.username, display_name: u.display_name, role: u.role, password: '', is_active: u.is_active })
+    setSaveErr(null)
+    setShowForm(true)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setSaveErr(null)
+    try {
+      if (editId) {
+        const payload: { display_name?: string; role?: string; is_active?: boolean; password?: string } = {
+          display_name: form.display_name,
+          role: form.role,
+          is_active: form.is_active,
+        }
+        if (form.password) payload.password = form.password
+        await updateUser(editId, payload)
+      } else {
+        await createUser({ username: form.username, password: form.password, display_name: form.display_name, role: form.role })
+      }
+      setShowForm(false)
+      loadUsers()
+    } catch (e) {
+      setSaveErr((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete(u: UserOut) {
+    if (!confirm(`Delete user "${u.username}"? This cannot be undone.`)) return
+    try {
+      await deleteUser(u.id)
+      loadUsers()
+    } catch (e) {
+      alert((e as Error).message)
+    }
+  }
+
+  async function handleToggleActive(u: UserOut) {
+    try {
+      await updateUser(u.id, { is_active: !u.is_active })
+      loadUsers()
+    } catch (e) {
+      alert((e as Error).message)
+    }
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '0.4rem 0.6rem', borderRadius: '7px',
+    border: '1px solid var(--border)', background: 'var(--bg)',
+    color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box',
+  }
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)',
+    textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem',
+    display: 'block',
+  }
+
+  return (
+    <section>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+          User Management
+        </div>
+        <button
+          onClick={openCreate}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.35rem',
+            padding: '0.3rem 0.7rem', borderRadius: '7px',
+            background: 'var(--waf-brand)', color: '#fff',
+            border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
+          }}
+        >
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+          New User
+        </button>
+      </div>
+
+      {/* Create / Edit form */}
+      {showForm && (
+        <div className="card" style={{ padding: '1rem', marginBottom: '0.75rem', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem' }}>
+            {editId ? 'Edit User' : 'Create New User'}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            {!editId && (
+              <div>
+                <label style={labelStyle}>Username *</label>
+                <input
+                  style={inputStyle}
+                  value={form.username}
+                  onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                  autoComplete="off"
+                  placeholder="jdoe"
+                />
+              </div>
+            )}
+            <div>
+              <label style={labelStyle}>Display Name</label>
+              <input
+                style={inputStyle}
+                value={form.display_name}
+                onChange={e => setForm(f => ({ ...f, display_name: e.target.value }))}
+                placeholder="Jane Doe"
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Role</label>
+              <select
+                style={{ ...inputStyle, cursor: 'pointer' }}
+                value={form.role}
+                onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+              >
+                {ALL_ROLES.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>{editId ? 'New Password (leave blank to keep)' : 'Password *'}</label>
+              <input
+                style={inputStyle}
+                type="password"
+                value={form.password}
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                autoComplete="new-password"
+                placeholder={editId ? '••••••••' : 'min. 8 characters'}
+              />
+            </div>
+            {editId && (
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                <label style={labelStyle}>Active</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.82rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.is_active}
+                    onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
+                  />
+                  Account active
+                </label>
+              </div>
+            )}
+          </div>
+          {saveErr && (
+            <div style={{ fontSize: '0.78rem', color: '#f87171', marginBottom: '0.5rem', padding: '0.4rem 0.6rem', background: 'rgba(248,113,113,.08)', borderRadius: '6px', border: '1px solid rgba(248,113,113,.2)' }}>
+              {saveErr}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={handleSave}
+              disabled={saving || (!editId && (!form.username || !form.password))}
+              style={{
+                padding: '0.35rem 0.875rem', borderRadius: '7px',
+                background: saving ? 'rgba(0,148,255,.4)' : 'var(--waf-brand)', color: '#fff',
+                border: 'none', cursor: saving ? 'default' : 'pointer', fontSize: '0.8rem', fontWeight: 600,
+              }}
+            >
+              {saving ? 'Saving…' : (editId ? 'Save Changes' : 'Create User')}
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              style={{
+                padding: '0.35rem 0.875rem', borderRadius: '7px',
+                background: 'transparent', color: 'var(--muted)',
+                border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.8rem',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        {loading ? (
+          <div style={{ padding: '2rem', textAlign: 'center' }}><div className="spinner" /></div>
+        ) : error ? (
+          <div style={{ padding: '1rem', color: '#f87171', fontSize: '0.82rem' }}>{error}</div>
+        ) : users.length === 0 ? (
+          <div style={{ padding: '1rem', color: 'var(--muted)', fontSize: '0.82rem' }}>No users found.</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+            <thead>
+              <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
+                {['Username', 'Display Name', 'Role', 'Provider', 'Status', ''].map(h => (
+                  <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u, i) => (
+                <tr key={u.id} style={{ borderBottom: i < users.length - 1 ? '1px solid var(--border)' : undefined, opacity: u.is_active ? 1 : 0.5 }}>
+                  <td style={{ padding: '0.55rem 0.875rem', fontWeight: 600, color: 'var(--text)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{
+                        width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
+                        background: 'rgba(0,148,255,.12)', border: '1px solid rgba(0,148,255,.2)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.62rem', fontWeight: 700, color: 'var(--waf-brand)',
+                      }}>
+                        {(u.display_name || u.username).charAt(0).toUpperCase()}
+                      </div>
+                      {u.username}
+                      {u.id === currentUserId && (
+                        <span style={{ fontSize: '0.62rem', color: 'var(--muted)', background: 'rgba(100,116,139,.1)', padding: '0.1rem 0.4rem', borderRadius: '999px' }}>you</span>
+                      )}
+                    </div>
+                  </td>
+                  <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)' }}>{u.display_name || '—'}</td>
+                  <td style={{ padding: '0.55rem 0.875rem' }}><RoleBadge role={u.role} /></td>
+                  <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', fontSize: '0.75rem' }}>{u.auth_provider}</td>
+                  <td style={{ padding: '0.55rem 0.875rem' }}>
+                    <span style={{
+                      display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
+                      background: u.is_active ? 'rgba(34,197,94,.12)' : 'rgba(100,116,139,.1)',
+                      color: u.is_active ? '#16a34a' : '#64748b',
+                      fontWeight: 600, fontSize: '0.68rem',
+                    }}>
+                      {u.is_active ? 'active' : 'inactive'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.55rem 0.875rem' }}>
+                    {u.id !== currentUserId && (
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        <button
+                          onClick={() => openEdit(u)}
+                          title="Edit"
+                          style={{ padding: '0.25rem 0.55rem', borderRadius: '6px', background: 'rgba(0,148,255,.1)', color: '#0094ff', border: '1px solid rgba(0,148,255,.2)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(u)}
+                          title={u.is_active ? 'Deactivate' : 'Activate'}
+                          style={{ padding: '0.25rem 0.55rem', borderRadius: '6px', background: u.is_active ? 'rgba(245,158,11,.1)' : 'rgba(34,197,94,.1)', color: u.is_active ? '#b45309' : '#16a34a', border: `1px solid ${u.is_active ? 'rgba(245,158,11,.25)' : 'rgba(34,197,94,.25)'}`, cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
+                        >
+                          {u.is_active ? 'Disable' : 'Enable'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(u)}
+                          title="Delete"
+                          style={{ padding: '0.25rem 0.55rem', borderRadius: '6px', background: 'rgba(218,44,56,.08)', color: '#DA2C38', border: '1px solid rgba(218,44,56,.2)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </section>
+  )
+}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AccessRolesPage() {
+  const { role, user } = useAuth()
+  const isAdmin = role === 'admin'
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
@@ -180,42 +537,46 @@ export default function AccessRolesPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.875rem',
         padding: '0.875rem 1.1rem', borderRadius: '10px',
-        background: 'linear-gradient(135deg, rgba(0,148,255,0.07) 0%, rgba(139,92,246,0.05) 100%)',
-        border: '1px solid rgba(0,148,255,0.22)',
+        background: 'linear-gradient(135deg, rgba(34,197,94,0.07) 0%, rgba(0,148,255,0.05) 100%)',
+        border: '1px solid rgba(34,197,94,0.22)',
       }}>
         <div style={{
           flexShrink: 0, width: '32px', height: '32px', borderRadius: '8px',
-          background: 'rgba(0,148,255,0.12)', border: '1px solid rgba(0,148,255,0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0094ff',
+          background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a',
         }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
           </svg>
         </div>
         <div style={{ flex: 1 }}>
           <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
-            Role-based access — currently informational.{' '}
+            Phase 1 authentication active.{' '}
           </span>
           <span style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-            Navigation is already organised by role. Authentication and access enforcement are on the roadmap. All pages are currently visible to everyone — this page is the living spec for the future login implementation.
+            Local JWT auth is live. Roles are enforced on every API request. Entra ID, LDAP, and Keycloak support planned for future phases.
           </span>
         </div>
         <span style={{
           flexShrink: 0, display: 'inline-flex', alignItems: 'center',
           padding: '0.18rem 0.65rem', borderRadius: '999px',
-          background: 'rgba(100,116,139,0.12)', color: '#64748b',
+          background: 'rgba(34,197,94,0.12)', color: '#16a34a',
           fontWeight: 600, fontSize: '0.7rem', whiteSpace: 'nowrap',
+          border: '1px solid rgba(34,197,94,0.25)',
         }}>
-          Auth: Roadmap
+          Auth: Phase 1 Live
         </span>
       </div>
+
+      {/* ── User Management (admin only) ───────────────────────────────────── */}
+      {isAdmin && user && <UserManagement currentUserId={user.id} />}
 
       {/* ── Roles & Navigation Access ──────────────────────────────────────── */}
       <section>
         <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
           Roles &amp; Navigation Access
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.75rem' }}>
           {ROLES.map(role => (
             <div key={role.id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
