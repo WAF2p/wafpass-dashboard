@@ -410,6 +410,9 @@ export interface UserOut {
   role: string
   auth_provider: string
   is_active: boolean
+  last_login_at: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface LoginResponse {
@@ -485,4 +488,76 @@ export async function updateUser(id: string, payload: { display_name?: string; r
 export async function deleteUser(id: string): Promise<void> {
   const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+export interface UserAuditLogEntry {
+  id: string
+  actor_id: string | null
+  action: string
+  detail: Record<string, unknown>
+  ip: string
+  timestamp: string
+}
+
+export async function fetchUserLogs(userId: string, limit = 100): Promise<UserAuditLogEntry[]> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(userId)}/logs?limit=${limit}`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<UserAuditLogEntry[]>
+}
+
+// ── API key management ────────────────────────────────────────────────────────
+
+export interface ApiKeyOut {
+  id: string
+  name: string
+  key_prefix: string
+  created_by: string | null
+  is_active: boolean
+  created_at: string
+  last_used_at: string | null
+}
+
+export interface ApiKeyCreateResponse extends ApiKeyOut {
+  raw_key: string
+}
+
+export async function fetchApiKeys(): Promise<ApiKeyOut[]> {
+  const res = await fetch(`${getApiBase()}/auth/api-keys`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<ApiKeyOut[]>
+}
+
+export async function createApiKey(name: string): Promise<ApiKeyCreateResponse> {
+  const res = await fetch(`${getApiBase()}/auth/api-keys`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  return res.json() as Promise<ApiKeyCreateResponse>
+}
+
+export async function revokeApiKey(id: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/auth/api-keys/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+export interface ApiKeyUsageLogEntry {
+  id: string
+  used_at: string
+  endpoint: string
+  run_id: string | null
+  project: string
+  branch: string
+  score: number | null
+  ip: string
+}
+
+export async function fetchApiKeyLogs(keyId: string, limit = 50): Promise<ApiKeyUsageLogEntry[]> {
+  const res = await fetch(`${getApiBase()}/auth/api-keys/${encodeURIComponent(keyId)}/logs?limit=${limit}`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<ApiKeyUsageLogEntry[]>
 }

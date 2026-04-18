@@ -33,12 +33,14 @@ import AuditLogPage from './pages/AuditLogPage'
 import GapAnalysisPage from './pages/GapAnalysisPage'
 import CostImpactPage from './pages/CostImpactPage'
 import AccessRolesPage from './pages/AccessRolesPage'
+import UserManagementPage from './pages/UserManagementPage'
+import ApiManagementPage from './pages/ApiManagementPage'
 
 const ALL_PAGES = [
   'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
-  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access',
+  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys',
 ] as const
 type Page = typeof ALL_PAGES[number]
 const PAGE_SET = new Set<string>(ALL_PAGES)
@@ -87,6 +89,8 @@ const PAGE_TITLE: Record<Page, string> = {
   feedback:    'Feedback',
   skipped:     'Skipped Controls',
   access:      'Access & Roles',
+  users:       'User Management',
+  apikeys:     'API Key Management',
 }
 
 const PAGE_SUBTITLE: Record<Page, string> = {
@@ -116,6 +120,8 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   feedback:    'Share your thoughts with the WAF++ team — we read every message',
   skipped:     'Controls skipped by the engine, waived, or risk-accepted — review your coverage gaps',
   access:      'Role definitions, page-level access model, and planned authentication integrations (Entra ID, Local DC, Keycloak)',
+  users:       'Create, edit, activate/deactivate, and delete user accounts',
+  apikeys:     'Generate and revoke API keys for CI/CD pipelines and service accounts',
 }
 
 function scoreColor(s: number) {
@@ -455,6 +461,23 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
             Access &amp; Roles
           </button>
 
+          {role === 'admin' && (
+            <>
+              <button onClick={() => navigate('users')} className={`sidebar-link${page === 'users' ? ' active' : ''}`}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Users
+              </button>
+              <button onClick={() => navigate('apikeys')} className={`sidebar-link${page === 'apikeys' ? ' active' : ''}`}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                API Keys
+              </button>
+            </>
+          )}
+
           <button onClick={() => navigate('settings')} className={`sidebar-link${page === 'settings' ? ' active' : ''}`}>
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -592,7 +615,11 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
 
         {/* Page content */}
         <main style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
-          {page === 'access' ? (
+          {page === 'users' ? (
+            <UserManagementPage />
+          ) : page === 'apikeys' ? (
+            <ApiManagementPage />
+          ) : page === 'access' ? (
             <AccessRolesPage />
           ) : page === 'feedback' ? (
             <FeedbackPage />
