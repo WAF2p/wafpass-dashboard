@@ -666,6 +666,76 @@ export async function updateGroupMapping(id: string, payload: Partial<GroupRoleM
   return res.json() as Promise<GroupRoleMappingOut>
 }
 
+// ── Evidence Locker API ───────────────────────────────────────────────────────
+
+export interface EvidenceOut {
+  id: string
+  run_id: string
+  title: string
+  note: string
+  project: string
+  prepared_by: string
+  organization: string
+  audit_period: string
+  frameworks: string[]
+  hash_digest: string
+  public_token: string
+  locked_by: string | null
+  created_at: string | null
+}
+
+export interface EvidenceCreate {
+  run_id: string
+  title?: string
+  note?: string
+  prepared_by?: string
+  organization?: string
+  audit_period?: string
+  frameworks?: string[]
+  snapshot: Record<string, unknown>
+  report_html?: string | null
+}
+
+export async function fetchEvidence(project?: string): Promise<EvidenceOut[]> {
+  const url = new URL(`${getApiBase()}/evidence`, window.location.origin)
+  if (project) url.searchParams.set('project', project)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<EvidenceOut[]>
+}
+
+export async function createEvidence(payload: EvidenceCreate): Promise<EvidenceOut> {
+  const res = await fetch(`${getApiBase()}/evidence`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Lock failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Lock failed')
+  }
+  return res.json() as Promise<EvidenceOut>
+}
+
+export async function deleteEvidence(id: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/evidence/${encodeURIComponent(id)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+export function getEvidenceQrUrl(id: string): string {
+  return `${getApiBase()}/evidence/${encodeURIComponent(id)}/qr.svg`
+}
+
+export function getEvidenceReportUrl(id: string): string {
+  return `${getApiBase()}/evidence/${encodeURIComponent(id)}/report.html`
+}
+
+export function getEvidencePublicUrl(token: string): string {
+  return `${getApiBase()}/evidence/p/${encodeURIComponent(token)}`
+}
+
 export async function deleteGroupMapping(id: string): Promise<void> {
   const res = await fetch(`${getApiBase()}/sso/group-mappings/${encodeURIComponent(id)}`, {
     method: 'DELETE', headers: _authHeaders(),
