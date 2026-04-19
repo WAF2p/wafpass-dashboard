@@ -35,12 +35,14 @@ import CostImpactPage from './pages/CostImpactPage'
 import AccessRolesPage from './pages/AccessRolesPage'
 import UserManagementPage from './pages/UserManagementPage'
 import ApiManagementPage from './pages/ApiManagementPage'
+import SsoSettingsPage from './pages/SsoSettingsPage'
+import GroupMappingsPage from './pages/GroupMappingsPage'
 
 const ALL_PAGES = [
   'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
-  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys',
+  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings',
 ] as const
 type Page = typeof ALL_PAGES[number]
 const PAGE_SET = new Set<string>(ALL_PAGES)
@@ -90,7 +92,9 @@ const PAGE_TITLE: Record<Page, string> = {
   skipped:     'Skipped Controls',
   access:      'Access & Roles',
   users:       'User Management',
-  apikeys:     'API Key Management',
+  apikeys:       'API Key Management',
+  sso:           'SSO Settings',
+  groupmappings: 'Group → Role Mappings',
 }
 
 const PAGE_SUBTITLE: Record<Page, string> = {
@@ -119,9 +123,11 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   risk:        'Formally accept or mitigate risks — with approver, expiry and traceability',
   feedback:    'Share your thoughts with the WAF++ team — we read every message',
   skipped:     'Controls skipped by the engine, waived, or risk-accepted — review your coverage gaps',
-  access:      'Role definitions, page-level access model, and planned authentication integrations (Entra ID, Local DC, Keycloak)',
+  access:      'Role definitions and page-level access model',
   users:       'Create, edit, activate/deactivate, and delete user accounts',
-  apikeys:     'Generate and revoke API keys for CI/CD pipelines and service accounts',
+  apikeys:       'Generate and revoke API keys for CI/CD pipelines and service accounts',
+  sso:           'Configure OIDC and SAML2 single sign-on for your organisation',
+  groupmappings: 'Map IdP group memberships to WAF++ roles — evaluated first during SSO login',
 }
 
 function scoreColor(s: number) {
@@ -469,11 +475,23 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
                 </svg>
                 Users
               </button>
+              <button onClick={() => navigate('groupmappings')} className={`sidebar-link${page === 'groupmappings' ? ' active' : ''}`}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                Group Mappings
+              </button>
               <button onClick={() => navigate('apikeys')} className={`sidebar-link${page === 'apikeys' ? ' active' : ''}`}>
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
                 API Keys
+              </button>
+              <button onClick={() => navigate('sso')} className={`sidebar-link${page === 'sso' ? ' active' : ''}`}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                SSO Settings
               </button>
             </>
           )}
@@ -617,8 +635,12 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
         <main style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
           {page === 'users' ? (
             <UserManagementPage />
+          ) : page === 'groupmappings' ? (
+            <GroupMappingsPage />
           ) : page === 'apikeys' ? (
             <ApiManagementPage />
+          ) : page === 'sso' ? (
+            <SsoSettingsPage />
           ) : page === 'access' ? (
             <AccessRolesPage />
           ) : page === 'feedback' ? (

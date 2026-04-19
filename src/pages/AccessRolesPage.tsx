@@ -126,6 +126,8 @@ const ROLES = [
     pages: [
       { name: 'All pages',        note: 'Inherits full engineer access' },
       { name: 'User Management',  note: 'Create, edit, activate/deactivate, delete users' },
+      { name: 'API Keys',         note: 'Generate and revoke CI/CD service keys' },
+      { name: 'SSO Settings',     note: 'Configure OIDC and SAML2 providers' },
       { name: 'Role Assignment',  note: 'Exclusive right to grant the admin role' },
     ],
     restriction: 'Only admins can modify other admin accounts.',
@@ -136,24 +138,66 @@ const ROLES = [
 
 const AUTH_PROVIDERS = [
   {
-    id: 'entraid',
-    label: 'Microsoft Entra ID',
-    sublabel: 'Azure AD · Microsoft 365',
-    color: '#0078d4',
-    bg: 'rgba(0,120,212,0.08)',
-    border: 'rgba(0,120,212,0.25)',
+    id: 'local',
+    label: 'Local accounts',
+    sublabel: 'Username + bcrypt password',
+    status: 'live' as const,
+    statusLabel: 'Live',
+    statusColor: '#22c55e',
+    color: '#22c55e',
+    bg: 'rgba(34,197,94,0.08)',
+    border: 'rgba(34,197,94,0.25)',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+    protocol: 'Local · JWT',
+    notes: ['Admin-created accounts stored in the users table', 'bcrypt password hashing with configurable rounds', 'Always available alongside any SSO provider'],
+  },
+  {
+    id: 'oidc',
+    label: 'OpenID Connect',
+    sublabel: 'Entra ID · Keycloak · Okta · Auth0 · Google',
+    status: 'live' as const,
+    statusLabel: 'Live',
+    statusColor: '#22c55e',
+    color: '#0094ff',
+    bg: 'rgba(0,148,255,0.08)',
+    border: 'rgba(0,148,255,0.25)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
       </svg>
     ),
     protocol: 'OAuth 2.0 · OIDC',
-    notes: ['Group → role mapping via tenant config', 'MFA & Conditional Access support', 'Service principal for CI/CD pipelines'],
+    notes: ['Authorization Code flow with discovery endpoint', 'JWT claim → WAF++ role mapping (configurable)', 'Auto-provisioning of new users on first login'],
   },
   {
-    id: 'localdc',
+    id: 'saml2',
+    label: 'SAML 2.0',
+    sublabel: 'ADFS · Keycloak · Azure AD · Okta · any SAML IdP',
+    status: 'live' as const,
+    statusLabel: 'Live',
+    statusColor: '#22c55e',
+    color: '#8b5cf6',
+    bg: 'rgba(139,92,246,0.08)',
+    border: 'rgba(139,92,246,0.25)',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
+    protocol: 'SAML 2.0',
+    notes: ['HTTP-Redirect binding for AuthnRequests', 'SAML attribute → WAF++ role mapping (configurable)', 'SP metadata endpoint for IdP registration'],
+  },
+  {
+    id: 'ldap',
     label: 'Local Domain Controller',
     sublabel: 'Active Directory · LDAP / Kerberos',
+    status: 'roadmap' as const,
+    statusLabel: 'Roadmap',
+    statusColor: '#64748b',
     color: '#475569',
     bg: 'rgba(71,85,105,0.08)',
     border: 'rgba(71,85,105,0.25)',
@@ -166,31 +210,17 @@ const AUTH_PROVIDERS = [
     protocol: 'LDAPS · Kerberos',
     notes: ['LDAP over TLS with certificate pinning', 'AD security group → role mapping', 'Kerberos pass-through for domain clients'],
   },
-  {
-    id: 'keycloak',
-    label: 'Keycloak',
-    sublabel: 'Self-hosted OIDC / SAML Identity Provider',
-    color: '#4a90d9',
-    bg: 'rgba(74,144,217,0.08)',
-    border: 'rgba(74,144,217,0.25)',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2l10 6v8l-10 6L2 16V8l10-6z" /><circle cx="12" cy="12" r="3" />
-      </svg>
-    ),
-    protocol: 'OIDC · SAML 2.0',
-    notes: ['Realm role → WAF++ role via JWT claims', 'SAML 2.0 fallback for legacy IdP federations', 'Client credentials for service accounts'],
-  },
 ]
 
 // ── Implementation notes ──────────────────────────────────────────────────────
 
 const IMPL_NOTES = [
-  { label: 'Current state',         body: 'Phase 1 live — local JWT authentication with bcrypt passwords. Roles are enforced on every API request by wafpass-server. The dashboard sidebar adapts to the signed-in user\'s role.' },
-  { label: 'Role claim source',     body: 'In Phase 1 roles are stored in the users table. In future LDAP/OIDC phases, roles will come from the IdP — JWT claim, LDAP group, or SAML attribute — mapped server-side.' },
+  { label: 'Current state',         body: 'Phase 2 live — local JWT auth plus OIDC and SAML2 SSO. SSO providers are configured in the admin SSO Settings page and stored in the database. Local accounts remain available alongside SSO.' },
+  { label: 'SSO token handoff',     body: 'After SSO authentication the server issues a standard WAF++ JWT and redirects to the dashboard with tokens in query params. The frontend stores them in localStorage — the session model is identical to local login.' },
+  { label: 'Role claim source',     body: 'For local accounts, roles are stored in the users table. For OIDC/SAML2, an optional role claim/attribute is mapped server-side via a JSON mapping table configured in SSO Settings.' },
   { label: 'Enforcement boundary',  body: 'wafpass-server enforces roles via middleware on every request. The dashboard reflects roles returned by the server after token exchange — no role logic lives in the frontend.' },
   { label: 'Session model',         body: 'Short-lived JWT access tokens (60 min default) with silent refresh via a long-lived refresh token. Both stored in localStorage for session persistence across page reloads.' },
-  { label: 'Multi-provider',        body: 'One primary provider per deployment, configured via environment variables. Provider federation (e.g. Entra ID + Keycloak in parallel) is out of scope for v1.' },
+  { label: 'Multi-provider',        body: 'OIDC and SAML2 can be enabled simultaneously alongside local accounts. LDAP federation is planned for a future release.' },
   { label: 'Service accounts',      body: 'CI/CD pipelines use the X-Api-Key header. Admin users can generate per-service keys in the API Keys page. A legacy global key can also be set via WAFPASS_API_KEY on the server.' },
 ]
 
@@ -220,11 +250,11 @@ export default function AccessRolesPage() {
         </div>
         <div style={{ flex: 1 }}>
           <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
-            Phase 1 authentication active.{' '}
+            Phase 2 SSO live.{' '}
           </span>
           <span style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-            Local JWT auth is live. Roles are enforced on every API request.
-            {role === 'admin' && <> Manage accounts in <strong>Users</strong> · manage service keys in <strong>API Keys</strong>.</>}
+            Local accounts, OIDC, and SAML2 are all active. Roles are enforced on every API request.
+            {role === 'admin' && <> Configure SSO in <strong>SSO Settings</strong> · manage accounts in <strong>Users</strong> · manage service keys in <strong>API Keys</strong>.</>}
           </span>
         </div>
         <span style={{
@@ -234,7 +264,7 @@ export default function AccessRolesPage() {
           fontWeight: 600, fontSize: '0.7rem', whiteSpace: 'nowrap',
           border: '1px solid rgba(34,197,94,0.25)',
         }}>
-          Auth: Phase 1 Live
+          Auth: Phase 2 Live
         </span>
       </div>
 
@@ -319,7 +349,7 @@ export default function AccessRolesPage() {
         {/* Auth providers */}
         <section>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
-            Planned Authentication Providers
+            Authentication Providers
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {AUTH_PROVIDERS.map(p => (
@@ -342,10 +372,10 @@ export default function AccessRolesPage() {
                       <span style={{ fontWeight: 700, fontSize: '0.83rem', color: p.color }}>{p.label}</span>
                       <span style={{
                         display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
-                        background: 'rgba(100,116,139,0.10)', color: '#64748b',
+                        background: `${p.statusColor}18`, color: p.statusColor,
                         fontWeight: 600, fontSize: '0.62rem',
                       }}>
-                        Roadmap
+                        {p.statusLabel}
                       </span>
                     </div>
                     <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{p.sublabel} · <strong style={{ color: 'var(--text)' }}>{p.protocol}</strong></div>

@@ -43,6 +43,7 @@ export interface AuthContextValue {
   role: string | null
   isLoading: boolean
   login(username: string, password: string): Promise<void>
+  loginWithTokens(accessToken: string, refreshToken: string, userObj: UserOut): void
   logout(): Promise<void>
 }
 
@@ -76,8 +77,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(null)
   }
 
-  // Restore session on mount
+  // Restore session on mount — also handles SSO token handoff via query params
   useEffect(() => {
+    // Check for SSO callback: ?sso_ok=1&at=ACCESS&rt=REFRESH&u=USER_B64
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('sso_ok') === '1') {
+      const at  = urlParams.get('at')
+      const rt  = urlParams.get('rt')
+      const uB64 = urlParams.get('u')
+      if (at && rt && uB64) {
+        try {
+          const raw = uB64.replace(/-/g, '+').replace(/_/g, '/')
+          const u = JSON.parse(atob(raw)) as UserOut
+          localStorage.setItem(ACCESS_KEY, at)
+          localStorage.setItem(REFRESH_KEY, rt)
+          localStorage.setItem(USER_KEY, JSON.stringify(u))
+          _applyTokens(at, u)
+          window.history.replaceState(null, '', window.location.pathname + '#/dashboard')
+          setIsLoading(false)
+          return
+        } catch {
+          // fall through to normal session restore
+        }
+      }
+    }
+
     const access    = localStorage.getItem(ACCESS_KEY)
     const refreshTk = localStorage.getItem(REFRESH_KEY)
     const userStr   = localStorage.getItem(USER_KEY)
@@ -112,6 +136,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     _applyTokens(resp.access_token, resp.user)
   }
 
+  function loginWithTokens(accessToken: string, refreshToken: string, userObj: UserOut) {
+    localStorage.setItem(ACCESS_KEY, accessToken)
+    localStorage.setItem(REFRESH_KEY, refreshToken)
+    localStorage.setItem(USER_KEY, JSON.stringify(userObj))
+    _applyTokens(accessToken, userObj)
+  }
+
   async function logout() {
     const refreshTk = localStorage.getItem(REFRESH_KEY)
     if (refreshTk) await logoutUser(refreshTk).catch(() => {})
@@ -119,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, role, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, role, isLoading, login, loginWithTokens, logout }}>
       {children}
     </AuthContext.Provider>
   )

@@ -561,3 +561,115 @@ export async function fetchApiKeyLogs(keyId: string, limit = 50): Promise<ApiKey
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<ApiKeyUsageLogEntry[]>
 }
+
+// ── SSO Configuration API ─────────────────────────────────────────────────────
+
+export interface SsoConfigOut {
+  id: string
+  enabled: boolean
+  config: Record<string, unknown>
+  updated_at: string | null
+}
+
+export interface SsoProviderInfo {
+  provider: string
+  enabled: boolean
+  label: string
+}
+
+export async function fetchSsoConfigs(): Promise<SsoConfigOut[]> {
+  const res = await fetch(`${getApiBase()}/sso/config`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<SsoConfigOut[]>
+}
+
+export async function upsertSsoConfig(provider: 'oidc' | 'saml2', enabled: boolean, config: Record<string, unknown>): Promise<SsoConfigOut> {
+  const res = await fetch(`${getApiBase()}/sso/config/${provider}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ enabled, config }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Save failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Save failed')
+  }
+  return res.json() as Promise<SsoConfigOut>
+}
+
+export async function deleteSsoConfig(provider: 'oidc' | 'saml2'): Promise<void> {
+  const res = await fetch(`${getApiBase()}/sso/config/${provider}`, { method: 'DELETE', headers: _authHeaders() })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+export async function fetchSsoProviders(): Promise<SsoProviderInfo[]> {
+  const res = await fetch(`${getApiBase()}/sso/providers`)
+  if (!res.ok) return []
+  return res.json() as Promise<SsoProviderInfo[]>
+}
+
+export function getSsoAuthorizeUrl(provider: 'oidc' | 'saml2'): string {
+  const base = getApiBase()
+  if (provider === 'oidc') return `${base}/auth/oidc/authorize`
+  return `${base}/auth/saml/login`
+}
+
+// ── Group → Role Mappings API ─────────────────────────────────────────────────
+
+export interface GroupRoleMappingOut {
+  id: string
+  provider: string
+  group_name: string
+  role: string
+  description: string
+  priority: number
+  created_at: string | null
+  created_by: string | null
+}
+
+export interface GroupRoleMappingCreate {
+  provider: string
+  group_name: string
+  role: string
+  description?: string
+  priority?: number
+}
+
+export async function fetchGroupMappings(): Promise<GroupRoleMappingOut[]> {
+  const res = await fetch(`${getApiBase()}/sso/group-mappings`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<GroupRoleMappingOut[]>
+}
+
+export async function createGroupMapping(payload: GroupRoleMappingCreate): Promise<GroupRoleMappingOut> {
+  const res = await fetch(`${getApiBase()}/sso/group-mappings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  return res.json() as Promise<GroupRoleMappingOut>
+}
+
+export async function updateGroupMapping(id: string, payload: Partial<GroupRoleMappingCreate>): Promise<GroupRoleMappingOut> {
+  const res = await fetch(`${getApiBase()}/sso/group-mappings/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Update failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Update failed')
+  }
+  return res.json() as Promise<GroupRoleMappingOut>
+}
+
+export async function deleteGroupMapping(id: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/sso/group-mappings/${encodeURIComponent(id)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+

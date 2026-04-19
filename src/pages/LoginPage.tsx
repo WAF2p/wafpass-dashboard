@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { fetchSsoProviders, getSsoAuthorizeUrl, type SsoProviderInfo } from '../api'
 import { useAuth } from '../AuthContext'
 
 export default function LoginPage() {
@@ -7,6 +8,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError]       = useState<string | null>(null)
   const [loading, setLoading]   = useState(false)
+  const [ssoProviders, setSsoProviders] = useState<SsoProviderInfo[]>([])
+
+  useEffect(() => {
+    fetchSsoProviders().then(setSsoProviders).catch(() => {})
+    // Show error from SSO callback redirect
+    const params = new URLSearchParams(window.location.search)
+    const ssoErr = params.get('sso_error')
+    if (ssoErr) setError(`SSO error: ${ssoErr.replace(/_/g, ' ')}`)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -111,11 +121,41 @@ export default function LoginPage() {
           </form>
         </div>
 
+        {/* SSO providers */}
+        {ssoProviders.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '0.25rem 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+              <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>or</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+            </div>
+            {ssoProviders.map(p => (
+              <a
+                key={p.provider}
+                href={getSsoAuthorizeUrl(p.provider as 'oidc' | 'saml2')}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+                  padding: '0.6rem 1rem', borderRadius: '8px',
+                  background: 'var(--bg)', border: '1px solid var(--border)',
+                  color: 'var(--text)', fontWeight: 600, fontSize: '0.875rem',
+                  textDecoration: 'none', transition: 'border-color .15s',
+                }}
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                {p.label}
+              </a>
+            ))}
+          </div>
+        )}
+
         {/* Footer hint */}
         <div style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-          Local authentication — Phase 1.<br />
-          Entra ID / LDAP / Keycloak support coming in future releases.<br />
-          Contact your administrator to create or reset your account.
+          {ssoProviders.length === 0
+            ? <>Local authentication · Contact your administrator to create or reset your account.</>
+            : <>Local and SSO authentication enabled · Contact your administrator for access.</>
+          }
         </div>
       </div>
     </div>
