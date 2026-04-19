@@ -522,7 +522,7 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
                 borderRadius: '999px', padding: '0.18rem 0.6rem',
                 fontSize: '0.72rem', fontWeight: 700, color: '#60a5fa', letterSpacing: '0.02em',
               }}>
-                v0.4.0
+                v1.0.0
               </span>
               {run.controls_loaded > 0 && (
                 <span style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>{run.controls_loaded} controls</span>
@@ -559,7 +559,7 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
         </div>
 
         <div style={{ padding: '0.5rem 1.25rem', borderTop: '1px solid var(--sidebar-border)', fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>
-          WAF++ PASS v0.4.0
+          WAF++ PASS v1.0.0
         </div>
       </aside>
 
