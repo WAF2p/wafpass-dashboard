@@ -439,7 +439,7 @@ function generateHtml(
 
 // ─── QR Code component (fetches SVG from server) ──────────────────────────────
 
-function QrCode({ evidenceId, size = 120 }: { evidenceId: string; size?: number }) {
+function QrCode({ evidenceId, size = 130 }: { evidenceId: string; size?: number }) {
   const [svg, setSvg] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -559,7 +559,7 @@ function LockerCard({
 
         {/* QR code */}
         <div style={{ flexShrink: 0 }}>
-          <QrCode evidenceId={ev.id} size={104} />
+          <QrCode evidenceId={ev.id} size={130} />
           <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textAlign: 'center', marginTop: '4px' }}>Scan for public URL</div>
         </div>
 
@@ -976,7 +976,7 @@ export default function EvidencePage({ run }: Props) {
                 SHA-256: <code style={{ fontSize: '0.68rem' }}>{justLocked.hash_digest}</code>
               </div>
             </div>
-            <QrCode evidenceId={justLocked.id} size={72} />
+            <QrCode evidenceId={justLocked.id} size={130} />
           </div>
         )}
 
