@@ -533,10 +533,15 @@ export default function UserManagementPage() {
               </div>
               <div>
                 <label style={labelStyle}>{editId ? 'New Password (leave blank to keep)' : 'Password *'}</label>
-                <input style={inputStyle} type="password" value={form.password}
+                <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 8 ? '#ef4444' : undefined }} type="password" value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   autoComplete="new-password"
                   placeholder={editId ? '••••••••' : 'min. 8 characters'} />
+                {form.password && form.password.length < 8 && (
+                  <div style={{ fontSize: '0.68rem', color: '#ef4444', marginTop: '0.2rem' }}>
+                    Password must be at least 8 characters
+                  </div>
+                )}
               </div>
               {editId && (
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
@@ -557,7 +562,7 @@ export default function UserManagementPage() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={handleSave}
-                disabled={saving || (!editId && (!form.username || !form.password))}
+                disabled={saving || (!editId && (!form.username || !form.password || form.password.length < 8)) || (!!form.password && form.password.length < 8)}
                 style={{
                   padding: '0.4rem 1rem', borderRadius: '8px',
                   background: saving ? 'rgba(0,148,255,.4)' : 'var(--waf-brand)', color: '#fff',

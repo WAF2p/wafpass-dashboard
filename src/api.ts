@@ -736,6 +736,63 @@ export function getEvidencePublicUrl(token: string): string {
   return `${getApiBase()}/evidence/p/${encodeURIComponent(token)}`
 }
 
+// ── Project Passport API ──────────────────────────────────────────────────────
+
+export interface ProjectPassport {
+  project: string
+  display_name: string
+  owner: string
+  owner_team: string
+  contact_email: string
+  description: string
+  criticality: string   // critical | high | medium | low | ""
+  environment: string   // production | staging | development | mixed | ""
+  cloud_provider: string // aws | azure | gcp | multi | other | ""
+  repository_url: string
+  documentation_url: string
+  tags: string[]
+  notes: string
+  image_url: string
+  updated_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type ProjectPassportUpsert = Omit<ProjectPassport, 'project' | 'updated_by' | 'created_at' | 'updated_at'>
+
+export async function fetchProjectPassports(): Promise<ProjectPassport[]> {
+  const res = await fetch(`${getApiBase()}/projects/passports`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<ProjectPassport[]>
+}
+
+export async function fetchProjectPassport(project: string): Promise<ProjectPassport | null> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/passport`, { headers: _authHeaders() })
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<ProjectPassport>
+}
+
+export async function upsertProjectPassport(project: string, payload: ProjectPassportUpsert): Promise<ProjectPassport> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/passport`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Save failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Save failed')
+  }
+  return res.json() as Promise<ProjectPassport>
+}
+
+export async function deleteProjectPassport(project: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/passport`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
 export async function deleteGroupMapping(id: string): Promise<void> {
   const res = await fetch(`${getApiBase()}/sso/group-mappings/${encodeURIComponent(id)}`, {
     method: 'DELETE', headers: _authHeaders(),

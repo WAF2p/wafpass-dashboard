@@ -30,6 +30,7 @@ const textareaSx: React.CSSProperties = {
 
 const OIDC_DEFAULTS = {
   discovery_url: '',
+  authorization_endpoint: '',
   client_id: '',
   client_secret: '',
   redirect_uri: '',
@@ -45,8 +46,9 @@ const OIDC_DEFAULTS = {
 
 function toOidcForm(config: Record<string, unknown>) {
   return {
-    discovery_url:    String(config.discovery_url ?? ''),
-    client_id:        String(config.client_id ?? ''),
+    discovery_url:          String(config.discovery_url ?? ''),
+    authorization_endpoint: String(config.authorization_endpoint ?? ''),
+    client_id:              String(config.client_id ?? ''),
     client_secret:    String(config.client_secret ?? ''),
     redirect_uri:     String(config.redirect_uri ?? ''),
     frontend_url:     String(config.frontend_url ?? 'http://localhost:5173'),
@@ -73,6 +75,7 @@ function fromOidcForm(f: typeof OIDC_DEFAULTS): Record<string, unknown> {
     default_role:       f.default_role.trim() || 'clevel',
     auto_provision:     f.auto_provision,
   }
+  if (f.authorization_endpoint.trim()) out.authorization_endpoint = f.authorization_endpoint.trim()
   if (f.role_claim.trim()) out.role_claim = f.role_claim.trim()
   if (f.role_mapping_raw.trim()) {
     try { out.role_mapping = JSON.parse(f.role_mapping_raw) } catch {}
@@ -153,6 +156,9 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
         <Field label="Discovery URL" hint="e.g. …/v2.0/.well-known/openid-configuration">
           <input style={inputSx} value={form.discovery_url} onChange={e => set('discovery_url', e.target.value)} placeholder="https://..." />
+        </Field>
+        <Field label="Authorization Endpoint (optional)" hint="Overrides the browser redirect URL from discovery — use when the server reaches the IdP via an internal hostname (e.g. Docker).">
+          <input style={inputSx} value={form.authorization_endpoint} onChange={e => set('authorization_endpoint', e.target.value)} placeholder="http://localhost:8080/realms/master/protocol/openid-connect/auth" />
         </Field>
         <Field label="Client ID">
           <input style={inputSx} value={form.client_id} onChange={e => set('client_id', e.target.value)} placeholder="your-client-id" />

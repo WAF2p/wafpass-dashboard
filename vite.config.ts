@@ -16,6 +16,9 @@ export default defineConfig({
       '/sandbox':  { target: API, changeOrigin: true },
       '/scan':     { target: API, changeOrigin: true },
       '/health':   { target: API, changeOrigin: true },
+      '/projects': { target: API, changeOrigin: true },
+      '/sso':      { target: API, changeOrigin: true },
+      '/evidence': { target: API, changeOrigin: true },
     },
   },
   build: {
