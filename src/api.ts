@@ -139,6 +139,40 @@ export async function fetchRun(id: string): Promise<RunDetail> {
   return res.json() as Promise<RunDetail>
 }
 
+export interface ProjectAchievement {
+  id: string
+  project: string
+  tier_level: number
+  tier_label: string
+  score: number
+  run_id: string
+  verification_token: string
+  snapshot_jsonb: Record<string, number>
+  achieved_at: string
+}
+
+export async function fetchProjectAchievements(project: string): Promise<ProjectAchievement[]> {
+  const res = await fetch(`${getApiBase()}/achievements/${encodeURIComponent(project)}`, { headers: _authHeaders() })
+  if (!res.ok) return []
+  return res.json() as Promise<ProjectAchievement[]>
+}
+
+export interface BadgeStatus {
+  project: string
+  tier_level: number
+  tier_label: string
+  score: number | null
+  color: string
+  badge_url: string
+  updated_at: string | null
+}
+
+export async function fetchBadgeStatus(project: string): Promise<BadgeStatus | null> {
+  const res = await fetch(`${getApiBase()}/public/badge/${encodeURIComponent(project)}/json`)
+  if (!res.ok) return null
+  return res.json() as Promise<BadgeStatus>
+}
+
 export async function fetchControls(runId: string): Promise<ControlMeta[]> {
   const res = await fetch(`${getApiBase()}/runs/${runId}/controls`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch controls: ${res.status}`)
@@ -611,6 +645,32 @@ export function getSsoAuthorizeUrl(provider: 'oidc' | 'saml2'): string {
   const base = getApiBase()
   if (provider === 'oidc') return `${base}/auth/oidc/authorize`
   return `${base}/auth/saml/login`
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+export interface LeaderboardEntry {
+  project: string
+  display_name: string | null
+  owner: string | null
+  owner_team: string | null
+  score: number
+  tier_level: number
+  tier_label: string
+  achieved_at: string
+  days_held: number
+  tiers_gained: number | null
+}
+
+export interface LeaderboardOut {
+  top_sovereign: LeaderboardEntry[]
+  most_improved: LeaderboardEntry[]
+}
+
+export async function fetchLeaderboard(): Promise<LeaderboardOut> {
+  const res = await fetch(`${getApiBase()}/leaderboard`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch leaderboard: ${res.status}`)
+  return res.json() as Promise<LeaderboardOut>
 }
 
 // ── Group → Role Mappings API ─────────────────────────────────────────────────

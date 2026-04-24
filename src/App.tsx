@@ -39,13 +39,15 @@ import SsoSettingsPage from './pages/SsoSettingsPage'
 import GroupMappingsPage from './pages/GroupMappingsPage'
 import ProjectOverviewPage from './pages/ProjectOverviewPage'
 import PassportDashboardPage from './pages/PassportDashboardPage'
+import BadgePage from './pages/BadgePage'
+import LeaderboardPage from './pages/LeaderboardPage'
 
 const ALL_PAGES = [
   'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings',
-  'projectoverview', 'passports',
+  'projectoverview', 'passports', 'badge', 'leaderboard',
 ] as const
 type Page = typeof ALL_PAGES[number]
 const PAGE_SET = new Set<string>(ALL_PAGES)
@@ -100,6 +102,8 @@ const PAGE_TITLE: Record<Page, string> = {
   groupmappings:   'Group → Role Mappings',
   projectoverview: 'Project Overview',
   passports:       'Project Passports',
+  badge:           'Badge Integration',
+  leaderboard:     'Hall of Fame',
 }
 
 const PAGE_SUBTITLE: Record<Page, string> = {
@@ -135,6 +139,8 @@ const PAGE_SUBTITLE: Record<Page, string> = {
   groupmappings:   'Map IdP group memberships to WAF++ roles — evaluated first during SSO login',
   projectoverview: 'Per-project score trends, maturity progression, and achievement tracking across all scans',
   passports:       'All project passports at a glance — owner, criticality, environment, recent achievements',
+  badge:           'Embed a live status badge in GitHub/GitLab READMEs, HTML docs, AsciiDoc, RST — with CI gate examples',
+  leaderboard:     'Top sovereign projects by Tier 5 tenure and most improved teams in the last 30 days',
 }
 
 function scoreColor(s: number) {
@@ -289,6 +295,8 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
       id: 'projects', label: 'Projects', color: '#14b8a6', minRole: 'clevel',
       items: [
         { page: 'passports', label: 'Project Passports', icon: 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2' },
+        { page: 'badge', label: 'Badge Integration', icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
+        { page: 'leaderboard', label: 'Hall of Fame', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
       ],
     },
     {
@@ -619,7 +627,7 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {run && page !== 'runs' && page !== 'diff' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'audit' && page !== 'evidence' && page !== 'feedback' && page !== 'projectoverview' && page !== 'passports' && (
+            {run && page !== 'runs' && page !== 'diff' && page !== 'catalogue' && page !== 'settings' && page !== 'runscan' && page !== 'sandbox' && page !== 'waivers' && page !== 'risk' && page !== 'audit' && page !== 'evidence' && page !== 'feedback' && page !== 'projectoverview' && page !== 'passports' && page !== 'badge' && page !== 'leaderboard' && (
               <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                 {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
                 {run.branch && <>{run.branch} · </>}
@@ -671,7 +679,11 @@ function AuthenticatedApp({ user, role, onLogout }: { user: { username: string; 
 
         {/* Page content */}
         <main style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
-          {page === 'passports' ? (
+          {page === 'leaderboard' ? (
+            <LeaderboardPage />
+          ) : page === 'badge' ? (
+            <BadgePage runs={runs} />
+          ) : page === 'passports' ? (
             <PassportDashboardPage
               runs={runs}
               role={role}

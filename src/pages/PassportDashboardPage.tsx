@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { fetchProjectPassports, fetchProjectPassport, upsertProjectPassport, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
+import { fetchProjectPassports, fetchProjectPassport, getApiBase, upsertProjectPassport, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
 import { MATURITY_META } from './SettingsPage'
 
 interface Props {
@@ -312,21 +312,19 @@ function AchievementsOverlay({
 
   return (
     <>
-      {/* Click-away backdrop */}
+      {/* Full-screen backdrop — click away closes; paddingLeft shifts centering into main content area past the 16rem sidebar */}
       <div
-        style={{ position: 'fixed', inset: 0, zIndex: 1999 }}
+        style={{ position: 'fixed', inset: 0, zIndex: 1999, background: 'rgba(0,20,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '16rem' }}
         onClick={onClose}
-      />
+      >
       <div
         style={{
-          position: 'absolute', top: 'calc(100% + 6px)', left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 2000, width: 'min(560px, 90vw)',
-          background: '#f9f7f1', borderRadius: '8px', boxShadow: '0 12px 40px rgba(0,0,0,0.28)',
+          width: 'min(580px, calc(100vw - 18rem))',
+          maxHeight: '82vh',
+          background: '#f9f7f1', borderRadius: '10px', boxShadow: '0 20px 60px rgba(0,0,0,0.38)',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
           fontFamily: 'Arial, Helvetica, sans-serif',
           border: '1.5px solid rgba(0,50,80,0.18)',
-          maxHeight: '480px',
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -424,6 +422,7 @@ function AchievementsOverlay({
           {`PP<WAF${mrzPad(displayName, 18)}<<STAMP<COLLECTION<<<<<<<<<<<<<<<<<`.slice(0, 44).padEnd(44, '<')}
         </div>
       </div>
+      </div>
     </>
   )
 }
@@ -436,8 +435,15 @@ type ViewMode = 'grid' | 'wide' | 'list'
 
 function usePassportCardData(project: string, passport: ProjectPassport | null, runs: RunSummary[]) {
   const projectRuns  = runs.filter(r => (r.project || '(unnamed)') === project)
-  const latestRun    = [...projectRuns].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+  const sortedRuns   = [...projectRuns].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  const latestRun    = sortedRuns[sortedRuns.length - 1]
   const bestScore    = projectRuns.reduce((m, r) => Math.max(m, r.score), 0)
+  const latestScore  = latestRun?.score ?? 0
+  const prevScore    = sortedRuns[sortedRuns.length - 2]?.score ?? latestScore
+  const scoreDelta   = projectRuns.length >= 2 ? latestScore - prevScore : null
+  const avgScore     = projectRuns.length > 0 ? Math.round(projectRuns.reduce((s, r) => s + r.score, 0) / projectRuns.length) : 0
+  const sparkRuns    = sortedRuns.slice(-8)
+  const latestControls = latestRun ? { run: latestRun.controls_run, loaded: latestRun.controls_loaded } : null
   const maturity     = getMaturityForScore(bestScore)
   const criticality  = passport?.criticality ? CRITICALITY_META[passport.criticality] : null
   const env          = passport?.environment  ? ENV_META[passport.environment]          : null
@@ -460,7 +466,7 @@ function usePassportCardData(project: string, passport: ProjectPassport | null, 
   const mrzScans     = String(projectRuns.length).padStart(3, '0')
   const mrz1 = `PP<WAF${mrzSurname}<<${mrzGivenName}`.slice(0, 44).padEnd(44, '<')
   const mrz2 = `${mrzDocNum}<WAF${mrzIssue}${mrzCrit}${mrzEnv}${mrzScans}<<<<<<<<<<<`.slice(0, 44).padEnd(44, '<')
-  return { projectRuns, latestRun, bestScore, maturity, criticality, env, cloud, displayName, achievementCount, mrz1, mrz2 }
+  return { projectRuns, latestRun, bestScore, latestScore, prevScore, scoreDelta, avgScore, sparkRuns, latestControls, maturity, criticality, env, cloud, displayName, achievementCount, mrz1, mrz2 }
 }
 
 // ── Row view ──────────────────────────────────────────────────────────────────
@@ -604,8 +610,8 @@ function PassportRow({
           )}
         </div>
 
-        {/* Links + last scan */}
-        <div style={{ flex: '0 0 80px', padding: '0.55rem 0.6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+        {/* Links + badge + last scan */}
+        <div style={{ flex: '0 0 88px', padding: '0.55rem 0.6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
           {(passport?.repository_url || passport?.documentation_url) && (
             <div style={{ display: 'flex', gap: '0.3rem' }}>
               {passport?.repository_url && <RepoIcon url={passport.repository_url} />}
@@ -617,9 +623,28 @@ function PassportRow({
               {new Date(latestRun.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
             </div>
           )}
-          <svg width="14" height="14" fill="none" stroke="rgba(0,40,70,0.3)" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <a
+              href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
+              download={`wafpass-badge-${project}.svg`}
+              onClick={e => e.stopPropagation()}
+              title="Download SVG badge"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.15rem',
+                padding: '0.12rem 0.3rem', borderRadius: '3px',
+                background: 'rgba(0,50,100,0.08)', border: '1px solid rgba(0,50,100,0.15)',
+                textDecoration: 'none', cursor: 'pointer',
+              }}
+            >
+              <svg width="8" height="8" fill="none" stroke="rgba(0,40,80,0.5)" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span style={{ fontSize: '0.38rem', fontWeight: 700, color: 'rgba(0,40,80,0.55)', letterSpacing: '0.04em' }}>BADGE</span>
+            </a>
+            <svg width="14" height="14" fill="none" stroke="rgba(0,40,70,0.3)" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -652,10 +677,9 @@ function PassportCard({
   onClick: () => void
   onOpenStamps: () => void
 }) {
-  const { latestRun, bestScore, maturity, criticality, env, cloud, displayName, achievementCount, mrz1, mrz2 } =
+  const { projectRuns, latestRun, bestScore, latestScore, scoreDelta, avgScore, sparkRuns, latestControls, maturity, criticality, env, cloud, displayName, achievementCount, mrz1, mrz2 } =
     usePassportCardData(project, passport, runs)
 
-  // Unique gradient ID per card to avoid SVG collisions
   const gradId = `pg-${project.replace(/[^a-z0-9]/gi, '-')}`
 
   return (
@@ -918,6 +942,56 @@ function PassportCard({
         </div>
       </div>
 
+      {/* ── Performance strip ── */}
+      {projectRuns.length > 0 && (
+        <div style={{
+          borderTop: '1px solid rgba(0,40,70,0.08)',
+          padding: '0.35rem 0.75rem',
+          background: 'rgba(0,40,70,0.02)',
+          display: 'flex', alignItems: 'center', gap: '0.7rem',
+        }}>
+          {/* Sparkline */}
+          {sparkRuns.length > 1 && (
+            <svg width={sparkRuns.length * 7} height="22" style={{ flexShrink: 0 }}>
+              {sparkRuns.map((r, i) => {
+                const h = Math.max(3, Math.round((r.score / 100) * 18))
+                return (
+                  <rect key={r.id} x={i * 7} y={22 - h} width="5" height={h}
+                    rx="1" fill={scoreColor(r.score)} opacity="0.75" />
+                )
+              })}
+            </svg>
+          )}
+          {/* Latest + trend */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.22rem', flexShrink: 0 }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: scoreColor(latestScore), lineHeight: 1 }}>
+              {latestScore > 0 ? latestScore : '—'}
+            </span>
+            <span style={{ fontSize: '0.42rem', color: 'rgba(0,40,70,0.4)' }}>latest</span>
+            {scoreDelta !== null && scoreDelta !== 0 && (
+              <span style={{ fontSize: '0.52rem', fontWeight: 700, color: scoreDelta > 0 ? '#16a34a' : '#dc2626', marginLeft: '0.1rem' }}>
+                {scoreDelta > 0 ? `↑${scoreDelta}` : `↓${Math.abs(scoreDelta)}`}
+              </span>
+            )}
+          </div>
+          {/* Divider */}
+          <div style={{ width: '1px', height: '14px', background: 'rgba(0,40,70,0.1)', flexShrink: 0 }} />
+          {/* Stats row */}
+          <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+            {[
+              { label: 'avg', value: avgScore > 0 ? String(avgScore) : '—' },
+              { label: 'scans', value: String(projectRuns.length) },
+              ...(latestControls && latestControls.loaded > 0 ? [{ label: 'coverage', value: `${Math.round((latestControls.run / latestControls.loaded) * 100)}%` }] : []),
+            ].map(s => (
+              <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'rgba(0,20,50,0.7)', lineHeight: 1 }}>{s.value}</span>
+                <span style={{ fontSize: '0.38rem', color: 'rgba(0,40,70,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Tags strip ── */}
       {passport?.tags && passport.tags.length > 0 && (
         <div style={{
@@ -953,23 +1027,46 @@ function PassportCard({
           <div style={{ overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>{mrz1}</div>
           <div style={{ overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>{mrz2}</div>
         </div>
-        <button
-          onClick={e => { e.stopPropagation(); onOpenStamps() }}
-          title="View stamps & achievements"
-          style={{
-            flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.25rem',
-            background: 'rgba(0,50,100,0.12)', border: '1px solid rgba(0,50,100,0.2)',
-            borderRadius: '4px', padding: '0.22rem 0.45rem',
-            cursor: 'pointer', transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,50,100,0.22)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,50,100,0.12)' }}
-        >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(0,40,80,0.55)">
-            <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-          </svg>
-          <span style={{ fontSize: '0.42rem', fontWeight: 700, color: 'rgba(0,40,80,0.65)', letterSpacing: '0.05em' }}>STAMPS</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+          {/* Badge download */}
+          <a
+            href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
+            download={`wafpass-badge-${project}.svg`}
+            onClick={e => e.stopPropagation()}
+            title="Download SVG badge"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.25rem',
+              background: 'rgba(0,50,100,0.12)', border: '1px solid rgba(0,50,100,0.2)',
+              borderRadius: '4px', padding: '0.22rem 0.45rem',
+              cursor: 'pointer', textDecoration: 'none', transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,50,100,0.22)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,50,100,0.12)' }}
+          >
+            <svg width="9" height="9" fill="none" stroke="rgba(0,40,80,0.55)" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span style={{ fontSize: '0.42rem', fontWeight: 700, color: 'rgba(0,40,80,0.65)', letterSpacing: '0.05em' }}>BADGE</span>
+          </a>
+          {/* Stamps */}
+          <button
+            onClick={e => { e.stopPropagation(); onOpenStamps() }}
+            title="View stamps & achievements"
+            style={{
+              flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.25rem',
+              background: 'rgba(0,50,100,0.12)', border: '1px solid rgba(0,50,100,0.2)',
+              borderRadius: '4px', padding: '0.22rem 0.45rem',
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,50,100,0.22)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,50,100,0.12)' }}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(0,40,80,0.55)">
+              <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+            <span style={{ fontSize: '0.42rem', fontWeight: 700, color: 'rgba(0,40,80,0.65)', letterSpacing: '0.05em' }}>STAMPS</span>
+          </button>
+        </div>
       </div>
     </button>
   )

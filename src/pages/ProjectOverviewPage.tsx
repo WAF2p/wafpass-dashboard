@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
 } from 'recharts'
-import { RunSummary } from '../api'
+import { fetchProjectAchievements, getApiBase, ProjectAchievement, RunSummary } from '../api'
 import { MATURITY_META } from './SettingsPage'
 
 interface Props {
@@ -421,6 +421,23 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
 
   const branchCount = new Set(projectRuns.map(r => r.branch).filter(Boolean)).size
 
+  // Server-side verified achievements
+  const [verifiedAchievements, setVerifiedAchievements] = useState<ProjectAchievement[]>([])
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!activeProject) return
+    fetchProjectAchievements(activeProject).then(setVerifiedAchievements).catch(() => {})
+  }, [activeProject])
+
+  function copyVerifyUrl(token: string) {
+    const base = getApiBase() || window.location.origin
+    navigator.clipboard.writeText(`${base}/public/achievements/${token}`).then(() => {
+      setCopiedToken(token)
+      setTimeout(() => setCopiedToken(null), 2000)
+    }).catch(() => {})
+  }
+
   if (runs.length === 0) {
     return (
       <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
@@ -674,7 +691,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
           <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
             <SectionHeader
               title="Maturity Level Badges"
-              sub="Earned by reaching score thresholds — tracks performance, independent of configured settings level"
+              sub="Earned by reaching score thresholds — verified achievements are recorded server-side with public proof-of-excellence links"
               count={earnedMaturityCount}
               total={MATURITY_META.length}
             />
@@ -729,6 +746,92 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               </div>
             </div>
           </div>
+
+          {/* ── Verified Achievements (server-side) ──────────────────────────── */}
+          {verifiedAchievements.length > 0 && (
+            <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+              <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>Verified Achievements</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.15rem' }}>Cryptographically verified milestones — share the link with stakeholders who don't have dashboard access</div>
+                </div>
+                <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+                  <strong style={{ color: 'var(--text)' }}>{verifiedAchievements.length}</strong> milestone{verifiedAchievements.length !== 1 ? 's' : ''} recorded
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {verifiedAchievements.map((a, i) => {
+                  const tierColors: Record<number, string> = { 1: '#d97706', 2: '#0094FF', 3: '#0891b2', 4: '#7c3aed', 5: '#059669' }
+                  const color = tierColors[a.tier_level] ?? '#0094FF'
+                  const isCopied = copiedToken === a.verification_token
+                  const verifyUrl = `${getApiBase() || window.location.origin}/public/achievements/${a.verification_token}`
+                  return (
+                    <div key={a.id} style={{
+                      display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem 1.25rem',
+                      borderBottom: i < verifiedAchievements.length - 1 ? '1px solid var(--border)' : 'none',
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                        background: `${color}18`, border: `2px solid ${color}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.72rem', fontWeight: 900, color,
+                      }}>L{a.tier_level}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{a.tier_label}</span>
+                          <span style={{
+                            fontSize: '0.6rem', fontWeight: 700, padding: '0.15rem 0.45rem', borderRadius: '999px',
+                            background: `${color}14`, color, border: `1px solid ${color}30`,
+                            textTransform: 'uppercase', letterSpacing: '0.05em',
+                          }}>Score {a.score}</span>
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>
+                          {new Date(a.achieved_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                        <a
+                          href={verifyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '0.3rem',
+                            padding: '0.3rem 0.65rem', borderRadius: '7px', fontSize: '0.72rem', fontWeight: 600,
+                            background: `${color}12`, color, border: `1px solid ${color}30`,
+                            textDecoration: 'none', cursor: 'pointer',
+                          }}
+                        >
+                          <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Verify
+                        </a>
+                        <button
+                          onClick={() => copyVerifyUrl(a.verification_token)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '0.3rem',
+                            padding: '0.3rem 0.65rem', borderRadius: '7px', fontSize: '0.72rem', fontWeight: 600,
+                            background: isCopied ? 'rgba(34,197,94,0.12)' : 'var(--bg)',
+                            color: isCopied ? '#15803d' : 'var(--muted)',
+                            border: `1px solid ${isCopied ? 'rgba(34,197,94,0.4)' : 'var(--border)'}`,
+                            cursor: 'pointer', transition: 'all 0.15s',
+                          }}
+                        >
+                          <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {isCopied
+                              ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            }
+                          </svg>
+                          {isCopied ? 'Copied!' : 'Copy link'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* ── Recent scans table ────────────────────────────────────────────── */}
           <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
