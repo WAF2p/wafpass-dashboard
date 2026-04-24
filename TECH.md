@@ -23,18 +23,55 @@ No state management library (no Redux, no Zustand). No CSS framework. No compone
 
 ```
 src/
-├── main.tsx              # ReactDOM.createRoot, wraps App in <AuthProvider>
-├── index.css             # Global CSS custom properties + utility classes
-├── App.tsx               # Root: auth guard, routing, sidebar, header, page dispatch
-├── AuthContext.tsx        # Token storage, login/logout/refresh, useAuth() hook
-├── api.ts                # All fetch() calls + TypeScript interfaces (auth-gated)
-├── audit.ts              # localStorage audit log + first-seen tracking
-├── controls-data.ts      # Hardcoded metadata for all 73 controls
-├── region-data.ts        # Cloud region coordinates and metadata
-├── pages/                # One file per page (28 pages, incl. LoginPage)
+├── main.tsx                     # ReactDOM.createRoot, wraps App in <AuthProvider>
+├── index.css                    # Global CSS custom properties + utility classes
+├── App.tsx                      # Root: auth guard, routing, sidebar, header, page dispatch
+├── AuthContext.tsx               # Token storage, login/logout/refresh, useAuth() hook
+├── api.ts                       # All fetch() calls + TypeScript interfaces (auth-gated)
+├── audit.ts                     # localStorage audit log + first-seen tracking
+├── controls-data.ts             # Hardcoded metadata for all 73 controls
+├── region-data.ts               # Cloud region coordinates and metadata
+├── pages/
+│   ├── LoginPage.tsx            # Login form + SSO redirect handling
+│   ├── DashboardPage.tsx        # Executive KPIs, pillar radar, trend chart
+│   ├── ProjectOverviewPage.tsx  # Project passport cards with maturity tiers
+│   ├── PassportDashboardPage.tsx # Single-project passport detail view
+│   ├── BadgePage.tsx            # Maturity badge + achievement verification snippets
+│   ├── LeaderboardPage.tsx      # Top sovereign and most improved rankings
+│   ├── ControlsCataloguePage.tsx # Browse and author controls
+│   ├── ControlsPage.tsx         # Run-specific controls view
+│   ├── FindingsPage.tsx         # Filterable findings table with bulk actions
+│   ├── CompliancePage.tsx       # Pillar coverage, pass rates, regulatory mapping
+│   ├── GapAnalysisPage.tsx      # Shortest path to framework compliance
+│   ├── ChangesPage.tsx          # Terraform plan changes
+│   ├── DriftDetectionPage.tsx   # Run-over-run control status drift
+│   ├── SkippedControlsPage.tsx  # Controls skipped due to no matching IaC resources
+│   ├── RegionsPage.tsx          # Cloud regions interactive map
+│   ├── ExploitPathsPage.tsx     # Attack chain visualization
+│   ├── BlastRadiusPage.tsx      # Failing resource propagation graph (D3)
+│   ├── DependencyGraphPage.tsx  # Full resource dependency graph (D3)
+│   ├── RemediationSprintPage.tsx # Prioritised fix queue with score projections
+│   ├── SecretScanPage.tsx       # Hardcoded credential findings
+│   ├── ModuleScorePage.tsx      # Per-Terraform-module pass rate
+│   ├── CostImpactPage.tsx       # $/month impact of failing WAF-COST controls
+│   ├── RunsListPage.tsx         # All scan runs with scores
+│   ├── RunDiffPage.tsx          # Finding-level diff between two runs
+│   ├── AuditLogPage.tsx         # Waivers, risk, and scan event timeline
+│   ├── EvidencePage.tsx         # Evidence Locker — lock packages, display QR codes
+│   ├── RunScanPage.tsx          # Trigger a scan or generate a CLI command
+│   ├── SandboxPage.tsx          # Test HCL against controls (mock + real engine)
+│   ├── WaiversPage.tsx          # Manage and export control waivers
+│   ├── RiskAcceptancePage.tsx   # Formally accept risks with approver sign-off
+│   ├── AccessRolesPage.tsx      # Role hierarchy and permission overview
+│   ├── SsoSettingsPage.tsx      # Configure OIDC / SAML2 providers (admin)
+│   ├── GroupMappingsPage.tsx    # Map IdP groups to WAF++ roles (admin)
+│   ├── ApiManagementPage.tsx    # Manage API keys for CI/CD (admin)
+│   ├── UserManagementPage.tsx   # Create, edit, deactivate users
+│   ├── SettingsPage.tsx         # Maturity level, feature toggles, PDF config
+│   └── FeedbackPage.tsx         # Send feedback to the WAF++ team
 └── components/
-    ├── RunSelectorModal.tsx   # Run picker modal
-    └── PdfReport.tsx          # Print-to-PDF report layout
+    ├── RunSelectorModal.tsx     # Run picker modal
+    └── PdfReport.tsx            # Print-to-PDF report layout
 ```
 
 ---
@@ -382,6 +419,34 @@ Multi-stage build:
 2. `nginx:alpine` — copies `dist/` to `/usr/share/nginx/html`
 
 The nginx config (`nginx.conf`) proxies API paths to `wafpass-server:8000` (Docker network hostname). If you run the server on a different hostname, update `nginx.conf` and rebuild.
+
+---
+
+## Evidence Locker architecture
+
+`EvidencePage.tsx` has two rendering modes:
+
+**Local (browser-only):** Generates a self-contained HTML string via `generateHtml()` and triggers a browser download. All data comes from `run`, `waivers`, `risks`, and `auditLog` already in React state — no server round-trip.
+
+**Server-locked:** Calls `createEvidence()` in `api.ts` which POSTs to `/evidence`. The server:
+1. Computes `SHA-256(canonical_json(snapshot))` and stores it in `hash_digest`.
+2. Generates a `public_token` (32-char URL-safe random) for the unauthenticated auditor URL.
+3. Returns `EvidenceOut` including `id`, `hash_digest`, `public_token`.
+
+The dashboard then renders:
+- The SHA-256 hash digest (copyable, for independent verification against `/evidence/{id}/snapshot`).
+- The public auditor URL (`/evidence/p/{token}`) as a copyable link.
+- A QR code image fetched from `/evidence/{id}/qr.svg` (SVG generated server-side by the `segno` library; falls back to a placeholder if not installed).
+
+The QR code encodes the public URL so auditors can scan it with a phone to access the frozen HTML report without logging in.
+
+## Achievement and Badge architecture
+
+`BadgePage.tsx` calls `fetchBadgeStatus(project)` which reads `/public/badge/{project}/json` — a public, no-auth endpoint that returns the latest run's tier level, label, color, and score. The page generates ready-to-paste badge snippets for Markdown, HTML, AsciiDoc, reStructuredText, Org-mode, and JSON.
+
+`LeaderboardPage.tsx` calls `GET /leaderboard` and renders two ranked tables. Both use `ProjectPassport` display names and owner metadata when available.
+
+Achievement verification tokens are surfaced as `GET /public/achievements/{token}` — a fully rendered HTML page served directly by the server with no React dependency. The page shows the tier badge, score, pillar scores at achievement time, and the verification token in a monospace box.
 
 ---
 
