@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
 } from 'recharts'
 import { fetchProjectAchievements, getApiBase, ProjectAchievement, RunSummary } from '../api'
-import { MATURITY_META } from './SettingsPage'
+import { MATURITY_META } from './settingsUtils'
 
 interface Props {
   runs: RunSummary[]

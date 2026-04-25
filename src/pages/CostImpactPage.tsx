@@ -184,7 +184,7 @@ function CostBar({ min, max, maxVal }: { min: number; max: number; maxVal: numbe
   const widthPct = Math.max(endPct - startPct, 0.5)
   const midPct   = cap((min + max) / 2)
   return (
-    <div style={{ position: 'relative', height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+    <div style={{ position: 'relative', height: 8, background: 'var(--track)', borderRadius: 4, overflow: 'hidden' }}>
       {/* Range band */}
       <div style={{
         position: 'absolute', top: 0, height: '100%', borderRadius: 4,
@@ -230,7 +230,7 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
             <span style={{ fontSize: 10, fontWeight: 700, color: cat.color, background: `${cat.color}18`, border: `1px solid ${cat.color}33`, borderRadius: 4, padding: '2px 7px' }}>
               {cat.label}
             </span>
-            <span style={{ fontSize: 10, color: conf.color, background: '#f1f5f9', borderRadius: 4, padding: '2px 7px', fontWeight: 600 }}>
+            <span style={{ fontSize: 10, color: conf.color, background: 'var(--bg)', borderRadius: 4, padding: '2px 7px', fontWeight: 600 }}>
               {conf.label}
             </span>
             <span style={{ fontSize: 11, color: 'var(--muted)' }}>
@@ -271,7 +271,7 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
           <div style={{ overflowX: 'auto', padding: '0 16px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 10 }}>
               <thead>
-                <tr style={{ background: 'rgba(0,0,0,.03)' }}>
+                <tr style={{ background: 'var(--bg)' }}>
                   <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '22%' }}>Resource</th>
                   <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '16%' }}>Type</th>
                   <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', width: '14%' }}>Category</th>
@@ -289,7 +289,7 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
                       <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 10, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 0 }} title={finding.resource || ''}>
                         {finding.resource || '—'}
                       </td>
-                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 10, color: '#374151', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '6px 10px', fontFamily: 'monospace', fontSize: 10, color: 'var(--text)', whiteSpace: 'nowrap' }}>
                         {rtype}
                       </td>
                       <td style={{ padding: '6px 10px' }}>
@@ -321,7 +321,7 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
               </div>
             )}
             {item.findings[0]?.remediation && (
-              <div style={{ padding: '8px 10px', background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.18)', borderRadius: 6, fontSize: 11, color: '#374151', lineHeight: 1.5 }}>
+              <div style={{ padding: '8px 10px', background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.18)', borderRadius: 6, fontSize: 11, color: 'var(--text)', lineHeight: 1.5 }}>
                 <strong style={{ color: '#059669' }}>Fix: </strong>{item.findings[0].remediation}
               </div>
             )}
@@ -381,7 +381,7 @@ export default function CostImpactPage({ run }: Props) {
               ? `${totals.failingControls} failing cost controls — estimated ~${fmtDollar(totals.allMid)}/month`
               : 'No failing cost controls detected'}
           </div>
-          <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>
             {hasCostFindings
               ? `Range: ${fmtRange(totals.allMin, totals.allMax)}/month across ${totals.failingResources} resources. ` +
                 `These are estimates based on AWS public pricing and industry benchmarks — actual figures require AWS Cost Explorer.`
@@ -452,7 +452,7 @@ export default function CostImpactPage({ run }: Props) {
             background: 'var(--bg)', border: '1px solid var(--border)',
             fontSize: 11, color: 'var(--muted)', lineHeight: 1.7,
           }}>
-            <strong style={{ color: '#374151', display: 'block', marginBottom: 4 }}>📌 Methodology</strong>
+            <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 4 }}>📌 Methodology</strong>
             Estimates are derived from <strong>AWS public pricing</strong> and industry benchmarks (AWS Well-Architected, Cloud FinOps Foundation).
             {' '}<strong>Waste</strong> = spend occurring now that could be eliminated.
             {' '}<strong>Savings opportunity</strong> = on-demand spend that reserved/committed pricing would reduce by 35–72%.

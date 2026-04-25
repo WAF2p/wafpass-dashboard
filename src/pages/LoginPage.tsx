@@ -34,8 +34,8 @@ export default function LoginPage() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    background: '#f8fafc', color: '#1e293b',
-    border: '1px solid #e2e8f0', borderRadius: '8px',
+    background: 'var(--input-bg)', color: 'var(--input-text)',
+    border: '1px solid var(--input-border)', borderRadius: '8px',
     padding: '0.6rem 0.85rem', fontSize: '0.875rem',
     outline: 'none', transition: 'border-color .15s',
   }

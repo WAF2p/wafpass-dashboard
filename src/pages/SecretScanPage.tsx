@@ -119,7 +119,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
       </div>
 
       {open && (
-        <div style={{ padding: '0 0.875rem 0.875rem 3.75rem', borderTop: '1px solid rgba(218,44,56,.15)', paddingTop: '0.75rem', background: '#fafbfc' }}>
+        <div style={{ padding: '0 0.875rem 0.875rem 3.75rem', borderTop: '1px solid rgba(218,44,56,.15)', paddingTop: '0.75rem', background: 'var(--bg)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div>
               <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>Pattern</div>
@@ -150,7 +150,7 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
       style={{
         borderRadius: '10px',
         border: isFail ? '1px solid rgba(218,44,56,.25)' : '1px solid var(--border)',
-        background: '#fff', overflow: 'hidden', cursor: 'pointer',
+        background: 'var(--surface)', overflow: 'hidden', cursor: 'pointer',
       }}
       onClick={() => setOpen(o => !o)}
     >
@@ -173,7 +173,7 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
         </svg>
       </div>
       {open && (
-        <div style={{ padding: '0 0.875rem 0.75rem 2.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.625rem', background: '#fafbfc' }}>
+        <div style={{ padding: '0 0.875rem 0.75rem 2.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.625rem', background: 'var(--bg)' }}>
           {finding.message && <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.6, marginBottom: '0.5rem' }}>{finding.message}</div>}
           {finding.remediation && (
             <div>
@@ -193,7 +193,7 @@ function StatBox({ label, value, color, sub }: { label: string; value: string | 
   return (
     <div style={{
       flex: 1, minWidth: '100px', borderRadius: '10px', padding: '0.75rem 1rem',
-      background: color ? `${color}0d` : '#fafbfc',
+      background: color ? `${color}0d` : 'var(--bg)',
       border: `1px solid ${color ? `${color}30` : 'var(--border)'}`,
     }}>
       <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: color ?? 'var(--muted)', marginBottom: '0.2rem' }}>{label}</div>
@@ -248,7 +248,7 @@ export default function SecretScanPage({ run }: Props) {
   const hasAlarm = rawSecrets.length > 0 || failPosture.length > 0
 
   const selectStyle: React.CSSProperties = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none',
   }
 

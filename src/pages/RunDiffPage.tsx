@@ -133,7 +133,7 @@ function DiffCard({ item }: { item: DiffItem }) {
   return (
     <div
       style={{
-        borderRadius: '10px', border: '1px solid var(--border)', background: '#fff',
+        borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--surface)',
         overflow: 'hidden', cursor: 'pointer',
         transition: 'box-shadow .15s',
       }}
@@ -162,7 +162,7 @@ function DiffCard({ item }: { item: DiffItem }) {
       </div>
 
       {open && finding && (
-        <div style={{ padding: '0 0.875rem 0.75rem 2.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.6rem', background: '#fafbfc' }}>
+        <div style={{ padding: '0 0.875rem 0.75rem 2.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.6rem', background: 'var(--bg)' }}>
           {finding.message && (
             <div style={{ marginBottom: '0.5rem' }}>
               <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>Message</div>
@@ -220,7 +220,7 @@ function RunSelector({
         onChange={e => onChange(e.target.value)}
         style={{
           width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px',
-          border: '1px solid var(--border)', background: '#fff', fontSize: '0.8rem',
+          border: '1px solid var(--border)', background: 'var(--input-bg)', fontSize: '0.8rem',
           color: 'var(--text)', cursor: 'pointer', appearance: 'auto',
         }}
       >
@@ -402,7 +402,7 @@ export default function RunDiffPage({ runs }: Props) {
                 {pillarDeltas.map(p => (
                   <div key={p.key} style={{
                     borderRadius: '8px', padding: '0.5rem 0.625rem',
-                    background: p.delta == null ? '#fafbfc' : p.delta > 0 ? 'rgba(5,150,105,.06)' : p.delta < 0 ? 'rgba(218,44,56,.06)' : '#fafbfc',
+                    background: p.delta == null ? 'var(--bg)' : p.delta > 0 ? 'rgba(5,150,105,.06)' : p.delta < 0 ? 'rgba(218,44,56,.06)' : 'var(--bg)',
                     border: `1px solid ${p.delta == null ? 'var(--border)' : p.delta > 0 ? 'rgba(5,150,105,.25)' : p.delta < 0 ? 'rgba(218,44,56,.25)' : 'var(--border)'}`,
                   }}>
                     <div style={{ fontSize: '0.62rem', fontWeight: 600, color: p.color, marginBottom: '0.2rem' }}>{p.label}</div>

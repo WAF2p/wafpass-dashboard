@@ -50,10 +50,11 @@ type SyncStatus = 'loading' | 'synced' | 'offline' | 'saving' | 'error'
 
 interface Props {
   controls: { id: string; title: string }[]
+  onCountChange?: (count: number) => void
 }
 
-export default function RiskAcceptancePage({ controls }: Props) {
-  const [data, setData] = useState<Record<string, RiskAcceptance>>(loadLocal)
+export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
+  const [data, setData] = useState<Record<string, RiskAcceptance>>({})
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [idInput, setIdInput] = useState('')
@@ -62,7 +63,13 @@ export default function RiskAcceptancePage({ controls }: Props) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('loading')
   const [syncError, setSyncError] = useState<string | null>(null)
 
-  // Fetch from server on mount
+  function applyMap(map: Record<string, RiskAcceptance>) {
+    setData(map)
+    saveLocal(map)
+    onCountChange?.(Object.keys(map).length)
+  }
+
+  // Fetch from server on mount; fall back to read-only localStorage cache if unreachable
   useEffect(() => {
     setSyncStatus('loading')
     fetchRisks()
@@ -74,22 +81,21 @@ export default function RiskAcceptancePage({ controls }: Props) {
             rfc: r.rfc, jira_link: r.jira_link, other_link: r.other_link,
             notes: r.notes, risk_level: r.risk_level as RiskAcceptance['risk_level'],
             residual_risk: r.residual_risk as RiskAcceptance['residual_risk'],
-            expires: r.expires, accepted_at: r.accepted_at, project: r.project,
+            expires: r.expires ?? '', accepted_at: r.accepted_at ?? '', project: r.project,
           }
         }
-        setData(map)
-        saveLocal(map)
+        applyMap(map)
         setSyncStatus('synced')
       })
       .catch((e: unknown) => {
+        const cached = loadLocal()
+        setData(cached)
         setSyncStatus('offline')
-        if (e instanceof TypeError) {
-          setSyncError(`Cannot reach server — using local cache. Check the server URL in Settings.`)
-        } else {
-          setSyncError(`Server error loading risks (${e instanceof Error ? e.message : String(e)}) — using local cache.`)
-        }
+        setSyncError(e instanceof TypeError
+          ? 'Cannot reach server — showing cached data. Check the server URL in Settings.'
+          : `Server error loading risks (${e instanceof Error ? e.message : String(e)}) — showing cached data.`)
       })
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const entries = Object.values(data)
     .filter(r => !search || r.id.toLowerCase().includes(search.toLowerCase()) || r.reason.toLowerCase().includes(search.toLowerCase()) || r.owner.toLowerCase().includes(search.toLowerCase()))
@@ -124,32 +130,29 @@ export default function RiskAcceptancePage({ controls }: Props) {
         notes: form.notes, risk_level: form.risk_level, residual_risk: form.residual_risk,
         expires: form.expires, accepted_at: form.accepted_at, project: form.project ?? '',
       })
+      const next = { ...data, [id]: record }
+      applyMap(next)
       setSyncStatus('synced')
+      appendAuditEvent({
+        actor: form.approver || form.owner || 'unknown',
+        category: 'risk',
+        action: existing ? 'risk_updated' : 'risk_created',
+        subject_id: id,
+        subject_type: 'risk_acceptance',
+        summary: existing
+          ? `Risk acceptance updated for ${id} — level: ${form.risk_level}, residual: ${form.residual_risk}, approver: ${form.approver}`
+          : `Risk acceptance recorded for ${id} — level: ${form.risk_level}, approver: ${form.approver}, expires: ${form.expires}`,
+        before: existing ?? undefined,
+        after: record,
+      })
+      setShowModal(false)
     } catch (e) {
-      setSyncStatus('offline')
+      setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? `Cannot reach server — saved locally only. Check the server URL in Settings.`
-        : `Server error saving risk (${e instanceof Error ? e.message : String(e)}) — saved locally only.`)
+        ? 'Cannot reach server — risk acceptance not saved. Check the server URL in Settings.'
+        : `Server error saving risk (${e instanceof Error ? e.message : String(e)})`)
     }
-    appendAuditEvent({
-      actor: form.approver || form.owner || 'unknown',
-      category: 'risk',
-      action: existing ? 'risk_updated' : 'risk_created',
-      subject_id: id,
-      subject_type: 'risk_acceptance',
-      summary: existing
-        ? `Risk acceptance updated for ${id} — level: ${form.risk_level}, residual: ${form.residual_risk}, approver: ${form.approver}`
-        : `Risk acceptance recorded for ${id} — level: ${form.risk_level}, approver: ${form.approver}, expires: ${form.expires}`,
-      before: existing ?? undefined,
-      after: record,
-    })
-    setData(prev => {
-      const next = { ...prev, [id]: record }
-      saveLocal(next)
-      return next
-    })
-    setShowModal(false)
-  }, [editId, idInput, form, data])
+  }, [editId, idInput, form, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = useCallback(async (id: string) => {
     const existing = data[id]
@@ -157,34 +160,31 @@ export default function RiskAcceptancePage({ controls }: Props) {
     setSyncError(null)
     try {
       await deleteRisk(id)
+      const next = { ...data }
+      delete next[id]
+      applyMap(next)
       setSyncStatus('synced')
+      if (existing) {
+        appendAuditEvent({
+          actor: existing.approver || existing.owner || 'unknown',
+          category: 'risk',
+          action: 'risk_deleted',
+          subject_id: id,
+          subject_type: 'risk_acceptance',
+          summary: `Risk acceptance removed for ${id} (approver: ${existing.approver}, level: ${existing.risk_level})`,
+          before: existing,
+        })
+      }
     } catch (e) {
-      setSyncStatus('offline')
+      setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? `Cannot reach server — removed locally only. Check the server URL in Settings.`
-        : `Server error deleting risk (${e instanceof Error ? e.message : String(e)}) — removed locally only.`)
+        ? 'Cannot reach server — risk acceptance not removed. Check the server URL in Settings.'
+        : `Server error deleting risk (${e instanceof Error ? e.message : String(e)})`)
     }
-    if (existing) {
-      appendAuditEvent({
-        actor: existing.approver || existing.owner || 'unknown',
-        category: 'risk',
-        action: 'risk_deleted',
-        subject_id: id,
-        subject_type: 'risk_acceptance',
-        summary: `Risk acceptance removed for ${id} (approver: ${existing.approver}, level: ${existing.risk_level})`,
-        before: existing,
-      })
-    }
-    setData(prev => {
-      const d = { ...prev }
-      delete d[id]
-      saveLocal(d)
-      return d
-    })
-  }, [data])
+  }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const inputStyle = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem',
     outline: 'none', width: '100%', boxSizing: 'border-box' as const,
   }
@@ -195,7 +195,7 @@ export default function RiskAcceptancePage({ controls }: Props) {
     if (syncStatus === 'loading') return { label: 'Loading…', color: '#94a3b8' }
     if (syncStatus === 'saving') return { label: 'Saving…', color: '#0094ff' }
     if (syncStatus === 'synced') return { label: 'Synced', color: '#22c55e' }
-    if (syncStatus === 'offline') return { label: 'Offline — local cache', color: '#eab308' }
+    if (syncStatus === 'offline') return { label: 'Offline — cached data', color: '#eab308' }
     return { label: 'Sync error', color: '#DA2C38' }
   })()
 
@@ -205,9 +205,12 @@ export default function RiskAcceptancePage({ controls }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <button
           onClick={openAdd}
+          disabled={syncStatus === 'offline'}
           style={{
-            background: 'var(--waf-brand)', color: '#fff', border: 'none', borderRadius: '8px',
-            padding: '0.5rem 1.1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+            background: syncStatus === 'offline' ? '#94a3b8' : 'var(--waf-brand)',
+            color: '#fff', border: 'none', borderRadius: '8px',
+            padding: '0.5rem 1.1rem', fontSize: '0.82rem', fontWeight: 700,
+            cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer',
           }}
         >
           + Record Risk Acceptance
@@ -229,7 +232,7 @@ export default function RiskAcceptancePage({ controls }: Props) {
       </div>
 
       {/* Sync error banner */}
-      {syncError && (
+      {syncError && !showModal && (
         <div style={{
           background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
           borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: '#DA2C38',
@@ -237,7 +240,6 @@ export default function RiskAcceptancePage({ controls }: Props) {
           {syncError}
         </div>
       )}
-
 
       {syncStatus === 'loading' ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
@@ -323,13 +325,15 @@ export default function RiskAcceptancePage({ controls }: Props) {
                   <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                     <button
                       onClick={() => openEdit(r)}
-                      style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: 'pointer', color: 'var(--muted)' }}
+                      disabled={syncStatus === 'offline'}
+                      style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--muted)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => void remove(r.id)}
-                      style={{ background: 'none', border: '1px solid rgba(218,44,56,.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: 'pointer', color: '#DA2C38' }}
+                      disabled={syncStatus === 'offline'}
+                      style={{ background: 'none', border: '1px solid rgba(218,44,56,.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Delete
                     </button>
@@ -347,7 +351,7 @@ export default function RiskAcceptancePage({ controls }: Props) {
           <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 99 }} />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: '#fff', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             padding: '1.5rem', width: '520px', maxWidth: '92vw', maxHeight: '90vh', overflowY: 'auto',
             zIndex: 100, display: 'flex', flexDirection: 'column', gap: '0.875rem',
           }}>
@@ -429,20 +433,30 @@ export default function RiskAcceptancePage({ controls }: Props) {
                 placeholder="Additional context…" rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
 
+            {syncError && (
+              <div style={{
+                background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+                borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: '#DA2C38',
+              }}>
+                {syncError}
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.45rem 1rem', fontSize: '0.82rem', cursor: 'pointer', color: 'var(--muted)' }}>
                 Cancel
               </button>
               <button
                 onClick={() => void submit()}
-                disabled={!idInput.trim()}
+                disabled={!idInput.trim() || syncStatus === 'saving'}
                 style={{
-                  background: idInput.trim() ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
+                  background: idInput.trim() && syncStatus !== 'saving' ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
                   border: 'none', borderRadius: '8px', padding: '0.45rem 1rem',
-                  fontSize: '0.82rem', fontWeight: 700, cursor: idInput.trim() ? 'pointer' : 'not-allowed',
+                  fontSize: '0.82rem', fontWeight: 700,
+                  cursor: idInput.trim() && syncStatus !== 'saving' ? 'pointer' : 'not-allowed',
                 }}
               >
-                {editId ? 'Save Changes' : 'Record'}
+                {syncStatus === 'saving' ? 'Saving…' : editId ? 'Save Changes' : 'Record'}
               </button>
             </div>
           </div>

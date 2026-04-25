@@ -43,10 +43,11 @@ const EMPTY_FORM: FormState = { id: '', reason: '', owner: '', expires: '' }
 
 interface Props {
   controls: { id: string; title: string }[]
+  onCountChange?: (count: number) => void
 }
 
-export default function WaiversPage({ controls }: Props) {
-  const [waivers, setWaivers] = useState<Record<string, Waiver>>(loadLocalWaivers)
+export default function WaiversPage({ controls, onCountChange }: Props) {
+  const [waivers, setWaivers] = useState<Record<string, Waiver>>({})
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -54,29 +55,33 @@ export default function WaiversPage({ controls }: Props) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('loading')
   const [syncError, setSyncError] = useState<string | null>(null)
 
-  // Fetch from server on mount; fall back to localStorage if unavailable
+  function applyMap(map: Record<string, Waiver>) {
+    setWaivers(map)
+    saveLocalWaivers(map)
+    onCountChange?.(Object.keys(map).length)
+  }
+
+  // Fetch from server on mount; fall back to read-only localStorage cache if unreachable
   useEffect(() => {
     setSyncStatus('loading')
     fetchWaivers()
       .then(records => {
         const map: Record<string, Waiver> = {}
         for (const r of records) {
-          map[r.id] = { id: r.id, reason: r.reason, owner: r.owner, expires: r.expires, project: r.project }
+          map[r.id] = { id: r.id, reason: r.reason, owner: r.owner, expires: r.expires ?? '', project: r.project }
         }
-        setWaivers(map)
-        saveLocalWaivers(map)
+        applyMap(map)
         setSyncStatus('synced')
       })
       .catch((e: unknown) => {
-        // Server unavailable or endpoint error — use localStorage cache
+        const cached = loadLocalWaivers()
+        setWaivers(cached)
         setSyncStatus('offline')
-        if (e instanceof TypeError) {
-          setSyncError(`Cannot reach server — using local cache. Check the server URL in Settings.`)
-        } else {
-          setSyncError(`Server error loading waivers (${e instanceof Error ? e.message : String(e)}) — using local cache.`)
-        }
+        setSyncError(e instanceof TypeError
+          ? 'Cannot reach server — showing cached data. Check the server URL in Settings.'
+          : `Server error loading waivers (${e instanceof Error ? e.message : String(e)}) — showing cached data.`)
       })
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const entries = Object.values(waivers).sort((a, b) => a.id.localeCompare(b.id))
 
@@ -100,32 +105,29 @@ export default function WaiversPage({ controls }: Props) {
     setSyncError(null)
     try {
       await upsertWaiver(waiver.id, { reason: waiver.reason, owner: waiver.owner, expires: waiver.expires, project: waiver.project ?? '' })
+      const next = { ...waivers, [waiver.id]: waiver }
+      applyMap(next)
       setSyncStatus('synced')
+      appendAuditEvent({
+        actor: waiver.owner || 'unknown',
+        category: 'waiver',
+        action: existing ? 'waiver_updated' : 'waiver_created',
+        subject_id: waiver.id,
+        subject_type: 'waiver',
+        summary: existing
+          ? `Waiver updated for ${waiver.id} by ${waiver.owner} (expires ${waiver.expires})`
+          : `Waiver created for ${waiver.id} by ${waiver.owner} (expires ${waiver.expires})`,
+        before: existing ?? undefined,
+        after: waiver,
+      })
+      setShowForm(false)
     } catch (e) {
-      setSyncStatus('offline')
+      setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? `Cannot reach server — saved locally only. Check the server URL in Settings.`
-        : `Server error saving waiver (${e instanceof Error ? e.message : String(e)}) — saved locally only.`)
+        ? 'Cannot reach server — waiver not saved. Check the server URL in Settings.'
+        : `Server error saving waiver (${e instanceof Error ? e.message : String(e)})`)
     }
-    appendAuditEvent({
-      actor: waiver.owner || 'unknown',
-      category: 'waiver',
-      action: existing ? 'waiver_updated' : 'waiver_created',
-      subject_id: waiver.id,
-      subject_type: 'waiver',
-      summary: existing
-        ? `Waiver updated for ${waiver.id} by ${waiver.owner} (expires ${waiver.expires})`
-        : `Waiver created for ${waiver.id} by ${waiver.owner} (expires ${waiver.expires})`,
-      before: existing ?? undefined,
-      after: waiver,
-    })
-    setWaivers(prev => {
-      const next = { ...prev, [waiver.id]: waiver }
-      saveLocalWaivers(next)
-      return next
-    })
-    setShowForm(false)
-  }, [form, waivers])
+  }, [form, waivers]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const remove = useCallback(async (id: string) => {
     const existing = waivers[id]
@@ -133,31 +135,28 @@ export default function WaiversPage({ controls }: Props) {
     setSyncError(null)
     try {
       await deleteWaiver(id)
+      const next = { ...waivers }
+      delete next[id]
+      applyMap(next)
       setSyncStatus('synced')
+      if (existing) {
+        appendAuditEvent({
+          actor: existing.owner || 'unknown',
+          category: 'waiver',
+          action: 'waiver_deleted',
+          subject_id: id,
+          subject_type: 'waiver',
+          summary: `Waiver removed for ${id} (was owned by ${existing.owner})`,
+          before: existing,
+        })
+      }
     } catch (e) {
-      setSyncStatus('offline')
+      setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? `Cannot reach server — removed locally only. Check the server URL in Settings.`
-        : `Server error deleting waiver (${e instanceof Error ? e.message : String(e)}) — removed locally only.`)
+        ? 'Cannot reach server — waiver not removed. Check the server URL in Settings.'
+        : `Server error deleting waiver (${e instanceof Error ? e.message : String(e)})`)
     }
-    if (existing) {
-      appendAuditEvent({
-        actor: existing.owner || 'unknown',
-        category: 'waiver',
-        action: 'waiver_deleted',
-        subject_id: id,
-        subject_type: 'waiver',
-        summary: `Waiver removed for ${id} (was owned by ${existing.owner})`,
-        before: existing,
-      })
-    }
-    setWaivers(prev => {
-      const w = { ...prev }
-      delete w[id]
-      saveLocalWaivers(w)
-      return w
-    })
-  }, [waivers])
+  }, [waivers]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function copyYaml() {
     const yaml = exportYaml(waivers)
@@ -181,7 +180,7 @@ export default function WaiversPage({ controls }: Props) {
   }
 
   const inputStyle = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem',
     outline: 'none', width: '100%', boxSizing: 'border-box' as const,
   }
@@ -195,7 +194,7 @@ export default function WaiversPage({ controls }: Props) {
     if (syncStatus === 'loading') return { label: 'Loading…', color: '#94a3b8' }
     if (syncStatus === 'saving') return { label: 'Saving…', color: '#0094ff' }
     if (syncStatus === 'synced') return { label: 'Synced', color: '#22c55e' }
-    if (syncStatus === 'offline') return { label: 'Offline — local cache', color: '#eab308' }
+    if (syncStatus === 'offline') return { label: 'Offline — cached data', color: '#eab308' }
     return { label: 'Sync error', color: '#DA2C38' }
   })()
 
@@ -206,9 +205,12 @@ export default function WaiversPage({ controls }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <button
           onClick={openAdd}
+          disabled={syncStatus === 'offline'}
           style={{
-            background: 'var(--waf-brand)', color: '#fff', border: 'none', borderRadius: '8px',
-            padding: '0.5rem 1.1rem', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+            background: syncStatus === 'offline' ? '#94a3b8' : 'var(--waf-brand)',
+            color: '#fff', border: 'none', borderRadius: '8px',
+            padding: '0.5rem 1.1rem', fontSize: '0.82rem', fontWeight: 700,
+            cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer',
           }}
         >
           + Add Waiver
@@ -254,7 +256,6 @@ export default function WaiversPage({ controls }: Props) {
         </div>
       )}
 
-
       {/* Waivers list */}
       {syncStatus === 'loading' ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
@@ -298,13 +299,15 @@ export default function WaiversPage({ controls }: Props) {
                   <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                     <button
                       onClick={() => openEdit(w)}
-                      style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: 'pointer', color: 'var(--muted)' }}
+                      disabled={syncStatus === 'offline'}
+                      style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--muted)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => void remove(w.id)}
-                      style={{ background: 'none', border: '1px solid rgba(218,44,56,.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: 'pointer', color: '#DA2C38' }}
+                      disabled={syncStatus === 'offline'}
+                      style={{ background: 'none', border: '1px solid rgba(218,44,56,.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Remove
                     </button>
@@ -343,7 +346,7 @@ export default function WaiversPage({ controls }: Props) {
           />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: '#fff', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
             padding: '1.5rem', width: '440px', maxWidth: '90vw', zIndex: 100,
             display: 'flex', flexDirection: 'column', gap: '1rem',
           }}>
@@ -409,6 +412,15 @@ export default function WaiversPage({ controls }: Props) {
               </div>
             </div>
 
+            {syncError && syncStatus !== 'loading' && (
+              <div style={{
+                background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+                borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: '#DA2C38',
+              }}>
+                {syncError}
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowForm(false)}
@@ -418,14 +430,15 @@ export default function WaiversPage({ controls }: Props) {
               </button>
               <button
                 onClick={() => void submit()}
-                disabled={!form.id}
+                disabled={!form.id || syncStatus === 'saving'}
                 style={{
-                  background: form.id ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
+                  background: form.id && syncStatus !== 'saving' ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
                   border: 'none', borderRadius: '8px', padding: '0.45rem 1rem',
-                  fontSize: '0.82rem', fontWeight: 700, cursor: form.id ? 'pointer' : 'not-allowed',
+                  fontSize: '0.82rem', fontWeight: 700,
+                  cursor: form.id && syncStatus !== 'saving' ? 'pointer' : 'not-allowed',
                 }}
               >
-                {editId ? 'Save Changes' : 'Add Waiver'}
+                {syncStatus === 'saving' ? 'Saving…' : editId ? 'Save Changes' : 'Add Waiver'}
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { fetchProjectPassports, fetchProjectPassport, getApiBase, upsertProjectPassport, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
-import { MATURITY_META } from './SettingsPage'
+import { MATURITY_META } from './settingsUtils'
 
 interface Props {
   runs: RunSummary[]

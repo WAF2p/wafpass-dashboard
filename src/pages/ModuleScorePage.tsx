@@ -262,7 +262,7 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
   const [statusFilter, setStatusFilter] = useState('FAIL')
 
   const selectStyle: React.CSSProperties = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', outline: 'none',
   }
 
@@ -281,9 +281,9 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
           width: '72px', height: '72px', borderRadius: '50%', flexShrink: 0,
           background: `conic-gradient(${scoreColor(mod.score)} ${mod.score * 3.6}deg, var(--bg) 0deg)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 0 0 4px #fff, 0 0 0 6px ${scoreColor(mod.score)}30`,
+          boxShadow: `0 0 0 4px var(--surface), 0 0 0 6px ${scoreColor(mod.score)}30`,
         }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
             <span style={{ fontSize: '1rem', fontWeight: 900, color: scoreColor(mod.score), lineHeight: 1 }}>{mod.score}%</span>
             <span style={{ fontSize: '0.55rem', color: 'var(--muted)', fontWeight: 600 }}>score</span>
           </div>
@@ -453,7 +453,7 @@ export default function ModuleScorePage({ run }: Props) {
   const modulesWithFail = modules.filter(m => m.fail > 0).length
 
   const selectStyle: React.CSSProperties = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none',
   }
 
@@ -479,7 +479,7 @@ export default function ModuleScorePage({ run }: Props) {
         ].map(({ label, value, color, sub }) => (
           <div key={label} style={{
             flex: 1, minWidth: '110px', borderRadius: '10px', padding: '0.75rem 1rem',
-            background: color ? `${color}0d` : '#fafbfc',
+            background: color ? `${color}0d` : 'var(--bg)',
             border: `1px solid ${color ? `${color}30` : 'var(--border)'}`,
           }}>
             <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: color ?? 'var(--muted)', marginBottom: '0.2rem' }}>{label}</div>
@@ -497,7 +497,7 @@ export default function ModuleScorePage({ run }: Props) {
           </svg>
           <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>Scanned paths:</span>
           {run.source_paths.map(p => (
-            <code key={p} style={{ fontSize: '0.7rem', background: '#fff', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.1em 0.4em', color: 'var(--text)' }}>{p}</code>
+            <code key={p} style={{ fontSize: '0.7rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.1em 0.4em', color: 'var(--text)' }}>{p}</code>
           ))}
         </div>
       )}
@@ -529,7 +529,7 @@ export default function ModuleScorePage({ run }: Props) {
                   style={{
                     fontSize: '0.62rem', fontWeight: 600, padding: '0.15rem 0.4rem',
                     borderRadius: '4px', border: '1px solid var(--border)',
-                    background: sortKey === k ? 'var(--waf-brand)' : '#fff',
+                    background: sortKey === k ? 'var(--waf-brand)' : 'var(--surface)',
                     color: sortKey === k ? '#fff' : 'var(--muted)',
                     cursor: 'pointer', flexShrink: 0,
                   }}

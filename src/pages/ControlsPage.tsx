@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ControlMeta, Finding } from '../api'
-import { CONTROLS, PILLAR_COLOR } from '../controls-data'
+import { PILLAR_COLOR } from '../controls-data'
+import { useControlsCatalogue } from '../useControlsCatalogue'
 
 interface Props {
   controls: ControlMeta[]   // from active run API — empty when no run selected
@@ -320,10 +321,12 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
 }
 
 export default function ControlsPage({ controls, findings }: Props) {
-  // Use live run controls when available, fall back to static reference set
+  const catalogue = useControlsCatalogue()
+
+  // Use live run controls when available, fall back to server catalogue / static
   const source: ControlMeta[] = controls.length > 0
     ? controls
-    : CONTROLS.map(c => ({
+    : catalogue.map(c => ({
         id: c.id,
         title: c.title,
         pillar: c.pillar,

@@ -456,38 +456,6 @@ Achievement verification tokens are surfaced as `GET /public/achievements/{token
 
 When a server returns 401 (expired token, not refreshed), api.ts throws `Error('HTTP 401')`. The page shows an error message but doesn't redirect to login. A centralised 401 interceptor (e.g. `authedFetch()` wrapper that calls `AuthContext.logout()` on 401) would improve the UX, but requires injecting the React context into api.ts — deferred to Phase 2.
 
-### No tests
-
-There are no unit or integration tests. The TypeScript compiler catches type errors, but there are no Jest/Vitest tests for component logic, API functions, or audit utilities.
-
-### Monolithic App.tsx
-
-`App.tsx` is ~630 lines handling routing, sidebar, header, state, and run loading. It has grown organically. The sidebar could be extracted to a `Sidebar.tsx` component, and the run-loading logic could move to a custom hook.
-
-### Inline styles everywhere
-
-All styling uses inline `style` objects. This is consistent and avoids CSS class collision but makes theming difficult and produces verbose JSX. No CSS module or styled-component is used.
-
-### Chart library coverage
-
-Recharts is used for radar and bar charts. D3 is used ad-hoc in BlastRadiusPage and DependencyGraphPage. The two libraries overlap; all charts could be unified on one library.
-
-### No code splitting
-
-The entire application (~1.3 MB minified) is in one chunk. Pages like DependencyGraphPage (which uses D3) and RegionsPage (which uses Leaflet + its CSS) contribute significantly. Lazy-loading page components with `React.lazy()` + `Suspense` would improve first-load performance.
-
-### localStorage as team cache
-
-Waivers and risk acceptances sync with the server but fall back to localStorage when offline. This works for single-user use but means two teammates with different local caches may see different waiver lists momentarily. The server is authoritative; the cache is best-effort.
-
-### Audit log is browser-local
-
-Audit events are recorded in `localStorage` per browser. There is no server-side audit log. Events cannot be shared across teammates, and they are lost if `localStorage` is cleared. A future version should persist audit events to the server.
-
-### `controls-data.ts` duplication
-
-`controls-data.ts` contains hardcoded metadata for all 73 controls (IDs, titles, pillars, severities). This duplicates the information in the server's controls catalogue. It is used as a fallback when no run is loaded. As the control set grows this file needs manual updates.
-
 ---
 
 ## Adding a new page

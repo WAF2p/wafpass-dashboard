@@ -7,7 +7,7 @@
  */
 
 import { RunDetail } from '../api'
-import { Settings, MATURITY_META } from '../pages/SettingsPage'
+import { Settings, MATURITY_META } from '../pages/settingsUtils'
 
 interface Props {
   run: RunDetail

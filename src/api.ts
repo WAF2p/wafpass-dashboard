@@ -117,26 +117,33 @@ export interface RunDetail extends RunSummary {
   plan_changes: PlanChanges | null
 }
 
+export interface RunPage {
+  items: RunSummary[]
+  nextCursor: string | null
+}
+
 export async function fetchRuns(params?: {
   limit?: number
-  offset?: number
+  cursor?: string
   project?: string
   stage?: string
-}): Promise<RunSummary[]> {
+}): Promise<RunPage> {
   const url = new URL(`${getApiBase()}/runs`, window.location.origin)
   if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
-  if (params?.offset !== undefined) url.searchParams.set('offset', String(params.offset))
+  if (params?.cursor) url.searchParams.set('cursor', params.cursor)
   if (params?.project) url.searchParams.set('project', params.project)
   if (params?.stage) url.searchParams.set('stage', params.stage)
   const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch runs: ${res.status}`)
-  return res.json() as Promise<RunSummary[]>
+  const json = await res.json() as ApiEnvelope<RunSummary[]>
+  return { items: json.data, nextCursor: json.meta?.next_cursor ?? null }
 }
 
 export async function fetchRun(id: string): Promise<RunDetail> {
   const res = await fetch(`${getApiBase()}/runs/${id}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Run not found: ${id}`)
-  return res.json() as Promise<RunDetail>
+  const json = await res.json() as ApiEnvelope<RunDetail>
+  return json.data
 }
 
 export interface ProjectAchievement {
@@ -154,7 +161,8 @@ export interface ProjectAchievement {
 export async function fetchProjectAchievements(project: string): Promise<ProjectAchievement[]> {
   const res = await fetch(`${getApiBase()}/achievements/${encodeURIComponent(project)}`, { headers: _authHeaders() })
   if (!res.ok) return []
-  return res.json() as Promise<ProjectAchievement[]>
+  const json = await res.json() as ApiEnvelope<ProjectAchievement[]>
+  return json.data
 }
 
 export interface BadgeStatus {
@@ -176,7 +184,8 @@ export async function fetchBadgeStatus(project: string): Promise<BadgeStatus | n
 export async function fetchControls(runId: string): Promise<ControlMeta[]> {
   const res = await fetch(`${getApiBase()}/runs/${runId}/controls`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch controls: ${res.status}`)
-  return res.json() as Promise<ControlMeta[]>
+  const json = await res.json() as ApiEnvelope<ControlMeta[]>
+  return json.data
 }
 
 export async function fetchFindings(
@@ -189,7 +198,8 @@ export async function fetchFindings(
   if (filters?.status) url.searchParams.set('status', filters.status)
   const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch findings: ${res.status}`)
-  return res.json() as Promise<Finding[]>
+  const json = await res.json() as ApiEnvelope<Finding[]>
+  return json.data
 }
 
 // ── Controls catalogue (wafpass-server /controls) ─────────────────────────────
@@ -217,6 +227,7 @@ interface ApiMeta {
   total?: number
   page?: number
   per_page?: number
+  next_cursor?: string | null
 }
 
 interface ApiEnvelope<T> {
@@ -259,7 +270,7 @@ export interface WaiverRecord {
   id: string
   reason: string
   owner: string
-  expires: string
+  expires: string | null
   project: string
   created_at: string
   updated_at: string
@@ -270,7 +281,8 @@ export async function fetchWaivers(project?: string): Promise<WaiverRecord[]> {
   if (project) url.searchParams.set('project', project)
   const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch waivers: ${res.status}`)
-  return res.json() as Promise<WaiverRecord[]>
+  const json = await res.json() as ApiEnvelope<WaiverRecord[]>
+  return json.data
 }
 
 export async function upsertWaiver(id: string, payload: Omit<WaiverRecord, 'id' | 'created_at' | 'updated_at'>): Promise<WaiverRecord> {
@@ -280,7 +292,8 @@ export async function upsertWaiver(id: string, payload: Omit<WaiverRecord, 'id' 
     body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`Failed to save waiver: ${res.status}`)
-  return res.json() as Promise<WaiverRecord>
+  const json = await res.json() as ApiEnvelope<WaiverRecord>
+  return json.data
 }
 
 export async function deleteWaiver(id: string): Promise<void> {
@@ -301,8 +314,8 @@ export interface RiskRecord {
   notes: string
   risk_level: string
   residual_risk: string
-  expires: string
-  accepted_at: string
+  expires: string | null
+  accepted_at: string | null
   project: string
   created_at: string
   updated_at: string
@@ -313,7 +326,8 @@ export async function fetchRisks(project?: string): Promise<RiskRecord[]> {
   if (project) url.searchParams.set('project', project)
   const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch risks: ${res.status}`)
-  return res.json() as Promise<RiskRecord[]>
+  const json = await res.json() as ApiEnvelope<RiskRecord[]>
+  return json.data
 }
 
 export async function upsertRisk(id: string, payload: Omit<RiskRecord, 'id' | 'created_at' | 'updated_at'>): Promise<RiskRecord> {
@@ -323,7 +337,8 @@ export async function upsertRisk(id: string, payload: Omit<RiskRecord, 'id' | 'c
     body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`Failed to save risk: ${res.status}`)
-  return res.json() as Promise<RiskRecord>
+  const json = await res.json() as ApiEnvelope<RiskRecord>
+  return json.data
 }
 
 export async function deleteRisk(id: string): Promise<void> {
@@ -418,7 +433,8 @@ export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
     const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
     throw new Error(body.detail ?? `HTTP ${res.status}`)
   }
-  return res.json() as Promise<RunSummary>
+  const json = await res.json() as ApiEnvelope<RunSummary>
+  return json.data
 }
 
 export async function createCatalogueControl(payload: Omit<CatalogueControl, 'created_at' | 'updated_at'> & { source?: string }): Promise<CatalogueControl> {
@@ -469,14 +485,14 @@ export async function loginUser(username: string, password: string): Promise<Log
   return res.json() as Promise<LoginResponse>
 }
 
-export async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; token_type: string }> {
+export async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; refresh_token: string; token_type: string }> {
   const res = await fetch(`${getApiBase()}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: refreshToken }),
   })
   if (!res.ok) throw new Error('Token refresh failed')
-  return res.json() as Promise<{ access_token: string; token_type: string }>
+  return res.json() as Promise<{ access_token: string; refresh_token: string; token_type: string }>
 }
 
 export async function logoutUser(refreshToken: string): Promise<void> {
@@ -670,7 +686,8 @@ export interface LeaderboardOut {
 export async function fetchLeaderboard(): Promise<LeaderboardOut> {
   const res = await fetch(`${getApiBase()}/leaderboard`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch leaderboard: ${res.status}`)
-  return res.json() as Promise<LeaderboardOut>
+  const json = await res.json() as ApiEnvelope<LeaderboardOut>
+  return json.data
 }
 
 // ── Group → Role Mappings API ─────────────────────────────────────────────────
@@ -761,7 +778,8 @@ export async function fetchEvidence(project?: string): Promise<EvidenceOut[]> {
   if (project) url.searchParams.set('project', project)
   const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json() as Promise<EvidenceOut[]>
+  const json = await res.json() as ApiEnvelope<EvidenceOut[]>
+  return json.data
 }
 
 export async function createEvidence(payload: EvidenceCreate): Promise<EvidenceOut> {
@@ -774,7 +792,8 @@ export async function createEvidence(payload: EvidenceCreate): Promise<EvidenceO
     const body = await res.json().catch(() => ({ detail: 'Lock failed' })) as { detail?: string }
     throw new Error(body.detail ?? 'Lock failed')
   }
-  return res.json() as Promise<EvidenceOut>
+  const json = await res.json() as ApiEnvelope<EvidenceOut>
+  return json.data
 }
 
 export async function deleteEvidence(id: string): Promise<void> {
@@ -823,14 +842,16 @@ export type ProjectPassportUpsert = Omit<ProjectPassport, 'project' | 'updated_b
 export async function fetchProjectPassports(): Promise<ProjectPassport[]> {
   const res = await fetch(`${getApiBase()}/projects/passports`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json() as Promise<ProjectPassport[]>
+  const json = await res.json() as ApiEnvelope<ProjectPassport[]>
+  return json.data
 }
 
 export async function fetchProjectPassport(project: string): Promise<ProjectPassport | null> {
   const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/passport`, { headers: _authHeaders() })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json() as Promise<ProjectPassport>
+  const json = await res.json() as ApiEnvelope<ProjectPassport>
+  return json.data
 }
 
 export async function upsertProjectPassport(project: string, payload: ProjectPassportUpsert): Promise<ProjectPassport> {
@@ -843,7 +864,8 @@ export async function upsertProjectPassport(project: string, payload: ProjectPas
     const body = await res.json().catch(() => ({ detail: 'Save failed' })) as { detail?: string }
     throw new Error(body.detail ?? 'Save failed')
   }
-  return res.json() as Promise<ProjectPassport>
+  const json = await res.json() as ApiEnvelope<ProjectPassport>
+  return json.data
 }
 
 export async function deleteProjectPassport(project: string): Promise<void> {
@@ -858,5 +880,56 @@ export async function deleteGroupMapping(id: string): Promise<void> {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+// ── Compliance Audit Events API ───────────────────────────────────────────────
+
+export interface ServerAuditEvent {
+  id: string
+  client_id: string
+  actor: string
+  category: string
+  action: string
+  subject_id: string
+  subject_type: string
+  summary: string
+  before: unknown | null
+  after: unknown | null
+  timestamp: string
+  created_by: string | null
+}
+
+export async function pushAuditEvent(event: {
+  client_id: string
+  actor: string
+  category: string
+  action: string
+  subject_id: string
+  subject_type: string
+  summary: string
+  timestamp: string
+  before?: unknown
+  after?: unknown
+}): Promise<void> {
+  const token = getAccessToken()
+  if (!token) return  // unauthenticated — skip silently
+  await fetch(`${getApiBase()}/audit/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(event),
+  }).catch(() => { /* fire-and-forget: never throw */ })
+}
+
+export async function fetchServerAuditEvents(params?: {
+  limit?: number
+  category?: string
+}): Promise<ServerAuditEvent[]> {
+  const url = new URL(`${getApiBase()}/audit/events`, window.location.origin)
+  if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
+  if (params?.category) url.searchParams.set('category', params.category)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json() as ApiEnvelope<ServerAuditEvent[]>
+  return json.data
 }
 

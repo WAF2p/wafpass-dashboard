@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { RunDetail } from '../api'
-import { CONTROLS, FRAMEWORKS, PILLAR_COLOR } from '../controls-data'
+import { FRAMEWORKS, PILLAR_COLOR } from '../controls-data'
+import { useControlsCatalogue } from '../useControlsCatalogue'
 
 interface Props { run: RunDetail }
 
@@ -19,6 +20,7 @@ function ProgressBar({ value }: { value: number }) {
 
 export default function CompliancePage({ run }: Props) {
   const [tab, setTab] = useState<'pillars' | 'frameworks'>('pillars')
+  const catalogue = useControlsCatalogue()
   const findings = run.findings
   const pillars = Array.from(new Set(findings.map(f => f.pillar).filter((p): p is string => Boolean(p)))).sort()
 
@@ -42,7 +44,7 @@ export default function CompliancePage({ run }: Props) {
   // ── Frameworks tab ──────────────────────────────────────────────────────
   // For each framework, find controls that map to it and their run status
   function controlRunStatus(ctrlId: string): 'PASS' | 'FAIL' | 'SKIP' | 'UNKNOWN' {
-    const ctrl = CONTROLS.find(c => c.id === ctrlId)
+    const ctrl = catalogue.find(c => c.id === ctrlId)
     if (!ctrl) return 'UNKNOWN'
     const related = findings.filter(f =>
       ctrl.automated_checks.some(c => c.id === f.check_id) || f.control_id === ctrlId
@@ -159,7 +161,7 @@ export default function CompliancePage({ run }: Props) {
       {tab === 'frameworks' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {FRAMEWORKS.map(fw => {
-            const mappedControls = CONTROLS.filter(c =>
+            const mappedControls = catalogue.filter(c =>
               c.regulatory_mapping.some(m => m.framework === fw.id)
             )
             const statuses = mappedControls.map(c => controlRunStatus(c.id))

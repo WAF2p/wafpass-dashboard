@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   AuditCategory, AuditEvent,
   clearAuditLog, clearFirstSeen,
   FirstSeenEntry, loadAuditLog, loadFirstSeen,
 } from '../audit'
+import { fetchServerAuditEvents, ServerAuditEvent } from '../api'
 
 // ─── Category metadata ────────────────────────────────────────────────────────
 
@@ -223,13 +224,44 @@ function FirstSeenTable({ entries }: { entries: FirstSeenEntry[] }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+function serverToAuditEvent(s: ServerAuditEvent): AuditEvent {
+  return {
+    id: s.client_id || s.id,
+    timestamp: s.timestamp,
+    actor: s.actor,
+    category: s.category as AuditCategory,
+    action: s.action as AuditEvent['action'],
+    subject_id: s.subject_id,
+    subject_type: s.subject_type,
+    summary: s.summary,
+    before: s.before ?? undefined,
+    after: s.after ?? undefined,
+  }
+}
+
 export default function AuditLogPage() {
   const [events, setEvents] = useState<AuditEvent[]>(() => loadAuditLog())
+  const [serverCount, setServerCount] = useState<number | null>(null)
   const [firstSeen, setFirstSeen] = useState<Record<string, FirstSeenEntry>>(() => loadFirstSeen())
   const [tab, setTab] = useState<'events' | 'exposure'>('events')
   const [catFilter, setCatFilter] = useState<AuditCategory | ''>('')
   const [search, setSearch] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
+
+  // Merge server events with localStorage on mount
+  useEffect(() => {
+    fetchServerAuditEvents({ limit: 2000 }).then(serverEvents => {
+      setServerCount(serverEvents.length)
+      if (serverEvents.length === 0) return
+      const serverIds = new Set(serverEvents.map(e => e.client_id || e.id))
+      const local = loadAuditLog().filter(e => !serverIds.has(e.id))
+      const merged = [
+        ...serverEvents.map(serverToAuditEvent),
+        ...local,
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      setEvents(merged)
+    }).catch(() => { /* server unavailable — local-only mode */ })
+  }, [])
 
   const firstSeenEntries = useMemo(() => Object.values(firstSeen), [firstSeen])
 
@@ -285,6 +317,22 @@ export default function AuditLogPage() {
           </div>
         ))}
       </div>
+
+      {/* ── Server sync banner ───────────────────────────────────────────── */}
+      {serverCount !== null && (
+        <div style={{
+          marginBottom: 16, padding: '8px 14px', borderRadius: 7, fontSize: 12,
+          background: serverCount > 0 ? 'rgba(5,150,105,.07)' : 'rgba(148,163,184,.08)',
+          border: `1px solid ${serverCount > 0 ? 'rgba(5,150,105,.25)' : 'rgba(148,163,184,.25)'}`,
+          color: serverCount > 0 ? '#059669' : 'var(--text-muted)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ fontWeight: 700 }}>{serverCount > 0 ? '✓ Server sync active' : 'ℹ Local-only mode'}</span>
+          {serverCount > 0
+            ? `${serverCount} events loaded from server and merged with local history.`
+            : 'No server events found. Events will be pushed to the server when you are logged in.'}
+        </div>
+      )}
 
       {/* ── Tabs + controls ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap', borderBottom: '1px solid var(--card-border)', paddingBottom: 12 }}>
@@ -380,8 +428,8 @@ export default function AuditLogPage() {
             <FirstSeenTable entries={firstSeenEntries} />
           </div>
           <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            <strong>Note:</strong> The first-seen date reflects the first time this browser loaded a run containing this failure.
-            For an authoritative record, cross-reference with the run history on the server.
+            <strong>Note:</strong> The first-seen date reflects when a run containing this failure was first loaded by any team member.
+            Cross-reference with the run history on the server for a complete record.
             Export as CSV or JSON and attach to your SOC2/ISO27001 evidence package.
           </div>
         </div>

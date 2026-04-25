@@ -40,7 +40,7 @@ function DetailPanel({ finding, onClose }: { finding: Finding; onClose: () => vo
     <div style={{
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
       width: '600px', maxWidth: '92vw', maxHeight: '85vh',
-      background: '#fff', borderRadius: '14px',
+      background: 'var(--surface)', borderRadius: '14px',
       boxShadow: '0 24px 64px rgba(15,23,42,.18)',
       display: 'flex', flexDirection: 'column', zIndex: 100,
       overflowY: 'auto',
@@ -141,14 +141,14 @@ function WaiveModal({ controlIds, project, onClose, onDone }: WaiveModalProps) {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '0.45rem 0.7rem', borderRadius: '8px',
-    border: '1px solid var(--border)', background: '#fff',
+    border: '1px solid var(--border)', background: 'var(--input-bg)',
     color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box',
   }
 
   return (
     <div style={{
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-      width: 480, maxWidth: '92vw', background: '#fff', borderRadius: '14px',
+      width: 480, maxWidth: '92vw', background: 'var(--surface)', borderRadius: '14px',
       boxShadow: '0 24px 64px rgba(15,23,42,.2)', zIndex: 200,
       display: 'flex', flexDirection: 'column',
     }}>
@@ -300,7 +300,7 @@ export default function FindingsPage({ run }: Props) {
   function clearSelection() { setChecked(new Set()) }
 
   const selectStyle = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none',
   }
 

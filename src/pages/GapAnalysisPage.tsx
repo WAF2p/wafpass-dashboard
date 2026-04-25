@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ControlMeta, Finding, RunDetail } from '../api'
-import { CONTROLS, FRAMEWORKS } from '../controls-data'
+import { FRAMEWORKS } from '../controls-data'
+import { useControlsCatalogue } from '../useControlsCatalogue'
 
 interface Props { run: RunDetail }
 
@@ -369,10 +370,12 @@ export default function GapAnalysisPage({ run }: Props) {
   const [sortMode, setSortMode]   = useState<'efficiency' | 'severity' | 'value'>('efficiency')
   const [showPassing, setShowPassing] = useState(false)
 
-  // Prefer run.controls_meta (live), fall back to static CONTROLS (cast to ControlMeta)
+  const catalogue = useControlsCatalogue()
+
+  // Prefer run.controls_meta (live), fall back to server catalogue / static
   const controls: ControlMeta[] = useMemo(() =>
-    run.controls_meta.length > 0 ? run.controls_meta : CONTROLS as unknown as ControlMeta[],
-    [run.controls_meta]
+    run.controls_meta.length > 0 ? run.controls_meta : catalogue as unknown as ControlMeta[],
+    [run.controls_meta, catalogue]
   )
 
   const allItems = useMemo(

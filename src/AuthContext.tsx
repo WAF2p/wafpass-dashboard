@@ -115,8 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (refreshTk && userStr) {
       refreshAccessToken(refreshTk)
-        .then(({ access_token }) => {
+        .then(({ access_token, refresh_token }) => {
           localStorage.setItem(ACCESS_KEY, access_token)
+          localStorage.setItem(REFRESH_KEY, refresh_token)
           const u = JSON.parse(userStr) as UserOut
           _applyTokens(access_token, u)
         })
