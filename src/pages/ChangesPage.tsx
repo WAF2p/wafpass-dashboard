@@ -280,8 +280,8 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '1560px', maxWidth: '95vw', maxHeight: '86vh',
-        background: '#fff', borderRadius: '14px',
-        boxShadow: '0 24px 64px rgba(15,23,42,.22)',
+        background: 'var(--card-bg)', borderRadius: '14px',
+        boxShadow: '0 24px 64px rgba(0,0,0,.4)',
         display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden',
       }}>
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
@@ -304,7 +304,7 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
           {change.action === 'replace' && <ReplaceDetail before={before} after={after} afterUnknown={afterUnknown} type={change.type} />}
         </div>
         <div style={{ padding: '0.65rem 1.25rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.4rem 1.1rem', borderRadius: '7px', border: '1px solid var(--border)', background: '#fff', color: 'var(--text)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>{t('pages.changes.close')}</button>
+          <button onClick={onClose} style={{ padding: '0.4rem 1.1rem', borderRadius: '7px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>{t('pages.changes.close')}</button>
         </div>
       </div>
     </>
@@ -620,7 +620,7 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
     return true
   })
 
-  const selectStyle = { background: '#fff', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none' }
+  const selectStyle = { background: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none' }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

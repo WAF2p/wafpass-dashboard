@@ -104,9 +104,25 @@ interface UnifiedControl {
 }
 
 function fromCore(c: ControlMeta): UnifiedControl {
+  // Use category if available, otherwise infer type from pillar
+  const getCategory = (): string => {
+    if (c.category) return c.category
+    const pillarKey = c.pillar?.toLowerCase().replace(/s$/, '')
+    switch (pillarKey) {
+      case 'security': return 'identity'
+      case 'cost': return 'governance'
+      case 'performance': return 'configuration'
+      case 'reliability': return 'governance'
+      case 'operational': case 'operations': return 'governance'
+      case 'sovereign': case 'sovereignty': return 'governance'
+      case 'sustainability': return 'governance'
+      default: return ''
+    }
+  }
+  const category = getCategory()
   return {
     id: c.id, pillar: c.pillar, severity: c.severity,
-    type: c.category ? [c.category] : [],
+    type: category ? [category] : [],
     description: c.description,
     checksCount: c.checks?.length ?? 0,
     isCustom: false, core: c,
@@ -1419,8 +1435,11 @@ interface Props {
 }
 
 export default function ControlsCataloguePage({ coreControls }: Props) {
-  // Debug: log component render start - comment out in production
-  // console.log('ControlsCataloguePage render START', { coreControlsLen: coreControls?.length || 0 })
+  const isInitialRender = useRef(true)
+  if (isInitialRender.current) {
+    // Debug logging disabled - removed
+  }
+  isInitialRender.current = false
 
   const [customControls, setCustomControls] = useState<CatalogueControl[]>([])
   const [loading, setLoading]               = useState(true)
@@ -1480,7 +1499,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
   }
 
   const allControls: UnifiedControl[] = [
-    ...frameworkFromScan.map(fromCore),
+    ...frameworkFromScan.map(c => fromCore(c)),
     // WAF- controls from catalogue should be treated as framework (not custom)
     // Use their actual type from catalogue; fall back to inferred type if empty
     ...frameworkFromCatalogue.map(c => {
@@ -1493,7 +1512,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
         isCustom: false, custom: c,
       }
     }),
-    ...customControls.filter(c => !frameworkControlIds.has(c.id)).map(fromCustom),
+    ...customControls.filter(c => !frameworkControlIds.has(c.id)).map(c => fromCustom(c)),
   ].sort((a, b) => a.id.localeCompare(b.id))
 
   const filtered = allControls.filter(c => {
@@ -1529,8 +1548,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
     : tab === 'custom' ? customCount
     : allControls.length
 
-  // Debug: log when filter bar renders
-  console.log('Filter bar render check - typeFilter:', typeFilter, 'ALL_TYPES:', ALL_TYPES, 'loading:', loading)
+  // Filter bar render
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 1 }}>
@@ -1642,7 +1660,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
       </div>
 
       {/* Filter bar */}
-      <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', flexShrink: 0 }} data-debug="filter-bar" key="filter-bar-0">
+      <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', flexShrink: 0 }} key="filter-bar-0">
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             type="text" placeholder="Search by ID or description…"
@@ -1654,22 +1672,22 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             {apiError && <span style={{ color: '#f97316', marginLeft: '0.5rem' }}>· custom controls unavailable</span>}
           </span>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }} data-debug="pillar-filter">
           <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Pillar</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
-            {ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />)}
+            {(() => ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />))()}
           </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
           <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Severity</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
-            {ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />)}
+            {(() => ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />))()}
           </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }} data-debug="type-filter-container">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
           <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Type</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
-            {ALL_TYPES.map(t => <TogglePill key={t} label={t} color={typeColor(t)} active={typeFilter.includes(t)} onClick={() => toggleType(t)} />)}
+            {(() => ALL_TYPES.map(t => <TogglePill key={t} label={t} color={typeColor(t)} active={typeFilter.includes(t)} onClick={() => toggleType(t)} />))()}
           </div>
         </div>
       </div>
@@ -1721,8 +1739,8 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
                     </td>
                     <td style={{ padding: '0.65rem 1rem' }}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                        {ctrl.type.slice(0, 2).map(t => <Tag key={t} label={t} />)}
-                        {ctrl.type.length > 2 && <Tag label={`+${ctrl.type.length - 2}`} />}
+                        {ctrl.type?.slice(0, 2).map(t => <Tag key={t} label={t} />)}
+                        {ctrl.type?.length > 2 && <Tag label={`+${ctrl.type.length - 2}`} />}
                       </div>
                     </td>
                     <td style={{ padding: '0.65rem 1rem', maxWidth: '320px' }}>

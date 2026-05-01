@@ -21,6 +21,11 @@
   --score-inner:    #ffffff;
   --text:           #0b1220;
   --muted:          #5b6474;
+  --card-bg:        #ffffff;
+  --card-border:    #e2e8f0;
+  --text-primary:   #0b1220;
+  --text-secondary: #5b6474;
+  --bg-secondary:   #f7f8fb;
   --shadow-sm:      0 1px 3px rgba(15,23,42,.06);
   --shadow-md:      0 4px 24px rgba(15,23,42,.09);
 }
@@ -44,6 +49,11 @@
   --score-inner:    #1c2230;
   --text:           #e6edf3;
   --muted:          #8b949e;
+  --card-bg:        #161b22;
+  --card-border:    rgba(255,255,255,.12);
+  --text-primary:   #e6edf3;
+  --text-secondary: #94a3b8;
+  --bg-secondary:   #0d1117;
   --shadow-sm:      0 1px 3px rgba(0,0,0,.30);
   --shadow-md:      0 4px 24px rgba(0,0,0,.50);
 }
