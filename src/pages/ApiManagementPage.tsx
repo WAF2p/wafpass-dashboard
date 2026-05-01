@@ -4,6 +4,7 @@
  */
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../AuthContext'
+import { useI18n } from '../i18n'
 import {
   fetchApiKeys, createApiKey, revokeApiKey, fetchApiKeyLogs,
   type ApiKeyOut, type ApiKeyCreateResponse, type ApiKeyUsageLogEntry,
@@ -36,6 +37,7 @@ function scoreColor(s: number | null): { color: string; bg: string } {
 // ── Usage log panel ───────────────────────────────────────────────────────────
 
 function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
+  const { t } = useI18n()
   const [logs, setLogs]       = useState<ApiKeyUsageLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
@@ -73,7 +75,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Usage Log
+              {t('pages.apikeys.usageLogHeader')}
             </span>
             <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>— {keyName}</span>
             {!loading && !error && (
@@ -82,7 +84,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
                 background: 'var(--surface)', border: '1px solid var(--border)',
                 padding: '0.1rem 0.5rem', borderRadius: '5px', fontWeight: 600,
               }}>
-                {logs.length} {logs.length === 1 ? 'entry' : 'entries'}
+                {logs.length} {logs.length === 1 ? t('pages.apikeys.entrySingular') : t('pages.apikeys.entryPlural')}
               </span>
             )}
           </div>
@@ -94,13 +96,13 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
             <div style={{ padding: '0.875rem 1.25rem', color: '#DA2C38', fontSize: '0.78rem' }}>{error}</div>
           ) : logs.length === 0 ? (
             <div style={{ padding: '1.5rem 1.25rem', color: 'var(--muted)', fontSize: '0.8rem', textAlign: 'center' }}>
-              No usage recorded yet. This key has not been used to push any runs.
+              {t('pages.apikeys.noUsageYet')}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.79rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['Timestamp', 'Endpoint', 'Project', 'Branch', 'Score', 'Run ID', 'IP'].map(h => (
+                  {[t('pages.apikeys.colTimestamp'), t('pages.apikeys.colEndpoint'), t('pages.apikeys.colProject'), t('pages.apikeys.colBranch'), t('pages.apikeys.colScore'), t('pages.apikeys.colRunId'), t('pages.apikeys.colIp')].map(h => (
                     <th key={h} style={{
                       padding: '0.45rem 1.25rem', textAlign: 'left',
                       fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
@@ -169,6 +171,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
 
 export default function ApiManagementPage() {
   const { role } = useAuth()
+  const { t } = useI18n()
   const isAdmin = role === 'admin'
 
   const [keys, setKeys]           = useState<ApiKeyOut[]>([])
@@ -209,7 +212,7 @@ export default function ApiManagementPage() {
   }
 
   async function handleRevoke(k: ApiKeyOut) {
-    if (!confirm(`Revoke API key "${k.name}"? CI/CD pipelines using this key will stop working immediately.`)) return
+    if (!confirm(t('pages.apikeys.revokeConfirm', { name: k.name }))) return
     try {
       await revokeApiKey(k.id)
       if (expandedId === k.id) setExpandedId(null)
@@ -246,7 +249,7 @@ export default function ApiManagementPage() {
         <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>Admin role required to manage API keys.</span>
+        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.apikeys.adminRequired')}</span>
       </div>
     )
   }
@@ -260,9 +263,9 @@ export default function ApiManagementPage() {
       {/* ── Stats strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
         {[
-          { label: 'Total Keys',   value: keys.length,         color: 'var(--text)' },
-          { label: 'Active',       value: activeKeys.length,   color: '#059669' },
-          { label: 'Revoked',      value: revokedKeys.length,  color: 'var(--muted)' },
+          { label: t('pages.apikeys.totalKeys'),  value: keys.length,         color: 'var(--text)' },
+          { label: t('common.active'),             value: activeKeys.length,   color: '#059669' },
+          { label: t('pages.apikeys.statRevoked'), value: revokedKeys.length,  color: 'var(--muted)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -282,7 +285,7 @@ export default function ApiManagementPage() {
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
             </svg>
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#059669' }}>
-              "{newKey.name}" created — copy the key now, it won't be shown again
+              {t('pages.apikeys.keyCreatedMsg', { name: newKey.name })}
             </span>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -304,18 +307,18 @@ export default function ApiManagementPage() {
               color: '#059669', border: '1px solid rgba(5,150,105,0.25)',
               cursor: 'pointer', fontSize: '0.79rem', fontWeight: 600,
             }}>
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? t('common.copied') : t('common.copy')}
             </button>
             <button onClick={() => setNewKey(null)} style={{
               padding: '0.42rem 0.875rem', borderRadius: '8px', flexShrink: 0,
               background: 'transparent', color: 'var(--muted)',
               border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.79rem',
             }}>
-              Dismiss
+              {t('pages.apikeys.dismiss')}
             </button>
           </div>
           <div style={{ marginTop: '0.65rem', padding: '0.5rem 0.75rem', borderRadius: '7px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '0.69rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Quick start</div>
+            <div style={{ fontSize: '0.69rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.apikeys.quickStart')}</div>
             <code style={{ fontSize: '0.74rem', color: 'var(--text)' }}>
               WAFPASS_API_KEY={newKey.raw_key.slice(0, 20)}… wafpass check ./iac --push https://your-server/runs
             </code>
@@ -326,13 +329,13 @@ export default function ApiManagementPage() {
       {/* ── Create new key ── */}
       <section>
         <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
-          Create New API Key
+          {t('pages.apikeys.createHeader')}
         </div>
         <div className="card" style={{ padding: '0.875rem 1rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.28rem', display: 'block' }}>
-                Key Name / Description
+                {t('pages.apikeys.keyNameLabel')}
               </label>
               <input
                 value={newName}
@@ -362,7 +365,7 @@ export default function ApiManagementPage() {
               <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
-              {creating ? 'Creating…' : 'Generate Key'}
+              {creating ? t('pages.apikeys.creating') : t('pages.apikeys.generateBtn')}
             </button>
           </div>
           {createErr && (
@@ -376,8 +379,8 @@ export default function ApiManagementPage() {
       {/* ── Active keys ── */}
       <section>
         <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
-          Active Keys
-          <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: '0.5rem', opacity: 0.7 }}>— click a row to inspect its usage log</span>
+          {t('pages.apikeys.activeKeysHeader')}
+          <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: '0.5rem', opacity: 0.7 }}>{t('pages.apikeys.clickToInspect')}</span>
         </div>
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {loading ? (
@@ -386,13 +389,13 @@ export default function ApiManagementPage() {
             <div style={{ padding: '1rem', color: '#DA2C38', fontSize: '0.82rem' }}>{error}</div>
           ) : activeKeys.length === 0 ? (
             <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.82rem', textAlign: 'center' }}>
-              No active API keys. Create one above.
+              {t('pages.apikeys.noActiveKeys')}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['Key', 'Prefix', 'Created', 'Last Used', ''].map(h => (
+                  {[t('pages.apikeys.colKey'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated'), t('pages.apikeys.colLastUsed'), ''].map(h => (
                     <th key={h} style={{
                       padding: '0.55rem 0.875rem', textAlign: 'left',
                       fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
@@ -461,7 +464,7 @@ export default function ApiManagementPage() {
                               <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{fmtDate(k.last_used_at)}</div>
                             </div>
                           ) : (
-                            <span style={{ color: 'var(--muted)', opacity: 0.6 }}>never</span>
+                            <span style={{ color: 'var(--muted)', opacity: 0.6 }}>{t('pages.apikeys.never')}</span>
                           )}
                         </td>
                         <td style={{ padding: '0.6rem 0.875rem' }} onClick={e => e.stopPropagation()}>
@@ -474,7 +477,7 @@ export default function ApiManagementPage() {
                               cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
                             }}
                           >
-                            Revoke
+                            {t('pages.apikeys.revokeBtn')}
                           </button>
                         </td>
                       </tr>
@@ -493,13 +496,13 @@ export default function ApiManagementPage() {
       {revokedKeys.length > 0 && (
         <section>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
-            Revoked Keys ({revokedKeys.length})
+            {t('pages.apikeys.revokedKeysHeader', { count: revokedKeys.length })}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden', opacity: 0.55 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['Name', 'Prefix', 'Created'].map(h => (
+                  {[t('pages.apikeys.colName'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated')].map(h => (
                     <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                   ))}
                 </tr>
@@ -525,7 +528,7 @@ export default function ApiManagementPage() {
       {/* ── Usage reference ── */}
       <section>
         <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
-          Usage Reference
+          {t('pages.apikeys.usageRefHeader')}
         </div>
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {[

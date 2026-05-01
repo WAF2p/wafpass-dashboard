@@ -6,6 +6,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { useAuth } from '../AuthContext'
 import { fetchUsers, createUser, updateUser, deleteUser, fetchUserLogs, type UserOut, type UserAuditLogEntry } from '../api'
+import { useI18n } from '../i18n'
 
 const ALL_ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
 
@@ -55,29 +56,39 @@ function fmtDate(iso: string | null | undefined): string {
 
 // ── Action badge ──────────────────────────────────────────────────────────────
 
-const ACTION_META: Record<string, { label: string; color: string; bg: string }> = {
-  'login':       { label: 'Login',        color: '#059669', bg: 'rgba(5,150,105,0.09)' },
-  'logout':      { label: 'Logout',       color: '#64748b', bg: 'rgba(100,116,139,0.09)' },
-  'run.push':    { label: 'Run pushed',   color: '#0078d4', bg: 'rgba(0,120,212,0.09)' },
-  'user.create': { label: 'User created', color: '#7c3aed', bg: 'rgba(124,58,237,0.09)' },
-  'user.update': { label: 'User updated', color: '#b45309', bg: 'rgba(180,83,9,0.09)' },
-  'user.delete': { label: 'User deleted', color: '#DA2C38', bg: 'rgba(218,44,56,0.09)' },
+const ACTION_STYLE: Record<string, { color: string; bg: string }> = {
+  'login':       { color: '#059669', bg: 'rgba(5,150,105,0.09)' },
+  'logout':      { color: '#64748b', bg: 'rgba(100,116,139,0.09)' },
+  'run.push':    { color: '#0078d4', bg: 'rgba(0,120,212,0.09)' },
+  'user.create': { color: '#7c3aed', bg: 'rgba(124,58,237,0.09)' },
+  'user.update': { color: '#b45309', bg: 'rgba(180,83,9,0.09)' },
+  'user.delete': { color: '#DA2C38', bg: 'rgba(218,44,56,0.09)' },
 }
 
 function ActionBadge({ action }: { action: string }) {
-  const m = ACTION_META[action] ?? { label: action, color: '#64748b', bg: 'rgba(100,116,139,0.08)' }
+  const { t } = useI18n()
+  const labelMap: Record<string, string> = {
+    'login':       t('pages.users.actionLogin'),
+    'logout':      t('pages.users.actionLogout'),
+    'run.push':    t('pages.users.actionRunPush'),
+    'user.create': t('pages.users.actionUserCreate'),
+    'user.update': t('pages.users.actionUserUpdate'),
+    'user.delete': t('pages.users.actionUserDelete'),
+  }
+  const s = ACTION_STYLE[action] ?? { color: '#64748b', bg: 'rgba(100,116,139,0.08)' }
   return (
     <span style={{
       display: 'inline-flex', padding: '0.15rem 0.5rem', borderRadius: '6px',
-      background: m.bg, color: m.color,
+      background: s.bg, color: s.color,
       fontWeight: 600, fontSize: '0.69rem', letterSpacing: '0.02em',
     }}>
-      {m.label}
+      {labelMap[action] ?? action}
     </span>
   )
 }
 
 function ActionDetail({ action, detail }: { action: string; detail: Record<string, unknown> }) {
+  const { t } = useI18n()
   const muted: React.CSSProperties = { fontSize: '0.75rem', color: 'var(--muted)' }
   if (action === 'run.push') {
     const score = detail.score as number | undefined
@@ -85,7 +96,7 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
       <span style={muted}>
         {detail.project
           ? <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{String(detail.project)}</strong>
-          : 'unnamed project'}
+          : t('pages.users.unnamedProject')}
         {detail.branch ? <> · <code style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{String(detail.branch)}</code></> : null}
         {score != null && (
           <span style={{
@@ -103,7 +114,7 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
   if (action === 'user.create') {
     return (
       <span style={muted}>
-        Created <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{String(detail.target_username ?? '?')}</strong>
+        {t('pages.users.createdAction')} <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{String(detail.target_username ?? '?')}</strong>
         {' '}as <RoleBadge role={String(detail.target_role ?? '')} />
       </span>
     )
@@ -112,7 +123,7 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
     const fields = detail.fields as string[] | undefined
     return (
       <span style={muted}>
-        Updated <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{String(detail.target_username ?? '?')}</strong>
+        {t('pages.users.updatedAction')} <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{String(detail.target_username ?? '?')}</strong>
         {fields?.length ? (
           <span style={{ marginLeft: '0.35rem' }}>
             {fields.map(f => (
@@ -126,7 +137,7 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
   if (action === 'user.delete') {
     return (
       <span style={muted}>
-        Deleted <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{String(detail.target_username ?? '?')}</strong>
+        {t('pages.users.deletedAction')} <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{String(detail.target_username ?? '?')}</strong>
         {detail.target_role ? <> · <RoleBadge role={String(detail.target_role)} /></> : null}
       </span>
     )
@@ -152,6 +163,7 @@ function MetaTile({ label, children }: { label: string; children: React.ReactNod
 // ── User detail & audit panel ─────────────────────────────────────────────────
 
 function UserDetailPanel({ user }: { user: UserOut }) {
+  const { t } = useI18n()
   const [logs, setLogs]       = useState<UserAuditLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
@@ -212,37 +224,37 @@ function UserDetailPanel({ user }: { user: UserOut }) {
                 </div>
               </div>
 
-              <MetaTile label="User ID">
+              <MetaTile label={t('pages.users.colUserId')}>
                 <code style={{ fontSize: '0.69rem', color: 'var(--muted)', fontFamily: 'ui-monospace,monospace' }}>
                   {user.id.slice(0, 8)}…
                 </code>
               </MetaTile>
 
-              <MetaTile label="Auth Provider">
+              <MetaTile label={t('pages.users.colAuthProvider')}>
                 <span style={{ textTransform: 'capitalize' }}>{user.auth_provider}</span>
               </MetaTile>
 
-              <MetaTile label="Status">
+              <MetaTile label={t('pages.users.colStatus')}>
                 <span style={{
                   display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '5px',
                   background: user.is_active ? 'rgba(5,150,105,0.1)' : 'rgba(100,116,139,0.09)',
                   color: user.is_active ? '#059669' : '#64748b',
                   fontWeight: 600, fontSize: '0.7rem',
                 }}>
-                  {user.is_active ? 'Active' : 'Inactive'}
+                  {user.is_active ? t('pages.users.active') : t('pages.users.inactive')}
                 </span>
               </MetaTile>
 
-              <MetaTile label="Last Login">
+              <MetaTile label={t('pages.users.colLastLogin')}>
                 {user.last_login_at ? (
                   <>
                     <span style={{ color: '#059669', fontWeight: 600 }}>{timeAgo(user.last_login_at)}</span>
                     <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(user.last_login_at)}</div>
                   </>
-                ) : <span style={{ color: 'var(--muted)' }}>Never</span>}
+                ) : <span style={{ color: 'var(--muted)' }}>{t('pages.users.never')}</span>}
               </MetaTile>
 
-              <MetaTile label="Created">
+              <MetaTile label={t('pages.users.colCreated')}>
                 {user.created_at ? (
                   <>
                     <span>{timeAgo(user.created_at)}</span>
@@ -267,7 +279,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Audit Trail
+              {t('pages.users.auditTrailLabel')}
             </span>
             {!loading && !error && (
               <span style={{
@@ -275,7 +287,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
                 background: 'var(--surface)', border: '1px solid var(--border)',
                 padding: '0.1rem 0.5rem', borderRadius: '5px', fontWeight: 600,
               }}>
-                {logs.length} {logs.length === 1 ? 'event' : 'events'}
+                {logs.length} {logs.length === 1 ? t('pages.users.eventSingular') : t('pages.users.eventPlural')}
               </span>
             )}
           </div>
@@ -287,13 +299,13 @@ function UserDetailPanel({ user }: { user: UserOut }) {
             <div style={{ padding: '0.875rem 1.25rem', color: '#DA2C38', fontSize: '0.78rem', background: 'rgba(218,44,56,0.04)' }}>{error}</div>
           ) : logs.length === 0 ? (
             <div style={{ padding: '1.5rem 1.25rem', color: 'var(--muted)', fontSize: '0.8rem', textAlign: 'center' }}>
-              No recorded actions for this user yet.
+              {t('pages.users.noAuditEvents')}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.79rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['Timestamp', 'Action', 'Detail', 'IP'].map(h => (
+                  {[t('pages.users.colTimestamp'), t('pages.users.colAction'), t('pages.users.colDetail'), t('pages.users.colIp')].map(h => (
                     <th key={h} style={{
                       padding: '0.45rem 1.25rem', textAlign: 'left',
                       fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
@@ -359,6 +371,7 @@ interface UserFormState {
 const EMPTY_FORM: UserFormState = { username: '', display_name: '', role: 'engineer', password: '', is_active: true }
 
 export default function UserManagementPage() {
+  const { t } = useI18n()
   const { role, user } = useAuth()
   const isAdmin = role === 'admin'
 
@@ -423,7 +436,7 @@ export default function UserManagementPage() {
 
   async function handleDelete(u: UserOut, e: React.MouseEvent) {
     e.stopPropagation()
-    if (!confirm(`Delete user "${u.username}"? This cannot be undone.`)) return
+    if (!confirm(t('pages.users.deleteConfirm', { username: u.username }))) return
     try {
       await deleteUser(u.id)
       if (expandedId === u.id) setExpandedId(null)
@@ -457,7 +470,7 @@ export default function UserManagementPage() {
         <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>Admin role required to manage users.</span>
+        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.users.adminRequired')}</span>
       </div>
     )
   }
@@ -468,9 +481,9 @@ export default function UserManagementPage() {
       {/* ── Stats strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
         {[
-          { label: 'Total Users', value: users.length, color: 'var(--text)' },
-          { label: 'Active',      value: users.filter(u => u.is_active).length,  color: '#059669' },
-          { label: 'Inactive',    value: users.filter(u => !u.is_active).length, color: 'var(--muted)' },
+          { label: t('pages.users.totalUsers'), value: users.length, color: 'var(--text)' },
+          { label: t('pages.users.active'),     value: users.filter(u => u.is_active).length,  color: '#059669' },
+          { label: t('pages.users.inactive'),   value: users.filter(u => !u.is_active).length, color: 'var(--muted)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -483,8 +496,8 @@ export default function UserManagementPage() {
       <section>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Accounts
-            <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: '0.5rem', opacity: 0.7 }}>— click a row to inspect</span>
+            {t('pages.users.accountsHeader')}
+            <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: '0.5rem', opacity: 0.7 }}>{t('pages.users.clickToInspect')}</span>
           </div>
           <button
             onClick={openCreate}
@@ -499,7 +512,7 @@ export default function UserManagementPage() {
             <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
-            New User
+            {t('pages.users.newUserBtn')}
           </button>
         </div>
 
@@ -507,49 +520,49 @@ export default function UserManagementPage() {
         {showForm && (
           <div className="card" style={{ padding: '1.1rem', marginBottom: '0.75rem' }}>
             <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.875rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.6rem' }}>
-              {editId ? 'Edit User' : 'New User'}
+              {editId ? t('pages.users.editUserTitle') : t('pages.users.newUserTitle')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '0.875rem' }}>
               {!editId && (
                 <div>
-                  <label style={labelStyle}>Username *</label>
+                  <label style={labelStyle}>{t('pages.users.usernameLabel')}</label>
                   <input style={inputStyle} value={form.username}
                     onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
                     autoComplete="off" placeholder="jdoe" />
                 </div>
               )}
               <div>
-                <label style={labelStyle}>Display Name</label>
+                <label style={labelStyle}>{t('pages.users.displayNameLabel')}</label>
                 <input style={inputStyle} value={form.display_name}
                   onChange={e => setForm(f => ({ ...f, display_name: e.target.value }))}
                   placeholder="Jane Doe" />
               </div>
               <div>
-                <label style={labelStyle}>Role</label>
+                <label style={labelStyle}>{t('pages.users.roleLabel')}</label>
                 <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.role}
                   onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
                   {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>{editId ? 'New Password (leave blank to keep)' : 'Password *'}</label>
+                <label style={labelStyle}>{editId ? t('pages.users.newPasswordLabel') : t('pages.users.passwordLabel')}</label>
                 <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 8 ? '#ef4444' : undefined }} type="password" value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   autoComplete="new-password"
                   placeholder={editId ? '••••••••' : 'min. 8 characters'} />
                 {form.password && form.password.length < 8 && (
                   <div style={{ fontSize: '0.68rem', color: '#ef4444', marginTop: '0.2rem' }}>
-                    Password must be at least 8 characters
+                    {t('pages.users.passwordTooShort')}
                   </div>
                 )}
               </div>
               {editId && (
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                  <label style={labelStyle}>Active</label>
+                  <label style={labelStyle}>{t('pages.users.activeLabel')}</label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.82rem' }}>
                     <input type="checkbox" checked={form.is_active}
                       onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-                    Account active
+                    {t('pages.users.accountActiveLabel')}
                   </label>
                 </div>
               )}
@@ -569,14 +582,14 @@ export default function UserManagementPage() {
                   border: 'none', cursor: saving ? 'default' : 'pointer', fontSize: '0.8rem', fontWeight: 600,
                 }}
               >
-                {saving ? 'Saving…' : (editId ? 'Save Changes' : 'Create User')}
+                {saving ? t('common.saving') : (editId ? t('pages.users.saveChangesBtn') : t('pages.users.createUserBtn'))}
               </button>
               <button onClick={() => setShowForm(false)} style={{
                 padding: '0.4rem 1rem', borderRadius: '8px',
                 background: 'transparent', color: 'var(--muted)',
                 border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.8rem',
               }}>
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -593,7 +606,7 @@ export default function UserManagementPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['', 'User', 'Role', 'Status', 'Last Login', 'Actions'].map(h => (
+                  {['', t('pages.users.colUser'), t('pages.users.colRole'), t('pages.users.colStatus'), t('pages.users.colLastLogin'), t('pages.users.colActions')].map(h => (
                     <th key={h} style={{
                       padding: '0.55rem 0.875rem', textAlign: 'left',
                       fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
@@ -671,7 +684,7 @@ export default function UserManagementPage() {
                             color: u.is_active ? '#059669' : '#64748b',
                             fontWeight: 600, fontSize: '0.69rem',
                           }}>
-                            {u.is_active ? 'Active' : 'Inactive'}
+                            {u.is_active ? t('pages.users.active') : t('pages.users.inactive')}
                           </span>
                         </td>
 
@@ -682,18 +695,18 @@ export default function UserManagementPage() {
                               <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(u.last_login_at)}</div>
                             </div>
                           ) : (
-                            <span style={{ color: 'var(--muted)', opacity: 0.6 }}>Never</span>
+                            <span style={{ color: 'var(--muted)', opacity: 0.6 }}>{t('pages.users.never')}</span>
                           )}
                         </td>
 
                         <td style={{ padding: '0.6rem 0.875rem' }} onClick={e => e.stopPropagation()}>
                           {u.id !== user?.id ? (
                             <div style={{ display: 'flex', gap: '0.3rem' }}>
-                              <button onClick={e => openEdit(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>Edit</button>
+                              <button onClick={e => openEdit(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.editBtn')}</button>
                               <button onClick={e => handleToggleActive(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: u.is_active ? '#b45309' : '#059669', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
-                                {u.is_active ? 'Disable' : 'Enable'}
+                                {u.is_active ? t('pages.users.disableBtn') : t('pages.users.enableBtn')}
                               </button>
-                              <button onClick={e => handleDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: '#DA2C38', border: '1px solid rgba(218,44,56,0.25)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>Del</button>
+                              <button onClick={e => handleDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: '#DA2C38', border: '1px solid rgba(218,44,56,0.25)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.delBtn')}</button>
                             </div>
                           ) : (
                             <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>—</span>

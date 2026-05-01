@@ -52,9 +52,8 @@ function writeCache(controls: Control[]): void {
 
 /**
  * Merge server catalogue controls with the static rich-metadata from controls-data.ts.
- * Server fields (id, pillar, severity, description) are authoritative.
- * Static fields (title, category, rationale, threat, regulatory_mapping, automated_checks)
- * fill gaps the server does not store.
+ * Server fields (id, pillar, severity, description, regulatory_mapping) are authoritative.
+ * Static fields (title, category, rationale, threat, automated_checks) fill gaps the server does not store.
  */
 function mergeWithServer(serverControls: CatalogueControl[]): Control[] {
   const staticById = new Map(CONTROLS.map(c => [c.id, c]))
@@ -73,7 +72,7 @@ function mergeWithServer(serverControls: CatalogueControl[]): Control[] {
       threat: s?.threat,
       checks_count: s?.checks_count ?? sc.checks?.length ?? 0,
       automated_checks: s?.automated_checks ?? [],
-      regulatory_mapping: s?.regulatory_mapping ?? [],
+      regulatory_mapping: sc.regulatory_mapping.length > 0 ? sc.regulatory_mapping : (s?.regulatory_mapping ?? []),
     })
     staticById.delete(sc.id)
   }

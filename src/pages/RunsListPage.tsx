@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from 'recharts'
 import { RunSummary } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props {
   runs: RunSummary[]
@@ -76,6 +77,7 @@ function PillarTooltip({ active, payload, label }: any) {
 
 // ── Trend view ────────────────────────────────────────────────────────────────
 function TrendView({ runs, onSelect }: Props) {
+  const { t } = useI18n()
   const sorted = useMemo(
     () => [...runs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
     [runs]
@@ -161,7 +163,7 @@ function TrendView({ runs, onSelect }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: scoreColor(firstRun.score), lineHeight: 1 }}>{firstRun.score}</div>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>first</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.first')}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
             <svg width="28" height="12" viewBox="0 0 28 12">
@@ -177,12 +179,12 @@ function TrendView({ runs, onSelect }: Props) {
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: scoreColor(lastRun.score), lineHeight: 1 }}>{lastRun.score}</div>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>latest</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.latest')}</div>
           </div>
         </div>
         <div style={{ width: '1px', height: '28px', background: 'var(--border)' }} />
         <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-          {projects.length} project{projects.length !== 1 ? 's' : ''}
+          {t('pages.runs.projects', { count: projects.length })}
         </div>
         {branches.length > 1 && (
           <>
@@ -191,7 +193,7 @@ function TrendView({ runs, onSelect }: Props) {
               value={branchFilter} onChange={e => setBranchFilter(e.target.value)}
               className="filter-select" style={{ fontSize: '0.75rem' }}
             >
-              <option value="">All branches</option>
+              <option value="">{t('pages.runs.allBranches')}</option>
               {branches.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
           </>
@@ -202,7 +204,7 @@ function TrendView({ runs, onSelect }: Props) {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Overall Score Over Time
+            {t('pages.runs.overallScore')}
           </span>
           <div style={{ display: 'flex', gap: '1.25rem', marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -216,7 +218,7 @@ function TrendView({ runs, onSelect }: Props) {
         <div style={{ padding: '1rem 0.5rem 0.5rem' }}>
           {sorted.length < 2 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              Run at least 2 scans to see a trend.
+              {t('pages.runs.needTwoScans')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
@@ -267,7 +269,7 @@ function TrendView({ runs, onSelect }: Props) {
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Pillar Scores Over Time
+              {t('pages.runs.pillarScores')}
             </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1px', background: 'var(--border)' }}>
@@ -293,7 +295,7 @@ function TrendView({ runs, onSelect }: Props) {
                   </div>
                   {data.length < 2 ? (
                     <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>single run</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.runs.singleRun')}</span>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={72}>
@@ -368,8 +370,6 @@ function StageBadge({ stage }: { stage: string }) {
   )
 }
 
-const COL_HEADERS = ['Project', 'Branch', 'Stage', 'Score', 'Framework', 'Triggered by', 'Controls', 'Date']
-
 function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void }) {
   return (
     <tr
@@ -398,12 +398,14 @@ function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void
 }
 
 function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: string) => void }) {
+  const { t } = useI18n()
+  const colHeaders = [t('pages.runs.colProject'), t('pages.runs.colBranch'), t('pages.runs.colStage'), t('pages.runs.colScore'), t('pages.runs.colFramework'), t('pages.runs.colTriggeredBy'), t('pages.runs.colControls'), t('pages.runs.colDate')]
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
         <thead>
           <tr style={{ background: 'var(--bg)' }}>
-            {COL_HEADERS.map(h => (
+            {colHeaders.map(h => (
               <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                 {h}
               </th>
@@ -420,13 +422,14 @@ function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: stri
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function RunsListPage({ runs, onSelect }: Props) {
+  const { t } = useI18n()
   const [viewMode, setViewMode] = useState<'all' | 'project' | 'trend'>('all')
   const [stageFilter, setStageFilter] = useState('')
 
   if (runs.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        No runs yet. Run <code>wafpass check --push http://localhost:8000/runs</code> to record your first scan.
+        {t('pages.runs.noRuns')} <code>wafpass check --push http://localhost:8000/runs</code>
       </div>
     )
   }
@@ -456,7 +459,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
         value={stageFilter} onChange={e => setStageFilter(e.target.value)}
         className="filter-select" style={{ fontSize: '0.75rem' }}
       >
-        <option value="">All stages</option>
+        <option value="">{t('pages.runs.allStages')}</option>
         {stages.map(s => <option key={s} value={s}>{s}</option>)}
       </select>
     </>
@@ -466,10 +469,10 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)', gap: '0.4rem' }}>
       {stageSelect}
       <div style={{ flex: 1 }} />
-      <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}>View:</span>
-      <button style={vm === 'all'     ? btnActive : btnInactive} onClick={() => setViewMode('all')}>All runs</button>
-      <button style={vm === 'project' ? btnActive : btnInactive} onClick={() => setViewMode('project')}>Project</button>
-      <button style={vm === 'trend'   ? btnActive : btnInactive} onClick={() => setViewMode('trend')}>Trend</button>
+      <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}></span>
+      <button style={vm === 'all'     ? btnActive : btnInactive} onClick={() => setViewMode('all')}>{t('pages.runs.viewAll')}</button>
+      <button style={vm === 'project' ? btnActive : btnInactive} onClick={() => setViewMode('project')}>{t('pages.runs.viewProject')}</button>
+      <button style={vm === 'trend'   ? btnActive : btnInactive} onClick={() => setViewMode('trend')}>{t('pages.runs.viewTrend')}</button>
     </div>
   )
 
@@ -483,16 +486,16 @@ export default function RunsListPage({ runs, onSelect }: Props) {
                 value={stageFilter} onChange={e => setStageFilter(e.target.value)}
                 className="filter-select" style={{ fontSize: '0.75rem' }}
               >
-                <option value="">All stages</option>
+                <option value="">{t('pages.runs.allStages')}</option>
                 {stages.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
             </>
           )}
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}>View:</span>
-          <button style={btnInactive} onClick={() => setViewMode('all')}>All runs</button>
-          <button style={btnInactive} onClick={() => setViewMode('project')}>Project</button>
-          <button style={btnActive}   onClick={() => setViewMode('trend')}>Trend</button>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}></span>
+          <button style={btnInactive} onClick={() => setViewMode('all')}>{t('pages.runs.viewAll')}</button>
+          <button style={btnInactive} onClick={() => setViewMode('project')}>{t('pages.runs.viewProject')}</button>
+          <button style={btnActive}   onClick={() => setViewMode('trend')}>{t('pages.runs.viewTrend')}</button>
         </div>
         <TrendView runs={filteredRuns} onSelect={onSelect} />
       </div>
@@ -541,7 +544,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
                 {groupRuns.length} run{groupRuns.length !== 1 ? 's' : ''}
               </span>
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
-                avg score <span style={{ fontWeight: 700, color, fontSize: '0.8rem' }}>{avgScore}</span>
+                {t('pages.runs.avgScore')} <span style={{ fontWeight: 700, color, fontSize: '0.8rem' }}>{avgScore}</span>
               </span>
             </div>
             <RunsTable runs={groupRuns} onSelect={onSelect} />

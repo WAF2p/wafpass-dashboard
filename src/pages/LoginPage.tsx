@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { fetchSsoProviders, getSsoAuthorizeUrl, type SsoProviderInfo } from '../api'
 import { useAuth } from '../AuthContext'
+import { useI18n } from '../i18n'
 
 export default function LoginPage() {
   const { login } = useAuth()
+  const { t } = useI18n()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState<string | null>(null)
@@ -12,7 +14,6 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetchSsoProviders().then(setSsoProviders).catch(() => {})
-    // Show error from SSO callback redirect
     const params = new URLSearchParams(window.location.search)
     const ssoErr = params.get('sso_error')
     if (ssoErr) setError(`SSO error: ${ssoErr.replace(/_/g, ' ')}`)
@@ -51,20 +52,20 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center' }}>
           <img src="/logo.png" alt="WAF++ PASS" style={{ height: '40px', objectFit: 'contain', marginBottom: '0.75rem' }} />
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-            Controls Dashboard
+            {t('pages.login.productLabel')}
           </div>
         </div>
 
         {/* Login card */}
         <div className="card" style={{ padding: '1.75rem' }}>
           <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', margin: '0 0 1.25rem' }}>
-            Sign in
+            {t('pages.login.title')}
           </h1>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.35rem' }}>
-                Username
+                {t('pages.login.username')}
               </label>
               <input
                 type="text"
@@ -80,7 +81,7 @@ export default function LoginPage() {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.35rem' }}>
-                Password
+                {t('pages.login.password')}
               </label>
               <input
                 type="password"
@@ -116,7 +117,7 @@ export default function LoginPage() {
                 transition: 'all .15s',
               }}
             >
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading ? t('pages.login.signingIn') : t('pages.login.signIn')}
             </button>
           </form>
         </div>
@@ -126,7 +127,7 @@ export default function LoginPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '0.25rem 0' }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-              <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>or</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.login.or')}</span>
               <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
             </div>
             {ssoProviders.map(p => (
@@ -153,8 +154,8 @@ export default function LoginPage() {
         {/* Footer hint */}
         <div style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.6 }}>
           {ssoProviders.length === 0
-            ? <>Local authentication · Contact your administrator to create or reset your account.</>
-            : <>Local and SSO authentication enabled · Contact your administrator for access.</>
+            ? t('pages.login.footerLocal')
+            : t('pages.login.footerSso')
           }
         </div>
       </div>

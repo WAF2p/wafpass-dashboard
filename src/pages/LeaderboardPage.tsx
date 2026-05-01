@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchLeaderboard, LeaderboardEntry, LeaderboardOut } from '../api'
+import { useI18n } from '../i18n'
 
 const TIER_COLORS: Record<number, string> = {
   1: '#d97706', 2: '#0094FF', 3: '#0891b2', 4: '#7c3aed', 5: '#059669',
@@ -30,6 +31,7 @@ function TierBadge({ level, label }: { level: number; label: string }) {
 }
 
 function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) {
+  const { t } = useI18n()
   const medal = MEDAL[rank]
   const height = PODIUM_HEIGHT[rank] ?? 70
   const name = entry.display_name || entry.project
@@ -97,8 +99,8 @@ function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) 
           color: 'var(--muted)',
         }}>
           {entry.tiers_gained != null
-            ? <><span style={{ color: '#22c55e', fontWeight: 700 }}>+{entry.tiers_gained}</span> tiers in 30d</>
-            : <><span style={{ color: medal.color, fontWeight: 700 }}>{entry.days_held}</span> days at Tier 5</>
+            ? <><span style={{ color: '#22c55e', fontWeight: 700 }}>+{entry.tiers_gained}</span> {t('pages.leaderboard.tiersIn30d')}</>
+            : <><span style={{ color: medal.color, fontWeight: 700 }}>{entry.days_held}</span> {t('pages.leaderboard.daysAtTier5')}</>
           }
         </div>
       </div>
@@ -121,6 +123,7 @@ function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) 
 }
 
 function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label: string; color: string }) {
+  const { t } = useI18n()
   const top3 = entries.slice(0, 3)
   const rest = entries.slice(3)
 
@@ -142,7 +145,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
           padding: '2.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.82rem',
           background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px',
         }}>
-          No data yet — run scans and earn tier achievements to appear here.
+          {t('pages.leaderboard.noData')}
         </div>
       ) : (
         <>
@@ -183,7 +186,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
                     <th style={thStyle}>Tier</th>
                     <th style={thStyle}>Score</th>
                     <th style={thStyle}>
-                      {rest[0]?.tiers_gained != null ? 'Tiers Gained' : 'Days at Tier 5'}
+                      {rest[0]?.tiers_gained != null ? t('pages.leaderboard.colTiersGained') : t('pages.leaderboard.colDaysAtTier5')}
                     </th>
                   </tr>
                 </thead>
@@ -249,6 +252,7 @@ const tdStyle: React.CSSProperties = {
 }
 
 export default function LeaderboardPage() {
+  const { t } = useI18n()
   const [data, setData] = useState<LeaderboardOut | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -274,7 +278,7 @@ export default function LeaderboardPage() {
         padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(218,44,56,.3)',
         background: 'rgba(218,44,56,.08)', color: '#f87171', fontSize: '0.85rem',
       }}>
-        Failed to load leaderboard: {error}
+        {t('pages.leaderboard.loadFailed')}: {error}
       </div>
     )
   }
@@ -297,23 +301,23 @@ export default function LeaderboardPage() {
         </div>
         <div>
           <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>
-            Hall of Fame — Global Project Leaderboard
+            {t('pages.leaderboard.title')}
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-            Recognising teams that lead by example — sustaining excellence and driving security culture forward.
+            {t('pages.leaderboard.subtitle')}
           </div>
         </div>
       </div>
 
       <Podium
         entries={data?.top_sovereign ?? []}
-        label="Top Sovereign Projects — Longest Tier 5 Tenure"
+        label={t('pages.leaderboard.topSovereign')}
         color="#059669"
       />
 
       <Podium
         entries={data?.most_improved ?? []}
-        label="Most Improved — Biggest Tier Jump in 30 Days"
+        label={t('pages.leaderboard.mostImproved')}
         color="#22c55e"
       />
     </div>

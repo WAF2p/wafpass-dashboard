@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ControlMeta, Finding } from '../api'
 import { PILLAR_COLOR } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
+import { useI18n } from '../i18n'
 
 interface Props {
   controls: ControlMeta[]   // from active run API — empty when no run selected
@@ -70,6 +71,7 @@ function CopyBtn({ code }: { code: string }) {
 }
 
 function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PASS' | 'FAIL' | 'SKIP' | null; onClose: () => void }) {
+  const { t } = useI18n()
   const pc = pillarColor(ctrl.pillar)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
 
@@ -141,21 +143,31 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
 
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: 0 }}>
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: activeTab === tab.id ? 700 : 500,
-                color: activeTab === tab.id ? 'var(--waf-brand)' : 'var(--muted)',
-                borderBottom: activeTab === tab.id ? '2px solid var(--waf-brand)' : '2px solid transparent',
-                marginBottom: '-1px', whiteSpace: 'nowrap',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {TABS.map(tab => {
+            const tabLabel: Record<TabId, string> = {
+              overview: t('pages.controlsPage.tabOverview'),
+              why: t('pages.controlsPage.tabWhy'),
+              regulatory: t('pages.controlsPage.tabRegulatory'),
+              checks: t('pages.controlsPage.tabChecks'),
+              fix: t('pages.controlsPage.tabFix'),
+              waiver: t('pages.controlsPage.tabWaiver'),
+            }
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: activeTab === tab.id ? 700 : 500,
+                  color: activeTab === tab.id ? 'var(--waf-brand)' : 'var(--muted)',
+                  borderBottom: activeTab === tab.id ? '2px solid var(--waf-brand)' : '2px solid transparent',
+                  marginBottom: '-1px', whiteSpace: 'nowrap',
+                }}
+              >
+                {tabLabel[tab.id]}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -274,11 +286,11 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '580px' }}>
             {existingWaiver && (
               <div style={{ background: 'rgba(167,139,250,.1)', border: '1px solid rgba(167,139,250,.3)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.82rem', color: '#7c3aed' }}>
-                This control is currently waived.
+                {t('pages.controlsPage.existingWaiver')}
               </div>
             )}
             <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Reason *</label>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.controlsPage.waiverReason')}</label>
               <textarea
                 value={wReason} onChange={e => setWReason(e.target.value)}
                 rows={3} placeholder="Why is this control being waived?"
@@ -287,11 +299,11 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Owner</label>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.controlsPage.waiverOwner')}</label>
                 <input value={wOwner} onChange={e => setWOwner(e.target.value)} placeholder="team or person" style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Expires</label>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.controlsPage.waiverExpires')}</label>
                 <input type="date" value={wExpires} onChange={e => setWExpires(e.target.value)} style={inputStyle} />
               </div>
             </div>
@@ -301,14 +313,14 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                 disabled={!wReason.trim()}
                 style={{ padding: '0.45rem 1rem', borderRadius: '7px', border: 'none', cursor: wReason.trim() ? 'pointer' : 'not-allowed', background: wSaved ? '#22c55e' : 'var(--waf-brand)', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}
               >
-                {wSaved ? 'Saved!' : existingWaiver ? 'Update Waiver' : 'Save Waiver'}
+                {wSaved ? t('pages.controlsPage.waiverSaved') : existingWaiver ? t('pages.controlsPage.waiverUpdate') : t('pages.controlsPage.waiveSave')}
               </button>
               {existingWaiver && (
                 <button
                   onClick={removeWaiver}
                   style={{ padding: '0.45rem 1rem', borderRadius: '7px', border: '1px solid rgba(218,44,56,.3)', cursor: 'pointer', background: 'rgba(218,44,56,.06)', color: '#DA2C38', fontWeight: 700, fontSize: '0.82rem' }}
                 >
-                  Remove Waiver
+                  {t('pages.controlsPage.waiverRemove')}
                 </button>
               )}
             </div>
@@ -321,6 +333,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
 }
 
 export default function ControlsPage({ controls, findings }: Props) {
+  const { t } = useI18n()
   const catalogue = useControlsCatalogue()
 
   // Use live run controls when available, fall back to server catalogue / static
@@ -388,20 +401,20 @@ export default function ControlsPage({ controls, findings }: Props) {
         {/* Filter bar */}
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
-            placeholder="Search by ID, title, category…"
+            placeholder={t('pages.controlsPage.searchPlaceholder')}
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ ...selectStyle, flex: '1', minWidth: '180px' }}
           />
           <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)} style={selectStyle}>
-            <option value="">All pillars</option>
+            <option value="">{t('pages.controlsPage.allPillars')}</option>
             {pillars.map(p => <option key={p}>{p}</option>)}
           </select>
           <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} style={selectStyle}>
-            <option value="">All severities</option>
+            <option value="">{t('pages.controlsPage.allSeverities')}</option>
             {['critical', 'high', 'medium', 'low'].map(s => <option key={s}>{s}</option>)}
           </select>
           <span style={{ fontSize: '0.75rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-            {filtered.length} / {source.length}
+            {t('pages.controlsPage.controlsOf', { count: String(filtered.length), total: String(source.length) })}
           </span>
         </div>
 

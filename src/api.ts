@@ -33,6 +33,7 @@ export interface Finding {
   message: string
   remediation: string
   example?: Record<string, unknown> | null
+  regulatory_mapping: { framework: string; controls: string[] }[]
 }
 
 export interface RunSummary {
@@ -221,6 +222,7 @@ export interface CatalogueControl {
   source: string
   created_at: string
   updated_at: string
+  regulatory_mapping: { framework: string; controls: string[] }[]
 }
 
 interface ApiMeta {
@@ -932,4 +934,122 @@ export async function fetchServerAuditEvents(params?: {
   const json = await res.json() as ApiEnvelope<ServerAuditEvent[]>
   return json.data
 }
+
+// ── Control Packs ─────────────────────────────────────────────────────────────
+
+export interface ControlPackOut {
+  version: string
+  description: string
+  is_active: boolean
+  control_count: number
+  imported_at: string
+  imported_by: string | null
+  activated_at: string | null
+  activated_by: string | null
+}
+
+export async function fetchControlPacks(): Promise<ControlPackOut[]> {
+  const res = await fetch(`${getApiBase()}/control-packs`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch control packs: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<ControlPackOut[]>
+  return json.data
+}
+
+export async function getActiveControlPack(): Promise<ControlPackOut | null> {
+  const res = await fetch(`${getApiBase()}/control-packs/active`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch active pack: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<ControlPackOut | null>
+  return json.data
+}
+
+export async function syncControlPack(version: string, description: string): Promise<ControlPackOut> {
+  const res = await fetch(`${getApiBase()}/control-packs/sync`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ version, description }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error((err as { detail?: string }).detail ?? `HTTP ${res.status}`)
+  }
+  const json = await res.json() as ApiEnvelope<ControlPackOut>
+  return json.data
+}
+
+export async function uploadControlPack(file: File, version: string, description: string): Promise<ControlPackOut> {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('version', version)
+  form.append('description', description)
+  const res = await fetch(`${getApiBase()}/control-packs/upload`, {
+    method: 'POST',
+    headers: _authHeaders(),
+    body: form,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error((err as { detail?: string }).detail ?? `HTTP ${res.status}`)
+  }
+  const json = await res.json() as ApiEnvelope<ControlPackOut>
+  return json.data
+}
+
+export async function activateControlPack(version: string): Promise<ControlPackOut> {
+  const res = await fetch(`${getApiBase()}/control-packs/${encodeURIComponent(version)}/activate`, {
+    method: 'POST',
+    headers: _authHeaders(),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error((err as { detail?: string }).detail ?? `HTTP ${res.status}`)
+  }
+  const json = await res.json() as ApiEnvelope<ControlPackOut>
+  return json.data
+}
+
+export async function downloadControlsZip(): Promise<Blob> {
+  const res = await fetch(`${getApiBase()}/controls/export`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to download controls: ${res.status}`)
+  return res.blob()
+}
+
+export interface ActivePackInfo {
+  version: string
+  description: string
+  control_count: number
+  imported_at: string
+  activated_at: string | null
+}
+
+export async function fetchActivePackInfo(): Promise<ActivePackInfo | null> {
+  const res = await fetch(`${getApiBase()}/controls/active-pack`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch active pack: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<ActivePackInfo | null>
+  return json.data
+}
+
+// ── User preferences ──────────────────────────────────────────────────────────
+
+export async function fetchUserPrefsFromServer(): Promise<Record<string, unknown> | null> {
+  const token = getAccessToken()
+  if (!token) return null
+  try {
+    const res = await fetch(`${getApiBase()}/auth/me/prefs`, { headers: _authHeaders() })
+    if (!res.ok) return null
+    return await res.json() as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+export async function pushUserPrefsToServer(prefs: Record<string, unknown>): Promise<void> {
+  const token = getAccessToken()
+  if (!token) return
+  await fetch(`${getApiBase()}/auth/me/prefs`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(_authHeaders()) },
+    body: JSON.stringify(prefs),
+  }).catch(() => { /* fire-and-forget */ })
+}
+
 

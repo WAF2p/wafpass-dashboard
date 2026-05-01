@@ -12,6 +12,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { RunDetail, ControlMeta } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -166,6 +167,7 @@ function computeSprintImpact(
 type SortKey = 'roi' | 'points' | 'effort' | 'severity' | 'frameworks'
 
 export default function RemediationSprintPage({ run }: Props) {
+  const { t } = useI18n()
   const storageKey = `wafpass_sprint_${run.id}`
 
   const [sprintIds, setSprintIds] = useState<Set<string>>(() => {
@@ -237,8 +239,8 @@ export default function RemediationSprintPage({ run }: Props) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
-        <div style={{ fontWeight: 700, fontSize: '1rem' }}>No failing controls</div>
-        <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>All controls are passing — nothing to plan.</div>
+        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{t('pages.remediation.noFailing')}</div>
+        <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>{t('pages.remediation.allPassing')}</div>
       </div>
     )
   }
@@ -250,10 +252,10 @@ export default function RemediationSprintPage({ run }: Props) {
 
       {/* ── Quick-add bar ── */}
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quick add:</span>
+        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.remediation.quickAdd')}:</span>
         <button onClick={() => addTopN(5)}
           style={{ fontSize: '0.75rem', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', cursor: 'pointer', fontWeight: 600 }}>
-          Top 5 by ROI
+          {t('pages.remediation.top5roi')}
         </button>
         {(['CRITICAL', 'HIGH'] as const).map(s => (
           allControls.some(c => c.severity === s) && (
@@ -266,7 +268,7 @@ export default function RemediationSprintPage({ run }: Props) {
         {sprintIds.size > 0 && (
           <button onClick={clearSprint}
             style={{ fontSize: '0.75rem', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', cursor: 'pointer', marginLeft: 'auto' }}>
-            Clear sprint
+            {t('pages.remediation.clearSprint')}
           </button>
         )}
       </div>
@@ -280,17 +282,17 @@ export default function RemediationSprintPage({ run }: Props) {
           {/* Backlog header + filters */}
           <div className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Backlog · {backlog.length} controls
+              {t('pages.remediation.backlog', { count: backlog.length })}
             </span>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto', flexWrap: 'wrap', alignItems: 'center' }}>
               {/* Sort */}
               <select value={sortBy} onChange={e => setSortBy(e.target.value as SortKey)} className="filter-select" style={{ fontSize: '0.75rem' }}>
-                <option value="roi">Sort: Best ROI</option>
-                <option value="points">Sort: Score impact</option>
-                <option value="severity">Sort: Severity</option>
-                <option value="effort">Sort: Quick wins first</option>
-                <option value="frameworks">Sort: Framework coverage</option>
+                <option value="roi">{t('pages.remediation.sortRoi')}</option>
+                <option value="points">{t('pages.remediation.sortPoints')}</option>
+                <option value="severity">{t('pages.remediation.sortSeverity')}</option>
+                <option value="effort">{t('pages.remediation.sortEffort')}</option>
+                <option value="frameworks">{t('pages.remediation.sortFrameworks')}</option>
               </select>
               {/* Filters */}
               <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)} className="filter-select" style={{ fontSize: '0.75rem' }}>
@@ -298,19 +300,19 @@ export default function RemediationSprintPage({ run }: Props) {
                 {pillars.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
               <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} className="filter-select" style={{ fontSize: '0.75rem' }}>
-                <option value="">All severities</option>
+                <option value="">{t('pages.findings.allSeverities')}</option>
                 {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               <select value={effortFilter} onChange={e => setEffortFilter(e.target.value)} className="filter-select" style={{ fontSize: '0.75rem' }}>
-                <option value="">All effort</option>
-                <option value="Low">Low effort</option>
-                <option value="Medium">Medium effort</option>
-                <option value="High">High effort</option>
+                <option value="">{t('pages.remediation.allEffort')}</option>
+                <option value="Low">{t('pages.remediation.lowEffort')}</option>
+                <option value="Medium">{t('pages.remediation.mediumEffort')}</option>
+                <option value="High">{t('pages.remediation.highEffort')}</option>
               </select>
               {(pillarFilter || sevFilter || effortFilter) && (
                 <button onClick={() => { setPillarFilter(''); setSevFilter(''); setEffortFilter('') }}
                   style={{ fontSize: '0.72rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem 0.4rem' }}>
-                  Clear
+                  {t('pages.remediation.clearFilters')}
                 </button>
               )}
             </div>
@@ -320,8 +322,8 @@ export default function RemediationSprintPage({ run }: Props) {
           {backlog.length === 0 ? (
             <div className="card" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--muted)' }}>
               {sprintIds.size === allControls.length
-                ? 'All controls are in the sprint.'
-                : 'No controls match the current filters.'}
+                ? t('pages.remediation.allInSprint')
+                : t('pages.remediation.noMatch')}
             </div>
           ) : (
             backlog.map(ctrl => (
@@ -344,22 +346,22 @@ export default function RemediationSprintPage({ run }: Props) {
           <div className="card" style={{ padding: '1.25rem', background: sprintControls.length > 0 ? 'linear-gradient(135deg, #0b1220 0%, #0f1e3a 100%)' : undefined, border: sprintControls.length > 0 ? '1px solid #0094FF40' : undefined }}>
             {sprintControls.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.4rem' }}>Sprint Impact</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.4rem' }}>{t('pages.remediation.sprintImpact')}</div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                  Add controls from the backlog to see your projected score improvement and framework coverage.
+                  {t('pages.remediation.sprintImpactHint')}
                 </div>
               </div>
             ) : (
               <>
                 <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', marginBottom: '0.75rem' }}>
-                  Sprint Impact Projection
+                  {t('pages.remediation.sprintImpactProjection')}
                 </div>
 
                 {/* Score gauge */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', marginBottom: '1rem' }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(run.score), lineHeight: 1 }}>{run.score}</div>
-                    <div style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>current</div>
+                    <div style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.remediation.current')}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
                     <svg width="32" height="14" viewBox="0 0 32 14">
@@ -370,7 +372,7 @@ export default function RemediationSprintPage({ run }: Props) {
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(impact.projectedScore), lineHeight: 1 }}>{impact.projectedScore}</div>
-                    <div style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>projected</div>
+                    <div style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.remediation.projected')}</div>
                   </div>
                 </div>
 
@@ -382,10 +384,10 @@ export default function RemediationSprintPage({ run }: Props) {
                 {/* Metrics grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.875rem' }}>
                   {[
-                    { label: 'Controls', value: String(sprintControls.length), sub: 'in sprint' },
-                    { label: 'Resources', value: String(impact.resourcesFixed), sub: 'to fix' },
-                    { label: 'Frameworks', value: String(impact.touchedFrameworks.length), sub: 'addressed' },
-                    { label: 'Gaps closed', value: String(impact.closedFrameworks.length), sub: 'fully resolved' },
+                    { label: t('pages.remediation.metricControls'), value: String(sprintControls.length), sub: t('pages.remediation.metricInSprint') },
+                    { label: t('pages.remediation.metricResources'), value: String(impact.resourcesFixed), sub: t('pages.remediation.metricToFix') },
+                    { label: t('pages.remediation.metricFrameworks'), value: String(impact.touchedFrameworks.length), sub: t('pages.remediation.metricAddressed') },
+                    { label: t('pages.remediation.metricGapsClosed'), value: String(impact.closedFrameworks.length), sub: t('pages.remediation.metricFullyResolved') },
                   ].map(m => (
                     <div key={m.label} style={{ background: '#0f1e3a', borderRadius: '8px', padding: '0.5rem 0.625rem', border: '1px solid #1e3a5f' }}>
                       <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{m.value}</div>
@@ -397,7 +399,7 @@ export default function RemediationSprintPage({ run }: Props) {
 
                 {/* Effort */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                  <span style={{ color: '#64748b' }}>Sprint effort</span>
+                  <span style={{ color: '#64748b' }}>{t('pages.remediation.sprintEffort')}</span>
                   <span style={{ fontWeight: 700, color: EFFORT_COLOR[impact.effortLabel as keyof typeof EFFORT_COLOR] ?? '#64748b' }}>
                     {impact.effortLabel}
                   </span>
@@ -407,7 +409,7 @@ export default function RemediationSprintPage({ run }: Props) {
                 {impact.closedFrameworks.length > 0 && (
                   <div style={{ marginTop: '0.75rem', padding: '0.625rem', background: '#0a1628', borderRadius: '8px', border: '1px solid #22c55e30' }}>
                     <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>
-                      Fully closing
+                      {t('pages.remediation.fullyClosing')}
                     </div>
                     {impact.closedFrameworks.map(fw => (
                       <div key={fw} style={{ fontSize: '0.7rem', color: '#86efac', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
@@ -424,7 +426,7 @@ export default function RemediationSprintPage({ run }: Props) {
           {sprintControls.length > 0 && (
             <div className="card" style={{ padding: 0, overflow: 'hidden', maxHeight: '480px', overflowY: 'auto' }}>
               <div style={{ padding: '0.625rem 0.875rem', borderBottom: '1px solid var(--border)', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Sprint ({sprintControls.length})
+                {t('pages.remediation.sprintHeader', { count: sprintControls.length })}
               </div>
               {sprintControls.map(ctrl => (
                 <div key={ctrl.id} style={{ padding: '0.625rem 0.875rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '0.625rem', alignItems: 'flex-start' }}>
@@ -439,7 +441,7 @@ export default function RemediationSprintPage({ run }: Props) {
                       {ctrl.title}
                     </div>
                     <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>
-                      +{ctrl.pointsGain} pts · {ctrl.frameworks.length} fw · {ctrl.effort} effort
+                      +{ctrl.pointsGain} pts · {ctrl.frameworks.length} fw · {t('pages.remediation.effortBadge', { effort: ctrl.effort })}
                     </div>
                   </div>
                   <button onClick={() => removeFromSprint(ctrl.id)}
@@ -466,6 +468,7 @@ function ControlCard({
   onExpand: () => void
   onAction: () => void
 }) {
+  const { t } = useI18n()
   const sevCol  = SEV_COLOR[ctrl.severity] ?? '#64748b'
   const effCol  = EFFORT_COLOR[ctrl.effort]
 
@@ -476,7 +479,7 @@ function ControlCard({
 
         {/* Add button */}
         <button onClick={onAction}
-          title={inSprint ? 'Remove from sprint' : 'Add to sprint'}
+          title={inSprint ? t('pages.remediation.removeFromSprint') : t('pages.remediation.addToSprint')}
           style={{
             flexShrink: 0, width: '28px', height: '28px', borderRadius: '8px', cursor: 'pointer',
             border: inSprint ? '1px solid #0094FF' : '1px solid var(--border)',
@@ -521,11 +524,11 @@ function ControlCard({
             </div>
             {/* Framework badge */}
             <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-              {ctrl.frameworks.length > 0 ? `${ctrl.frameworks.length} framework${ctrl.frameworks.length !== 1 ? 's' : ''}` : 'no frameworks'}
+              {ctrl.frameworks.length > 0 ? `${ctrl.frameworks.length} framework${ctrl.frameworks.length !== 1 ? 's' : ''}` : t('pages.remediation.noFrameworks')}
             </span>
             {/* Effort badge */}
             <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '999px', background: `${effCol}18`, color: effCol, border: `1px solid ${effCol}35`, whiteSpace: 'nowrap' }}>
-              {ctrl.effort} effort
+              {t('pages.remediation.effortBadge', { effort: ctrl.effort })}
             </span>
           </div>
         </div>
@@ -548,14 +551,14 @@ function ControlCard({
 
           {ctrl.description && (
             <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Description</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.remediation.description')}</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.55 }}>{ctrl.description}</div>
             </div>
           )}
 
           {ctrl.remediations.length > 0 && (
             <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>Remediation steps</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>{t('pages.remediation.remediationSteps')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {ctrl.remediations.map((r, i) => (
                   <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.55, padding: '0.5rem 0.75rem', background: 'var(--bg)', borderRadius: '8px', borderLeft: '3px solid #0094FF' }}>
@@ -568,7 +571,7 @@ function ControlCard({
 
           {ctrl.frameworks.length > 0 && (
             <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>Regulatory mapping</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>{t('pages.remediation.regulatoryMapping')}</div>
               <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                 {ctrl.frameworks.map(fw => (
                   <span key={fw} style={{ fontSize: '0.68rem', padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>

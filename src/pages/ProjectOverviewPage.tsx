@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
 } from 'recharts'
 import { fetchProjectAchievements, getApiBase, ProjectAchievement, RunSummary } from '../api'
+import { useI18n } from '../i18n'
 import { MATURITY_META } from './settingsUtils'
 
 interface Props {
@@ -368,6 +369,7 @@ function StatCard({ label, children }: { label: string; children: React.ReactNod
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ProjectOverviewPage({ runs, onSelect, onBack, initialProject }: Props) {
+  const { t } = useI18n()
   const activeProject = initialProject ?? Array.from(new Set(runs.map(r => r.project || '(unnamed)')))[0] ?? null
 
   const projectRuns = useMemo(() => {
@@ -441,7 +443,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
   if (runs.length === 0) {
     return (
       <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
-        No scan runs yet. Push your first wafpass result to see project overviews.
+        {t('pages.projectOverview.noScans')}
       </div>
     )
   }
@@ -473,7 +475,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Passports
+            {t('pages.projectOverview.backBtn')}
           </button>
         )}
         {activeProject && (
@@ -481,7 +483,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeProject}
             </span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', flexShrink: 0 }}>Project Overview</span>
+            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', flexShrink: 0 }}>{t('pages.projectOverview.title')}</span>
           </div>
         )}
       </div>
@@ -490,7 +492,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
         <>
           {/* ── KPI cards ────────────────────────────────────────────────────── */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
-            <StatCard label="Latest Score">
+            <StatCard label={t('pages.projectOverview.latestScore')}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
                 <span style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(latestRun.score) }}>{latestRun.score}</span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
@@ -503,10 +505,10 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{fmtFull(latestRun.created_at)}</div>
             </StatCard>
 
-            <StatCard label="Total Scans">
+            <StatCard label={t('pages.projectOverview.totalScans')}>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text)' }}>{projectRuns.length}</div>
               <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
-                {branchCount} branch{branchCount !== 1 ? 'es' : ''}
+                {t('pages.projectOverview.branches', { count: String(branchCount), es: branchCount !== 1 ? 'es' : '' })}
               </div>
             </StatCard>
 
@@ -514,7 +516,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               background: `${currentMeta.bg}0.08)`, borderRadius: '12px',
               padding: '1rem 1.25rem', border: `1px solid ${currentMeta.color}44`,
             }}>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem', fontWeight: 600 }}>Best Score Level</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem', fontWeight: 600 }}>{t('pages.projectOverview.bestScoreLevel')}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{
                   width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
@@ -524,18 +526,18 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 }}>L{currentMeta.level}</div>
                 <div>
                   <div style={{ fontSize: '1rem', fontWeight: 800, color: currentMeta.textColor }}>{currentMeta.short}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>Best: {bestScore}/100</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{t('pages.projectOverview.bestScore', { score: String(bestScore) })}/100</div>
                 </div>
               </div>
             </div>
 
-            <StatCard label="Badges Earned">
+            <StatCard label={t('pages.projectOverview.badgesEarned')}>
               <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)' }}>
                 {earnedMaturityCount + earnedAchievementCount}
                 <span style={{ fontSize: '0.95rem', color: 'var(--muted)', fontWeight: 400 }}>/{MATURITY_META.length + ACHIEVEMENTS.length}</span>
               </div>
               <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
-                {earnedMaturityCount} maturity · {earnedAchievementCount} achievements
+                {t('pages.projectOverview.maturityCount', { count: String(earnedMaturityCount) })} · {t('pages.projectOverview.achievementsCount', { count: String(earnedAchievementCount) })}
               </div>
             </StatCard>
           </div>
@@ -559,21 +561,21 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                   }}>L{currentMeta.level}</div>
                   <div>
                     <div style={{ fontSize: '0.78rem', fontWeight: 700, color: currentMeta.textColor }}>{currentMeta.short}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>Best score: {bestScore}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.projectOverview.bestScore', { score: String(bestScore) })}</div>
                   </div>
                 </div>
 
                 {/* Center: pts needed */}
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>{ptsNeeded}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>points to next level</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.projectOverview.pointsToNext')}</div>
                 </div>
 
                 {/* Right: next level */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <div>
                     <div style={{ fontSize: '0.78rem', fontWeight: 700, color: nextMeta.textColor, textAlign: 'right' }}>{nextMeta.short}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textAlign: 'right' }}>Requires {nextThreshold}+</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textAlign: 'right' }}>{t('pages.projectOverview.requiresScore', { score: String(nextThreshold) })}</div>
                   </div>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
@@ -619,8 +621,8 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
               <div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: currentMeta.textColor }}>Maximum maturity reached — L5 Excellence</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>All {MATURITY_META.length} maturity badges earned. Outstanding security posture.</div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: currentMeta.textColor }}>{t('pages.projectOverview.maxMaturity')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{t('pages.projectOverview.allBadgesEarned', { count: String(MATURITY_META.length) })}</div>
               </div>
             </div>
           )}
@@ -628,7 +630,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
           {/* ── Charts row ───────────────────────────────────────────────────── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1.25rem', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>Score Trend</div>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>{t('pages.projectOverview.scoreTrend')}</div>
               {trendData.length > 1 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={trendData} onClick={d => { if (d?.activePayload?.[0]?.payload?.id) onSelect(d.activePayload[0].payload.id) }} style={{ cursor: 'pointer' }}>
@@ -648,7 +650,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.75rem' }}>
                           <div style={{ color: 'var(--muted)', marginBottom: '0.2rem' }}>{d.date}{d.branch ? ` · ${d.branch}` : ''}</div>
                           <div style={{ fontWeight: 800, color: scoreColor(d.score), fontSize: '1rem' }}>{d.score}/100</div>
-                          <div style={{ color: 'var(--muted)', fontSize: '0.65rem', marginTop: '0.2rem' }}>Click to open run</div>
+                          <div style={{ color: 'var(--muted)', fontSize: '0.65rem', marginTop: '0.2rem' }}>{t('pages.projectOverview.clickToOpen')}</div>
                         </div>
                       )
                     }} />
@@ -660,13 +662,13 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 </ResponsiveContainer>
               ) : (
                 <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: '0.78rem' }}>
-                  Need at least 2 runs for trend
+                  {t('pages.projectOverview.needMoreRuns')}
                 </div>
               )}
             </div>
 
             <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1.25rem', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>Latest Pillar Scores</div>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>{t('pages.projectOverview.latestPillarScores')}</div>
               {pillarData.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                   {pillarData.map(p => (
@@ -681,7 +683,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 </div>
               ) : (
                 <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: '0.78rem' }}>
-                  No pillar data available
+                  {t('pages.projectOverview.noPillarData')}
                 </div>
               )}
             </div>
@@ -690,8 +692,8 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
           {/* ── Maturity Medal Badges ─────────────────────────────────────────── */}
           <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
             <SectionHeader
-              title="Maturity Level Badges"
-              sub="Earned by reaching score thresholds — verified achievements are recorded server-side with public proof-of-excellence links"
+              title={t('pages.projectOverview.maturityLevelBadges')}
+              sub={t('pages.projectOverview.maturityLevelBadgesSub')}
               count={earnedMaturityCount}
               total={MATURITY_META.length}
             />
@@ -713,7 +715,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                         marginTop: '0.35rem', fontSize: '0.6rem', fontWeight: 700,
                         color: m.earned ? m.textColor : '#2d3d54',
                       }}>
-                        {m.earned ? `Score ${MATURITY_THRESHOLDS[m.level]}+ reached` : `Requires score ${MATURITY_THRESHOLDS[m.level]}+`}
+                        {m.earned ? t('pages.projectOverview.scoreReached', { score: String(MATURITY_THRESHOLDS[m.level]) }) : t('pages.projectOverview.requiresScore', { score: String(MATURITY_THRESHOLDS[m.level]) })}
                       </div>
                     </div>
                   </div>
@@ -725,8 +727,8 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
           {/* ── Achievement Badges ────────────────────────────────────────────── */}
           <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
             <SectionHeader
-              title="Achievement Badges"
-              sub="Earned by scan behaviour — independent of maturity level · more badges in future releases"
+              title={t('pages.projectOverview.achievementBadges')}
+              sub={t('pages.projectOverview.achievementBadgesSub')}
               count={earnedAchievementCount}
               total={ACHIEVEMENTS.length}
             />
@@ -752,11 +754,11 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
               <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>Verified Achievements</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.15rem' }}>Cryptographically verified milestones — share the link with stakeholders who don't have dashboard access</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.projectOverview.verifiedAchievements')}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.projectOverview.verifiedAchievementsSub')}</div>
                 </div>
                 <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-                  <strong style={{ color: 'var(--text)' }}>{verifiedAchievements.length}</strong> milestone{verifiedAchievements.length !== 1 ? 's' : ''} recorded
+                  {t('pages.projectOverview.milestonesRecorded', { count: String(verifiedAchievements.length), s: verifiedAchievements.length !== 1 ? 's' : '' })}
                 </span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -804,7 +806,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                           <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
-                          Verify
+                          {t('pages.projectOverview.verify')}
                         </a>
                         <button
                           onClick={() => copyVerifyUrl(a.verification_token)}
@@ -823,7 +825,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                               : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                             }
                           </svg>
-                          {isCopied ? 'Copied!' : 'Copy link'}
+                          {isCopied ? t('pages.projectOverview.copied') : t('pages.projectOverview.copyLink')}
                         </button>
                       </div>
                     </div>
@@ -836,12 +838,12 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
           {/* ── Recent scans table ────────────────────────────────────────────── */}
           <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
             <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>
-              Recent Scans · {activeProject}
+              {t('pages.projectOverview.recentScans', { project: activeProject })}
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)' }}>
-                  {['Score', 'Branch', 'Stage', 'Triggered By', 'Date', ''].map(h => (
+                  {[t('pages.projectOverview.colScore'), t('pages.projectOverview.colBranch'), t('pages.projectOverview.colStage'), t('pages.projectOverview.colTriggeredBy'), t('pages.projectOverview.colDate'), ''].map(h => (
                     <th key={h} style={{ padding: '0.55rem 1rem', textAlign: 'left', fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>
                   ))}
                 </tr>
@@ -856,7 +858,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                     <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{fmtFull(r.created_at)}</td>
                     <td style={{ padding: '0.65rem 1rem' }}>
                       <button onClick={() => onSelect(r.id)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', color: 'var(--waf-brand)', cursor: 'pointer', fontWeight: 600 }}>
-                        Open
+                        {t('pages.projectOverview.open')}
                       </button>
                     </td>
                   </tr>
@@ -867,7 +869,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
         </>
       ) : (
         <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
-          No runs found for this project.
+          {t('pages.projectOverview.noRuns')}
         </div>
       )}
     </div>

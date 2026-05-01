@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getApiBase, fetchScanStatus, triggerScan, type ScanStatus, type RunSummary } from '../api'
+import { useI18n } from '../i18n'
 
 function getServerUrl(): string {
   const base = getApiBase().trim().replace(/\/$/, '')
@@ -54,6 +55,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 }
 
 function ServerScanPanel() {
+  const { t } = useI18n()
   const [status, setStatus] = useState<ScanStatus | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
 
@@ -104,14 +106,14 @@ function ServerScanPanel() {
     ? '#94a3b8'
     : ready ? '#22c55e' : '#f59e0b'
   const dotLabel = status == null
-    ? 'Checking…'
-    : ready ? 'Ready' : 'Unavailable'
+    ? t('pages.scan.checking')
+    : ready ? t('pages.scan.ready') : t('pages.scan.unavailable')
 
   return (
     <div className="card" style={{ borderColor: 'rgba(34,197,94,.25)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0, flex: 1 }}>
-          Run Scan from Server
+          {t('pages.scan.serverPanel')}
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--muted)' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0 }}/>
@@ -150,7 +152,7 @@ function ServerScanPanel() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '0.875rem' }}>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div style={{ flex: 3, minWidth: '200px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Server-side IaC path <span style={{ color: '#ef4444' }}>*</span></label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.scan.iacPathLabel')} <span style={{ color: '#ef4444' }}>*</span></label>
             <input
               value={scanPath}
               onChange={e => setScanPath(e.target.value)}
@@ -160,7 +162,7 @@ function ServerScanPanel() {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Framework</label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.scan.frameworkLabel')}</label>
             <select value={scanIac} onChange={e => setScanIac(e.target.value)} style={inputStyle} disabled={!ready}>
               <option value="terraform">Terraform</option>
               <option value="cdk">AWS CDK</option>
@@ -172,15 +174,15 @@ function ServerScanPanel() {
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '130px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Project</label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.scan.projectLabel')}</label>
             <input value={scanProject} onChange={e => setScanProject(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="my-service" disabled={!ready}/>
           </div>
           <div style={{ flex: 1, minWidth: '130px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Branch</label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.scan.branchLabel')}</label>
             <input value={scanBranch} onChange={e => setScanBranch(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="main" disabled={!ready}/>
           </div>
           <div style={{ flex: 1, minWidth: '130px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Stage</label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.scan.stageLabel')}</label>
             <input value={scanStage} onChange={e => setScanStage(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="dev | staging | prod" disabled={!ready}/>
           </div>
         </div>
@@ -198,7 +200,7 @@ function ServerScanPanel() {
           transition: 'all .15s',
         }}
       >
-        {running ? 'Scanning…' : 'Run Scan'}
+        {running ? t('pages.scan.scanning') : t('pages.scan.runScan')}
       </button>
 
       {runError && (
@@ -209,10 +211,10 @@ function ServerScanPanel() {
 
       {result && (
         <div style={{ marginTop: '0.875rem', padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.25)' }}>
-          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#22c55e', marginBottom: '0.5rem' }}>Scan complete — run persisted</div>
+          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#22c55e', marginBottom: '0.5rem' }}>{t('pages.scan.scanComplete')}</div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.75rem', color: 'var(--muted)' }}>
-            <div><span style={{ fontWeight: 600 }}>Score:</span> <span style={{ color: result.score >= 80 ? '#22c55e' : result.score >= 50 ? '#f59e0b' : '#ef4444', fontWeight: 700 }}>{result.score}%</span></div>
-            <div><span style={{ fontWeight: 600 }}>Controls run:</span> {result.controls_run}</div>
+            <div><span style={{ fontWeight: 600 }}>{t('pages.scan.scoreLabel')}:</span> <span style={{ color: result.score >= 80 ? '#22c55e' : result.score >= 50 ? '#f59e0b' : '#ef4444', fontWeight: 700 }}>{result.score}%</span></div>
+            <div><span style={{ fontWeight: 600 }}>{t('pages.scan.controlsRunLabel')}:</span> {result.controls_run}</div>
             {result.project && <div><span style={{ fontWeight: 600 }}>Project:</span> {result.project}</div>}
             {result.stage && <div><span style={{ fontWeight: 600 }}>Stage:</span> {result.stage}</div>}
             <div><span style={{ fontWeight: 600 }}>ID:</span> <code style={{ fontSize: '0.72rem' }}>{result.id}</code></div>
@@ -235,6 +237,7 @@ function ServerScanPanel() {
 }
 
 export default function RunScanPage() {
+  const { t } = useI18n()
   const serverUrl = getServerUrl()
 
   const [path, setPath] = useState('/path/to/terraform')
@@ -294,12 +297,12 @@ export default function RunScanPage() {
           {/* Command builder */}
           <div className="card">
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-              CLI Command Builder
+              {t('pages.scan.cliBuilder')}
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <div style={{ flex: 2, minWidth: '180px' }}>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>IaC Source Path</label>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.scan.iacSourceLabel')}</label>
                   <input value={path} onChange={e => setPath(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="/path/to/terraform"/>
                 </div>
                 <div>
@@ -319,7 +322,7 @@ export default function RunScanPage() {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>
-                  Terraform Plan File <span style={{ fontWeight: 400 }}>(optional)</span>
+                  {t('pages.scan.planFileLabel')}
                 </label>
                 <input
                   value={planFile}
@@ -343,7 +346,7 @@ export default function RunScanPage() {
           {/* API endpoints */}
           <div className="card">
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.875rem' }}>
-              Direct API Push
+              {t('pages.scan.directApiTitle')}
             </h2>
             <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '0.65rem' }}>
               POST JSON results directly — generated automatically with <code style={{ color: 'var(--text)' }}>--output json --push</code>:
@@ -382,7 +385,7 @@ curl -X POST ${serverUrl}/runs \\
           {/* Quick start */}
           <div className="card">
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1.25rem' }}>
-              Quick Start — CLI
+              {t('pages.scan.quickStartTitle')}
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
@@ -428,7 +431,7 @@ curl -X POST ${serverUrl}/runs \\
           {/* CLI flags reference */}
           <div className="card">
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.875rem' }}>
-              CLI Flags Reference
+              {t('pages.scan.cliFlagsTitle')}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.35rem 1rem', fontSize: '0.78rem' }}>
               {[

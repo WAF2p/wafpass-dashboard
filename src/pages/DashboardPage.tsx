@@ -4,6 +4,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { Finding, RunDetail } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props {
   run: RunDetail
@@ -43,8 +44,8 @@ function scoreColor(s: number) {
   return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
 }
 
-function scoreLabel(s: number) {
-  return s >= 80 ? 'Good posture' : s >= 60 ? 'Needs attention' : 'High risk'
+function scoreLabel(s: number, t: (key: string) => string) {
+  return s >= 80 ? t('pages.dashboard.goodPosture') : s >= 60 ? t('pages.dashboard.needsAttention') : t('pages.dashboard.highRisk')
 }
 
 function hex(hex: string, alpha: number): string {
@@ -169,6 +170,7 @@ function CopyBlock({ code }: { code: string }) {
 }
 
 function AutoFixModal({ run, findings, scopeLabel, onClose }: { run: RunDetail; findings: Finding[]; scopeLabel: string; onClose: () => void }) {
+  const { t } = useI18n()
   const iacPath = run.path || run.source_paths?.[0] || '/path/to/terraform'
   const iac = run.iac_framework && run.iac_framework !== 'terraform' ? run.iac_framework : null
   const entries: FixEntry[] = findings.map(f => ({ checkId: f.check_id, controlId: f.control_id, resource: f.resource, kind: classifyFinding(f), reason: classifyFinding(f) === 'manual' ? manualReason(f.check_id) : undefined }))
@@ -188,13 +190,13 @@ function AutoFixModal({ run, findings, scopeLabel, onClose }: { run: RunDetail; 
         <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Auto-Fix CLI Commands
+              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{t('pages.dashboard.autoFixTitle')}
                 <span style={{ marginLeft: '0.5rem', background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.55rem', fontWeight: 800, padding: '0.1rem 0.35rem', borderRadius: '3px' }}>α</span>
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
-                Scope: <strong style={{ color: 'var(--text)' }}>{scopeLabel}</strong>
-                {' · '}<span style={{ color: '#16a34a', fontWeight: 600 }}>{autoE.length} auto-fixable</span>
-                {manE.length > 0 && <span style={{ color: 'var(--muted)' }}> · {manE.length} manual</span>}
+                {t('pages.dashboard.autoFixScope')} <strong style={{ color: 'var(--text)' }}>{scopeLabel}</strong>
+                {' · '}<span style={{ color: '#16a34a', fontWeight: 600 }}>{t('pages.dashboard.autoFixCount', { auto: autoE.length })}</span>
+                {manE.length > 0 && <span style={{ color: 'var(--muted)' }}> · {t('pages.dashboard.manualCount', { count: manE.length })}</span>}
               </div>
             </div>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.1rem', padding: '0.2rem' }}>✕</button>
@@ -205,18 +207,18 @@ function AutoFixModal({ run, findings, scopeLabel, onClose }: { run: RunDetail; 
             Run the commands below where your IaC source lives. The dry-run shows a diff without touching files. Add <code style={{ color: 'var(--waf-brand)' }}>--apply</code> to write patches — a <code style={{ color: 'var(--waf-brand)' }}>.tf.bak</code> backup is created automatically.
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>1 · Preview (dry-run)</div>
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.dashboard.previewStep')}</div>
             <CopyBlock code={dryRun} />
           </div>
           {autoE.length > 0 && (
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>2 · Apply patches</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.dashboard.applyStep')}</div>
               <CopyBlock code={apply} />
             </div>
           )}
           {autoE.length > 0 && (
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>Auto-fixable ({autoE.length})</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.dashboard.autoFixable', { count: autoE.length })}</div>
               {autoE.map((e, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.4rem 0.6rem', borderRadius: '7px', background: 'rgba(22,163,74,.05)', border: '1px solid rgba(22,163,74,.15)', marginBottom: '0.25rem' }}>
                   <span style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--muted)', flexShrink: 0 }}>{e.controlId}</span>
@@ -227,7 +229,7 @@ function AutoFixModal({ run, findings, scopeLabel, onClose }: { run: RunDetail; 
           )}
           {manE.length > 0 && (
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>Manual review ({manE.length})</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.dashboard.manualReview', { count: manE.length })}</div>
               {Object.entries(manByR).map(([reason, items]) => (
                 <div key={reason} style={{ marginBottom: '0.75rem' }}>
                   <div style={{ fontSize: '0.75rem', color: '#b45309', marginBottom: '0.3rem' }}>{reason}</div>
@@ -238,7 +240,7 @@ function AutoFixModal({ run, findings, scopeLabel, onClose }: { run: RunDetail; 
           )}
         </div>
         <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.45rem 1.1rem', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>Close</button>
+          <button onClick={onClose} style={{ padding: '0.45rem 1.1rem', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>{t('pages.dashboard.closeBtn')}</button>
         </div>
       </div>
     </>
@@ -278,6 +280,7 @@ const I: Record<string, React.ReactNode> = {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount = 0, runCount = 0 }: Props) {
+  const { t } = useI18n()
   const findings = run.findings
   const [autoFix, setAutoFix] = useState<{ findings: Finding[]; scopeLabel: string } | null>(null)
 
@@ -388,7 +391,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         {/* Score card */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', minWidth: '160px', background: hex(scoreColor(run.score), 0.03), borderColor: hex(scoreColor(run.score), 0.2) }}>
           <ScoreGauge score={run.score} />
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: scoreColor(run.score) }}>{scoreLabel(run.score)}</div>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: scoreColor(run.score) }}>{scoreLabel(run.score, t)}</div>
         </div>
 
         {/* Metadata + KPIs */}
@@ -398,7 +401,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.3rem' }}>
-                  {run.project || 'Infrastructure Scan'}
+                  {run.project || t('pages.dashboard.infrastructureScan')}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', alignItems: 'center' }}>
                   {run.branch && (
@@ -409,13 +412,13 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                   )}
                   {run.iac_framework && <span style={{ padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#f1f5f9', color: 'var(--muted)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'capitalize' }}>{run.iac_framework}</span>}
                   {run.created_at && <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{dateFmt(run.created_at)}</span>}
-                  {run.controls_loaded > 0 && <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{run.controls_loaded} controls loaded</span>}
+                  {run.controls_loaded > 0 && <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.dashboard.controlsLoaded', { count: run.controls_loaded })}</span>}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {onNav && <>
-                  <button onClick={() => onNav('findings')} style={{ padding: '0.38rem 0.875rem', borderRadius: '7px', border: '1px solid rgba(218,44,56,.35)', background: 'rgba(218,44,56,.07)', color: '#DA2C38', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer' }}>View Findings</button>
-                  <button onClick={() => onNav('runscan')} style={{ padding: '0.38rem 0.875rem', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer' }}>New Scan</button>
+                  <button onClick={() => onNav('findings')} style={{ padding: '0.38rem 0.875rem', borderRadius: '7px', border: '1px solid rgba(218,44,56,.35)', background: 'rgba(218,44,56,.07)', color: '#DA2C38', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer' }}>{t('pages.dashboard.viewFindings')}</button>
+                  <button onClick={() => onNav('runscan')} style={{ padding: '0.38rem 0.875rem', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer' }}>{t('pages.dashboard.newScan')}</button>
                 </>}
               </div>
             </div>
@@ -424,11 +427,11 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
           {/* 5 KPI chips */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
             {([
-              { n: ctrlFail,                  label: 'Failed Controls',   c: '#DA2C38' },
-              { n: critFails.length + highFails.length, label: 'Crit + High', c: '#f97316' },
-              { n: failResources,             label: 'Resources at Risk', c: '#d97706' },
-              { n: waiverCount,               label: 'Active Waivers',    c: '#7c3aed' },
-              { n: `${avgCompliance}%`,       label: 'Avg Compliance',    c: '#059669' },
+              { n: ctrlFail,                  label: t('pages.dashboard.failedControls'),  c: '#DA2C38' },
+              { n: critFails.length + highFails.length, label: t('pages.dashboard.critHigh'), c: '#f97316' },
+              { n: failResources,             label: t('pages.dashboard.resourcesAtRisk'), c: '#d97706' },
+              { n: waiverCount,               label: t('pages.dashboard.activeWaivers'),   c: '#7c3aed' },
+              { n: `${avgCompliance}%`,       label: t('pages.dashboard.avgCompliance'),   c: '#059669' },
             ] as { n: string | number; label: string; c: string }[]).map(({ n, label, c }) => (
               <div key={label} className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem 0.5rem', background: hex(c, 0.05), borderColor: hex(c, 0.2) }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: c, lineHeight: 1 }}>{n}</div>
@@ -448,17 +451,17 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '7px', background: 'rgba(218,44,56,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DA2C38', flexShrink: 0 }}>{I.warning}</div>
               <div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>Requires Immediate Attention</div>
-                <div style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>Critical &amp; high severity findings — address before next deployment</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.requiresAttention')}</div>
+                <div style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>{t('pages.dashboard.critHighDesc')}</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={() => setAutoFix({ findings: critHighFails, scopeLabel: 'critical & high failures' })}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid rgba(0,148,255,.3)', background: 'rgba(0,148,255,.07)', color: 'var(--waf-brand)', fontSize: '0.73rem', fontWeight: 700, cursor: 'pointer' }}>
-                {I.bolt} Auto-Fix
+                {I.bolt} {t('pages.dashboard.autoFix')}
                 <span style={{ background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.48rem', fontWeight: 800, padding: '0.05rem 0.28rem', borderRadius: '3px' }}>α</span>
               </button>
-              {onNav && <button onClick={() => onNav('findings')} style={{ padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer' }}>All findings →</button>}
+              {onNav && <button onClick={() => onNav('findings')} style={{ padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer' }}>{t('pages.dashboard.allFindings')}</button>}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -487,19 +490,19 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
           3. NAVIGATION OVERVIEW — entry to every section
       ══════════════════════════════════════════════════════════════════ */}
       <div className="card" style={{ padding: '1.25rem' }}>
-        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '1.1rem' }}>Navigate the Dashboard</div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '1.1rem' }}>{t('pages.dashboard.navigateDashboard')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-          <NavGroup label="Analysis & Risk">
+          <NavGroup label={t('pages.dashboard.navAnalysis')}>
             <Tile icon={I.list}    title="Findings"         value={allFails.length > 0 ? allFails.length : undefined}  sub={`${passRate}% pass rate · ${totalChecks} checks`}                  accent="#DA2C38" alert={allFails.length > 0}                       onClick={() => onNav?.('findings')} />
             <Tile icon={I.check}   title="Compliance"       value={`${avgCompliance}%`}                                 sub={`${regulatoryAll.length} frameworks mapped`}                        accent="#0094FF"                                                   onClick={() => onNav?.('compliance')} />
-            <Tile icon={I.gap}     title="Gap Analysis"     value={allFails.length > 0 ? `${new Set(allFails.map(f => f.control_id)).size} gaps` : undefined} sub="Controls ranked by effort-per-requirement"           accent="#7c3aed"                                                   onClick={() => onNav?.('gapanalysis')} />
+            <Tile icon={I.gap}     title="Gap Analysis"     value={allFails.length > 0 ? t('pages.dashboard.gapsLabel', { count: new Set(allFails.map(f => f.control_id)).size }) : undefined} sub="Controls ranked by effort-per-requirement"           accent="#7c3aed"                                                   onClick={() => onNav?.('gapanalysis')} />
             <Tile icon={I.exploit} title="Exploit Paths"    sub="Attack chain visualization"                            accent="#DA2C38"                                                                                                                           onClick={() => onNav?.('exploitpath')} />
             <Tile icon={I.blast}   title="Blast Radius"     value={failResources > 0 ? failResources : undefined}       sub="Structural impact of failing resources"                             accent="#f97316"                                                   onClick={() => onNav?.('blastradius')} />
             <Tile icon={I.dep}     title="Dep. Graph"        sub="Full resource dependency topology"                    accent="#0d9488"                                                                                                                           onClick={() => onNav?.('depgraph')} />
           </NavGroup>
 
-          <NavGroup label="Infrastructure">
+          <NavGroup label={t('pages.dashboard.navInfrastructure')}>
             <Tile icon={I.shield}  title="Controls Catalogue" value={run.controls_loaded || run.controls_meta?.length || 0} sub={`${pillarHealth.length} pillars covered`}                      accent="#0094FF"                                                   onClick={() => onNav?.('catalogue')} />
             <Tile icon={I.globe}   title="Deployed Regions"  value={detectedRegions.length > 0 ? `${detectedRegions.length} regions` : undefined} sub={detectedRegions.length > 0 ? providerNames.map(p => p.toUpperCase()).join(', ') : 'Cloud footprint map'}  accent="#0ea5e9"  onClick={() => onNav?.('regions')} />
             <Tile icon={I.key}     title="Secret Scanner"    value={secretUnsuppressed > 0 ? secretUnsuppressed : undefined} sub={secretFindings.length > 0 ? `${secretCritical} critical detected` : 'Detect hardcoded credentials'}  accent="#DA2C38" alert={secretCritical > 0}  onClick={() => onNav?.('secrets')} />
@@ -508,14 +511,14 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             <Tile icon={I.drift}   title="Changes & Drift"   value={changeDelta > 0 ? changeDelta : undefined}           sub="Plan changes and regression detection"                              accent="#f97316"                                                   onClick={() => onNav?.('changes')} />
           </NavGroup>
 
-          <NavGroup label="Risk & Governance">
+          <NavGroup label={t('pages.dashboard.navRiskGovernance')}>
             <Tile icon={I.waiver}  title="Waivers"           value={waiverCount > 0 ? waiverCount : undefined}           sub="Active control waivers · export to YAML"                            accent="#7c3aed"                                                   onClick={() => onNav?.('waivers')} />
             <Tile icon={I.risk}    title="Risk Acceptance"   value={riskCount > 0 ? riskCount : undefined}               sub="Formal acceptances with approver trail"                             accent="#f97316"                                                   onClick={() => onNav?.('risk')} />
             <Tile icon={I.sprint}  title="Remediation Sprint" sub="Prioritized fix queue with effort estimate"            accent="#22c55e"                                                                                                                           onClick={() => onNav?.('remediation')} />
             <Tile icon={I.skip}    title="Skipped Controls"  value={ctrlSkip > 0 ? ctrlSkip : undefined}                 sub="Coverage gaps and exclusions"                                       accent="#64748b"                                                   onClick={() => onNav?.('skipped')} />
           </NavGroup>
 
-          <NavGroup label="History, Audit & Tools">
+          <NavGroup label={t('pages.dashboard.navHistoryAudit')}>
             <Tile icon={I.history} title="Run History"       value={runCount > 0 ? `${runCount} runs` : undefined}       sub="Score trends over time"                                             accent="#0094FF"                                                   onClick={() => onNav?.('runs')} />
             <Tile icon={I.diff}    title="Run Comparison"    sub="Side-by-side diff of two scans"                        accent="#7c3aed"                                                                                                                           onClick={() => onNav?.('diff')} />
             <Tile icon={I.log}     title="Audit Log"         sub="Tamper-evident action record"                          accent="#64748b"                                                                                                                           onClick={() => onNav?.('audit')} />
@@ -532,7 +535,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
       ══════════════════════════════════════════════════════════════════ */}
       {pillarHealth.length > 0 && (
         <div className="card">
-          <CardLabel>Pillar Health</CardLabel>
+          <CardLabel>{t('pages.dashboard.pillarHealth')}</CardLabel>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '0.6rem' }}>
             {pillarHealth.map(({ pillar, score, fails, total }) => {
               const pColor = PILLAR_COLOR[pillar] ?? '#888'
@@ -553,8 +556,8 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                     <div style={{ height: '100%', borderRadius: '999px', background: sColor, width: `${pct}%`, transition: 'width 0.5s ease' }} />
                   </div>
                   <div style={{ fontSize: '0.68rem', color: fails > 0 ? '#DA2C38' : '#059669', fontWeight: 600 }}>
-                    {fails > 0 ? `${fails} failing` : 'All passing'}
-                    <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{total > 0 ? ` of ${total} checks` : ''}</span>
+                    {fails > 0 ? t('pages.dashboard.failing', { count: fails }) : t('pages.dashboard.allPassing')}
+                    <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{total > 0 ? ` ${t('pages.dashboard.ofChecks', { total })}` : ''}</span>
                   </div>
                 </div>
               )
@@ -572,7 +575,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
           {/* Severity pie */}
           {severityCounts.length > 0 && (
             <div className="card">
-              <CardLabel>Failures by Severity</CardLabel>
+              <CardLabel>{t('pages.dashboard.failuresBySeverity')}</CardLabel>
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie data={severityCounts} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={36}>
@@ -596,7 +599,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
           {/* Pillar bar chart */}
           {pillarData.length > 0 && (
             <div className="card">
-              <CardLabel>Score by Pillar</CardLabel>
+              <CardLabel>{t('pages.dashboard.scoreByPillar')}</CardLabel>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={pillarData} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--muted)' }} />
@@ -618,8 +621,8 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
       {regulatoryTop.length > 0 && (
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <CardLabel>Regulatory Readiness {regulatoryAll.length > 6 ? `(top 6 of ${regulatoryAll.length})` : ''}</CardLabel>
-            {onNav && <button onClick={() => onNav('compliance')} style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--waf-brand)', background: 'none', border: 'none', cursor: 'pointer', marginTop: '-0.5rem' }}>Full matrix →</button>}
+            <CardLabel>{t('pages.dashboard.regulatoryReadiness')}{regulatoryAll.length > 6 ? ` (top 6 of ${regulatoryAll.length})` : ''}</CardLabel>
+            {onNav && <button onClick={() => onNav('compliance')} style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--waf-brand)', background: 'none', border: 'none', cursor: 'pointer', marginTop: '-0.5rem' }}>{t('pages.dashboard.fullMatrix')}</button>}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem 2rem' }}>
             {regulatoryTop.map(({ fw, pass, total, pct }) => {
@@ -653,21 +656,21 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '7px', background: 'rgba(220,38,38,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>{I.fire}</div>
               <div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>Architectural Debt Heatmap</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Failing controls by pillar × severity</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.debtHeatmap')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.dashboard.debtHeatmapDesc')}</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.63rem', color: '#94a3b8' }}>
-              <span>Low</span>
+              <span>{t('pages.dashboard.legendLow')}</span>
               {['#fee2e2', '#fca5a5', '#f87171', '#dc2626'].map(c => <div key={c} style={{ width: '0.7rem', height: '0.7rem', borderRadius: '2px', background: c }} />)}
-              <span>High</span>
+              <span>{t('pages.dashboard.legendHigh')}</span>
             </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem', width: '100%' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '0.35rem 0.75rem', textAlign: 'left', color: 'var(--muted)', fontWeight: 600 }}>Pillar</th>
+                  <th style={{ padding: '0.35rem 0.75rem', textAlign: 'left', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.dashboard.pillarHeader')}</th>
                   {SEVERITIES.map(s => <th key={s} style={{ padding: '0.35rem 0.75rem', textAlign: 'center', color: SEVERITY_COLOR[s], fontWeight: 700, fontSize: '0.68rem' }}>{s}</th>)}
                 </tr>
               </thead>
@@ -705,10 +708,10 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
       {totalChecks > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
           {([
-            { label: 'Checks Run',         value: totalChecks,       sub: 'individual checks',       color: 'var(--text)' },
-            { label: 'Check Pass Rate',    value: `${passRate}%`,    sub: `${passChecks}/${totalChecks} passed`, color: passRate >= 80 ? '#16a34a' : passRate >= 60 ? '#d97706' : '#dc2626' },
-            { label: 'Resources Scanned', value: resources,          sub: 'unique resources',         color: 'var(--waf-brand)' },
-            { label: 'Resources Failing', value: failResources,      sub: 'with ≥1 failure',           color: failResources > 0 ? '#dc2626' : '#16a34a' },
+            { label: t('pages.dashboard.checksRun'),        value: totalChecks,       sub: 'individual checks',       color: 'var(--text)' },
+            { label: t('pages.dashboard.checkPassRate'),    value: `${passRate}%`,    sub: `${passChecks}/${totalChecks} passed`, color: passRate >= 80 ? '#16a34a' : passRate >= 60 ? '#d97706' : '#dc2626' },
+            { label: t('pages.dashboard.resourcesScanned'), value: resources,          sub: 'unique resources',         color: 'var(--waf-brand)' },
+            { label: t('pages.dashboard.resourcesFailing'), value: failResources,      sub: 'with ≥1 failure',          color: failResources > 0 ? '#dc2626' : '#16a34a' },
           ] as { label: string; value: string | number; sub: string; color: string }[]).map(({ label, value, sub, color }) => (
             <div key={label} className="card" style={{ padding: '0.875rem 1rem' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
@@ -728,13 +731,13 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '7px', background: 'rgba(22,163,74,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>{I.bolt}</div>
               <div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>Quick Wins</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Top failing controls prioritized by severity</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.quickWins')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.dashboard.quickWinsDesc')}</div>
               </div>
             </div>
             <button onClick={() => setAutoFix({ findings: allFails, scopeLabel: 'all failing controls' })}
               style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid rgba(0,148,255,.3)', background: 'rgba(0,148,255,.07)', color: 'var(--waf-brand)', fontSize: '0.73rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-              {I.bolt} Auto-Fix
+              {I.bolt} {t('pages.dashboard.autoFix')}
               <span style={{ background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.48rem', fontWeight: 800, padding: '0.05rem 0.28rem', borderRadius: '3px' }}>α</span>
             </button>
           </div>
@@ -774,14 +777,14 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ color: 'var(--waf-brand)' }}>{I.globe}</div>
-              <span style={{ fontSize: '0.83rem', fontWeight: 700, color: 'var(--text)' }}>Cloud Footprint</span>
+              <span style={{ fontSize: '0.83rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.cloudFootprint')}</span>
             </div>
-            {onNav && <button onClick={() => onNav('regions')} style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--waf-brand)', background: 'none', border: 'none', cursor: 'pointer' }}>Full map →</button>}
+            {onNav && <button onClick={() => onNav('regions')} style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--waf-brand)', background: 'none', border: 'none', cursor: 'pointer' }}>{t('pages.dashboard.fullMap')}</button>}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center' }}>
             <div style={{ padding: '0.35rem 0.875rem', borderRadius: '8px', background: 'rgba(0,148,255,.07)', border: '1px solid rgba(0,148,255,.18)' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--waf-brand)' }}>{detectedRegions.length}</span>
-              <span style={{ fontSize: '0.68rem', color: 'var(--muted)', marginLeft: '0.3rem' }}>regions</span>
+              <span style={{ fontSize: '0.68rem', color: 'var(--muted)', marginLeft: '0.3rem' }}>{t('pages.dashboard.regionsSuffix')}</span>
             </div>
             {Object.entries(providerCounts).map(([prov, cnt]) => (
               <div key={prov} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', padding: '0.35rem 0.75rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>

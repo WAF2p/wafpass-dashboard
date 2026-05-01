@@ -1,12 +1,15 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { ControlMeta, fetchWaivers, fetchRisks } from './api'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { ControlMeta, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, pushUserPrefsToServer } from './api'
 import { useAuth } from './AuthContext'
 import { useTheme } from './theme'
+import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
 import RunSelectorModal from './components/RunSelectorModal'
+const UserPreferencesPage    = lazy(() => import('./pages/UserPreferencesPage'))
 import Sidebar from './components/Sidebar'
 import PdfReport from './components/PdfReport'
 import { loadMaturityState, saveMaturityState, Settings } from './pages/settingsUtils'
+import { DEFAULT_USER_PREFS, loadUserPrefs, saveUserPrefs, UserPreferences } from './pages/userPrefsUtils'
 import { buildHash, Page, PAGE_SUBTITLE, PAGE_TITLE, parseHash } from './routing'
 import { useControlsCatalogue } from './useControlsCatalogue'
 import { useRunLoader } from './useRunLoader'
@@ -45,6 +48,8 @@ const ProjectOverviewPage    = lazy(() => import('./pages/ProjectOverviewPage'))
 const PassportDashboardPage  = lazy(() => import('./pages/PassportDashboardPage'))
 const BadgePage              = lazy(() => import('./pages/BadgePage'))
 const LeaderboardPage        = lazy(() => import('./pages/LeaderboardPage'))
+const MaturityJourneyPage    = lazy(() => import('./pages/MaturityJourneyPage'))
+const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -66,7 +71,7 @@ export default function App() {
 const PAGES_WITHOUT_RUN_META = new Set<Page>([
   'runs', 'diff', 'catalogue', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'audit', 'evidence', 'feedback',
-  'projectoverview', 'passports', 'badge', 'leaderboard',
+  'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
 ])
 
 function AuthenticatedApp({ user, role, onLogout }: {
@@ -79,6 +84,9 @@ function AuthenticatedApp({ user, role, onLogout }: {
   const [initialRunId] = useState(() => parseHash().runId)
   const [page, setPage] = useState<Page>(() => parseHash().page)
   const [showRunModal, setShowRunModal] = useState(false)
+  const [userPrefs, setUserPrefs] = useState<UserPreferences>(loadUserPrefs)
+  const [prefsSyncStatus, setPrefsSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
+  const prefsSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [linkCopied, setLinkCopied] = useState(false)
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [waiverCount, setWaiverCount] = useState(0)
@@ -144,6 +152,33 @@ function AuthenticatedApp({ user, role, onLogout }: {
     saveMaturityState(level, s)
   }
 
+  // On mount: pull server prefs in background, merge over localStorage (server wins)
+  useEffect(() => {
+    fetchUserPrefsFromServer().then(serverPrefs => {
+      if (serverPrefs && Object.keys(serverPrefs).length > 0) {
+        const merged = { ...DEFAULT_USER_PREFS, ...serverPrefs } as UserPreferences
+        setUserPrefs(merged)
+        saveUserPrefs(merged)
+      }
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const debouncedServerPush = useCallback((p: UserPreferences) => {
+    if (prefsSyncTimer.current) clearTimeout(prefsSyncTimer.current)
+    setPrefsSyncStatus('syncing')
+    prefsSyncTimer.current = setTimeout(() => {
+      pushUserPrefsToServer(p as unknown as Record<string, unknown>)
+        .then(() => setPrefsSyncStatus('synced'))
+        .catch(() => setPrefsSyncStatus('error'))
+    }, 600)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleUserPrefsChange(p: UserPreferences) {
+    setUserPrefs(p)
+    saveUserPrefs(p)           // localStorage: immediate
+    debouncedServerPush(p)     // server: debounced 600 ms
+  }
+
   const catalogue = useControlsCatalogue()
   const failCount = run ? run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').length : 0
 
@@ -151,7 +186,10 @@ function AuthenticatedApp({ user, role, onLogout }: {
     ? run.controls_meta.map(c => ({ id: c.id, title: c.title }))
     : catalogue.map(c => ({ id: c.id, title: c.title }))
 
+  const effectiveLang = userPrefs.language || settings.defaultLanguage || 'en'
+
   return (
+    <I18nProvider lang={effectiveLang}>
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       {showRunModal && (
         <RunSelectorModal
@@ -171,11 +209,13 @@ function AuthenticatedApp({ user, role, onLogout }: {
         user={user}
         maturityLevel={maturityLevel}
         settings={settings}
+        hideDisabledMenuItems={userPrefs.hideDisabledMenuItems}
         waiverCount={waiverCount}
         riskCount={riskCount}
         failCount={failCount}
         navigate={navigate}
         onShowRunModal={() => setShowRunModal(true)}
+        onOpenUserPrefs={() => navigate('userprefs')}
         onLogout={onLogout}
       />
 
@@ -243,7 +283,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
             {run && page === 'dashboard' && (
               <button
                 onClick={() => window.print()}
-                title={settings.pdfAutoOpen ? 'Share as PDF (auto-open enabled in settings)' : 'Share as PDF'}
+                title={userPrefs.pdfAutoOpen ? 'Share as PDF (auto-open enabled in preferences)' : 'Share as PDF'}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.4rem',
                   padding: '0.4rem 0.875rem', borderRadius: '8px',
@@ -268,7 +308,11 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <div className="spinner" />
           </div>
         }>
-          {page === 'leaderboard' ? (
+          {page === 'userprefs' ? (
+            <UserPreferencesPage prefs={userPrefs} user={user} syncStatus={prefsSyncStatus} onChange={handleUserPrefsChange} />
+          ) : page === 'journey' ? (
+            <MaturityJourneyPage run={run} runs={runs} maturityLevel={maturityLevel} settings={settings} waiverCount={waiverCount} riskCount={riskCount} navigate={navigate} />
+          ) : page === 'leaderboard' ? (
             <LeaderboardPage />
           ) : page === 'badge' ? (
             <BadgePage runs={runs} />
@@ -286,6 +330,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
               onSelect={id => { setSelectedId(id); navigate('dashboard') }}
               onBack={() => navigate('passports')}
             />
+          ) : page === 'controlspacks' ? (
+            <ControlsPacksPage />
           ) : page === 'users' ? (
             <UserManagementPage />
           ) : page === 'groupmappings' ? (
@@ -317,7 +363,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'diff' ? (
             <RunDiffPage runs={runs} />
           ) : page === 'catalogue' ? (
-            <ControlsCataloguePage coreControls={run?.controls_meta ?? []} />
+            <ControlsCataloguePage key="catalogue" coreControls={run?.controls_meta ?? []} />
           ) : page === 'skipped' ? (
             <SkippedControlsPage run={run} />
           ) : loadingRun ? (
@@ -361,7 +407,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'findings' ? (
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
-            <CompliancePage run={run} />
+            <CompliancePage run={run} settings={settings} />
           ) : page === 'gapanalysis' ? (
             <GapAnalysisPage run={run} />
           ) : page === 'changes' ? (
@@ -394,5 +440,6 @@ function AuthenticatedApp({ user, role, onLogout }: {
         </div>
       )}
     </div>
+    </I18nProvider>
   )
 }

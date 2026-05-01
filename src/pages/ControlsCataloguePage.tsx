@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, fetchCatalogueControls } from '../api'
+import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, fetchCatalogueControls, downloadControlsZip, fetchActivePackInfo, ActivePackInfo } from '../api'
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
@@ -34,9 +34,14 @@ const PILLAR_PREFIX: Record<string, string> = {
   security: 'SEC', cost: 'COST', performance: 'PERF', reliability: 'REL',
   operational: 'OPS', sustainability: 'SUS', sovereign: 'SOV',
 }
+const TYPE_COLOR: Record<string, string> = {
+  governance: '#0094FF', configuration: '#f97316', iac: '#7c3aed',
+  network: '#06b6d4', identity: '#eab308', data: '#22c55e', cost: '#f97316',
+}
 
 function sevColor(s: string)    { return SEV_COLOR[s?.toLowerCase()]    ?? '#94a3b8' }
 function pillarColor(p: string) { return PILLAR_COLOR[p?.toLowerCase()] ?? '#94a3b8' }
+function typeColor(t: string)   { return TYPE_COLOR[t?.toLowerCase()]   ?? '#94a3b8' }
 function engineColor(e: string) { return ENGINE_COLOR[e?.toLowerCase()] ?? '#94a3b8' }
 
 // ── Shared components ─────────────────────────────────────────────────────────
@@ -71,6 +76,9 @@ function TogglePill({ label, color, active, onClick }: { label: string; color: s
       background: active ? color : `${color}18`,
       color: active ? '#fff' : color,
       border: `1px solid ${color}44`,
+      whiteSpace: 'nowrap',
+      flex: '0 0 auto',
+      minWidth: 'auto',
     }}>{label}</button>
   )
 }
@@ -618,6 +626,7 @@ function Step6Preview({ state }: { state: WizardState }) {
     type: state.types as CatalogueControl['type'],
     description: state.description, checks: state.checks,
     source: 'dashboard', created_at: '', updated_at: '',
+    regulatory_mapping: [],
   })
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
@@ -1167,6 +1176,7 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
         description: state.description.trim(),
         checks: state.checks,
         source: 'dashboard',
+        regulatory_mapping: [],
       })
       setSavedControl(result)
       onCreated(result)
@@ -1409,6 +1419,9 @@ interface Props {
 }
 
 export default function ControlsCataloguePage({ coreControls }: Props) {
+  // Debug: log component render start - comment out in production
+  // console.log('ControlsCataloguePage render START', { coreControlsLen: coreControls?.length || 0 })
+
   const [customControls, setCustomControls] = useState<CatalogueControl[]>([])
   const [loading, setLoading]               = useState(true)
   const [apiError, setApiError]             = useState<string | null>(null)
@@ -1418,7 +1431,10 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
   const [search, setSearch]                 = useState('')
   const [pillarFilter, setPillarFilter]     = useState<string[]>([])
   const [severityFilter, setSeverityFilter] = useState<string[]>([])
+  const [typeFilter, setTypeFilter]         = useState<string[]>([])
   const [tab, setTab]                       = useState<TabFilter>('all')
+  const [packInfo, setPackInfo]             = useState<ActivePackInfo | null>(null)
+  const [packLoading, setPackLoading]       = useState(true)
 
   useEffect(() => {
     setLoading(true)
@@ -1428,10 +1444,56 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
       .finally(() => setLoading(false))
   }, [])
 
-  const customIds   = new Set(customControls.map(c => c.id))
+  useEffect(() => {
+    setPackLoading(true)
+    fetchActivePackInfo()
+      .then(info => setPackInfo(info))
+      .catch(() => setPackInfo(null))
+      .finally(() => setPackLoading(false))
+  }, [])
+
+  // Framework controls: WAF- prefix controls from both run.controls_meta and server's custom controls
+  // Custom controls: non-WAF- controls from server's custom controls catalogue
+  const frameworkFromScan = coreControls.filter(c => c.id.startsWith('WAF-'))
+  const frameworkFromCatalogue = customControls.filter(c => c.id.startsWith('WAF-') && !frameworkFromScan.find(s => s.id === c.id))
+  const frameworkControlIds = new Set([...frameworkFromScan, ...frameworkFromCatalogue].map(c => c.id))
+
+  // Helper: get type from framework control by id, or infer from pillar if not found
+  const getFrameworkType = (id: string, pillar: string): string[] => {
+    // First, try to find the type from framework controls in the scan
+    const ctrl = frameworkFromScan.find(c => c.id === id)
+    if (ctrl?.category) return [ctrl.category]
+
+    // Infer type from pillar if control type is empty
+    // Handle both singular and plural pillar names (operations/operational, sovereignty/sovereign)
+    const pillarKey = pillar.toLowerCase().replace(/s$/, '')  // Remove trailing 's' for plural
+    switch (pillarKey) {
+      case 'security': return ['identity', 'governance']
+      case 'cost': return ['governance', 'configuration']
+      case 'performance': return ['configuration', 'infrastructure']
+      case 'reliability': return ['governance', 'configuration']
+      case 'operational': case 'operations': return ['governance', 'configuration']
+      case 'sovereign': case 'sovereignty': return ['governance', 'identity']
+      case 'sustainability': return ['governance', 'configuration']
+      default: return []
+    }
+  }
+
   const allControls: UnifiedControl[] = [
-    ...coreControls.filter(c => !customIds.has(c.id)).map(fromCore),
-    ...customControls.map(fromCustom),
+    ...frameworkFromScan.map(fromCore),
+    // WAF- controls from catalogue should be treated as framework (not custom)
+    // Use their actual type from catalogue; fall back to inferred type if empty
+    ...frameworkFromCatalogue.map(c => {
+      const controlType = c.type && c.type.length > 0 ? c.type : getFrameworkType(c.id, c.pillar)
+      return {
+        id: c.id, pillar: c.pillar, severity: c.severity,
+        type: controlType,
+        description: c.description,
+        checksCount: c.checks?.length ?? 0,
+        isCustom: false, custom: c,
+      }
+    }),
+    ...customControls.filter(c => !frameworkControlIds.has(c.id)).map(fromCustom),
   ].sort((a, b) => a.id.localeCompare(b.id))
 
   const filtered = allControls.filter(c => {
@@ -1439,6 +1501,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
     if (tab === 'custom'    && !c.isCustom) return false
     if (pillarFilter.length   > 0 && !pillarFilter.includes(c.pillar?.toLowerCase()))   return false
     if (severityFilter.length > 0 && !severityFilter.includes(c.severity?.toLowerCase())) return false
+    if (typeFilter.length     > 0 && !typeFilter.some(f => c.type.includes(f)))           return false
     if (search) {
       const q = search.toLowerCase()
       return c.id.toLowerCase().includes(q) || c.description.toLowerCase().includes(q) || c.pillar.toLowerCase().includes(q)
@@ -1448,6 +1511,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
 
   function togglePillar(p: string)   { setPillarFilter(prev   => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]) }
   function toggleSeverity(s: string) { setSeverityFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]) }
+  function toggleType(t: string)     { setTypeFilter(prev     => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]) }
 
   const frameworkCount = allControls.filter(c => !c.isCustom).length
   const customCount    = allControls.filter(c =>  c.isCustom).length
@@ -1465,8 +1529,49 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
     : tab === 'custom' ? customCount
     : allControls.length
 
+  // Debug: log when filter bar renders
+  console.log('Filter bar render check - typeFilter:', typeFilter, 'ALL_TYPES:', ALL_TYPES, 'loading:', loading)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 1 }}>
+      {/* ── Active Control Pack Banner ────────────────────────────────────── */}
+      {!packLoading && packInfo && (
+        <div className="card" style={{
+          display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap',
+          borderLeft: '4px solid var(--waf-brand)',
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: 'rgba(0,148,255,0.12)', border: '1px solid rgba(0,148,255,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="22" height="22" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 2 }}>
+              Active Control Pack
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--waf-brand)', fontFamily: 'monospace' }}>
+                {packInfo.version}
+              </span>
+              {packInfo.description && (
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  {packInfo.description}
+                </span>
+              )}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <div><strong style={{ color: 'var(--text-primary)' }}>{packInfo.control_count}</strong> controls</div>
+            <div>activated {new Date(packInfo.activated_at || '').toLocaleDateString()}</div>
+          </div>
+        </div>
+      )}
+
       {/* Tab bar + New Control button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.2rem' }}>
@@ -1484,6 +1589,29 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {/* Download YAML Pack */}
+          <button
+            onClick={async () => {
+              try {
+                const blob = await downloadControlsZip()
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `wafpass_controls_${new Date().toISOString().split('T')[0]}.zip`
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+              } catch (e) {
+                alert('Failed to download controls: ' + (e instanceof Error ? e.message : 'Unknown error'))
+              }
+            }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid rgba(0,148,255,.35)', background: 'rgba(0,148,255,.08)', color: '#0094FF', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+          >
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            Download Controls YAML
+            <span style={{ background: 'rgba(0,148,255,.15)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.68rem' }}>{allControls.length}</span>
+          </button>
           {/* Checkov Pack */}
           <button
             onClick={downloadPack}
@@ -1514,7 +1642,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
       </div>
 
       {/* Filter bar */}
-      <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', flexShrink: 0 }} data-debug="filter-bar" key="filter-bar-0">
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             type="text" placeholder="Search by ID or description…"
@@ -1526,13 +1654,23 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             {apiError && <span style={{ color: '#f97316', marginLeft: '0.5rem' }}>· custom controls unavailable</span>}
           </span>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem' }}>Pillar</span>
-          {ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />)}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Pillar</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
+            {ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />)}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem' }}>Severity</span>
-          {ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />)}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Severity</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
+            {ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }} data-debug="type-filter-container">
+          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Type</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
+            {ALL_TYPES.map(t => <TogglePill key={t} label={t} color={typeColor(t)} active={typeFilter.includes(t)} onClick={() => toggleType(t)} />)}
+          </div>
         </div>
       </div>
 

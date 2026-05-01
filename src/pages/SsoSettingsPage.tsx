@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { deleteSsoConfig, fetchSsoConfigs, upsertSsoConfig, type SsoConfigOut } from '../api'
+import { useI18n } from '../i18n'
 
 // ── Field helpers ─────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ function fromOidcForm(f: typeof OIDC_DEFAULTS): Record<string, unknown> {
 }
 
 function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSaved(): void }) {
+  const { t } = useI18n()
   const [enabled, setEnabled] = useState(initial?.enabled ?? false)
   const [form, setForm]       = useState(initial ? toOidcForm(initial.config) : { ...OIDC_DEFAULTS })
   const [saving, setSaving]   = useState(false)
@@ -98,7 +100,7 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
     setMsg(null)
     try {
       await upsertSsoConfig('oidc', enabled, fromOidcForm(form))
-      setMsg({ ok: true, text: 'OIDC configuration saved.' })
+      setMsg({ ok: true, text: t('pages.sso.oidcSaved') })
       onSaved()
     } catch (e) {
       setMsg({ ok: false, text: e instanceof Error ? e.message : 'Save failed' })
@@ -108,11 +110,11 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
   }
 
   async function handleDelete() {
-    if (!confirm('Remove OIDC configuration?')) return
+    if (!confirm(t('pages.sso.oidcRemoveConfirm'))) return
     setSaving(true)
     try {
       await deleteSsoConfig('oidc')
-      setMsg({ ok: true, text: 'OIDC configuration removed.' })
+      setMsg({ ok: true, text: t('pages.sso.oidcRemoved') })
       setEnabled(false)
       setForm({ ...OIDC_DEFAULTS })
       onSaved()
@@ -129,9 +131,9 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
     <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>OpenID Connect (OIDC)</div>
+          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.sso.oidcTitle')}</div>
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
-            Compatible with Entra ID, Keycloak, Okta, Auth0, Google, and any OIDC-compliant IdP.
+            {t('pages.sso.oidcSubtitle')}
           </div>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: enabled ? '#22c55e' : 'var(--muted)' }}>
@@ -149,48 +151,48 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
               background: '#fff', transition: 'left .2s',
             }} />
           </div>
-          {enabled ? 'Enabled' : 'Disabled'}
+          {enabled ? t('pages.sso.enabled') : t('pages.sso.disabled')}
         </label>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
-        <Field label="Discovery URL" hint="e.g. …/v2.0/.well-known/openid-configuration">
+        <Field label={t('pages.sso.discoveryUrl')} hint={t('pages.sso.discoveryUrlHint')}>
           <input style={inputSx} value={form.discovery_url} onChange={e => set('discovery_url', e.target.value)} placeholder="https://..." />
         </Field>
-        <Field label="Authorization Endpoint (optional)" hint="Overrides the browser redirect URL from discovery — use when the server reaches the IdP via an internal hostname (e.g. Docker).">
+        <Field label={t('pages.sso.authEndpointLabel')} hint={t('pages.sso.authEndpointHint')}>
           <input style={inputSx} value={form.authorization_endpoint} onChange={e => set('authorization_endpoint', e.target.value)} placeholder="http://localhost:8080/realms/master/protocol/openid-connect/auth" />
         </Field>
-        <Field label="Client ID">
+        <Field label={t('pages.sso.clientId')}>
           <input style={inputSx} value={form.client_id} onChange={e => set('client_id', e.target.value)} placeholder="your-client-id" />
         </Field>
-        <Field label="Client Secret">
+        <Field label={t('pages.sso.clientSecret')}>
           <input style={inputSx} type="password" value={form.client_secret} onChange={e => set('client_secret', e.target.value)} placeholder="••••••••" />
         </Field>
-        <Field label="Redirect URI" hint="Must match the registered IdP redirect URI.">
+        <Field label={t('pages.sso.redirectUri')} hint={t('pages.sso.redirectUriHint')}>
           <input style={inputSx} value={form.redirect_uri} onChange={e => set('redirect_uri', e.target.value)} placeholder="https://api.example.com/auth/oidc/callback" />
         </Field>
-        <Field label="Frontend URL" hint="Dashboard origin — where users land after login.">
+        <Field label={t('pages.sso.frontendUrl')} hint={t('pages.sso.frontendUrlHint')}>
           <input style={inputSx} value={form.frontend_url} onChange={e => set('frontend_url', e.target.value)} placeholder="http://localhost:5173" />
         </Field>
-        <Field label="Scopes" hint="Space-separated. 'openid' required.">
+        <Field label={t('pages.sso.scopes')} hint={t('pages.sso.scopesHint')}>
           <input style={inputSx} value={form.scopes} onChange={e => set('scopes', e.target.value)} placeholder="openid profile email" />
         </Field>
-        <Field label="Username claim" hint="Claim used as WAF++ username.">
+        <Field label={t('pages.sso.usernameClaim')} hint={t('pages.sso.usernameClaimHint')}>
           <input style={inputSx} value={form.username_claim} onChange={e => set('username_claim', e.target.value)} placeholder="email" />
         </Field>
-        <Field label="Display name claim">
+        <Field label={t('pages.sso.displayNameClaim')}>
           <input style={inputSx} value={form.display_name_claim} onChange={e => set('display_name_claim', e.target.value)} placeholder="name" />
         </Field>
-        <Field label="Default role" hint="For new SSO users with no role match.">
+        <Field label={t('pages.sso.defaultRole')} hint={t('pages.sso.defaultRoleHint')}>
           <select style={inputSx} value={form.default_role} onChange={e => set('default_role', e.target.value)}>
             {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </Field>
-        <Field label="Role claim (optional)" hint="id_token claim containing groups/roles.">
+        <Field label={t('pages.sso.roleClaim')} hint={t('pages.sso.roleClaimHint')}>
           <input style={inputSx} value={form.role_claim} onChange={e => set('role_claim', e.target.value)} placeholder="roles" />
         </Field>
         <div style={{ gridColumn: 'span 2' }}>
-          <Field label='Role mapping (JSON, optional)' hint='{"IdPGroup": "wafpass_role"}'>
+          <Field label={t('pages.sso.roleMapping')} hint={t('pages.sso.roleMappingHint')}>
             <textarea style={{ ...textareaSx, minHeight: '52px' }} value={form.role_mapping_raw} onChange={e => set('role_mapping_raw', e.target.value)} placeholder='{"Admin": "admin", "Reader": "clevel"}' />
           </Field>
         </div>
@@ -198,8 +200,8 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
 
       <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
         <input type="checkbox" checked={form.auto_provision} onChange={e => set('auto_provision', e.target.checked)} />
-        <span style={{ color: 'var(--text)', fontWeight: 600 }}>Auto-provision new users</span>
-        <span style={{ color: 'var(--muted)' }}>— create a WAF++ account on first SSO login</span>
+        <span style={{ color: 'var(--text)', fontWeight: 600 }}>{t('pages.sso.autoProvision')}</span>
+        <span style={{ color: 'var(--muted)' }}>{t('pages.sso.autoProvisionHint')}</span>
       </label>
 
       {msg && (
@@ -223,7 +225,7 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
             border: '1px solid var(--waf-brand)', cursor: saving ? 'wait' : 'pointer',
           }}
         >
-          {saving ? 'Saving…' : 'Save OIDC'}
+          {saving ? t('pages.sso.saving') : t('pages.sso.saveOidc')}
         </button>
         {initial && (
           <button
@@ -235,7 +237,7 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
               border: '1px solid rgba(239,68,68,.4)', cursor: 'pointer',
             }}
           >
-            Remove
+            {t('pages.sso.removeBtn')}
           </button>
         )}
       </div>
@@ -304,6 +306,7 @@ function fromSamlForm(f: typeof SAML_DEFAULTS): Record<string, unknown> {
 }
 
 function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSaved(): void }) {
+  const { t } = useI18n()
   const [enabled, setEnabled] = useState(initial?.enabled ?? false)
   const [form, setForm]       = useState(initial ? toSamlForm(initial.config) : { ...SAML_DEFAULTS })
   const [saving, setSaving]   = useState(false)
@@ -318,7 +321,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
     setMsg(null)
     try {
       await upsertSsoConfig('saml2', enabled, fromSamlForm(form))
-      setMsg({ ok: true, text: 'SAML2 configuration saved.' })
+      setMsg({ ok: true, text: t('pages.sso.saml2Saved') })
       onSaved()
     } catch (e) {
       setMsg({ ok: false, text: e instanceof Error ? e.message : 'Save failed' })
@@ -328,11 +331,11 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
   }
 
   async function handleDelete() {
-    if (!confirm('Remove SAML2 configuration?')) return
+    if (!confirm(t('pages.sso.saml2RemoveConfirm'))) return
     setSaving(true)
     try {
       await deleteSsoConfig('saml2')
-      setMsg({ ok: true, text: 'SAML2 configuration removed.' })
+      setMsg({ ok: true, text: t('pages.sso.saml2Removed') })
       setEnabled(false)
       setForm({ ...SAML_DEFAULTS })
       onSaved()
@@ -350,9 +353,9 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
     <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>SAML 2.0</div>
+          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.sso.saml2Title')}</div>
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
-            Compatible with Active Directory FS, Keycloak, Okta, Azure AD, and any SAML 2.0 IdP.
+            {t('pages.sso.saml2Subtitle')}
           </div>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: enabled ? '#22c55e' : 'var(--muted)' }}>
@@ -370,7 +373,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
               background: '#fff', transition: 'left .2s',
             }} />
           </div>
-          {enabled ? 'Enabled' : 'Disabled'}
+          {enabled ? t('pages.sso.enabled') : t('pages.sso.disabled')}
         </label>
       </div>
 
@@ -380,64 +383,64 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
           background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)',
           color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.5rem',
         }}>
-          <span style={{ fontWeight: 600, color: 'var(--text)' }}>SP Metadata:</span>
+          <span style={{ fontWeight: 600, color: 'var(--text)' }}>{t('pages.sso.spMetadataLabel')}</span>
           <a href={metadataUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--waf-brand)', fontFamily: 'monospace', fontSize: '0.72rem' }}>{metadataUrl}</a>
-          <span style={{ marginLeft: 'auto', opacity: 0.6 }}>Register this URL in your IdP.</span>
+          <span style={{ marginLeft: 'auto', opacity: 0.6 }}>{t('pages.sso.spMetadataHint')}</span>
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
-        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: '0.15rem' }}>Service Provider (SP)</div>
-        <Field label="SP Entity ID" hint="Registered in the IdP.">
+        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: '0.15rem' }}>{t('pages.sso.spSection')}</div>
+        <Field label={t('pages.sso.spEntityId')} hint={t('pages.sso.spEntityIdHint')}>
           <input style={inputSx} value={form.entity_id} onChange={e => set('entity_id', e.target.value)} placeholder="https://wafpass.example.com" />
         </Field>
-        <Field label="ACS URL" hint="Points to this server's /auth/saml/acs.">
+        <Field label={t('pages.sso.acsUrl')} hint={t('pages.sso.acsUrlHint')}>
           <input style={inputSx} value={form.acs_url} onChange={e => set('acs_url', e.target.value)} placeholder="https://api.example.com/auth/saml/acs" />
         </Field>
-        <Field label="Frontend URL" hint="Dashboard origin — where users land after login.">
+        <Field label={t('pages.sso.frontendUrl')} hint={t('pages.sso.frontendUrlHint')}>
           <input style={inputSx} value={form.frontend_url} onChange={e => set('frontend_url', e.target.value)} placeholder="http://localhost:5173" />
         </Field>
-        <Field label="SP Certificate (PEM, optional)" hint="For signed AuthnRequests. Leave blank to skip.">
+        <Field label={t('pages.sso.spCertificate')} hint={t('pages.sso.spCertHint')}>
           <textarea style={{ ...textareaSx, minHeight: '58px' }} value={form.sp_certificate} onChange={e => set('sp_certificate', e.target.value)} placeholder="-----BEGIN CERTIFICATE-----&#10;..." />
         </Field>
         <div style={{ gridColumn: 'span 2' }}>
-          <Field label="SP Private Key (PEM, optional)" hint="Required if SP Certificate is set.">
+          <Field label={t('pages.sso.spPrivateKey')} hint={t('pages.sso.spKeyHint')}>
             <textarea style={{ ...textareaSx, minHeight: '58px' }} value={form.sp_private_key} onChange={e => set('sp_private_key', e.target.value)} placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;..." />
           </Field>
         </div>
 
         <div style={{ gridColumn: 'span 3', height: '1px', background: 'var(--border)', margin: '0.1rem 0' }} />
-        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Identity Provider (IdP)</div>
-        <Field label="IdP Entity ID">
+        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.idpSection')}</div>
+        <Field label={t('pages.sso.idpEntityId')}>
           <input style={inputSx} value={form.idp_entity_id} onChange={e => set('idp_entity_id', e.target.value)} placeholder="https://idp.example.com" />
         </Field>
-        <Field label="IdP SSO URL (HTTP-Redirect)">
+        <Field label={t('pages.sso.idpSsoUrl')}>
           <input style={inputSx} value={form.idp_sso_url} onChange={e => set('idp_sso_url', e.target.value)} placeholder="https://idp.example.com/sso/saml" />
         </Field>
         <div style={{ gridColumn: 'span 3' }}>
-          <Field label="IdP Certificate (PEM)" hint="Validates the SAML assertion signature.">
+          <Field label={t('pages.sso.idpCertificate')} hint={t('pages.sso.idpCertHint')}>
             <textarea style={{ ...textareaSx, minHeight: '58px' }} value={form.idp_certificate} onChange={e => set('idp_certificate', e.target.value)} placeholder="-----BEGIN CERTIFICATE-----&#10;..." />
           </Field>
         </div>
 
         <div style={{ gridColumn: 'span 3', height: '1px', background: 'var(--border)', margin: '0.1rem 0' }} />
-        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Attribute Mapping</div>
-        <Field label="Username attribute" hint="Leave blank to use NameID.">
+        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.attrMappingSection')}</div>
+        <Field label={t('pages.sso.usernameAttribute')} hint={t('pages.sso.usernameAttrHint')}>
           <input style={inputSx} value={form.username_attribute} onChange={e => set('username_attribute', e.target.value)} placeholder="…identity/claims/emailaddress" />
         </Field>
-        <Field label="Display name attribute (optional)">
+        <Field label={t('pages.sso.displayNameAttr')}>
           <input style={inputSx} value={form.display_name_attribute} onChange={e => set('display_name_attribute', e.target.value)} placeholder="…claims/displayname" />
         </Field>
-        <Field label="Default role">
+        <Field label={t('pages.sso.defaultRole')}>
           <select style={inputSx} value={form.default_role} onChange={e => set('default_role', e.target.value)}>
             {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </Field>
-        <Field label="Role attribute (optional)" hint="SAML attribute with groups/roles.">
+        <Field label={t('pages.sso.roleAttribute')} hint={t('pages.sso.roleAttrHint')}>
           <input style={inputSx} value={form.role_attribute} onChange={e => set('role_attribute', e.target.value)} placeholder="Role" />
         </Field>
         <div style={{ gridColumn: 'span 2' }}>
-          <Field label='Role mapping (JSON, optional)' hint='{"SAMLGroup": "wafpass_role"}'>
+          <Field label={t('pages.sso.roleMapping')} hint={t('pages.sso.roleMappingHint')}>
             <textarea style={{ ...textareaSx, minHeight: '52px' }} value={form.role_mapping_raw} onChange={e => set('role_mapping_raw', e.target.value)} placeholder='{"Admins": "admin"}' />
           </Field>
         </div>
@@ -445,8 +448,8 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
 
       <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', cursor: 'pointer' }}>
         <input type="checkbox" checked={form.auto_provision} onChange={e => set('auto_provision', e.target.checked)} />
-        <span style={{ color: 'var(--text)', fontWeight: 600 }}>Auto-provision new users</span>
-        <span style={{ color: 'var(--muted)' }}>— create a WAF++ account on first SSO login</span>
+        <span style={{ color: 'var(--text)', fontWeight: 600 }}>{t('pages.sso.autoProvision')}</span>
+        <span style={{ color: 'var(--muted)' }}>{t('pages.sso.autoProvisionHint')}</span>
       </label>
 
       {msg && (
@@ -470,7 +473,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
             border: '1px solid var(--waf-brand)', cursor: saving ? 'wait' : 'pointer',
           }}
         >
-          {saving ? 'Saving…' : 'Save SAML2'}
+          {saving ? t('pages.sso.saving') : t('pages.sso.saveSaml2')}
         </button>
         {initial && (
           <button
@@ -482,7 +485,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
               border: '1px solid rgba(239,68,68,.4)', cursor: 'pointer',
             }}
           >
-            Remove
+            {t('pages.sso.removeBtn')}
           </button>
         )}
       </div>
@@ -493,6 +496,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SsoSettingsPage() {
+  const { t } = useI18n()
   const [configs, setConfigs] = useState<SsoConfigOut[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
@@ -530,8 +534,7 @@ export default function SsoSettingsPage() {
         background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)',
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5,
       }}>
-        <strong style={{ color: 'var(--text)' }}>SSO Overview</strong> — Configure OIDC or SAML2 to allow users to sign in via your organisation's identity provider.
-        When enabled, login buttons appear on the sign-in page. Local password accounts continue to work alongside SSO.
+        <strong style={{ color: 'var(--text)' }}>{t('pages.sso.overviewTitle')}</strong> — {t('pages.sso.overviewText')}
         <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>pip install "wafpass-server[saml]"</code>).
       </div>
 

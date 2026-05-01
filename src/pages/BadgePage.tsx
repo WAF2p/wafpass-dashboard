@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchBadgeStatus, getApiBase, RunSummary } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props {
   runs: RunSummary[]
@@ -32,7 +33,7 @@ const FORMAT_LABELS: Record<SnippetFormat, string> = {
   json:     'JSON API',
 }
 
-function CodeBlock({ code, lang = '' }: { code: string; lang?: string }) {
+function CodeBlock({ code, lang = '', t }: { code: string; lang?: string; t: (key: string) => string }) {
   const [copied, setCopied] = useState(false)
   function copy() {
     navigator.clipboard.writeText(code).then(() => {
@@ -76,7 +77,7 @@ function CodeBlock({ code, lang = '' }: { code: string; lang?: string }) {
             : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3" />
           }
         </svg>
-        {copied ? 'Copied!' : 'Copy'}
+        {copied ? t('common.copied') : t('common.copy')}
       </button>
     </div>
   )
@@ -116,6 +117,7 @@ function InlineBadgeSvg({ tierLevel, tierLabel, color }: { tierLevel: number; ti
 }
 
 export default function BadgePage({ runs }: Props) {
+  const { t } = useI18n()
   const projects = useMemo(
     () => Array.from(new Set(runs.map(r => r.project).filter(Boolean))).sort(),
     [runs],
@@ -195,7 +197,7 @@ export default function BadgePage({ runs }: Props) {
   if (runs.length === 0) {
     return (
       <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
-        No scan runs yet. Push your first wafpass result to generate a badge.
+        {t('pages.badgePage.noScansYet')}
       </div>
     )
   }
@@ -206,7 +208,7 @@ export default function BadgePage({ runs }: Props) {
       {/* ── Project selector + live/offline toggle ───────────────────────────── */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>Project</div>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.badgePage.project')}</div>
           <select
             value={project}
             onChange={e => setProject(e.target.value)}
@@ -221,7 +223,7 @@ export default function BadgePage({ runs }: Props) {
         </div>
 
         <div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>Deployment mode</div>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.badgePage.deployMode')}</div>
           <div style={{ display: 'flex', gap: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
             {(['live', 'offline'] as const).map(m => (
               <button
@@ -234,7 +236,7 @@ export default function BadgePage({ runs }: Props) {
                   border: 'none',
                 }}
               >
-                {m === 'live' ? 'Live (public server)' : 'Offline (download)'}
+                {m === 'live' ? t('pages.badgePage.liveModeLabel') : t('pages.badgePage.offlineModeLabel')}
               </button>
             ))}
           </div>
@@ -257,7 +259,7 @@ export default function BadgePage({ runs }: Props) {
           </svg>
           <div>
             <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#d97706', marginBottom: '0.2rem' }}>
-              Offline / Internal deployment mode
+              {t('pages.badgePage.offlineModeTitle')}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
               Your WAF++ server is not publicly accessible. Download the current badge SVG and commit it to your repository alongside your README. Re-download after each significant milestone to keep it fresh. Use the <strong style={{ color: 'var(--text)' }}>static tier badges</strong> below to always show a fixed level.
@@ -269,7 +271,7 @@ export default function BadgePage({ runs }: Props) {
       {/* ── Badge preview ────────────────────────────────────────────────────── */}
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>Badge Preview</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.badgePage.badgePreview')}</div>
           {statusLoading && <div className="spinner" style={{ width: '14px', height: '14px' }} />}
           {!statusLoading && status && (
             <span style={{
@@ -287,9 +289,9 @@ export default function BadgePage({ runs }: Props) {
         }}>
           {/* Rendered */}
           <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-            <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Rendered</div>
+            <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.rendered')}</div>
             <InlineBadgeSvg tierLevel={currentLevel} tierLabel={currentLabel} color={currentColor} />
-            <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>In-browser preview of your badge</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.inBrowserPreview')}</div>
           </div>
 
           <div style={{ background: 'var(--border)' }} />
@@ -298,21 +300,21 @@ export default function BadgePage({ runs }: Props) {
             <>
               {/* Live from server */}
               <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Live from server</div>
+                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.liveFromServer')}</div>
                 <img
                   src={badgeUrl}
                   alt={`WAF++ PASS – ${project}`}
                   style={{ height: '20px' }}
                   onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                 />
-                <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>Actual badge served by your WAF++ server</div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.liveFromServerDesc')}</div>
               </div>
 
               <div style={{ background: 'var(--border)' }} />
 
               {/* Action */}
               <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Direct link</div>
+                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.directLink')}</div>
                 <a
                   href={badgeUrl}
                   target="_blank"
@@ -327,15 +329,15 @@ export default function BadgePage({ runs }: Props) {
                   <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
-                  Open live badge
+                  {t('pages.badgePage.openLiveBadge')}
                 </a>
-                <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>Opens the SVG in a new tab</div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.openLiveBadgeDesc')}</div>
               </div>
             </>
           ) : (
             /* Offline: download action */
             <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-              <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Download</div>
+              <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.download')}</div>
               <a
                 href={`${apiBase}/public/badge/${encodeURIComponent(project)}/download`}
                 download
@@ -349,9 +351,9 @@ export default function BadgePage({ runs }: Props) {
                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Download current badge
+                {t('pages.badgePage.downloadDesc')}
               </a>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>Commit to your repo alongside the README</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.downloadHint')}</div>
             </div>
           )}
         </div>
@@ -360,8 +362,8 @@ export default function BadgePage({ runs }: Props) {
       {/* ── Embed code ───────────────────────────────────────────────────────── */}
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>Embed Code</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Copy the snippet for your documentation format</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>{t('pages.badgePage.embedCode')}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.embedCodeDesc')}</div>
         </div>
 
         {/* Format tabs */}
@@ -386,9 +388,9 @@ export default function BadgePage({ runs }: Props) {
 
         <div style={{ padding: '1.25rem' }}>
           {format === 'json' ? (
-            <CodeBlock code={snippets('json')} lang="sh" />
+            <CodeBlock code={snippets('json')} lang="sh" t={t} />
           ) : (
-            <CodeBlock code={snippets(format)} lang={format} />
+            <CodeBlock code={snippets(format)} lang={format} t={t} />
           )}
 
           {/* Format-specific notes */}
@@ -433,8 +435,8 @@ export default function BadgePage({ runs }: Props) {
       {/* ── GitHub Actions gate example ──────────────────────────────────────── */}
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>GitHub Actions — Maturity Gate</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Block merges if the project drops below your required tier</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>{t('pages.badgePage.githubActionsTitle')}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.githubActionsDesc')}</div>
         </div>
         <div style={{ padding: '1.25rem' }}>
           <CodeBlock lang="yaml" code={`name: WAF++ Maturity Gate
@@ -453,7 +455,7 @@ jobs:
             echo "::error::WAF++ maturity gate failed — current tier L$TIER is below required L3 (Governed)"
             exit 1
           fi
-          echo "::notice::WAF++ maturity gate passed — L$TIER"`} />
+          echo "::notice::WAF++ maturity gate passed — L$TIER"`} t={t} />
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
             Add this workflow to <code style={{ color: 'var(--text)' }}>.github/workflows/wafpass-gate.yml</code>.
             Adjust the <code style={{ color: 'var(--text)' }}>-lt 3</code> threshold to enforce your team's minimum tier.
@@ -464,8 +466,8 @@ jobs:
       {/* ── GitLab CI gate ───────────────────────────────────────────────────── */}
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>GitLab CI — Maturity Gate</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Same logic, GitLab pipeline syntax</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>{t('pages.badgePage.gitlabCiTitle')}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.gitlabCiDesc')}</div>
         </div>
         <div style={{ padding: '1.25rem' }}>
           <CodeBlock lang="yaml" code={`wafpass-maturity-gate:
@@ -479,17 +481,15 @@ jobs:
       echo "WAF++ maturity tier: L$TIER"
       [ "$TIER" -ge 3 ] || (echo "Gate failed — tier L$TIER below L3" && exit 1)
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"`} />
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"`} t={t} />
         </div>
       </div>
 
       {/* ── Static tier badge downloads ──────────────────────────────────────── */}
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>Static Tier Badges</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
-            Pre-rendered, immutable badges by tier — ideal for air-gapped environments or committing alongside your README
-          </div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>{t('pages.badgePage.staticBadges')}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.staticBadgesDesc')}</div>
         </div>
         <div style={{ padding: '1.25rem', display: 'flex', flexWrap: 'wrap', gap: '0.875rem' }}>
           {[1, 2, 3, 4, 5].map(tier => {
@@ -532,13 +532,13 @@ jobs:
       {/* ── Shields.io compatible endpoint note ─────────────────────────────── */}
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>Shields.io Dynamic Badge</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>{t('pages.badgePage.shieldsIo')}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
             Use the JSON endpoint with shields.io's <code style={{ color: 'var(--text)' }}>endpoint</code> badge type for full customisation
           </div>
         </div>
         <div style={{ padding: '1.25rem' }}>
-          <CodeBlock lang="markdown" code={`<!-- shields.io dynamic badge via the JSON endpoint -->\n![WAF++ PASS](https://img.shields.io/endpoint?url=${encodeURIComponent(`${apiBase}/public/badge/${encodeURIComponent(project)}/json`)}&style=flat-square&label=WAF%2B%2B+PASS)`} />
+          <CodeBlock lang="markdown" code={`<!-- shields.io dynamic badge via the JSON endpoint -->\n![WAF++ PASS](https://img.shields.io/endpoint?url=${encodeURIComponent(`${apiBase}/public/badge/${encodeURIComponent(project)}/json`)}&style=flat-square&label=WAF%2B%2B+PASS)`} t={t} />
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
             The JSON endpoint returns a <code style={{ color: 'var(--text)' }}>schemaVersion=1</code>-compatible payload automatically
             when shields.io's <code style={{ color: 'var(--text)' }}>endpoint</code> badge type is used — shields.io handles rendering,

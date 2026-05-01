@@ -62,6 +62,7 @@ function freshServer(overrides = {}) {
     source: 'wafpass',
     created_at: '',
     updated_at: '',
+    regulatory_mapping: [],
     ...overrides,
   }
 }

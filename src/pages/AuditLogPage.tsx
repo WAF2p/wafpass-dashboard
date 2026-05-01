@@ -5,6 +5,7 @@ import {
   FirstSeenEntry, loadAuditLog, loadFirstSeen,
 } from '../audit'
 import { fetchServerAuditEvents, ServerAuditEvent } from '../api'
+import { useI18n } from '../i18n'
 
 // ─── Category metadata ────────────────────────────────────────────────────────
 
@@ -140,6 +141,7 @@ function EventRow({ event }: { event: AuditEvent }) {
 // ─── First-seen table ─────────────────────────────────────────────────────────
 
 function FirstSeenTable({ entries }: { entries: FirstSeenEntry[] }) {
+  const { t } = useI18n()
   const [sevFilter, setSevFilter] = useState('')
   const [pillarFilter, setPillarFilter] = useState('')
   const [search, setSearch] = useState('')
@@ -165,11 +167,11 @@ function FirstSeenTable({ entries }: { entries: FirstSeenEntry[] }) {
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search control or resource…"
           style={{ ...selectStyle, flex: 1, minWidth: 180 }} />
         <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} style={selectStyle}>
-          <option value="">All severities</option>
+          <option value="">{t('pages.findings.allSeverities')}</option>
           {['critical', 'high', 'medium', 'low'].map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)} style={selectStyle}>
-          <option value="">All pillars</option>
+          <option value="">{t('pages.findings.allPillars')}</option>
           {pillars.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
         {(sevFilter || pillarFilter || search) && (
@@ -183,7 +185,7 @@ function FirstSeenTable({ entries }: { entries: FirstSeenEntry[] }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr style={{ background: 'var(--bg-secondary)' }}>
-              {['Control', 'Resource', 'Severity', 'Pillar', 'Project / Branch', 'First Seen', 'Age'].map(h => (
+              {[t('pages.audit.colControl'), t('pages.audit.colResource'), t('pages.audit.colSeverity'), t('pages.audit.colPillar'), t('pages.audit.colProject'), t('pages.audit.colFirstSeen'), t('pages.audit.colAge')].map(h => (
                 <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
@@ -212,7 +214,7 @@ function FirstSeenTable({ entries }: { entries: FirstSeenEntry[] }) {
             })}
             {sorted.length === 0 && (
               <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-                No first-seen failures recorded yet. Load a run to begin tracking.
+                {t('pages.audit.noFirstSeen')}
               </td></tr>
             )}
           </tbody>
@@ -240,6 +242,7 @@ function serverToAuditEvent(s: ServerAuditEvent): AuditEvent {
 }
 
 export default function AuditLogPage() {
+  const { t } = useI18n()
   const [events, setEvents] = useState<AuditEvent[]>(() => loadAuditLog())
   const [serverCount, setServerCount] = useState<number | null>(null)
   const [firstSeen, setFirstSeen] = useState<Record<string, FirstSeenEntry>>(() => loadFirstSeen())
@@ -301,14 +304,14 @@ export default function AuditLogPage() {
       {/* ── Stats strip ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
         {[
-          { label: 'Total events',      value: stats.total,       color: 'var(--text-primary)' },
-          { label: 'Waiver events',     value: stats.waivers,     color: '#2563eb' },
-          { label: 'Risk events',       value: stats.risks,       color: '#7c3aed' },
-          { label: 'Scans received',    value: stats.scans,       color: '#059669' },
-          { label: 'Controls tracked',  value: stats.findings,    color: '#d97706' },
-          { label: 'Crit/high tracked', value: stats.critOrHigh,  color: '#dc2626' },
+          { label: t('pages.audit.totalEvents'),      value: stats.total,       color: 'var(--text-primary)' },
+          { label: t('pages.audit.waiverEvents'),     value: stats.waivers,     color: '#2563eb' },
+          { label: t('pages.audit.riskEvents'),       value: stats.risks,       color: '#7c3aed' },
+          { label: t('pages.audit.scansReceived'),    value: stats.scans,       color: '#059669' },
+          { label: t('pages.audit.controlsTracked'),  value: stats.findings,    color: '#d97706' },
+          { label: t('pages.audit.critHighTracked'),  value: stats.critOrHigh,  color: '#dc2626' },
           ...(stats.oldestFailDays > 0
-            ? [{ label: 'Oldest open failure', value: `${stats.oldestFailDays}d`, color: stats.oldestFailDays > 90 ? '#dc2626' : '#d97706' }]
+            ? [{ label: t('pages.audit.oldestFailure'), value: `${stats.oldestFailDays}d`, color: stats.oldestFailDays > 90 ? '#dc2626' : '#d97706' }]
             : []),
         ].map(({ label, value, color }) => (
           <div key={label} style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--card-bg)', border: '1px solid var(--card-border)', textAlign: 'center', minWidth: 100 }}>
@@ -337,7 +340,7 @@ export default function AuditLogPage() {
       {/* ── Tabs + controls ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap', borderBottom: '1px solid var(--card-border)', paddingBottom: 12 }}>
         <div style={{ display: 'flex', gap: 2 }}>
-          {([['events', `Event Timeline (${events.length})`, '#2563eb'], ['exposure', `Control Exposure (${firstSeenEntries.length})`, '#d97706']] as const).map(([key, label, color]) => (
+          {([['events', t('pages.audit.tabEvents', { count: events.length }), '#2563eb'], ['exposure', t('pages.audit.tabExposure', { count: firstSeenEntries.length }), '#d97706']] as const).map(([key, label, color]) => (
             <button key={key} onClick={() => setTab(key)} style={{
               padding: '7px 14px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
               background: 'none', borderBottom: tab === key ? `2px solid ${color}` : '2px solid transparent',
@@ -363,12 +366,12 @@ export default function AuditLogPage() {
           {!confirmClear ? (
             <button onClick={() => setConfirmClear(true)}
               style={{ ...selectStyle, cursor: 'pointer', color: '#dc2626', borderColor: 'rgba(220,38,38,.3)' }}>
-              Clear log
+              {t('pages.audit.clearLog')}
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>Permanently clear all audit data?</span>
-              <button onClick={handleClear} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #dc2626', background: '#dc2626', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>Yes, clear</button>
+              <span style={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>{t('pages.audit.clearConfirm')}</span>
+              <button onClick={handleClear} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #dc2626', background: '#dc2626', color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>{t('pages.audit.clearYes')}</button>
               <button onClick={() => setConfirmClear(false)} style={{ ...selectStyle, cursor: 'pointer' }}>Cancel</button>
             </div>
           )}
@@ -380,10 +383,10 @@ export default function AuditLogPage() {
         <div>
           {/* Filters */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events…"
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('pages.audit.searchPlaceholder')}
               style={{ ...selectStyle, flex: 1, minWidth: 200 }} />
             <select value={catFilter} onChange={e => setCatFilter(e.target.value as AuditCategory | '')} style={selectStyle}>
-              <option value="">All categories</option>
+              <option value="">{t('pages.audit.allCategories')}</option>
               {(Object.keys(CAT_META) as AuditCategory[]).map(c => (
                 <option key={c} value={c}>{CAT_META[c].label}</option>
               ))}
@@ -397,9 +400,9 @@ export default function AuditLogPage() {
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 20px', border: '1px dashed var(--card-border)', borderRadius: 10, color: 'var(--text-muted)' }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-              <strong>No audit events yet</strong>
+              <strong>{t('pages.audit.noEvents')}</strong>
               <div style={{ marginTop: 6, fontSize: 12, maxWidth: 420, margin: '6px auto 0' }}>
-                Events are recorded automatically when you create, edit, or delete waivers and risk acceptances, and when you load a scan run.
+                {t('pages.audit.noEventsHint')}
               </div>
             </div>
           ) : (

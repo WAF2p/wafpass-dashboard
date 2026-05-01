@@ -2,8 +2,8 @@ export const ALL_PAGES = [
   'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
-  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings',
-  'projectoverview', 'passports', 'badge', 'leaderboard',
+  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
+  'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -41,10 +41,13 @@ export const PAGE_TITLE: Record<Page, string> = {
   apikeys:         'API Key Management',
   sso:             'SSO Settings',
   groupmappings:   'Group → Role Mappings',
+  controlspacks:   'Controls Upgrade',
   projectoverview: 'Project Overview',
   passports:       'Project Passports',
   badge:           'Badge Integration',
   leaderboard:     'Hall of Fame',
+  journey:         'Maturity Journey',
+  userprefs:       'My Preferences',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
@@ -78,10 +81,13 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   apikeys:         'Generate and revoke API keys for CI/CD pipelines and service accounts',
   sso:             'Configure OIDC and SAML2 single sign-on for your organisation',
   groupmappings:   'Map IdP group memberships to WAF++ roles — evaluated first during SSO login',
+  controlspacks:   'Sync and activate versioned WAF++ control packs — import, roll back, and track control catalogue changes',
   projectoverview: 'Per-project score trends, maturity progression, and achievement tracking across all scans',
   passports:       'All project passports at a glance — owner, criticality, environment, recent achievements',
   badge:           'Embed a live status badge in GitHub/GitLab READMEs, HTML docs, AsciiDoc, RST — with CI gate examples',
   leaderboard:     'Top sovereign projects by Tier 5 tenure and most improved teams in the last 30 days',
+  journey:         'Your flight from ground to cruise altitude — the story of building secure cloud infrastructure',
+  userprefs:       'Appearance, navigation defaults, date formats, and report behaviour — stored in this browser',
 }
 
 export function parseHash(): { page: Page; runId: string | null } {

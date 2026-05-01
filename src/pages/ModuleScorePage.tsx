@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { RunDetail, Finding } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -258,6 +259,7 @@ function ModuleRow({
 // ── Detail panel ──────────────────────────────────────────────────────────────
 
 function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
+  const { t } = useI18n()
   const [showAll, setShowAll] = useState(false)
   const [statusFilter, setStatusFilter] = useState('FAIL')
 
@@ -285,7 +287,7 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
         }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
             <span style={{ fontSize: '1rem', fontWeight: 900, color: scoreColor(mod.score), lineHeight: 1 }}>{mod.score}%</span>
-            <span style={{ fontSize: '0.55rem', color: 'var(--muted)', fontWeight: 600 }}>score</span>
+            <span style={{ fontSize: '0.55rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.moduleScore.score')}</span>
           </div>
         </div>
         <div style={{ flex: 1 }}>
@@ -307,9 +309,9 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
         {[
-          { label: 'Resources', value: mod.uniqueResources },
-          { label: 'Failing res.', value: mod.failingResources, color: mod.failingResources > 0 ? '#DA2C38' : undefined },
-          { label: 'Score drag', value: mod.scoreDrag > 0 ? `▼${mod.scoreDrag}pt` : '—', color: mod.scoreDrag > 0 ? '#DA2C38' : undefined },
+          { label: t('pages.moduleScore.resources'), value: mod.uniqueResources },
+          { label: t('pages.moduleScore.failingRes'), value: mod.failingResources, color: mod.failingResources > 0 ? '#DA2C38' : undefined },
+          { label: t('pages.moduleScore.scoreDrag'), value: mod.scoreDrag > 0 ? `▼${mod.scoreDrag}pt` : '—', color: mod.scoreDrag > 0 ? '#DA2C38' : undefined },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ borderRadius: '8px', padding: '0.5rem 0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', textAlign: 'center' }}>
             <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)' }}>{label}</div>
@@ -321,7 +323,7 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
       {/* Pillar breakdown */}
       {mod.pillarScores.length > 0 && (
         <div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.5rem' }}>Pillar Scores</div>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.5rem' }}>{t('pages.moduleScore.pillarScores')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
             {mod.pillarScores.map(p => (
               <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -341,7 +343,7 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
       {mod.topControls.length > 0 && (
         <div>
           <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.4rem' }}>
-            Top Failing Controls
+            {t('pages.moduleScore.topFailingControls')}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
             {mod.topControls.map(c => {
@@ -363,7 +365,7 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
           <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)' }}>
-            Findings ({filtered.length})
+            {t('pages.moduleScore.findings', { count: String(filtered.length) })}
           </div>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
             <option value="">All</option>
@@ -403,12 +405,12 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
             onClick={() => setShowAll(true)}
             style={{ marginTop: '0.5rem', width: '100%', padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.72rem', cursor: 'pointer' }}
           >
-            Show all {filtered.length} findings
+            {t('pages.moduleScore.showAll', { count: String(filtered.length) })}
           </button>
         )}
         {filtered.length === 0 && (
           <div style={{ padding: '0.75rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.78rem' }}>
-            No findings match the filter.
+            {t('pages.moduleScore.noMatchFilter')}
           </div>
         )}
       </div>
@@ -421,6 +423,7 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
 type SortKey = 'score' | 'fail' | 'drag' | 'name' | 'resources'
 
 export default function ModuleScorePage({ run }: Props) {
+  const { t } = useI18n()
   const [sortKey, setSortKey] = useState<SortKey>('score')
   const [search, setSearch] = useState('')
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
@@ -460,7 +463,7 @@ export default function ModuleScorePage({ run }: Props) {
   if (modules.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        No findings with resource addresses in this run.
+        {t('pages.moduleScore.noFindings')}
       </div>
     )
   }
@@ -471,11 +474,11 @@ export default function ModuleScorePage({ run }: Props) {
       {/* ── Summary strip ── */}
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         {[
-          { label: 'Modules', value: modules.length, sub: `${run.source_paths?.length ?? 0} scanned path${run.source_paths?.length !== 1 ? 's' : ''}` },
-          { label: 'Modules with failures', value: modulesWithFail, color: modulesWithFail > 0 ? '#DA2C38' : undefined },
-          { label: 'Total failures', value: totalFails, color: totalFails > 0 ? '#DA2C38' : undefined },
-          { label: 'Critical fails', value: totalCrit, color: totalCrit > 0 ? '#DA2C38' : undefined },
-          { label: 'Worst module', value: worstModule?.displayName ?? '—', sub: worstModule ? `${worstModule.score}%` : undefined, color: worstModule?.fail ? '#DA2C38' : undefined },
+          { label: t('pages.moduleScore.modulesLabel'), value: modules.length, sub: `${run.source_paths?.length ?? 0} scanned path${run.source_paths?.length !== 1 ? 's' : ''}` },
+          { label: t('pages.moduleScore.modulesWithFailures'), value: modulesWithFail, color: modulesWithFail > 0 ? '#DA2C38' : undefined },
+          { label: t('pages.moduleScore.totalFailures'), value: totalFails, color: totalFails > 0 ? '#DA2C38' : undefined },
+          { label: t('pages.moduleScore.criticalFails'), value: totalCrit, color: totalCrit > 0 ? '#DA2C38' : undefined },
+          { label: t('pages.moduleScore.worstModule'), value: worstModule?.displayName ?? '—', sub: worstModule ? `${worstModule.score}%` : undefined, color: worstModule?.fail ? '#DA2C38' : undefined },
         ].map(({ label, value, color, sub }) => (
           <div key={label} style={{
             flex: 1, minWidth: '110px', borderRadius: '10px', padding: '0.75rem 1rem',
@@ -495,7 +498,7 @@ export default function ModuleScorePage({ run }: Props) {
           <svg width="13" height="13" fill="none" stroke="var(--muted)" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
           </svg>
-          <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>Scanned paths:</span>
+          <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.moduleScore.scannedPaths')}</span>
           {run.source_paths.map(p => (
             <code key={p} style={{ fontSize: '0.7rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.1em 0.4em', color: 'var(--text)' }}>{p}</code>
           ))}
@@ -510,18 +513,18 @@ export default function ModuleScorePage({ run }: Props) {
           {/* Toolbar */}
           <div style={{ padding: '0.625rem 0.75rem', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.4rem', background: 'var(--bg)' }}>
             <input
-              placeholder="Filter modules…"
+              placeholder={t('pages.moduleScore.filterPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ ...selectStyle, fontSize: '0.78rem', padding: '0.35rem 0.5rem' }}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 600, flexShrink: 0 }}>Sort:</span>
+              <span style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 600, flexShrink: 0 }}>{t('pages.moduleScore.sortLabel')}</span>
               {([
-                ['score', 'Score ↑'],
-                ['fail', 'Fails ↓'],
-                ['drag', 'Drag ↓'],
-                ['name', 'A–Z'],
+                ['score', t('pages.moduleScore.sortScoreAsc')],
+                ['fail',  t('pages.moduleScore.sortFailDesc')],
+                ['drag',  t('pages.moduleScore.sortDragDesc')],
+                ['name',  t('pages.moduleScore.sortAz')],
               ] as [SortKey, string][]).map(([k, label]) => (
                 <button
                   key={k}
@@ -550,14 +553,14 @@ export default function ModuleScorePage({ run }: Props) {
             ))}
             {sorted.length === 0 && (
               <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem' }}>
-                No modules match "{search}"
+                {t('pages.moduleScore.noMatch', { search })}
               </div>
             )}
           </div>
 
           {/* Footer count */}
           <div style={{ padding: '0.4rem 0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg)' }}>
-            {sorted.length} of {modules.length} module{modules.length !== 1 ? 's' : ''}
+            {t('pages.moduleScore.modulesOf', { count: String(sorted.length), total: String(modules.length) })}
           </div>
         </div>
 
@@ -567,7 +570,7 @@ export default function ModuleScorePage({ run }: Props) {
             ? <DetailPanel key={selected.path} mod={selected} run={run} />
             : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--muted)', fontSize: '0.85rem' }}>
-                Select a module to see details.
+                {t('pages.moduleScore.selectModule')}
               </div>
             )}
         </div>

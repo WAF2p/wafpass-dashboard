@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Finding, RunDetail, upsertWaiver } from '../api'
 import { appendAuditEvent } from '../audit'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -35,7 +36,7 @@ function Pill({ label, color }: { label: string; color: string }) {
 
 // ─── Detail panel ─────────────────────────────────────────────────────────────
 
-function DetailPanel({ finding, onClose }: { finding: Finding; onClose: () => void }) {
+function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () => void; t: (k: string) => string }) {
   return (
     <div style={{
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -59,24 +60,24 @@ function DetailPanel({ finding, onClose }: { finding: Finding; onClose: () => vo
           {finding.pillar && <Pill label={finding.pillar} color="var(--waf-brand)" />}
         </div>
         <div>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Resource</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.findings.detailResource')}</div>
           <code style={{ fontSize: '0.8rem', color: 'var(--text)', wordBreak: 'break-all' }}>{finding.resource}</code>
         </div>
         {finding.message && (
           <div>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Message</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.findings.detailMessage')}</div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>{finding.message}</p>
           </div>
         )}
         {finding.remediation && (
           <div>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Remediation</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.findings.detailRemediation')}</div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>{finding.remediation}</p>
           </div>
         )}
         {finding.example && (
           <div>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Example Fix</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.findings.detailExample')}</div>
             <pre style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.75rem', overflowX: 'auto', margin: 0, color: 'var(--text)', lineHeight: 1.6 }}>
               {JSON.stringify(finding.example, null, 2)}
             </pre>
@@ -84,7 +85,7 @@ function DetailPanel({ finding, onClose }: { finding: Finding; onClose: () => vo
         )}
         {finding.control_id && (
           <div>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Control ID</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.findings.detailControlId')}</div>
             <code style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{finding.control_id}</code>
           </div>
         )}
@@ -100,9 +101,10 @@ interface WaiveModalProps {
   project: string
   onClose: () => void
   onDone: () => void
+  t: (k: string, vars?: Record<string, string | number>) => string
 }
 
-function WaiveModal({ controlIds, project, onClose, onDone }: WaiveModalProps) {
+function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps) {
   const [reason, setReason] = useState('')
   const [owner, setOwner] = useState('')
   const [expires, setExpires] = useState('')
@@ -155,10 +157,10 @@ function WaiveModal({ controlIds, project, onClose, onDone }: WaiveModalProps) {
       <div style={{ padding: '1.1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>
-            Waive {controlIds.length} control{controlIds.length !== 1 ? 's' : ''}
+            {t('pages.findings.waiveModalTitle', { count: controlIds.length })}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.1rem' }}>
-            Creates or updates a waiver entry for each selected control
+            {t('pages.findings.waiveModalSubtitle')}
           </div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.1rem', padding: '0.25rem' }}>✕</button>
@@ -175,7 +177,7 @@ function WaiveModal({ controlIds, project, onClose, onDone }: WaiveModalProps) {
 
         <div>
           <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
-            Reason <span style={{ color: '#dc2626' }}>*</span>
+            {t('pages.findings.waiveReason')} <span style={{ color: '#dc2626' }}>*</span>
           </label>
           <textarea
             value={reason}
@@ -188,11 +190,11 @@ function WaiveModal({ controlIds, project, onClose, onDone }: WaiveModalProps) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Owner</label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.findings.waiveOwner')}</label>
             <input value={owner} onChange={e => setOwner(e.target.value)} placeholder="name or team" style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Expires</label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.findings.waiveExpires')}</label>
             <input type="date" value={expires} onChange={e => setExpires(e.target.value)} style={inputStyle} />
           </div>
         </div>
@@ -205,7 +207,7 @@ function WaiveModal({ controlIds, project, onClose, onDone }: WaiveModalProps) {
 
         {status === 'done' && (
           <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.25)', borderRadius: 7, fontSize: '0.8rem', color: '#15803d', fontWeight: 600 }}>
-            ✓ {controlIds.length} waiver{controlIds.length !== 1 ? 's' : ''} saved
+            ✓ {t('pages.findings.wavingDone', { count: controlIds.length })}
           </div>
         )}
 
@@ -222,7 +224,7 @@ function WaiveModal({ controlIds, project, onClose, onDone }: WaiveModalProps) {
               color: '#fff', fontSize: '0.82rem', cursor: !reason.trim() || status !== 'idle' ? 'default' : 'pointer', fontWeight: 700,
             }}
           >
-            {status === 'saving' ? 'Saving…' : status === 'done' ? 'Saved!' : `Waive ${controlIds.length} control${controlIds.length !== 1 ? 's' : ''}`}
+            {status === 'saving' ? t('pages.findings.wavingSaving') : t('pages.findings.waiveBtn', { count: controlIds.length })}
           </button>
         </div>
       </div>
@@ -250,6 +252,7 @@ function exportCsv(findings: Finding[], filename: string) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FindingsPage({ run }: Props) {
+  const { t } = useI18n()
   const findings = run.findings
   const [statusFilter, setStatusFilter]     = useState('')
   const [severityFilter, setSeverityFilter] = useState('')
@@ -313,22 +316,22 @@ export default function FindingsPage({ run }: Props) {
         {/* ── Filter bar ────────────────────────────────────────────────────── */}
         <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
-            placeholder="Search checks, resources…"
+            placeholder={t('pages.findings.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ ...selectStyle, flex: '1', minWidth: '180px' }}
           />
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
-            <option value="">All statuses</option>
+            <option value="">{t('pages.findings.allStatuses')}</option>
             {['PASS', 'FAIL', 'SKIP', 'WAIVED', 'ERROR'].map(s => <option key={s}>{s}</option>)}
           </select>
           <select value={severityFilter} onChange={e => setSeverityFilter(e.target.value)} style={selectStyle}>
-            <option value="">All severities</option>
+            <option value="">{t('pages.findings.allSeverities')}</option>
             {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(s => <option key={s}>{s}</option>)}
           </select>
           {pillars.length > 0 && (
             <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)} style={selectStyle}>
-              <option value="">All pillars</option>
+              <option value="">{t('pages.findings.allPillars')}</option>
               {pillars.map(p => <option key={p}>{p}</option>)}
             </select>
           )}
@@ -354,10 +357,10 @@ export default function FindingsPage({ run }: Props) {
             display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
           }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--waf-brand)' }}>
-              {checkedInView.length} finding{checkedInView.length !== 1 ? 's' : ''} selected
+              {t('pages.findings.selected', { count: checkedInView.length })}
               {selectedControlIds.length !== checkedInView.length && (
                 <span style={{ fontWeight: 400, color: 'var(--muted)', marginLeft: '0.4rem' }}>
-                  · {selectedControlIds.length} unique control{selectedControlIds.length !== 1 ? 's' : ''}
+                  · {t('pages.findings.uniqueControls', { count: selectedControlIds.length })}
                 </span>
               )}
             </span>
@@ -374,7 +377,7 @@ export default function FindingsPage({ run }: Props) {
               <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              Waive {selectedControlIds.length} control{selectedControlIds.length !== 1 ? 's' : ''}
+              {t('pages.findings.waiveControls', { count: selectedControlIds.length })}
             </button>
 
             <button
@@ -386,14 +389,14 @@ export default function FindingsPage({ run }: Props) {
                 color: '#059669', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
               }}
             >
-              ↓ Export selection
+              {t('pages.findings.exportSelection')}
             </button>
 
             <button
               onClick={clearSelection}
               style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             >
-              Clear selection
+              {t('pages.findings.clearSelection')}
             </button>
           </div>
         )}
@@ -413,7 +416,7 @@ export default function FindingsPage({ run }: Props) {
                     style={{ accentColor: 'var(--waf-brand)', cursor: 'pointer' }}
                   />
                 </th>
-                {['Check', 'Resource', 'Pillar', 'Severity', 'Status'].map(h => (
+                {[t('pages.findings.colCheck'), t('pages.findings.colResource'), t('pages.findings.colPillar'), t('pages.findings.colSeverity'), t('pages.findings.colStatus')].map(h => (
                   <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
@@ -471,7 +474,7 @@ export default function FindingsPage({ run }: Props) {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
-                    No findings match the current filters.
+                    {t('pages.findings.noFindings')}
                   </td>
                 </tr>
               )}
@@ -484,7 +487,7 @@ export default function FindingsPage({ run }: Props) {
       {detail && (
         <>
           <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 99 }} />
-          <DetailPanel finding={detail} onClose={() => setDetail(null)} />
+          <DetailPanel finding={detail} onClose={() => setDetail(null)} t={t} />
         </>
       )}
 
@@ -497,6 +500,7 @@ export default function FindingsPage({ run }: Props) {
             project={run.project ?? ''}
             onClose={() => setShowWaiveModal(false)}
             onDone={() => { setShowWaiveModal(false); clearSelection() }}
+            t={t}
           />
         </>
       )}

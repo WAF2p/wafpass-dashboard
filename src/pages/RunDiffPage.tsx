@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { RunSummary, RunDetail, Finding, fetchRun } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props {
   runs: RunSummary[]
@@ -123,6 +124,7 @@ function PillarChip({ pillar }: { pillar: string }) {
 }
 
 function DiffCard({ item }: { item: DiffItem }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const finding = item.headFinding ?? item.baseFinding
 
@@ -165,13 +167,13 @@ function DiffCard({ item }: { item: DiffItem }) {
         <div style={{ padding: '0 0.875rem 0.75rem 2.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.6rem', background: 'var(--bg)' }}>
           {finding.message && (
             <div style={{ marginBottom: '0.5rem' }}>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>Message</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>{t('pages.findings.detailMessage')}</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.5 }}>{finding.message}</div>
             </div>
           )}
           {finding.remediation && (
             <div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>Remediation</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>{t('pages.findings.detailRemediation')}</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.5 }}>{finding.remediation}</div>
             </div>
           )}
@@ -182,17 +184,18 @@ function DiffCard({ item }: { item: DiffItem }) {
 }
 
 function DiffSection({ items, status }: { items: DiffItem[]; status: DiffStatus }) {
+  const { t } = useI18n()
   const sorted = useMemo(() =>
     [...items].sort((a, b) =>
       (SEV_ORDER[a.severity?.toUpperCase()] ?? 9) - (SEV_ORDER[b.severity?.toUpperCase()] ?? 9)
     ), [items])
 
   if (sorted.length === 0) {
-    const label = status === 'newly_failed' ? 'No new failures' : status === 'fixed' ? 'Nothing fixed' : 'No persistent failures'
+    const label = status === 'newly_failed' ? t('pages.diff.noNewFailures') : status === 'fixed' ? t('pages.diff.nothingFixed') : t('pages.diff.noPersistent')
     return (
       <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
         {status === 'fixed'
-          ? <span style={{ color: '#059669', fontWeight: 600 }}>{label} — clean!</span>
+          ? <span style={{ color: '#059669', fontWeight: 600 }}>{label}</span>
           : label}
       </div>
     )
@@ -237,6 +240,7 @@ function RunSelector({
 type Tab = 'newly_failed' | 'fixed' | 'still_failing'
 
 export default function RunDiffPage({ runs }: Props) {
+  const { t } = useI18n()
   const sortedRuns = useMemo(() => [...runs].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   ), [runs])
@@ -281,14 +285,14 @@ export default function RunDiffPage({ runs }: Props) {
   if (runs.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        At least two runs are needed to compare.
+        {t('pages.diff.needTwoRuns')}
       </div>
     )
   }
   if (runs.length === 1) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        Only one run exists — record another scan to enable comparison.
+        {t('pages.diff.onlyOneRun')}
       </div>
     )
   }
@@ -325,9 +329,9 @@ export default function RunDiffPage({ runs }: Props) {
   const sameRun = baseId === headId
 
   const TAB_CONFIG: { status: Tab; label: string; color: string; bg: string }[] = [
-    { status: 'newly_failed', label: 'Newly Failed', color: '#DA2C38', bg: 'rgba(218,44,56,.10)' },
-    { status: 'fixed',        label: 'Fixed',        color: '#059669', bg: 'rgba(5,150,105,.10)' },
-    { status: 'still_failing', label: 'Still Failing', color: '#d97706', bg: 'rgba(217,119,6,.10)' },
+    { status: 'newly_failed',  label: t('pages.diff.newlyFailed'),   color: '#DA2C38', bg: 'rgba(218,44,56,.10)' },
+    { status: 'fixed',         label: t('pages.diff.fixed'),          color: '#059669', bg: 'rgba(5,150,105,.10)' },
+    { status: 'still_failing', label: t('pages.diff.stillFailing'),   color: '#d97706', bg: 'rgba(217,119,6,.10)' },
   ]
 
   return (
@@ -336,7 +340,7 @@ export default function RunDiffPage({ runs }: Props) {
       {/* ── Run selectors ── */}
       <div className="card" style={{ padding: '1rem 1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
-          <RunSelector label="Base (older / PR target)" value={baseId} runs={sortedRuns} onChange={id => { setBaseId(id); setActiveTab('newly_failed') }} />
+          <RunSelector label={t('pages.diff.baseLabel')} value={baseId} runs={sortedRuns} onChange={id => { setBaseId(id); setActiveTab('newly_failed') }} />
 
           {/* Arrow */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '0.35rem', flexShrink: 0 }}>
@@ -345,11 +349,11 @@ export default function RunDiffPage({ runs }: Props) {
             </svg>
           </div>
 
-          <RunSelector label="Head (newer / PR branch)" value={headId} runs={sortedRuns} onChange={id => { setHeadId(id); setActiveTab('newly_failed') }} />
+          <RunSelector label={t('pages.diff.headLabel')} value={headId} runs={sortedRuns} onChange={id => { setHeadId(id); setActiveTab('newly_failed') }} />
         </div>
         {sameRun && (
           <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(234,179,8,.10)', border: '1px solid rgba(234,179,8,.30)', borderRadius: '8px', fontSize: '0.78rem', color: '#d97706' }}>
-            Base and head are the same run — select two different runs to see a diff.
+            {t('pages.diff.sameRunWarning')}
           </div>
         )}
       </div>
@@ -361,7 +365,7 @@ export default function RunDiffPage({ runs }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: pillarDeltas.length > 0 ? '1rem' : 0 }}>
             {/* Base score */}
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>Base</div>
+              <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>{t('pages.diff.baseLabel')}</div>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(baseSummary.score), lineHeight: 1 }}>{baseSummary.score}</div>
               <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
                 {baseSummary.project && <>{baseSummary.project} · </>}{baseSummary.branch}
@@ -380,13 +384,13 @@ export default function RunDiffPage({ runs }: Props) {
                 </div>
               )}
               <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.2rem' }}>
-                {scoreDelta !== null && scoreDelta > 0 ? 'Score improved' : scoreDelta !== null && scoreDelta < 0 ? 'Score regressed' : 'No change'}
+                {scoreDelta !== null && scoreDelta > 0 ? t('pages.diff.scoreImproved') : scoreDelta !== null && scoreDelta < 0 ? t('pages.diff.scoreRegressed') : t('pages.diff.noChange')}
               </div>
             </div>
 
             {/* Head score */}
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>Head</div>
+              <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '0.2rem' }}>{t('pages.diff.headLabel')}</div>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(headSummary.score), lineHeight: 1 }}>{headSummary.score}</div>
               <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
                 {headSummary.project && <>{headSummary.project} · </>}{headSummary.branch}
@@ -397,7 +401,7 @@ export default function RunDiffPage({ runs }: Props) {
           {/* Pillar deltas grid */}
           {pillarDeltas.length > 0 && (
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.6rem' }}>Pillar Scores</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.6rem' }}>{t('pages.runs.pillarScores')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.5rem' }}>
                 {pillarDeltas.map(p => (
                   <div key={p.key} style={{
@@ -417,7 +421,7 @@ export default function RunDiffPage({ runs }: Props) {
                       )}
                     </div>
                     {p.base != null && p.head != null && (
-                      <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginTop: '0.05rem' }}>was {p.base}</div>
+                      <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{p.base}</div>
                     )}
                   </div>
                 ))}
@@ -434,7 +438,7 @@ export default function RunDiffPage({ runs }: Props) {
           {(loadingBase || loadingHead) && (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
               <div className="spinner" style={{ margin: '0 auto 0.75rem' }} />
-              Loading runs…
+              {t('pages.diff.loadingRuns')}
             </div>
           )}
 
@@ -494,7 +498,7 @@ export default function RunDiffPage({ runs }: Props) {
           {/* No data yet */}
           {!loadingBase && !loadingHead && !diff && !sameRun && (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              Select two runs above to see the diff.
+              {t('pages.diff.selectTwo')}
             </div>
           )}
         </div>

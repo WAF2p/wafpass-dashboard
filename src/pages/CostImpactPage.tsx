@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Finding, RunDetail } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -203,6 +204,7 @@ function CostBar({ min, max, maxVal }: { min: number; max: number; maxVal: numbe
 // ─── Control card ─────────────────────────────────────────────────────────────
 
 function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: number }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const cat  = CATEGORY_META[item.dominantCategory]
   const conf = CONF_META[item.dominantConf]
@@ -256,7 +258,7 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
             </>
           ) : (
             <div style={{ fontSize: 11, color: 'var(--muted)', fontStyle: 'italic', lineHeight: 1.4 }}>
-              governance<br />risk only
+              {t('pages.costImpact.govRiskOnly').split('\n').map((line, i) => <span key={i}>{line}{i === 0 ? <br /> : ''}</span>)}
             </div>
           )}
           <div style={{ color: 'var(--muted)', fontSize: 10, marginTop: 6, userSelect: 'none' }}>{open ? '▲' : '▼'}</div>
@@ -317,12 +319,12 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
           <div style={{ padding: '10px 16px 14px' }}>
             {item.findings[0]?.message && (
               <div style={{ padding: '8px 10px', background: 'rgba(0,0,0,.03)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 11, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 6 }}>
-                <strong style={{ color: 'var(--text)' }}>Finding: </strong>{item.findings[0].message}
+                <strong style={{ color: 'var(--text)' }}>{t('pages.costImpact.findingLabel')} </strong>{item.findings[0].message}
               </div>
             )}
             {item.findings[0]?.remediation && (
               <div style={{ padding: '8px 10px', background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.18)', borderRadius: 6, fontSize: 11, color: 'var(--text)', lineHeight: 1.5 }}>
-                <strong style={{ color: '#059669' }}>Fix: </strong>{item.findings[0].remediation}
+                <strong style={{ color: '#059669' }}>{t('pages.costImpact.fixLabel')} </strong>{item.findings[0].remediation}
               </div>
             )}
           </div>
@@ -335,6 +337,7 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CostImpactPage({ run }: Props) {
+  const { t } = useI18n()
   const [catFilter, setCatFilter] = useState<CostCategory | 'all'>('all')
 
   const controlItems = useMemo(() => buildControlItems(run.findings), [run.findings])
@@ -378,14 +381,13 @@ export default function CostImpactPage({ run }: Props) {
         <div style={{ flex: 1, minWidth: 220 }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
             {hasCostFindings
-              ? `${totals.failingControls} failing cost controls — estimated ~${fmtDollar(totals.allMid)}/month`
-              : 'No failing cost controls detected'}
+              ? t('pages.costImpact.failingCostControls', { count: String(totals.failingControls), mid: fmtDollar(totals.allMid) })
+              : t('pages.costImpact.noFailingCost')}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>
             {hasCostFindings
-              ? `Range: ${fmtRange(totals.allMin, totals.allMax)}/month across ${totals.failingResources} resources. ` +
-                `These are estimates based on AWS public pricing and industry benchmarks — actual figures require AWS Cost Explorer.`
-              : 'All WAF-COST controls are passing for this run.'}
+              ? t('pages.costImpact.rangeAcross', { range: fmtRange(totals.allMin, totals.allMax), count: String(totals.failingResources) }) + ' ' + t('pages.costImpact.estimateNote')
+              : t('pages.costImpact.allPassing')}
           </div>
         </div>
 
@@ -408,7 +410,7 @@ export default function CostImpactPage({ run }: Props) {
 
       {!hasCostFindings ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', border: '1px dashed var(--border)', borderRadius: 10, color: '#059669', fontSize: 14 }}>
-          ✅ No failing cost findings — all WAF-COST controls passing
+          {t('pages.costImpact.noFailingFindings')}
         </div>
       ) : (
         <>
@@ -419,7 +421,7 @@ export default function CostImpactPage({ run }: Props) {
               border: `1px solid ${catFilter === 'all' ? 'var(--waf-brand)' : 'var(--border)'}`,
               background: catFilter === 'all' ? 'rgba(0,148,255,.08)' : 'none',
               color: catFilter === 'all' ? 'var(--waf-brand)' : 'var(--muted)',
-            }}>All ({controlItems.length})</button>
+            }}>{t('pages.costImpact.allFilter', { count: String(controlItems.length) })}</button>
             {(Object.keys(CATEGORY_META) as CostCategory[]).map(cat => {
               const count = controlItems.filter(i => i.dominantCategory === cat).length
               if (count === 0) return null
@@ -437,7 +439,7 @@ export default function CostImpactPage({ run }: Props) {
             })}
 
             <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)' }}>
-              Sorted by estimated monthly impact (highest first)
+              {t('pages.costImpact.sortedByImpact')}
             </span>
           </div>
 
@@ -452,13 +454,8 @@ export default function CostImpactPage({ run }: Props) {
             background: 'var(--bg)', border: '1px solid var(--border)',
             fontSize: 11, color: 'var(--muted)', lineHeight: 1.7,
           }}>
-            <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 4 }}>📌 Methodology</strong>
-            Estimates are derived from <strong>AWS public pricing</strong> and industry benchmarks (AWS Well-Architected, Cloud FinOps Foundation).
-            {' '}<strong>Waste</strong> = spend occurring now that could be eliminated.
-            {' '}<strong>Savings opportunity</strong> = on-demand spend that reserved/committed pricing would reduce by 35–72%.
-            {' '}<strong>Financial governance risk</strong> = controls whose failure creates future or untracked cost exposure.
-            Estimates do not account for data volume, instance type, or negotiated EDP discounts.
-            For precise figures, use <strong>AWS Cost Explorer</strong>, <strong>AWS Compute Optimizer</strong>, or your cloud provider's cost management tooling.
+            <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 4 }}>{t('pages.costImpact.methodology')}</strong>
+            {t('pages.costImpact.methodologyText')}
           </div>
         </>
       )}

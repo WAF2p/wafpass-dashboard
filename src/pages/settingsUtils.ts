@@ -30,9 +30,10 @@ export interface Settings {
   carbonTracking: boolean
   evidenceCollection: boolean
   multiCloudNormalization: boolean
-  // UX
-  pdfAutoOpen: boolean
-  hideDisabledMenuItems: boolean
+  // Regulatory scope
+  regulatoryRegions: string[]
+  // i18n
+  defaultLanguage: string
   // PDF Report
   reportSections: ReportSections
 }
@@ -101,8 +102,8 @@ export const DEFAULT_SETTINGS: Settings = {
   carbonTracking: false,
   evidenceCollection: false,
   multiCloudNormalization: false,
-  pdfAutoOpen: false,
-  hideDisabledMenuItems: false,
+  regulatoryRegions: ['global', 'eu', 'de'],
+  defaultLanguage: 'en',
   reportSections: DEFAULT_REPORT_SECTIONS,
 }
 

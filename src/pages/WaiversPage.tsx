@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { appendAuditEvent } from '../audit'
 import { fetchWaivers, upsertWaiver, deleteWaiver } from '../api'
+import { useI18n } from '../i18n'
 
 export interface Waiver {
   id: string
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export default function WaiversPage({ controls, onCountChange }: Props) {
+  const { t } = useI18n()
   const [waivers, setWaivers] = useState<Record<string, Waiver>>({})
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -191,11 +193,11 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
   }
 
   const syncPill = (() => {
-    if (syncStatus === 'loading') return { label: 'Loading…', color: '#94a3b8' }
-    if (syncStatus === 'saving') return { label: 'Saving…', color: '#0094ff' }
-    if (syncStatus === 'synced') return { label: 'Synced', color: '#22c55e' }
-    if (syncStatus === 'offline') return { label: 'Offline — cached data', color: '#eab308' }
-    return { label: 'Sync error', color: '#DA2C38' }
+    if (syncStatus === 'loading') return { label: t('pages.waivers.syncLoading'), color: '#94a3b8' }
+    if (syncStatus === 'saving') return { label: t('pages.waivers.syncSaving'), color: '#0094ff' }
+    if (syncStatus === 'synced') return { label: t('pages.waivers.syncSynced'), color: '#22c55e' }
+    if (syncStatus === 'offline') return { label: t('pages.waivers.syncOffline'), color: '#eab308' }
+    return { label: t('pages.waivers.syncError'), color: '#DA2C38' }
   })()
 
   return (
@@ -213,7 +215,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
             cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer',
           }}
         >
-          + Add Waiver
+          {t('pages.waivers.addBtn')}
         </button>
         {entries.length > 0 && (
           <>
@@ -224,7 +226,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                 borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.82rem', cursor: 'pointer',
               }}
             >
-              {copied ? 'Copied!' : 'Copy YAML'}
+              {copied ? t('pages.waivers.copied') : t('pages.waivers.copyYaml')}
             </button>
             <button
               onClick={downloadYaml}
@@ -233,7 +235,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                 borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.82rem', cursor: 'pointer',
               }}
             >
-              Download .wafpass-skip.yml
+              {t('pages.waivers.downloadYml')}
             </button>
           </>
         )}
@@ -263,10 +265,9 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
         </div>
       ) : entries.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-          <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>No waivers configured</div>
+          <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>{t('pages.waivers.noWaivers')}</div>
           <div style={{ fontSize: '0.78rem' }}>
-            Add waivers to suppress specific controls from failing the scan.
-            Export as <code>.wafpass-skip.yml</code> for CLI use.
+            {t('pages.waivers.noWaiversHint')}
           </div>
         </div>
       ) : (
@@ -281,11 +282,11 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                       <code style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--waf-brand)' }}>{w.id}</code>
                       {expired && (
                         <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#DA2C38', background: 'rgba(218,44,56,.15)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
-                          EXPIRED
+                          {t('pages.waivers.expired')}
                         </span>
                       )}
                       {w.expires && !expired && (
-                        <span style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>expires {w.expires}</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.waivers.expires')} {w.expires}</span>
                       )}
                       {w.project && (
                         <span style={{ fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
@@ -294,7 +295,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                       )}
                     </div>
                     {w.reason && <div style={{ fontSize: '0.8rem', color: 'var(--text)', marginBottom: '0.2rem' }}>{w.reason}</div>}
-                    {w.owner && <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>Owner: {w.owner}</div>}
+                    {w.owner && <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{t('pages.waivers.owner')}: {w.owner}</div>}
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                     <button
@@ -323,7 +324,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
       {entries.length > 0 && (
         <div className="card">
           <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
-            .wafpass-skip.yml Preview
+            {t('pages.waivers.previewTitle')}
           </h2>
           <pre style={{
             background: '#0f172a', color: '#e2e8f0', borderRadius: '8px',
@@ -332,7 +333,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
             {exportYaml(waivers)}
           </pre>
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.5rem' }}>
-            Place this file in your repository root. wafpass-core will skip these controls automatically.
+            {t('pages.waivers.previewHint')}
           </div>
         </div>
       )}
@@ -351,12 +352,12 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
             display: 'flex', flexDirection: 'column', gap: '1rem',
           }}>
             <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-              {editId ? 'Edit Waiver' : 'Add Waiver'}
+              {editId ? t('pages.waivers.editWaiver') : t('pages.waivers.addWaiver')}
             </h2>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-                Control *
+                {t('pages.waivers.controlLabel')} *
               </label>
               {editId ? (
                 <input value={form.id} disabled style={{ ...inputStyle, opacity: 0.6 }} />
@@ -376,7 +377,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-                Reason
+                {t('pages.waivers.reasonLabel')}
               </label>
               <textarea
                 value={form.reason}
@@ -390,7 +391,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-                  Owner
+                  {t('pages.waivers.ownerLabel')}
                 </label>
                 <input
                   value={form.owner}
@@ -401,7 +402,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>
-                  Expires
+                  {t('pages.waivers.expiresLabel')}
                 </label>
                 <input
                   type="date"
@@ -438,7 +439,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                   cursor: form.id && syncStatus !== 'saving' ? 'pointer' : 'not-allowed',
                 }}
               >
-                {syncStatus === 'saving' ? 'Saving…' : editId ? 'Save Changes' : 'Add Waiver'}
+                {syncStatus === 'saving' ? t('pages.waivers.syncSaving') : editId ? t('pages.waivers.saveChanges') : t('pages.waivers.addBtn')}
               </button>
             </div>
           </div>

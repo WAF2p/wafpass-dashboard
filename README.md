@@ -196,6 +196,10 @@ The **User Management** page (engineer+) supports creating, editing, and deactiv
 
 The **SSO Settings** page (admin) configures OIDC and SAML2 providers without restarting the server. The **Group Mappings** page maps IdP group names to WAF++ roles, applied at login time.
 
+**OIDC security:** The server verifies the `id_token` signature using the IdP's public JWKS (fetched from `jwks_uri` in the discovery document) and validates the `aud` claim and a per-request nonce before provisioning the user. Ensure your IdP exposes a `jwks_uri` in its OpenID Connect discovery document — all major providers (Keycloak, Entra ID, Okta, Auth0) do by default.
+
+**SAML2 security:** The server validates the assertion XML signature against the configured IdP certificate via `python3-saml` (strict mode).
+
 ---
 
 ## Production build

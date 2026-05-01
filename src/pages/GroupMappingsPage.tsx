@@ -9,6 +9,7 @@ import {
   fetchGroupMappings, createGroupMapping, updateGroupMapping, deleteGroupMapping,
   type GroupRoleMappingOut, type GroupRoleMappingCreate,
 } from '../api'
+import { useI18n } from '../i18n'
 
 const ALL_ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
 const ALL_PROVIDERS = ['*', 'oidc', 'saml2'] as const
@@ -68,6 +69,7 @@ const selectStyle: React.CSSProperties = {
 // ── Create form ───────────────────────────────────────────────────────────────
 
 function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void }) {
+  const { t } = useI18n()
   const blank: GroupRoleMappingCreate = { provider: '*', group_name: '', role: 'clevel', description: '', priority: 0 }
   const [form, setForm] = useState(blank)
   const [saving, setSaving] = useState(false)
@@ -75,7 +77,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
   const [open, setOpen] = useState(false)
 
   async function handleSave() {
-    if (!form.group_name.trim()) { setErr('Group name is required.'); return }
+    if (!form.group_name.trim()) { setErr(t('pages.groupMappings.groupRequired')); return }
     setSaving(true); setErr(null)
     try {
       const created = await createGroupMapping({ ...form, group_name: form.group_name.trim() })
@@ -101,7 +103,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
-        Add Mapping
+        {t('pages.groupMappings.addBtn')}
       </button>
     )
   }
@@ -112,11 +114,11 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
       padding: '1.25rem 1.5rem',
     }}>
       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-        New Group → Role Mapping
+        {t('pages.groupMappings.addTitle')}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '0.75rem', alignItems: 'end' }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Group Name *</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.groupNameLabel')}</span>
           <input
             style={inputStyle} placeholder="e.g. wafpass-admins"
             value={form.group_name}
@@ -124,19 +126,19 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
           />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Provider</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.providerLabel')}</span>
           <select style={selectStyle} value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}>
             {ALL_PROVIDERS.map(p => <option key={p} value={p}>{p === '*' ? '* (any)' : p}</option>)}
           </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mapped Role</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.roleLabel')}</span>
           <select style={selectStyle} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
             {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Priority</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.priorityLabel')}</span>
           <input
             type="number" style={inputStyle} placeholder="0"
             value={form.priority}
@@ -151,7 +153,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
               background: 'var(--waf-brand)', color: '#fff', border: 'none', cursor: saving ? 'wait' : 'pointer',
             }}
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('pages.sso.saving') : t('pages.groupMappings.saveBtn')}
           </button>
           <button
             onClick={() => { setOpen(false); setErr(null); setForm(blank) }}
@@ -160,12 +162,12 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
               background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer',
             }}
           >
-            Cancel
+            {t('pages.groupMappings.cancelBtn')}
           </button>
         </div>
       </div>
       <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.75rem' }}>
-        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Description (optional)</span>
+        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.descriptionLabel')}</span>
         <input
           style={inputStyle} placeholder="e.g. Azure AD group for WAF++ platform admins"
           value={form.description}
@@ -180,6 +182,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
 // ── Edit form (inline in expanded row) ───────────────────────────────────────
 
 function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut; onSaved: (m: GroupRoleMappingOut) => void; onCancel: () => void }) {
+  const { t } = useI18n()
   const [form, setForm] = useState({
     provider: mapping.provider,
     group_name: mapping.group_name,
@@ -191,7 +194,7 @@ function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut
   const [err, setErr] = useState<string | null>(null)
 
   async function handleSave() {
-    if (!form.group_name.trim()) { setErr('Group name is required.'); return }
+    if (!form.group_name.trim()) { setErr(t('pages.groupMappings.groupRequired')); return }
     setSaving(true); setErr(null)
     try {
       const updated = await updateGroupMapping(mapping.id, { ...form, group_name: form.group_name.trim() })
@@ -204,28 +207,28 @@ function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut
     <div style={{ padding: '0.75rem 1rem', background: 'var(--bg)', borderRadius: '8px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Group Name</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.colGroupName')}</span>
           <input style={inputStyle} value={form.group_name} onChange={e => setForm(f => ({ ...f, group_name: e.target.value }))} />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Provider</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.providerLabel')}</span>
           <select style={selectStyle} value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}>
             {ALL_PROVIDERS.map(p => <option key={p} value={p}>{p === '*' ? '* (any)' : p}</option>)}
           </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mapped Role</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.roleLabel')}</span>
           <select style={selectStyle} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
             {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Priority</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.priorityLabel')}</span>
           <input type="number" style={inputStyle} value={form.priority} onChange={e => setForm(f => ({ ...f, priority: parseInt(e.target.value) || 0 }))} />
         </label>
       </div>
       <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Description</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.descriptionLabel')}</span>
         <input style={inputStyle} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
       </label>
       {err && <div style={{ marginBottom: '0.5rem', fontSize: '0.78rem', color: '#f87171' }}>{err}</div>}
@@ -234,13 +237,13 @@ function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut
           onClick={handleSave} disabled={saving}
           style={{ padding: '0.4rem 0.9rem', borderRadius: '7px', fontWeight: 600, fontSize: '0.8rem', background: 'var(--waf-brand)', color: '#fff', border: 'none', cursor: saving ? 'wait' : 'pointer' }}
         >
-          {saving ? 'Saving…' : 'Save changes'}
+          {saving ? t('pages.sso.saving') : t('pages.groupMappings.saveChangesBtn')}
         </button>
         <button
           onClick={onCancel}
           style={{ padding: '0.4rem 0.75rem', borderRadius: '7px', fontWeight: 600, fontSize: '0.8rem', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer' }}
         >
-          Cancel
+          {t('pages.groupMappings.cancelBtn')}
         </button>
       </div>
     </div>
@@ -250,6 +253,7 @@ function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function GroupMappingsPage() {
+  const { t } = useI18n()
   const [mappings, setMappings] = useState<GroupRoleMappingOut[]>([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
@@ -315,10 +319,10 @@ export default function GroupMappingsPage() {
       {/* Stats strip */}
       <div style={{ display: 'flex', gap: '0.75rem' }}>
         {[
-          { label: 'Total mappings', value: mappings.length, color: 'var(--waf-brand)' },
-          { label: 'Any provider (*)', value: byProvider('*'), color: '#64748b' },
-          { label: 'OIDC only', value: byProvider('oidc'), color: '#0094ff' },
-          { label: 'SAML2 only', value: byProvider('saml2'), color: '#7c3aed' },
+          { label: t('pages.groupMappings.statTotal'), value: mappings.length, color: 'var(--waf-brand)' },
+          { label: t('pages.groupMappings.statAny'), value: byProvider('*'), color: '#64748b' },
+          { label: t('pages.groupMappings.statOidc'), value: byProvider('oidc'), color: '#0094ff' },
+          { label: t('pages.groupMappings.statSaml2'), value: byProvider('saml2'), color: '#7c3aed' },
         ].map(({ label, value, color }) => (
           <div key={label} style={{
             flex: 1, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px',
@@ -346,7 +350,7 @@ export default function GroupMappingsPage() {
           color: 'var(--muted)', fontSize: '0.85rem',
           background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px',
         }}>
-          No group mappings yet. Add one above to enable centralized group-to-role resolution.
+          {t('pages.groupMappings.emptyState')}
         </div>
       ) : (
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
@@ -357,11 +361,11 @@ export default function GroupMappingsPage() {
             borderBottom: '1px solid var(--border)',
             fontSize: '0.68rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700,
           }}>
-            <span>Group Name</span>
-            <span>Provider</span>
-            <span>Maps To</span>
-            <span>Priority</span>
-            <span>Description</span>
+            <span>{t('pages.groupMappings.colGroupName')}</span>
+            <span>{t('pages.groupMappings.colProvider')}</span>
+            <span>{t('pages.groupMappings.colMapsTo')}</span>
+            <span>{t('pages.groupMappings.colPriority')}</span>
+            <span>{t('pages.groupMappings.colDescription')}</span>
             <span />
           </div>
 
@@ -400,17 +404,17 @@ export default function GroupMappingsPage() {
                 <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => { setEditingId(m.id); setExpandedId(m.id) }}
-                    title="Edit"
+                    title={t('pages.groupMappings.editBtn')}
                     style={{ padding: '0.3rem 0.55rem', borderRadius: '6px', background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
                   >
-                    Edit
+                    {t('pages.groupMappings.editBtn')}
                   </button>
                   <button
                     onClick={() => setDeletingId(m.id)}
-                    title="Delete"
+                    title={t('pages.groupMappings.deleteBtn')}
                     style={{ padding: '0.3rem 0.55rem', borderRadius: '6px', background: 'none', border: '1px solid rgba(218,44,56,0.3)', color: '#f87171', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
                   >
-                    Delete
+                    {t('pages.groupMappings.deleteBtn')}
                   </button>
                 </div>
               </div>
@@ -427,33 +431,33 @@ export default function GroupMappingsPage() {
                   ) : deletingId === m.id ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', background: 'rgba(218,44,56,0.06)', border: '1px solid rgba(218,44,56,0.2)', borderRadius: '8px' }}>
                       <span style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
-                        Delete mapping <strong>{m.group_name}</strong> → <strong>{m.role}</strong>? This cannot be undone.
+                        {t('pages.groupMappings.deleteConfirmText', { group: m.group_name, role: m.role })}
                       </span>
                       <button
                         onClick={() => handleDelete(m.id)}
                         style={{ padding: '0.35rem 0.8rem', borderRadius: '7px', background: '#DA2C38', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap' }}
                       >
-                        Confirm delete
+                        {t('pages.groupMappings.confirmDeleteBtn')}
                       </button>
                       <button
                         onClick={() => setDeletingId(null)}
                         style={{ padding: '0.35rem 0.7rem', borderRadius: '7px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
                       >
-                        Cancel
+                        {t('pages.groupMappings.cancelBtn')}
                       </button>
                     </div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
                       <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>ID</div>
+                        <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>{t('pages.groupMappings.fieldId')}</div>
                         <code style={{ fontSize: '0.72rem', wordBreak: 'break-all' }}>{m.id}</code>
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Created</div>
+                        <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>{t('pages.groupMappings.fieldCreated')}</div>
                         {m.created_at ? new Date(m.created_at).toLocaleString() : '—'}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Created by</div>
+                        <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>{t('pages.groupMappings.fieldCreatedBy')}</div>
                         {m.created_by ?? '—'}
                       </div>
                     </div>

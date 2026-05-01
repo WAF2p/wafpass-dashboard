@@ -3,6 +3,7 @@
  * User management and API key management are on their own pages.
  */
 import { useAuth } from '../AuthContext'
+import { useI18n } from '../i18n'
 
 // ── Role definitions ──────────────────────────────────────────────────────────
 
@@ -228,6 +229,7 @@ const IMPL_NOTES = [
 
 export default function AccessRolesPage() {
   const { role } = useAuth()
+  const { t } = useI18n()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -250,11 +252,11 @@ export default function AccessRolesPage() {
         </div>
         <div style={{ flex: 1 }}>
           <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
-            Phase 2 SSO live.{' '}
+            {t('pages.access.bannerTitle')}{' '}
           </span>
           <span style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-            Local accounts, OIDC, and SAML2 are all active. Roles are enforced on every API request.
-            {role === 'admin' && <> Configure SSO in <strong>SSO Settings</strong> · manage accounts in <strong>Users</strong> · manage service keys in <strong>API Keys</strong>.</>}
+            {t('pages.access.bannerText')}
+            {role === 'admin' && <strong>{t('pages.access.bannerAdminText')}</strong>}
           </span>
         </div>
         <span style={{
@@ -264,14 +266,14 @@ export default function AccessRolesPage() {
           fontWeight: 600, fontSize: '0.7rem', whiteSpace: 'nowrap',
           border: '1px solid rgba(34,197,94,0.25)',
         }}>
-          Auth: Phase 2 Live
+          {t('pages.access.bannerBadge')}
         </span>
       </div>
 
       {/* ── Roles & Navigation Access ──────────────────────────────────────── */}
       <section>
         <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
-          Roles &amp; Navigation Access
+          {t('pages.access.rolesHeader')}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.75rem' }}>
           {ROLES.map(role => (
@@ -349,7 +351,7 @@ export default function AccessRolesPage() {
         {/* Auth providers */}
         <section>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
-            Authentication Providers
+            {t('pages.access.authProvidersHeader')}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {AUTH_PROVIDERS.map(p => (
@@ -397,7 +399,7 @@ export default function AccessRolesPage() {
         {/* Implementation notes */}
         <section>
           <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
-            Implementation Notes
+            {t('pages.access.implNotesHeader')}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {IMPL_NOTES.map((note, i) => (

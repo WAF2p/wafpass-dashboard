@@ -117,7 +117,7 @@ On mount, `parseHash().runId` is captured in `initialHashRunId` (a `useRef`). Af
 
 ## Authentication (`AuthContext.tsx`)
 
-### Token flow
+### Token flow — local login
 
 ```
 LoginPage
@@ -136,6 +136,33 @@ AuthContext
 App.tsx checks: if (!user) → <LoginPage />
                else       → <AuthenticatedApp />
 ```
+
+### Token flow — SSO (OIDC / SAML2)
+
+```
+LoginPage
+    │  user clicks "Sign in with OIDC / SAML2"
+    ▼
+window.location = /auth/oidc/authorize  (or /auth/saml/login)
+    │
+    ▼
+Server performs IdP redirect → callback → JWKS signature verification
+    │  (OIDC: id_token verified against IdP public key; nonce validated)
+    │  302 redirect to dashboard
+    │  ?sso_ok=1&at=<access_token>&rt=<refresh_token>&u=<base64_user>
+    ▼
+LoginPage (on mount, detects sso_ok=1 in URL params)
+    ├─ extract at, rt, u from URLSearchParams
+    ├─ decode user: JSON.parse(atob(u))
+    ├─ AuthContext.loginWithTokens(at, rt, user)
+    │   ├─ localStorage.setItem('wafpass_access_token', at)
+    │   ├─ localStorage.setItem('wafpass_refresh_token', rt)
+    │   └─ localStorage.setItem('wafpass_auth_user', JSON.stringify(user))
+    └─ window.history.replaceState(null, '', pathname + '#/dashboard')
+       (clears tokens from URL / browser history immediately)
+```
+
+The tokens arrive via URL query parameters, which is a standard OAuth 2.0 pattern for SPA redirects. The URL is cleaned up synchronously via `replaceState` before any navigation can leak them. The server ensures the tokens are only issued after full IdP verification — the dashboard trusts and stores what the server provides.
 
 ### On-mount session restore
 
