@@ -6,8 +6,9 @@ import fr from './locales/fr'
 import es from './locales/es'
 import pt from './locales/pt'
 import br from './locales/br'
+import el from './locales/el'
 
-export const LOCALES: Record<string, PartialTranslations> = { en, de, fr, es, pt, br }
+export const LOCALES: Record<string, PartialTranslations> = { en, de, fr, es, pt, br, el }
 
 function deepMerge<T extends object>(base: T, override: Partial<T>): T {
   const result = { ...base }
