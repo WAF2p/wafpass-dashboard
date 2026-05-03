@@ -243,7 +243,7 @@ const br: PartialTranslations = {
     },
 
     users: {
-      colUserId: 'ID do Usuário', colAuthProvider: 'Provedor de Autenticação', colStatus: 'Status', colLastLogin: 'Último Login', colCreated: 'Criado',
+      imageUrlLabel: 'URL da Imagem de Perfil', colUserId: 'ID do Usuário', colAuthProvider: 'Provedor de Autenticação', colStatus: 'Status', colLastLogin: 'Último Login', colCreated: 'Criado',
       never: 'Nunca', active: 'Ativo', inactive: 'Inativo',
       actionLogin: 'Login', actionLogout: 'Logout', actionRunPush: 'Run enviado', actionUserCreate: 'Usuário criado', actionUserUpdate: 'Usuário atualizado', actionUserDelete: 'Usuário excluído',
       totalUsers: 'Total de Usuários', accountsHeader: 'Contas', clickToInspect: '— clique em uma linha para inspecionar',

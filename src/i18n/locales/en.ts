@@ -71,7 +71,7 @@ const en: Translations = {
     dates: 'Dates & Time', dateFormat: 'Date format',
     dateRelative: 'Relative (2 hours ago)', dateAbsolute: 'Short (Apr 26, 2026)', dateFull: 'Full (2026-04-26 14:30)',
     datePreview: 'Preview',
-    reports: 'Reports & Export', autoPdf: 'Auto-open PDF', autoPdfDesc: 'Open PDF in new tab after export',
+    reports: 'Reports & Export', autoPdf: 'Auto-open PDF', autoPdfDesc: 'Open PDF in new tab after export', darkModePdf: 'Dark mode PDF', darkModePdfDesc: 'Use dark colors when exporting PDF reports',
     resetSection: 'Reset', resetDesc: 'Revert all preferences to factory defaults. This also clears the server copy.',
     resetBtn: 'Reset to defaults',
   },
@@ -154,6 +154,8 @@ const en: Translations = {
       waiveControls: 'Waive {{count}} control(s)',
       exportSelection: '↓ Export selection',
       clearSelection: 'Clear selection',
+      exportVisibleFilters: 'Export visible filters only',
+      exportAllFindings: 'All findings',
       colCheck: 'Check',
       colResource: 'Resource',
       colPillar: 'Pillar',
@@ -172,6 +174,13 @@ const en: Translations = {
       wavingSaving: 'Saving…',
       wavingDone: '{{count}} waiver(s) saved',
       waiveBtn: 'Waive {{count}} control(s)',
+      // Comments section
+      commentSection: 'Collaboration on this finding',
+      commentBtn: 'Add Comment',
+      commentThread: '{{count}} comment(s)',
+      noComments: 'No comments yet. Be the first to comment!',
+      confirmDeleteComment: 'Delete this comment?',
+      deleteComment: 'Delete',
     },
 
     waivers: {
@@ -261,6 +270,7 @@ const en: Translations = {
       colDate: 'Date',
       avgScore: 'avg score',
       noRuns: 'No runs yet. Run wafpass check --push to record your first scan.',
+      loadMore: 'Load more...',
     },
 
     diff: {
@@ -375,6 +385,7 @@ const en: Translations = {
       newUserTitle: 'New User',
       usernameLabel: 'Username *',
       displayNameLabel: 'Display Name',
+      imageUrlLabel: 'Profile Image URL',
       roleLabel: 'Role',
       passwordLabel: 'Password *',
       newPasswordLabel: 'New Password (leave blank to keep)',
@@ -546,6 +557,10 @@ const en: Translations = {
       regulatoryMapping: 'Regulatory mapping',
       effortBadge: '{{effort}} effort',
       noFrameworks: 'no frameworks',
+      exportLabel: 'Export',
+      exportCsv: 'CSV for Excel',
+      exportJira: 'Jira issues',
+      exportSlack: 'Slack / MS Teams',
     },
 
     gapanalysis: {
@@ -1115,6 +1130,7 @@ const en: Translations = {
       noControls: 'No controls',
       nextWaypoints: 'Next Waypoints',
       nextWaypointsDesc: 'Top failing controls on your current heading. Clear these to advance your stage.',
+      loadMore: 'Load More',
       allFindings: 'All Findings →',
       noWaypoints: 'No active waypoints — all controls are cleared',
       finalApproach: 'You are cleared for final approach.',

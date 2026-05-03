@@ -176,6 +176,8 @@ export interface Translations {
     reports: string
     autoPdf: string
     autoPdfDesc: string
+    darkModePdf: string
+    darkModePdfDesc: string
     resetSection: string
     resetDesc: string
     resetBtn: string
@@ -273,6 +275,8 @@ export interface Translations {
       waiveControls: string       // "Waive {{count}} control(s)"
       exportSelection: string     // "↓ Export selection"
       clearSelection: string      // "Clear selection"
+      exportVisibleFilters: string // "Export visible filters only"
+      exportAllFindings: string   // "All findings"
       colCheck: string
       colResource: string
       colPillar: string
@@ -291,6 +295,13 @@ export interface Translations {
       wavingSaving: string        // "Saving…"
       wavingDone: string          // "{{count}} waiver(s) saved"
       waiveBtn: string            // "Waive {{count}} control(s)"
+      // Comments section
+      commentSection: string      // "Collaboration on this finding"
+      commentBtn: string          // "Add Comment"
+      commentThread: string       // "{{count}} comment(s)"
+      noComments: string          // "No comments yet. Be the first to comment!"
+      confirmDeleteComment: string // "Delete this comment?"
+      deleteComment: string       // "Delete"
     }
 
     waivers: {
@@ -380,6 +391,7 @@ export interface Translations {
       colDate: string
       avgScore: string            // "avg score"
       noRuns: string
+      loadMore: string            // "Load more..."
     }
 
     diff: {
@@ -494,6 +506,7 @@ export interface Translations {
       newUserTitle: string
       usernameLabel: string
       displayNameLabel: string
+      imageUrlLabel: string
       roleLabel: string
       passwordLabel: string
       newPasswordLabel: string
@@ -665,6 +678,10 @@ export interface Translations {
       regulatoryMapping: string   // "Regulatory mapping"
       effortBadge: string         // "{{effort}} effort"
       noFrameworks: string        // "no frameworks"
+      exportLabel: string         // "Export"
+      exportCsv: string           // "CSV for Excel"
+      exportJira: string          // "Jira issues"
+      exportSlack: string         // "Slack / MS Teams"
     }
 
     gapanalysis: {
@@ -1267,6 +1284,7 @@ export interface Translations {
       noControls: string
       nextWaypoints: string
       nextWaypointsDesc: string
+      loadMore: string
       allFindings: string
       noWaypoints: string
       finalApproach: string

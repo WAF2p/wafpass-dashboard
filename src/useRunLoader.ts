@@ -14,6 +14,7 @@ export interface RunLoaderResult {
   run: RunDetail | null
   loadingRun: boolean
   runsError: string | null
+  refetchRuns: () => Promise<void>
 }
 
 export function useRunLoader(initialRunId: string | null): RunLoaderResult {
@@ -22,6 +23,7 @@ export function useRunLoader(initialRunId: string | null): RunLoaderResult {
   const [run, setRun] = useState<RunDetail | null>(null)
   const [loadingRun, setLoadingRun] = useState(false)
   const [runsError, setRunsError] = useState<string | null>(null)
+  const [runsVersion, setRunsVersion] = useState(0)  // Increment to trigger reload
 
   const savedInitialId = useRef(initialRunId)
 
@@ -60,7 +62,12 @@ export function useRunLoader(initialRunId: string | null): RunLoaderResult {
     })
 
     return () => { cancelled = true }
-  }, [])
+  }, [runsVersion])
+
+  const refetchRuns = async () => {
+    setRuns([])  // Clear current runs first
+    setRunsVersion(v => v + 1)  // Trigger reload effect to re-fetch runs
+  }
 
   useEffect(() => {
     if (!selectedId) return
@@ -76,5 +83,5 @@ export function useRunLoader(initialRunId: string | null): RunLoaderResult {
       .finally(() => setLoadingRun(false))
   }, [selectedId])
 
-  return { runs, selectedId, setSelectedId, run, loadingRun, runsError }
+  return { runs, selectedId, setSelectedId, run, loadingRun, runsError, refetchRuns }
 }

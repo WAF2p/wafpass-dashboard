@@ -75,7 +75,7 @@ const PAGES_WITHOUT_RUN_META = new Set<Page>([
 ])
 
 function AuthenticatedApp({ user, role, onLogout }: {
-  user: { username: string; display_name: string; role: string }
+  user: { username: string; display_name: string; image_url: string; role: string }
   role: string
   onLogout(): Promise<void>
 }) {
@@ -93,7 +93,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
   const [riskCount, setRiskCount] = useState(0)
   const mounted = useRef(false)
 
-  const { runs, selectedId, setSelectedId, run, loadingRun, runsError } = useRunLoader(initialRunId)
+  const { runs, selectedId, setSelectedId, run, loadingRun, runsError, refetchRuns } = useRunLoader(initialRunId)
 
   function navigate(newPage: Page) {
     setPage(newPage)
@@ -219,7 +219,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
         onLogout={onLogout}
       />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
+      <div className="app-main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
         {/* Header */}
         <header style={{
           background: 'var(--header-bg)', backdropFilter: 'blur(12px)',
@@ -287,7 +287,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.4rem',
                   padding: '0.4rem 0.875rem', borderRadius: '8px',
-                  background: 'var(--waf-brand)', color: '#fff',
+                  background: userPrefs.pdfDarkMode ? 'rgba(34,197,94,.2)' : 'var(--waf-brand)',
+                  color: userPrefs.pdfDarkMode ? '#22c55e' : '#fff',
                   border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem',
                   boxShadow: '0 2px 8px rgba(0,148,255,.30)',
                 }}
@@ -296,6 +297,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 Share as PDF
+                {userPrefs.pdfDarkMode && <span style={{ fontSize: '0.6rem', fontWeight: 400, opacity: 0.8 }}>DM</span>}
               </button>
             )}
           </div>
@@ -321,6 +323,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
               runs={runs}
               role={role}
               onOpenProject={project => { setSelectedProject(project); navigate('projectoverview') }}
+              onRefetchRuns={refetchRuns}
             />
           ) : page === 'projectoverview' ? (
             <ProjectOverviewPage
@@ -436,7 +439,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
       {/* PDF report — hidden in normal view, printed only */}
       {run && (
         <div id="wafpass-pdf-root" style={{ display: 'none' }}>
-          <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} />
+          <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
         </div>
       )}
     </div>

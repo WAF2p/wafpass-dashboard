@@ -11,7 +11,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react'
-import { RunDetail, ControlMeta } from '../api'
+import { RunDetail, ControlMeta, getApiBase, getAccessToken } from '../api'
 import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
@@ -184,6 +184,77 @@ export default function RemediationSprintPage({ run }: Props) {
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify([...sprintIds])) } catch {}
   }, [sprintIds, storageKey])
+
+  // ── Export handlers ────────────────────────────────────────────────────────
+  const [isExporting, setIsExporting] = useState(false)
+  const apiBase = getApiBase()
+  const authHeaders: Record<string, string> = getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}
+
+  const handleExportCsv = async () => {
+    if (sprintIds.size === 0) return
+    const sprintList = [...sprintIds].join(',')
+    const url = `${apiBase}/runs/${run.id}/export/csv?sprint=${encodeURIComponent(sprintList)}`
+    try {
+      setIsExporting(true)
+      const response = await fetch(url, { headers: authHeaders })
+      if (!response.ok) throw new Error(`Export failed: ${response.status}`)
+      const blob = await response.blob()
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.setAttribute('download', `remediation_sprint_${run.project.replace(/ /g, '_')}_${run.created_at?.split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleExportJira = async () => {
+    if (sprintIds.size === 0) return
+    const sprintList = [...sprintIds].join(',')
+    const url = `${apiBase}/runs/${run.id}/export/jira?sprint=${encodeURIComponent(sprintList)}`
+    try {
+      setIsExporting(true)
+      const response = await fetch(url, { headers: authHeaders })
+      if (!response.ok) throw new Error(`Export failed: ${response.status}`)
+      const blob = await response.blob()
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.setAttribute('download', `jira_issues_${run.project.replace(/ /g, '_')}_${run.created_at?.split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleExportSlack = async () => {
+    if (sprintIds.size === 0) return
+    const sprintList = [...sprintIds].join(',')
+    const url = `${apiBase}/runs/${run.id}/export/slack`
+    try {
+      setIsExporting(true)
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ sprint: sprintList }),
+      })
+      if (!response.ok) throw new Error(`Export failed: ${response.status}`)
+      const data = await response.json() as { text: string; preview: string; control_count: string; project: string; run_id: string }
+      // Show message in a simple modal for sharing
+      const textArea = document.createElement('textarea')
+      textArea.value = data.text
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      alert('Slack/Teams message text copied to clipboard! You can paste it into your message.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   const allControls = useMemo(() => buildFailingControls(run), [run])
 
@@ -416,6 +487,68 @@ export default function RemediationSprintPage({ run }: Props) {
                         <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span> {fw}
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Export buttons */}
+                {sprintControls.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #1e3a5f' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', marginBottom: '0.5rem' }}>
+                      {t('pages.remediation.exportLabel')}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <button
+                        onClick={handleExportCsv}
+                        disabled={isExporting}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.5rem',
+                          padding: '0.5rem 0.75rem', borderRadius: '8px',
+                          border: '1px solid #0094FF', background: '#0094FF1A',
+                          color: '#0094FF', cursor: isExporting ? 'not-allowed' : 'pointer',
+                          fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s',
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h18v18H3V3zm0 18h18M3 12h18" />
+                        </svg>
+                        {t('pages.remediation.exportCsv')}
+                      </button>
+                      <button
+                        onClick={handleExportJira}
+                        disabled={isExporting}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.5rem',
+                          padding: '0.5rem 0.75rem', borderRadius: '8px',
+                          border: '1px solid #f59e0b', background: '#f59e0b1A',
+                          color: '#f59e0b', cursor: isExporting ? 'not-allowed' : 'pointer',
+                          fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s',
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="8" cy="8" r="3" />
+                          <path d="M2 12h6m4 0h6m-4 4v-4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {t('pages.remediation.exportJira')}
+                      </button>
+                      <button
+                        onClick={handleExportSlack}
+                        disabled={isExporting}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.5rem',
+                          padding: '0.5rem 0.75rem', borderRadius: '8px',
+                          border: '1px solid #22c55e', background: '#22c55e1A',
+                          color: '#22c55e', cursor: isExporting ? 'not-allowed' : 'pointer',
+                          fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s',
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                          <path d="M10 9l-4 5 4 5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M14 9l4 5-4 5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {t('pages.remediation.exportSlack')}
+                      </button>
+                    </div>
                   </div>
                 )}
               </>

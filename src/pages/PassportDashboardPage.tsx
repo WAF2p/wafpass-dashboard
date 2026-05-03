@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from 'react'
-import { fetchProjectPassports, fetchProjectPassport, getApiBase, upsertProjectPassport, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
+import { fetchProjectPassports, fetchProjectPassport, getApiBase, upsertProjectPassport, deleteProject, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
 import { MATURITY_META } from './settingsUtils'
 
 interface Props {
   runs: RunSummary[]
   role: string
   onOpenProject: (project: string) => void
+  onRefetchRuns?: () => void
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -1328,7 +1329,7 @@ const VIEW_MODES: { id: ViewMode; label: string; icon: string }[] = [
     icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
 ]
 
-export default function PassportDashboardPage({ runs, role, onOpenProject }: Props) {
+export default function PassportDashboardPage({ runs, role, onOpenProject, onRefetchRuns }: Props) {
   const [passports, setPassports] = useState<ProjectPassport[]>([])
   const [loading, setLoading] = useState(true)
   const [editingProject, setEditingProject] = useState<string | null>(null)
@@ -1378,6 +1379,21 @@ export default function PassportDashboardPage({ runs, role, onOpenProject }: Pro
       const idx = prev.findIndex(p => p.project === project)
       return idx >= 0 ? prev.map((p, i) => i === idx ? saved : p) : [...prev, saved]
     })
+  }
+
+  async function handleDelete(project: string) {
+    const projectRuns = runs.filter(r => r.project === project)
+    if (!confirm(`Delete project "${project}" and all ${projectRuns.length} run(s)? This action cannot be undone.`)) return
+    try {
+      await deleteProject(project)
+      // Refresh the passports list to update UI
+      await fetchProjectPassports().then(setPassports).catch(() => {})
+      // Also refresh runs so deleted project is removed from allProjects
+      onRefetchRuns?.()
+    } catch (err) {
+      console.error('Failed to delete project:', err)
+      alert(`Failed to delete project: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
   }
 
   async function openEdit(project: string) {
@@ -1452,20 +1468,36 @@ export default function PassportDashboardPage({ runs, role, onOpenProject }: Pro
                 onClick={() => onOpenProject(project)}
               />
               {canEdit(role) && (
-                <button
-                  onClick={e => { e.stopPropagation(); openEdit(project) }}
-                  title="Edit passport"
-                  style={{
-                    position: 'absolute', top: '0.4rem', right: '0.4rem',
-                    width: '24px', height: '24px', borderRadius: '5px',
-                    background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
+                <>
+                  <button
+                    onClick={e => { e.stopPropagation(); openEdit(project) }}
+                    title="Edit passport"
+                    style={{
+                      position: 'absolute', top: '0.4rem', right: '3.2rem',
+                      width: '24px', height: '24px', borderRadius: '5px',
+                      background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDelete(project) }}
+                    title="Delete project"
+                    style={{
+                      position: 'absolute', top: '0.4rem', right: '0.4rem',
+                      width: '24px', height: '24px', borderRadius: '5px',
+                      background: 'rgba(218,44,56,0.3)', border: '1px solid rgba(218,44,56,0.4)',
+                      color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </>
               )}
             </div>
           ))}
@@ -1488,20 +1520,36 @@ export default function PassportDashboardPage({ runs, role, onOpenProject }: Pro
                   onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
                 />
                 {canEdit(role) && (
-                  <button
-                    onClick={e => { e.stopPropagation(); openEdit(project) }}
-                    title="Edit passport"
-                    style={{
-                      position: 'absolute', top: '0.5rem', right: '0.5rem',
-                      width: '26px', height: '26px', borderRadius: '6px',
-                      background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
+                  <>
+                    <button
+                      onClick={e => { e.stopPropagation(); openEdit(project) }}
+                      title="Edit passport"
+                      style={{
+                        position: 'absolute', top: '0.5rem', right: '3.4rem',
+                        width: '26px', height: '26px', borderRadius: '6px',
+                        background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.15)',
+                        color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleDelete(project) }}
+                      title="Delete project"
+                      style={{
+                        position: 'absolute', top: '0.5rem', right: '0.5rem',
+                        width: '26px', height: '26px', borderRadius: '6px',
+                        background: 'rgba(218,44,56,0.35)', border: '1px solid rgba(218,44,56,0.45)',
+                        color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </>
                 )}
                 {stampsProject === project && (
                   <AchievementsOverlay

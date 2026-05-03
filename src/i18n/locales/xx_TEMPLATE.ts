@@ -386,6 +386,7 @@ const xx: PartialTranslations = {
       runs: 'runs',
       first: 'first',
       latest: 'latest',
+      loadMore: 'Load More',
       projects: '{{count}} project(s)',
       allBranches: 'All branches',
       allStages: 'All stages',
@@ -692,6 +693,10 @@ const xx: PartialTranslations = {
       regulatoryMapping: 'Regulatory mapping',
       effortBadge: '{{effort}} effort',
       noFrameworks: 'no frameworks',
+      exportLabel: 'Export',
+      exportCsv: 'CSV for Excel',
+      exportJira: 'Jira issues',
+      exportSlack: 'Slack / MS Teams',
     },
 
     gapanalysis: {
@@ -1334,6 +1339,7 @@ const xx: PartialTranslations = {
       noControls: 'No controls',
       nextWaypoints: 'Next Waypoints',
       nextWaypointsDesc: 'Top failing controls on your current heading. Clear these to advance your stage.',
+      loadMore: 'Load More',
       allFindings: 'All Findings →',
       noWaypoints: 'No active waypoints — all controls are cleared',
       finalApproach: 'You are cleared for final approach.',

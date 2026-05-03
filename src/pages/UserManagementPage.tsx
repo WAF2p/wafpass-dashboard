@@ -205,8 +205,15 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               background: roleC.subtle,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '1rem', fontWeight: 800, color: roleC.accent,
+              overflow: 'hidden',
             }}>
-              {(user.display_name || user.username).charAt(0).toUpperCase()}
+              {user.image_url ? (
+                <img src={user.image_url} alt={user.display_name || user.username} style={{
+                  width: '100%', height: '100%', objectFit: 'cover',
+                }} />
+              ) : (
+                <span>{(user.display_name || user.username).charAt(0).toUpperCase()}</span>
+              )}
             </div>
 
             {/* Name + meta grid */}
@@ -363,12 +370,13 @@ const labelStyle: React.CSSProperties = {
 interface UserFormState {
   username: string
   display_name: string
+  image_url: string
   role: string
   password: string
   is_active: boolean
 }
 
-const EMPTY_FORM: UserFormState = { username: '', display_name: '', role: 'engineer', password: '', is_active: true }
+const EMPTY_FORM: UserFormState = { username: '', display_name: '', image_url: '', role: 'engineer', password: '', is_active: true }
 
 export default function UserManagementPage() {
   const { t } = useI18n()
@@ -405,7 +413,7 @@ export default function UserManagementPage() {
   function openEdit(u: UserOut, e: React.MouseEvent) {
     e.stopPropagation()
     setEditId(u.id)
-    setForm({ username: u.username, display_name: u.display_name, role: u.role, password: '', is_active: u.is_active })
+    setForm({ username: u.username, display_name: u.display_name, image_url: u.image_url || '', role: u.role, password: '', is_active: u.is_active })
     setSaveErr(null)
     setShowForm(true)
   }
@@ -415,15 +423,16 @@ export default function UserManagementPage() {
     setSaveErr(null)
     try {
       if (editId) {
-        const payload: { display_name?: string; role?: string; is_active?: boolean; password?: string } = {
+        const payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string } = {
           display_name: form.display_name,
+          image_url: form.image_url || undefined,
           role: form.role,
           is_active: form.is_active,
         }
         if (form.password) payload.password = form.password
         await updateUser(editId, payload)
       } else {
-        await createUser({ username: form.username, password: form.password, display_name: form.display_name, role: form.role })
+        await createUser({ username: form.username, password: form.password, display_name: form.display_name, image_url: form.image_url, role: form.role })
       }
       setShowForm(false)
       loadUsers()
@@ -545,6 +554,36 @@ export default function UserManagementPage() {
                 </select>
               </div>
               <div>
+                <label style={labelStyle}>{t('pages.users.imageUrlLabel')}</label>
+                <input style={inputStyle} value={form.image_url}
+                  onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
+                  placeholder="https://example.com/avatar.png" />
+                <div style={{ marginTop: '0.4rem' }}>
+                  <label htmlFor={`file-upload-${editId || 'create'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.72rem', color: 'var(--text)' }}>
+                    <svg width="14" height="14" fill="none" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span style={{ color: 'var(--muted)' }}>Upload image</span>
+                    <input type="file" accept="image/*"
+                      onChange={e => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const reader = new FileReader()
+                          reader.onload = (ev) => {
+                            const result = ev.target?.result as string
+                            setForm(f => ({ ...f, image_url: result }))
+                          }
+                          reader.readAsDataURL(file)
+                        }
+                      }}
+                      style={{ display: 'none' }}
+                      id={`file-upload-${editId || 'create'}`} />
+                  </label>
+                </div>
+              </div>
+              <div>
                 <label style={labelStyle}>{editId ? t('pages.users.newPasswordLabel') : t('pages.users.passwordLabel')}</label>
                 <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 8 ? '#ef4444' : undefined }} type="password" value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
@@ -656,8 +695,15 @@ export default function UserManagementPage() {
                               background: roleC.subtle,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               fontSize: '0.65rem', fontWeight: 800, color: roleC.accent,
+                              overflow: 'hidden',
                             }}>
-                              {(u.display_name || u.username).charAt(0).toUpperCase()}
+                              {u.image_url ? (
+                                <img src={u.image_url} alt={u.display_name || u.username} style={{
+                                  width: '100%', height: '100%', objectFit: 'cover',
+                                }} />
+                              ) : (
+                                <span>{(u.display_name || u.username).charAt(0).toUpperCase()}</span>
+                              )}
                             </div>
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text)', fontSize: '0.83rem' }}>

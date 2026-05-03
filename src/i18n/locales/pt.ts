@@ -156,6 +156,13 @@ const pt: PartialTranslations = {
       waiveReason: 'Motivo', waiveOwner: 'Responsável', waiveExpires: 'Expira',
       wavingSaving: 'Salvando…', wavingDone: '{{count}} isenções salvas',
       waiveBtn: 'Isoentar {{count}} controle(s)',
+      // Comments section
+      commentSection: 'Colaboração neste hallazgo',
+      commentBtn: 'Adicionar Comentário',
+      commentThread: '{{count}} comentário(s)',
+      noComments: 'Sem comentários ainda. Seja o primeiro!',
+      confirmDeleteComment: 'Apagar este comentário?',
+      deleteComment: 'Apagar',
     },
 
     waivers: {
@@ -187,7 +194,7 @@ const pt: PartialTranslations = {
     },
 
     runs: {
-      runs: 'execuções', first: 'primeira', latest: 'última', projects: '{{count}} projeto(s)',
+      runs: 'execuções', first: 'primeira', latest: 'última', loadMore: 'Carregar mais', projects: '{{count}} projeto(s)',
       allBranches: 'Todas as branches', allStages: 'Todas as stages',
       viewAll: 'Todas as execuções', viewProject: 'Projeto', viewTrend: 'Tendência',
       overallScore: 'Pontuação Geral ao Longo do Tempo', pillarScores: 'Pontuações dos Pilares ao Longo do Tempo',
@@ -243,7 +250,7 @@ const pt: PartialTranslations = {
     },
 
     users: {
-      colUserId: 'ID do Usuário', colAuthProvider: 'Provedor de Autenticação', colStatus: 'Status', colLastLogin: 'Último Login', colCreated: 'Criado',
+      imageUrlLabel: 'URL da Imagem de Perfil', colUserId: 'ID do Usuário', colAuthProvider: 'Provedor de Autenticação', colStatus: 'Status', colLastLogin: 'Último Login', colCreated: 'Criado',
       never: 'Nunca', active: 'Ativo', inactive: 'Inativo',
       actionLogin: 'Login', actionLogout: 'Logout', actionRunPush: 'Run enviado', actionUserCreate: 'Usuário criado', actionUserUpdate: 'Usuário atualizado', actionUserDelete: 'Usuário excluído',
       totalUsers: 'Total de Usuários', accountsHeader: 'Contas', clickToInspect: '— clique em uma linha para inspecionar',
@@ -312,6 +319,7 @@ const pt: PartialTranslations = {
       sprintEffort: 'Esforço da sprint', fullyClosing: 'Fechando totalmente',
       sprintHeader: 'Sprint ({{count}})', addToSprint: 'Adicionar à sprint', removeFromSprint: 'Remover da sprint',
       description: 'Descrição', remediationSteps: 'Passos de remediação', regulatoryMapping: 'Mapeamento regulatório', effortBadge: '{{effort}} esforço', noFrameworks: 'sem frameworks',
+      exportLabel: 'Exportar', exportCsv: 'CSV para Excel', exportJira: 'Issues do Jira', exportSlack: 'Slack / MS Teams',
     },
 
     gapanalysis: {
@@ -546,7 +554,7 @@ const pt: PartialTranslations = {
       theSituation: 'A Situação', priorityControls: 'Controles de Prioridade', excellenceStandard: 'O Padrão de Excelência',
       projectPassport: 'Passaporte do Projeto', passportDesc: 'Frameworks de conformidade e pilares que você liberou. Cada carimbo é conquistado, não assumido.',
       fullMatrix: 'Matriz Completa →', complianceFrameworks: 'Frameworks de Conformidade', controlsOf: '{{passing}} / {{total}} controles', noFrameworks: 'Execute um escaneamento para preencher a cobertura de framework de conformidade.',
-      infraPillars: 'Pilares de Infraestrutura', noControls: 'Nenhum controle', nextWaypoints: 'Próximos Waypoints', nextWaypointsDesc: 'Controles falhando topo na sua rota atual. Limpe estes para avançar seu estágio.',
+      infraPillars: 'Pilares de Infraestrutura', noControls: 'Nenhum controle', nextWaypoints: 'Próximos Waypoints', nextWaypointsDesc: 'Controles falhando topo na sua rota atual. Limpe estes para avançar seu estágio.', loadMore: 'Carregar mais',
       allFindings: 'Todos os Hallazgos →', noWaypoints: 'Nenhum waypoint ativo — todos os controles estão liberados', finalApproach: 'Você está liberado para aproximação final.',
       flightManual: 'Manual de Voo · {{chapter}}', bpProject: 'Projeto', bpMaturity: 'Maturidade', bpScore: 'Pontuação', bpControls: 'Controles', bpWaivers: 'Isenções', bpRisk: 'Acep. de Risco',
     },

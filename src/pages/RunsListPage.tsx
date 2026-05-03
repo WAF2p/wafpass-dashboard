@@ -34,6 +34,7 @@ function fmt(iso: string) {
 function fmtFull(iso: string) {
   return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
+const PAGE_SIZE = 50
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 function ScoreTooltip({ active, payload, label }: any) {
@@ -425,6 +426,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   const { t } = useI18n()
   const [viewMode, setViewMode] = useState<'all' | 'project' | 'trend'>('all')
   const [stageFilter, setStageFilter] = useState('')
+  const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE)
 
   if (runs.length === 0) {
     return (
@@ -439,10 +441,18 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     [runs]
   )
 
+  // Filter and slice runs for display
   const filteredRuns = useMemo(
     () => stageFilter ? runs.filter(r => r.stage === stageFilter) : runs,
     [runs, stageFilter]
   )
+
+  const displayedRuns = useMemo(
+    () => filteredRuns.slice(0, displayLimit),
+    [filteredRuns, displayLimit]
+  )
+
+  const hasMoreRuns = displayLimit < filteredRuns.length
 
   const btnBase: React.CSSProperties = {
     padding: '0.3rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem',
@@ -497,7 +507,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
           <button style={btnInactive} onClick={() => setViewMode('project')}>{t('pages.runs.viewProject')}</button>
           <button style={btnActive}   onClick={() => setViewMode('trend')}>{t('pages.runs.viewTrend')}</button>
         </div>
-        <TrendView runs={filteredRuns} onSelect={onSelect} />
+        <TrendView runs={displayedRuns} onSelect={onSelect} />
       </div>
     )
   }
@@ -506,12 +516,28 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     return (
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {toolbar}
-        <RunsTable runs={filteredRuns} onSelect={onSelect} />
+        <RunsTable runs={displayedRuns} onSelect={onSelect} />
+        {hasMoreRuns && (
+          <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border)' }}>
+            <button
+              onClick={() => setDisplayLimit(prev => prev + PAGE_SIZE)}
+              style={{
+                display: 'block', margin: '0 auto',
+                padding: '0.5rem 1rem', borderRadius: '8px',
+                border: '1px solid var(--border)', background: 'var(--surface)',
+                color: 'var(--text)', fontSize: '0.75rem', fontWeight: 600,
+                cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              {t('pages.runs.loadMore', { count: Math.min(PAGE_SIZE, filteredRuns.length - displayLimit) })}
+            </button>
+          </div>
+        )}
       </div>
     )
   }
 
-  // Group by project
+  // Group by project - use filtered runs for grouping, but only display paginated
   const groupMap = new Map<string, RunSummary[]>()
   for (const r of filteredRuns) {
     const key = r.project || '(no project)'
@@ -530,8 +556,15 @@ export default function RunsListPage({ runs, onSelect }: Props) {
         {toolbar}
       </div>
       {groups.map(([project, groupRuns]) => {
-        const scores   = groupRuns.map(r => r.score)
-        const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        // For project view, we only show runs that are within displayLimit of the filtered runs
+        const displayedGroupRuns = groupRuns.filter(r => {
+          const index = filteredRuns.indexOf(r)
+          return index >= 0 && index < displayLimit
+        })
+        const scores   = displayedGroupRuns.map(r => r.score)
+        const avgScore = displayedGroupRuns.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+          : 0
         const color    = scoreColor(avgScore)
         const isUnnamed = project === '(no project)'
         return (
@@ -547,10 +580,25 @@ export default function RunsListPage({ runs, onSelect }: Props) {
                 {t('pages.runs.avgScore')} <span style={{ fontWeight: 700, color, fontSize: '0.8rem' }}>{avgScore}</span>
               </span>
             </div>
-            <RunsTable runs={groupRuns} onSelect={onSelect} />
+            <RunsTable runs={displayedGroupRuns} onSelect={onSelect} />
           </div>
         )
       })}
+      {hasMoreRuns && (
+        <div style={{ textAlign: 'center', padding: '1rem' }}>
+          <button
+            onClick={() => setDisplayLimit(prev => prev + PAGE_SIZE)}
+            style={{
+              padding: '0.5rem 1rem', borderRadius: '8px',
+              border: '1px solid var(--border)', background: 'var(--surface)',
+              color: 'var(--text)', fontSize: '0.75rem', fontWeight: 600,
+              cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            {t('pages.runs.loadMore', { count: Math.min(PAGE_SIZE, filteredRuns.length - displayLimit) })}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

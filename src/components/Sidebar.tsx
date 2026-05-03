@@ -11,7 +11,7 @@ export interface SidebarProps {
   runsError: string | null
   page: Page
   role: string
-  user: { username: string; display_name: string; role: string }
+  user: { username: string; display_name: string; image_url: string; role: string }
   maturityLevel: number
   settings: Settings
   hideDisabledMenuItems: boolean
@@ -288,7 +288,7 @@ export default function Sidebar({
   }
 
   return (
-    <aside style={{
+    <aside className="app-sidebar" style={{
       width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column',
       background: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)',
       overflowY: 'auto',
@@ -462,8 +462,15 @@ export default function Sidebar({
           background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '0.65rem', fontWeight: 700, color: 'var(--waf-brand)',
+          overflow: 'hidden',
         }}>
-          {(user.display_name || user.username).charAt(0).toUpperCase()}
+          {user.image_url ? (
+            <img src={user.image_url} alt={user.display_name || user.username} style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+            }} />
+          ) : (
+            <span>{(user.display_name || user.username).charAt(0).toUpperCase()}</span>
+          )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--sidebar-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

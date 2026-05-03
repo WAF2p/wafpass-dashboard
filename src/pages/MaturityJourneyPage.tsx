@@ -273,21 +273,23 @@ export default function MaturityJourneyPage({
   const [expandedStage, setExpandedStage] = useState<number | null>(null)
   const matMeta = getMaturityMeta(maturityLevel)
 
-  // Unique failing controls sorted by severity
-  const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+  // Unique failing controls - any FAIL finding means the control fails
   const failingControls = run
     ? [...new Map(
         run.findings
           .filter(f => f.status?.toUpperCase() === 'FAIL')
-          .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
           .map(f => [f.control_id, f])
-      ).values()].slice(0, 6)
+      ).values()]
     : []
 
-  // Unique passing control IDs
-  const passIds = run
-    ? new Set(run.findings.filter(f => f.status?.toUpperCase() === 'PASS').map(f => f.control_id))
-    : new Set<string>()
+  // Next Waypoints display limit
+  const [displayLimit, setDisplayLimit] = useState(10)
+
+  // Unique failing control IDs (any FAIL finding means control fails)
+  const failIds = new Set(failingControls.map(f => f.control_id))
+
+  // A control is passing if it has no FAIL findings
+  const isControlPassing = (controlId: string) => !failIds.has(controlId)
 
   // Dynamic frameworks from controls_meta
   const allFrameworks = run
@@ -297,16 +299,16 @@ export default function MaturityJourneyPage({
 
   const frameworkStats = allFrameworks.map(fw => {
     const fwControls = run!.controls_meta.filter(c => c.regulatory_mapping?.some(r => r.framework === fw))
-    const passing = fwControls.filter(c => passIds.has(c.id)).length
+    const passing = fwControls.filter(c => isControlPassing(c.id)).length
     const pct = fwControls.length ? Math.round(passing / fwControls.length * 100) : 0
     return { name: fw, total: fwControls.length, passing, pct }
   })
 
-  const PILLARS = ['security', 'reliability', 'cost', 'operations', 'sovereign', 'sustainability', 'performance']
+  const PILLARS = ['security', 'reliability', 'cost', 'operational', 'sovereign', 'sustainability', 'performance']
   const pillarStats = PILLARS.map(p => {
     const pControls = run?.controls_meta.filter(c => c.pillar === p) ?? []
     if (!pControls.length) return { name: p, total: 0, passing: 0, pct: 0 }
-    const passing = pControls.filter(c => passIds.has(c.id)).length
+    const passing = pControls.filter(c => isControlPassing(c.id)).length
     return { name: p, total: pControls.length, passing, pct: Math.round(passing / pControls.length * 100) }
   })
 
@@ -427,7 +429,7 @@ export default function MaturityJourneyPage({
                 { label: t('pages.maturityJourney.bpProject'),  value: run.project || run.path.split('/').pop() || '—' },
                 { label: t('pages.maturityJourney.bpMaturity'), value: matMeta.label },
                 { label: t('pages.maturityJourney.bpScore'),    value: `${score} pts`, color: scoreColor(score) },
-                { label: t('pages.maturityJourney.bpControls'), value: `${passIds.size} / ${run.controls_loaded}` },
+                { label: t('pages.maturityJourney.bpControls'), value: `${run.controls_meta.filter(c => isControlPassing(c.id)).length} / ${run.controls_loaded}` },
                 { label: t('pages.maturityJourney.bpWaivers'),  value: String(waiverCount) },
                 { label: t('pages.maturityJourney.bpRisk'),     value: String(riskCount) },
               ].map(item => (
@@ -643,7 +645,7 @@ export default function MaturityJourneyPage({
             <button onClick={() => navigate('findings')} className="btn btn-outline" style={{ fontSize: '0.75rem', flexShrink: 0 }}>{t('pages.maturityJourney.allFindings')}</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {failingControls.map(f => {
+            {failingControls.slice(0, displayLimit).map(f => {
               const sevColor = ({ critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' } as Record<string, string>)[f.severity] || '#64748b'
               return (
                 <div key={f.control_id}
@@ -674,6 +676,14 @@ export default function MaturityJourneyPage({
               )
             })}
           </div>
+          {failingControls.length > displayLimit && (
+            <button
+              onClick={() => setDisplayLimit(prev => prev + 10)}
+              className="btn btn-outline"
+              style={{ fontSize: '0.75rem', marginTop: '0.75rem', width: '100%' }}>
+              {t('pages.maturityJourney.loadMore')}
+            </button>
+          )}
         </div>
       )}
 

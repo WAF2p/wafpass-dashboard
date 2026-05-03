@@ -6,6 +6,7 @@ export interface UserPreferences {
   showInlineHelp: boolean
   sidebarCompact: boolean
   language: string  // '' means "use system/org default"
+  pdfDarkMode: boolean
 }
 
 export const DEFAULT_USER_PREFS: UserPreferences = {
@@ -16,6 +17,7 @@ export const DEFAULT_USER_PREFS: UserPreferences = {
   showInlineHelp: true,
   sidebarCompact: false,
   language: '',
+  pdfDarkMode: false,
 }
 
 const PREFS_KEY = 'wafpass_user_prefs'

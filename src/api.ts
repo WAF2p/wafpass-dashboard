@@ -23,6 +23,7 @@ function _authHeaders(): Record<string, string> {
 }
 
 export interface Finding {
+  id: string               // Server-side finding ID (from run_findings table)
   check_id: string
   check_title: string
   control_id: string
@@ -34,6 +35,7 @@ export interface Finding {
   remediation: string
   example?: Record<string, unknown> | null
   regulatory_mapping: { framework: string; controls: string[] }[]
+  comment_count: number    // Number of comments on this finding
 }
 
 export interface RunSummary {
@@ -107,6 +109,7 @@ export interface SecretFinding {
   matched_key: string // attribute name, e.g. "password" (empty for format patterns)
   masked_value: string // first 4 chars + *** — raw value is never stored
   suppressed: boolean
+  comment_count: number // Number of comments on this finding
 }
 
 export interface RunDetail extends RunSummary {
@@ -459,6 +462,7 @@ export interface UserOut {
   id: string
   username: string
   display_name: string
+  image_url: string
   role: string
   auth_provider: string
   is_active: boolean
@@ -511,7 +515,7 @@ export async function fetchUsers(): Promise<UserOut[]> {
   return res.json() as Promise<UserOut[]>
 }
 
-export async function createUser(payload: { username: string; password: string; display_name?: string; role?: string }): Promise<UserOut> {
+export async function createUser(payload: { username: string; password: string; display_name?: string; image_url?: string; role?: string }): Promise<UserOut> {
   const res = await fetch(`${getApiBase()}/auth/users`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
@@ -524,7 +528,7 @@ export async function createUser(payload: { username: string; password: string; 
   return res.json() as Promise<UserOut>
 }
 
-export async function updateUser(id: string, payload: { display_name?: string; role?: string; is_active?: boolean; password?: string }): Promise<UserOut> {
+export async function updateUser(id: string, payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string }): Promise<UserOut> {
   const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
@@ -877,6 +881,13 @@ export async function deleteProjectPassport(project: string): Promise<void> {
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
+export async function deleteProject(project: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/delete`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
 export async function deleteGroupMapping(id: string): Promise<void> {
   const res = await fetch(`${getApiBase()}/sso/group-mappings/${encodeURIComponent(id)}`, {
     method: 'DELETE', headers: _authHeaders(),
@@ -1028,6 +1039,98 @@ export async function fetchActivePackInfo(): Promise<ActivePackInfo | null> {
   return json.data
 }
 
+// ── Finding comments (team collaboration) ─────────────────────────────────────
+
+export interface FindingComment {
+  id: string
+  finding_id: string
+  run_id: string
+  user_id: string
+  username: string
+  display_name: string
+  image_url: string
+  message: string
+  created_at: string
+}
+
+export interface FindingCommentCreate {
+  message: string
+}
+
+export async function fetchFindingComments(findingId: string): Promise<FindingComment[]> {
+  const res = await fetch(`${getApiBase()}/findings/${encodeURIComponent(findingId)}/comments`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch comments: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<FindingComment[]>
+  return json.data
+}
+
+export async function createFindingComment(findingId: string, payload: FindingCommentCreate): Promise<FindingComment> {
+  const res = await fetch(`${getApiBase()}/findings/${encodeURIComponent(findingId)}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  const json = await res.json() as ApiEnvelope<FindingComment>
+  return json.data
+}
+
+export async function deleteFindingComment(findingId: string, commentId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/findings/${encodeURIComponent(findingId)}/comments/${encodeURIComponent(commentId)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+// ── Secret finding comments (team collaboration on hardcoded secrets) ─────────
+
+export interface SecretFindingComment {
+  id: string
+  secret_finding_id: string
+  run_id: string
+  user_id: string
+  username: string
+  display_name: string
+  image_url: string
+  message: string
+  created_at: string
+}
+
+export interface SecretFindingCommentCreate {
+  message: string
+}
+
+export async function fetchSecretFindingComments(secretFindingId: string): Promise<SecretFindingComment[]> {
+  const res = await fetch(`${getApiBase()}/secret-findings/${encodeURIComponent(secretFindingId)}/comments`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch secret finding comments: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<SecretFindingComment[]>
+  return json.data
+}
+
+export async function createSecretFindingComment(secretFindingId: string, payload: SecretFindingCommentCreate): Promise<SecretFindingComment> {
+  const res = await fetch(`${getApiBase()}/secret-findings/${encodeURIComponent(secretFindingId)}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  const json = await res.json() as ApiEnvelope<SecretFindingComment>
+  return json.data
+}
+
+export async function deleteSecretFindingComment(secretFindingId: string, commentId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/secret-findings/${encodeURIComponent(secretFindingId)}/comments/${encodeURIComponent(commentId)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
 // ── User preferences ──────────────────────────────────────────────────────────
 
 export async function fetchUserPrefsFromServer(): Promise<Record<string, unknown> | null> {
@@ -1050,6 +1153,21 @@ export async function pushUserPrefsToServer(prefs: Record<string, unknown>): Pro
     headers: { 'Content-Type': 'application/json', ...(_authHeaders()) },
     body: JSON.stringify(prefs),
   }).catch(() => { /* fire-and-forget */ })
+}
+
+export async function updateMyProfile(payload: { display_name?: string; image_url?: string }): Promise<UserOut> {
+  const token = getAccessToken()
+  if (!token) throw new Error('Not authenticated')
+  const res = await fetch(`${getApiBase()}/auth/me/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Update failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Update failed')
+  }
+  return res.json() as Promise<UserOut>
 }
 
 

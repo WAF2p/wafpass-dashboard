@@ -64,6 +64,8 @@ function StatusBadge({ status }: { status: string }) {
 function RawSecretCard({ sf }: { sf: SecretFinding }) {
   const [open, setOpen] = useState(false)
   const sev = (sf.severity ?? 'HIGH').toUpperCase()
+  const hasComments = (sf.comment_count ?? 0) > 0
+  const commentCount = sf.comment_count ?? 0
 
   return (
     <div
@@ -94,6 +96,18 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
             <SevBadge sev={sf.severity} />
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#DA2C38' }}>{sf.pattern_name}</span>
+            {hasComments && (
+              <span style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                borderRadius: '999px',
+                padding: '0.05rem 0.4rem',
+                background: 'rgba(0,148,255,.15)',
+                color: '#0094ff',
+              }}>
+                {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+              </span>
+            )}
           </div>
           {/* File + line */}
           <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -146,6 +160,9 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
 function ControlFindingCard({ finding }: { finding: Finding }) {
   const [open, setOpen] = useState(false)
   const isFail = finding.status?.toUpperCase() === 'FAIL'
+  const hasComments = (finding.comment_count ?? 0) > 0
+  const commentCount = finding.comment_count ?? 0
+
   return (
     <div
       style={{
@@ -162,6 +179,18 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
             <SevBadge sev={finding.severity} />
             <StatusBadge status={finding.status} />
             <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontFamily: 'monospace' }}>{finding.check_id}</span>
+            {hasComments && (
+              <span style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                borderRadius: '999px',
+                padding: '0.05rem 0.4rem',
+                background: 'rgba(0,148,255,.15)',
+                color: '#0094ff',
+              }}>
+                {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+              </span>
+            )}
           </div>
           <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{finding.check_title}</div>
           {finding.resource && (

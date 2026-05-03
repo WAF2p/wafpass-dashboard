@@ -330,26 +330,67 @@ a { color: var(--waf-brand); text-decoration: none; }
 
 /* ── Print / Share as PDF ────────────────────────────────────────── */
 @media print {
-  @page { margin: 1.5cm; size: A4; }
-
-  /* Force background colours and images to print */
+  @page { margin: 0; size: A4; }
+  body { margin: 0; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-  /* Hide everything except the PDF report */
-  body > #root > div > aside,
-  body > #root > div > div:not(#wafpass-pdf-root),
-  body > #root > div > [class]:not(#wafpass-pdf-root),
-  body > #root > div > button { display: none !important; }
+  /* Hide sidebar and main content */
+  aside.app-sidebar,
+  .app-main-content {
+    display: none !important;
+  }
 
-  /* Show only the PDF report container */
+  /* Show only the PDF report container - full width A4 with some margins */
   #wafpass-pdf-root {
     display: block !important;
     position: static !important;
+    width: 210mm !important;
+    height: auto !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
   }
 
-  /* Reset root layout */
-  body, html, #root { height: auto !important; overflow: visible !important; background: #fff !important; }
-  #root > div { display: block !important; height: auto !important; overflow: visible !important; }
+  /* Content inside PDF root */
+  #wafpass-pdf-root > div {
+    width: 100% !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  /* Additional constraint for inner content (pageStyle in PdfReport) */
+  #wafpass-pdf-root [style*="max-width: 800px"] {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Scale down tables and content to fit */
+  #wafpass-pdf-root table {
+    font-size: 0.65rem !important;
+  }
+  #wafpass-pdf-root table th,
+  #wafpass-pdf-root table td {
+    padding: 0.25rem 0.35rem !important;
+  }
+  #wafpass-pdf-root .cardStyle {
+    padding: 0.75rem !important;
+  }
+
+  /* Light mode (default) PDF colors */
+  #wafpass-pdf-root {
+    color: #0b1220;
+    background: #fff;
+  }
+  #wafpass-pdf-root [data-theme="light"] {
+    color: #0b1220;
+    background: #fff;
+  }
+  /* Dark mode PDF colors */
+  #wafpass-pdf-root [data-theme="dark"] {
+    color: #f8fafc;
+    background: #0b1220;
+  }
 }
 
 /* ── Responsive ──────────────────────────────────────────────────── */

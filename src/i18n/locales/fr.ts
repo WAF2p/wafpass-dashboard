@@ -167,6 +167,13 @@ const fr: PartialTranslations = {
       wavingSaving: 'Enregistrement…',
       wavingDone: '{{count}} exemption(s) enregistrée(s)',
       waiveBtn: 'Renoncer à {{count}} contrôle(s)',
+      // Comments section
+      commentSection: 'Collaboration sur ce résultat',
+      commentBtn: 'Ajouter un commentaire',
+      commentThread: '{{count}} commentaire(s)',
+      noComments: 'Aucun commentaire pour le moment. Soyez le premier!',
+      confirmDeleteComment: 'Supprimer ce commentaire?',
+      deleteComment: 'Supprimer',
     },
     waivers: {
       addBtn: '+ Ajouter une exemption',
@@ -232,6 +239,7 @@ const fr: PartialTranslations = {
       runs: 'exécutions',
       first: 'premier',
       latest: 'dernier',
+      loadMore: 'Charger plus',
       projects: '{{count}} projet(s)',
       allBranches: 'Toutes les branches',
       allStages: 'Tous les stages',
@@ -340,6 +348,7 @@ const fr: PartialTranslations = {
       colDaysAtTier5: 'Jours au niveau 5',
     },
     users: {
+      imageUrlLabel: 'URL image de profil',
       colUserId: 'ID utilisateur',
       colAuthProvider: 'Fournisseur d\'auth',
       colStatus: 'Statut',
@@ -530,6 +539,10 @@ const fr: PartialTranslations = {
       regulatoryMapping: 'Mappage réglementaire',
       effortBadge: 'effort {{effort}}',
       noFrameworks: 'aucun framework',
+      exportLabel: 'Exporter',
+      exportCsv: 'CSV pour Excel',
+      exportJira: 'Tickets Jira',
+      exportSlack: 'Slack / MS Teams',
     },
     gapanalysis: {
       resourcesToFix: '{{count}} ressource(s) à corriger',
@@ -1082,6 +1095,7 @@ const fr: PartialTranslations = {
       noControls: 'Aucun contrôle',
       nextWaypoints: 'Prochains waypoints',
       nextWaypointsDesc: 'Contrôles en échec principaux sur votre route actuelle. Corrigez-les pour faire avancer votre étape.',
+      loadMore: ' Charger plus',
       allFindings: 'Tous les résultats →',
       noWaypoints: 'Aucun waypoint actif — tous les contrôles sont autorisés',
       finalApproach: 'Vous êtes autorisé à l\'approche finale.',

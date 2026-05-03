@@ -429,6 +429,11 @@ const labelStyle: React.CSSProperties = {
 }
 
 function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const [isFocused, setIsFocused] = useState(false)
+  const charCount = state.description.trim().length
+  const isShort = charCount < 20
+  const isLongEnough = charCount >= 20
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)', borderRadius: '10px', padding: '0.875rem 1rem', fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -441,14 +446,30 @@ function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: 
           onChange={e => onChange({ description: e.target.value })}
           rows={5}
           placeholder={`E.g. "All S3 buckets must have server-side encryption enabled using AES-256 or KMS. Unencrypted buckets must not be deployable in any environment."`}
-          style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+          style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, outline: isFocused && isShort ? '2px solid #f97316' : 'none' }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           autoFocus
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.3rem' }}>
-          <span style={{ fontSize: '0.68rem', color: state.description.length < 20 ? '#DA2C38' : '#059669' }}>
-            {state.description.length < 20 ? `${20 - state.description.length} more characters needed` : `${state.description.length} characters ✓`}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.3rem', fontSize: '0.68rem' }}>
+          <span style={{ color: isLongEnough ? '#059669' : '#DA2C38', fontWeight: 700 }}>
+            {isLongEnough ? '✓' : isFocused ? '✏' : '•'} {isLongEnough ? `${charCount} characters` : `${20 - charCount} more needed`}
+          </span>
+          <div style={{ flex: 1, height: 3, borderRadius: 999, background: 'var(--border)', overflow: 'hidden', flexShrink: 0 }}>
+            <div style={{ height: '100%', width: `${Math.min(100, (charCount / 500) * 100)}%`, background: isLongEnough ? '#059669' : '#f97316', transition: 'width 0.3s ease' }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
+          <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+            Custom controls use <strong>CUS-</strong> prefix (e.g., CUS-001)
           </span>
         </div>
+        {isFocused && isShort && (
+          <div style={{ marginTop: '0.25rem', fontSize: '0.68rem', color: '#f97316', background: 'rgba(249,115,22,.08)', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
+            Tip: Aim for 30-100 characters for clear control descriptions
+          </div>
+        )}
       </div>
     </div>
   )
@@ -494,19 +515,53 @@ function Step2Pillar({ state, onChange }: { state: WizardState; onChange: (p: Pa
 }
 
 function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const [customNum, setCustomNum] = useState(state.id.replace('CUS-', ''))
+  const isIdValid = /^[0-9]+$/.test(customNum)
+
+  // Sync customNum back to state when user types
+  useEffect(() => {
+    setCustomNum(state.id.replace('CUS-', ''))
+  }, [state.id])
+
+  // Extract number from state and rebuild with CUS- prefix
+  useEffect(() => {
+    const num = state.id.replace('CUS-', '')
+    setCustomNum(num)
+  }, [])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow numbers
+    const num = e.target.value.replace(/[^0-9]/g, '').padStart(3, '0')
+    setCustomNum(num)
+    onChange({ id: `CUS-${num}` })
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div>
         <label style={labelStyle}>Control ID</label>
-        <input
-          value={state.id}
-          onChange={e => onChange({ id: e.target.value.toUpperCase() })}
-          placeholder="SEC-001"
-          style={inputStyle}
-          autoFocus
-        />
-        <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
-          Auto-suggested from pillar prefix <code style={{ background: 'var(--bg)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>{PILLAR_PREFIX[state.pillar] ?? state.pillar.toUpperCase().slice(0, 3)}</code>. Edit freely — must be unique.
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          <code style={{ fontSize: '0.82rem', color: '#0094FF', padding: '0.45rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontFamily: 'monospace' }}>
+            CUS-
+          </code>
+          <input
+            value={customNum}
+            onChange={handleChange}
+            placeholder="001"
+            style={{ ...inputStyle, width: '100px', outline: !isIdValid ? '2px solid #f97316' : 'none', fontFamily: 'monospace' }}
+            autoFocus
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.3rem', fontSize: '0.68rem' }}>
+          <span style={{ color: isIdValid ? '#059669' : '#94a3b8', fontWeight: 700 }}>
+            {isIdValid ? '✓' : '•'} Format: CUS-001 to CUS-999
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
+          <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+            Custom controls use <strong>CUS-</strong> prefix (fixed - only the number changes)
+          </span>
         </div>
       </div>
       <div>
@@ -530,6 +585,9 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
               >{s}</button>
             )
           })}
+        </div>
+        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
+          <span style={{ fontWeight: 600 }}>Tip:</span> Critical & High block CI/CD, Medium & Low are advisory-only
         </div>
       </div>
     </div>
@@ -587,6 +645,12 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
   function add() { onChange({ checks: [...state.checks, { ...EMPTY_CHECK }] }) }
   function remove(i: number) { onChange({ checks: state.checks.filter((_, idx) => idx !== i) }) }
 
+  // Validation helpers
+  const checkHasValidId = (ch: CatalogueCheck) => ch.id && /^[a-zA-Z0-9_.-]+$/.test(ch.id)
+  const checkHasValidEngine = (ch: CatalogueCheck) => ch.engine && ALL_ENGINES.includes(ch.engine)
+  const checkHasValidDescription = (ch: CatalogueCheck) => ch.description && ch.description.length > 10
+  const checkHasValidExpected = (ch: CatalogueCheck) => ch.expected && ch.expected.length > 3
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -597,41 +661,84 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
           + Add check
         </button>
       </div>
-      {state.checks.map((ch, i) => (
-        <div key={i} style={{ background: 'var(--bg)', borderRadius: '10px', border: '1px solid var(--border)', padding: '0.875rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Check {i + 1}</span>
-            {state.checks.length > 1 && (
-              <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA2C38', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
-            )}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px', gap: '0.5rem', marginBottom: '0.5rem' }}>
+      {state.checks.map((ch, i) => {
+        const idOk = checkHasValidId(ch)
+        const engineOk = checkHasValidEngine(ch)
+        const descOk = checkHasValidDescription(ch)
+        const expectedOk = checkHasValidExpected(ch)
+        const allOk = idOk && engineOk && descOk && expectedOk
+
+        return (
+          <div key={i} style={{ background: 'var(--bg)', borderRadius: '10px', border: `1px solid ${allOk ? 'rgba(0,148,255,.2)' : 'var(--border)'}`, padding: '0.875rem', transition: 'border-color 0.2s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Check {i + 1}</span>
+              {state.checks.length > 1 && (
+                <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA2C38', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
+              )}
+              <span style={{ fontSize: '0.62rem', color: allOk ? '#059669' : '#f97316', fontWeight: 700 }}>
+                {allOk ? '✓' : '✏'}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  value={ch.id}
+                  onChange={e => update(i, 'id', e.target.value)}
+                  placeholder="Check ID — e.g. tf.s3_encryption"
+                  style={{ ...inputStyle, outline: ch.id && !idOk ? '2px solid #f97316' : 'none' }}
+                />
+                {ch.id && !idOk && (
+                  <div style={{ position: 'absolute', bottom: '-1.15rem', left: 0, right: 0, fontSize: '0.62rem', color: '#f97316' }}>
+                    Use format: engine.resource_type (e.g., tf.s3_encryption)
+                  </div>
+                )}
+                <div style={{ fontSize: '0.58rem', color: '#64748b', marginTop: '0.2rem' }}>
+                  {ch.id ? (idOk ? 'Valid ✓' : 'Invalid format') : 'Auto-suggested: tf.'}
+                </div>
+              </div>
+              <select value={ch.engine} onChange={e => update(i, 'engine', e.target.value)} style={{ ...inputStyle, outline: ch.engine && !engineOk ? '2px solid #f97316' : 'none' }}>
+                {ALL_ENGINES.map(e => (
+                  <option key={e} value={e}>{e}</option>
+                ))}
+              </select>
+              {ch.engine && !engineOk && (
+                <div style={{ position: 'absolute', bottom: '-1.2rem', left: 0, right: 0, fontSize: '0.62rem', color: '#f97316' }}>
+                  Select a valid engine
+                </div>
+              )}
+            </div>
             <input
-              value={ch.id}
-              onChange={e => update(i, 'id', e.target.value)}
-              placeholder="Check ID — e.g. tf.s3_encryption"
-              style={inputStyle}
+              value={ch.description}
+              onChange={e => update(i, 'description', e.target.value)}
+              placeholder="What this check verifies"
+              style={{ ...inputStyle, marginBottom: '0.5rem', outline: ch.description && !descOk ? '2px solid #f97316' : 'none' }}
             />
-            <select value={ch.engine} onChange={e => update(i, 'engine', e.target.value)} style={inputStyle}>
-              {ALL_ENGINES.map(e => (
-                <option key={e} value={e}>{e}</option>
-              ))}
-            </select>
+            <div style={{ fontSize: '0.62rem', color: '#64748b', marginBottom: '0.2rem' }}>
+              {ch.description ? (descOk ? 'Good length ✓' : 'Too short') : 'Describe the check requirement'}
+            </div>
+            <input
+              value={ch.expected}
+              onChange={e => update(i, 'expected', e.target.value)}
+              placeholder="Expected — what a passing configuration looks like"
+              style={{ ...inputStyle, outline: ch.expected && !expectedOk ? '2px solid #f97316' : 'none' }}
+            />
+            <div style={{ fontSize: '0.62rem', color: '#64748b' }}>
+              {ch.expected ? (expectedOk ? 'Valid ✓' : 'Too short') : 'Describe expected state'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
+              <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Schema hint:</span>
+              <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+                engine: {ALL_ENGINES.join(' | ')}
+              </span>
+            </div>
           </div>
-          <input
-            value={ch.description}
-            onChange={e => update(i, 'description', e.target.value)}
-            placeholder="What this check verifies"
-            style={{ ...inputStyle, marginBottom: '0.5rem' }}
-          />
-          <input
-            value={ch.expected}
-            onChange={e => update(i, 'expected', e.target.value)}
-            placeholder="Expected — what a passing configuration looks like"
-            style={inputStyle}
-          />
+        )
+      })}
+      {state.checks.length === 0 && (
+        <div style={{ fontSize: '0.7rem', color: '#f97316', padding: '0.5rem', background: 'rgba(249,115,22,.08)', borderRadius: '8px', textAlign: 'center' }}>
+          Add at least one check to define how this control is verified
         </div>
-      ))}
+      )}
     </div>
   )
 }
@@ -1141,7 +1248,7 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
   const [state, setState] = useState<WizardState>({
     description: '',
     pillar: 'security',
-    id: 'SEC-001',
+    id: 'CUS-001',
     severity: 'medium',
     types: ['governance'],
     checks: [{ ...EMPTY_CHECK }],
@@ -1149,22 +1256,9 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedControl, setSavedControl] = useState<CatalogueControl | null>(null)
-  const prevPillar = useRef(state.pillar)
 
   function update(patch: Partial<WizardState>) {
-    setState(prev => {
-      const next = { ...prev, ...patch }
-      // Auto-update ID prefix when pillar changes and ID still matches pattern
-      if (patch.pillar && patch.pillar !== prevPillar.current) {
-        const prefix = PILLAR_PREFIX[patch.pillar] ?? patch.pillar.toUpperCase().slice(0, 3)
-        const oldPrefix = PILLAR_PREFIX[prevPillar.current] ?? prevPillar.current.toUpperCase().slice(0, 3)
-        if (prev.id.startsWith(oldPrefix + '-')) {
-          next.id = `${prefix}-${prev.id.split('-')[1] ?? '001'}`
-        }
-        prevPillar.current = patch.pillar
-      }
-      return next
-    })
+    setState(prev => ({ ...prev, ...patch }))
   }
 
   function canAdvance(): boolean {

@@ -199,6 +199,10 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
             <Row label={t('prefs.autoPdf')} desc={t('prefs.autoPdfDesc')}>
               <Toggle checked={p.pdfAutoOpen} onChange={v => update({ pdfAutoOpen: v })} />
             </Row>
+
+            <Row label={t('prefs.darkModePdf')} desc={t('prefs.darkModePdfDesc')}>
+              <Toggle checked={p.pdfDarkMode} onChange={v => update({ pdfDarkMode: v })} />
+            </Row>
           </div>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>

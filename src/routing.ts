@@ -90,19 +90,38 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   userprefs:       'Appearance, navigation defaults, date formats, and report behaviour — stored in this browser',
 }
 
-export function parseHash(): { page: Page; runId: string | null } {
+export interface FilterState {
+  search?: string
+  statusFilter?: string
+  severityFilter?: string
+  pillarFilter?: string
+  [key: string]: string | undefined
+}
+
+export function parseHash(): { page: Page; runId: string | null; filters: FilterState } {
   const raw = window.location.hash.replace(/^#\/?/, '')
   const qi = raw.indexOf('?')
   const slug = qi >= 0 ? raw.slice(0, qi) : raw
   const query = qi >= 0 ? raw.slice(qi + 1) : ''
+  const params = new URLSearchParams(query)
+
   return {
     page: PAGE_SET.has(slug) ? (slug as Page) : 'dashboard',
-    runId: new URLSearchParams(query).get('run'),
+    runId: params.get('run'),
+    filters: Object.fromEntries(params.entries()) as FilterState,
   }
 }
 
-export function buildHash(page: Page, runId: string | null): string {
-  return runId ? `#/${page}?run=${runId}` : `#/${page}`
+export function buildHash(page: Page, runId: string | null, filters: FilterState = {}): string {
+  const params = new URLSearchParams()
+  if (runId) params.set('run', runId)
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== '') {
+      params.set(key, value)
+    }
+  }
+  const query = params.toString()
+  return query ? `#/${page}?${query}` : `#/${page}`
 }
 
 export function scoreColor(s: number): string {
