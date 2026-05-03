@@ -18,9 +18,9 @@ const el: PartialTranslations = {
 
   nav: {
     sections: {
-      journey: 'Πορεία', clevel: 'C-Level', ciso: 'CISO',
+      journey: 'Πορεία', overview: 'Επισκόπηση', ciso: 'CISO',
       architect: 'Αρχιτέκτονας', engineer: 'Μηχανικός', runs: 'Εκτελέσεις',
-      admin: 'Διαχείριση', system: 'Σύστημα',
+      admin: 'Διαχείριση', system: 'Σύστημα', bestpractices: 'Βέλτιστες Πρακτικές',
     },
     items: {
       dashboard: 'Πίνακας Ελέγχου', catalogue: 'Κατάλογος Ελέγχων',
@@ -37,7 +37,8 @@ const el: PartialTranslations = {
       apikeys: 'Κλειδιά API', sso: 'Ρυθμίσεις SSO', groupmappings: 'Αντιστοιχίσεις Ομάδων',
       controlspacks: 'Αναβάθμιση Ελέγχων', passports: 'Διαβατήρια Έργου', badge: 'Ενσωμάτωση Badge',
       leaderboard: 'Hall of Fame', journey: 'Πορεία Ωριμότητας',
-      userprefs: 'Οι Προτιμήσεις Μου',
+      userprefs: 'Οι Προτιμήσεις Μου', reference: 'Αρχιτεκτονική Αναφορά',
+      antipattern: 'Μουσείο Αντι-Προτύπων', bestpractices: 'Περιοχή Βέλτιστων Πρακτικών',
     },
   },
 
@@ -630,6 +631,18 @@ const el: PartialTranslations = {
       pack: '{{count}} πακέτο{{s}}', howItWorks: 'Πώς Λειτουργεί', uploadZipStep: 'Μεταφόρτωση ZIP: πακετάρετε τα αρχεία ελέγχων *.yml σε .zip και ανεβάστε το απευθείας από τον browser.', syncStep: 'Συγχρονισμός από Κατάλογο: τοποθετήστε ενημερωμένα YAML αρχεία στο WAFPASS_CONTROLS_DIR του server και εκκινήστε συγχρονισμό.',
       immutableSnapshot: 'Κάθε μέθοδος αποθηκεύει πλήρες αμετάβλητο snapshot και κάνει upsert όλων των ελέγχων στον κατάλογο, έπειτα σημειώνει το νέο πακέτο ως ενεργό.', rollBack: 'Για επαναφορά, πατήστε Ενεργοποίηση σε οποιοδήποτε ιστορικό πακέτο — το αποθηκευμένο snapshot εφαρμόζεται ξανά χωρίς πρόσβαση στο σύστημα αρχείων.',
       manageControls: 'Διαχείριση Μεμονωμένων Ελέγχων', catalogueLink: 'Κατάλογος Ελέγχων', singlePointTruth: 'Μοναδικό Σημείο Αλήθειας',
+    },
+
+    antipattern: {
+      title: 'Μουσείο Αντι-Προτύπων',
+      subtitle: 'Πλεοναστικές συγκρίσεις "Κακός vs. Καλός" για κάθε πυλώνα WAF++',
+      bestpractices: 'Περιοχή Βέλτιστων Πρακτικών',
+      failingInfo: 'Προβολή πλεοναστικών συγκρίσεων για προβλήματα {{pillar}}',
+      viewBestPractices: 'Προβολή Βελτίστων Πρακτικών',
+    },
+    reference: {
+      title: 'Αρχιτεκτονική Αναφορά',
+      subtitle: 'Αναφορά αρχιτεκτονικής WAF++ για εφαρμογές υποδομής',
     },
 
     settingsPage: {

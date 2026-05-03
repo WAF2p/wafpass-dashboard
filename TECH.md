@@ -68,10 +68,12 @@ src/
 │   ├── ApiManagementPage.tsx    # Manage API keys for CI/CD (admin)
 │   ├── UserManagementPage.tsx   # Create, edit, deactivate users
 │   ├── SettingsPage.tsx         # Maturity level, feature toggles, PDF config
+│   ├── UserPreferencesPage.tsx  # Appearance, navigation defaults, date formats
+│   ├── ReferenceArchitecturePage.tsx # WAF++ Reference Architecture documentation
 │   └── FeedbackPage.tsx         # Send feedback to the WAF++ team
 └── components/
     ├── RunSelectorModal.tsx     # Run picker modal
-    └── PdfReport.tsx            # Print-to-PDF report layout
+    └── PdfReport.tsx            # Print-to-PDF report layout with dark mode support
 ```
 
 ---
@@ -86,7 +88,12 @@ No React Router. Custom hash-based routing is implemented directly in `App.tsx`.
 #/dashboard              → page "dashboard", no run
 #/findings?run=abc123    → page "findings", run "abc123"
 #/settings               → page "settings", no run required
+#/userprefs              → page "userprefs", no run required (preferences page)
 ```
+
+**Pages without run metadata in header:** `runs`, `diff`, `catalogue`, `settings`, `runscan`, `sandbox`, `waivers`, `risk`, `audit`, `evidence`, `feedback`, `projectoverview`, `passports`, `badge`, `leaderboard`, `journey`, `userprefs`.
+
+These pages don't show the "Run X from Y" chip in the top header because they don't require or benefit from run context.
 
 ### Key functions
 
@@ -292,6 +299,15 @@ try {
     }
 }
 ```
+
+### Findings comments API
+
+The findings comments endpoints (`/findings-comments`, `/secret-findings-comments`) support:
+- `fetchFindingComments(findingId)` — list comments for a finding
+- `createFindingComment(findingId, message)` — add a comment
+- `deleteFindingComment(commentId)` — remove a comment
+
+All require Bearer JWT authentication (clevel+ role).
 
 ---
 

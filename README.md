@@ -111,6 +111,7 @@ In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:80
 | API Management | `#/apikeys` | admin | Manage API keys for CI/CD pipelines |
 | User Management | `#/users` | engineer | Create, update, and deactivate user accounts |
 | Settings | `#/settings` | clevel | Maturity level, feature toggles, PDF config, server URL |
+| My Preferences | `#/userprefs` | clevel | Appearance, navigation defaults, date formats, report behaviour |
 | Feedback | `#/feedback` | clevel | Send feedback to the WAF++ team |
 
 ### Deep links
@@ -188,6 +189,16 @@ See Settings → Connection & Real Engine to enable and configure the real engin
 
 All waiver and risk acceptance create/update/delete events are logged locally in `localStorage` and displayed in the Audit Log page. Events can be exported as CSV or JSON. First-seen failure tracking identifies when each failing control first appeared.
 
+### Findings comments and collaboration
+
+Team members can add comments to findings in the **Scan Findings** page. Comments support:
+- Real-time comment threads on each finding
+- Comment count badge showing active discussions
+- Delete comments (author or owner of the finding)
+- User mentions with automatic profile display
+
+Comments are synced with the server via `GET /findings-comments` and `POST /findings-comments` endpoints.
+
 ### User and API key management
 
 The **User Management** page (engineer+) supports creating, editing, and deactivating user accounts and setting roles. The **API Management** page (admin) manages named API keys for CI/CD pipelines — each key can be revoked independently.
@@ -199,6 +210,32 @@ The **SSO Settings** page (admin) configures OIDC and SAML2 providers without re
 **OIDC security:** The server verifies the `id_token` signature using the IdP's public JWKS (fetched from `jwks_uri` in the discovery document) and validates the `aud` claim and a per-request nonce before provisioning the user. Ensure your IdP exposes a `jwks_uri` in its OpenID Connect discovery document — all major providers (Keycloak, Entra ID, Okta, Auth0) do by default.
 
 **SAML2 security:** The server validates the assertion XML signature against the configured IdP certificate via `python3-saml` (strict mode).
+
+---
+
+## PDF Reports
+
+The **Share as PDF** feature generates a print-optimized A4-compliant report with:
+- Compact table layout to fit all findings on one or two pages
+- Dark mode support — respects your dashboard theme settings
+- Maturity level indicator and score badge
+- Executive summary with control KPIs, pillar breakdown, and compliance matrix
+
+The PDF uses CSS `@media print` to hide the sidebar and main content, showing only the report container at 210mm width for proper A4 formatting.
+
+---
+
+## Internationalization
+
+The dashboard supports multiple languages with automatic fallback to English for untranslated strings:
+- **English** (`en`) — base language
+- **German** (`de`)
+- **French** (`fr`)
+- **Spanish** (`es`)
+- **Brazilian Portuguese** (`pt`)
+- **Greek** (`el`)
+
+Switch languages in **My Preferences** or set a default in **Settings → General**. Partial translations are fully supported — only translate what you need.
 
 ---
 

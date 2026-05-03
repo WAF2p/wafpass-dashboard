@@ -18,9 +18,9 @@ const en: Translations = {
 
   nav: {
     sections: {
-      journey: 'Journey', clevel: 'C-Level', ciso: 'CISO',
+      journey: 'Journey', overview: 'Overview', ciso: 'CISO',
       architect: 'Architect', engineer: 'Engineer', runs: 'Runs',
-      admin: 'Admin', system: 'System',
+      admin: 'Admin', system: 'System', bestpractices: 'Best Practices',
     },
     items: {
       dashboard: 'Dashboard', catalogue: 'Controls Catalogue',
@@ -37,7 +37,9 @@ const en: Translations = {
       apikeys: 'API Keys', sso: 'SSO Settings', groupmappings: 'Group Mappings', controlspacks: 'Controls Upgrade',
       passports: 'Project Passports', badge: 'Badge Integration',
       leaderboard: 'Hall of Fame', journey: 'Maturity Journey',
-      userprefs: 'My Preferences',
+      userprefs: 'My Preferences', reference: 'Reference Architecture',
+      antipattern: 'Anti-Pattern Museum',
+      bestpractices: 'Best Practice Area',
     },
   },
 
@@ -1357,6 +1359,18 @@ const en: Translations = {
       manageControls: 'Manage Individual Controls',
       catalogueLink: 'Controls Catalogue',
       singlePointTruth: 'Single Point of Truth',
+    },
+
+    antipattern: {
+      title: 'Anti-Pattern Museum',
+      subtitle: 'Side-by-side "Bad vs. Good" code comparisons for each WAF++ pillar',
+      bestpractices: 'Best Practice Area',
+      failingInfo: 'View side-by-side comparisons for {{pillar}} issues',
+      viewBestPractices: 'View Best Practices',
+    },
+    reference: {
+      title: 'Reference Architecture',
+      subtitle: 'WAF++ architecture reference for infrastructure implementations',
     },
 
     settingsPage: {

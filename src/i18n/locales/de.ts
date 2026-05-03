@@ -18,9 +18,9 @@ const de: PartialTranslations = {
 
   nav: {
     sections: {
-      journey: 'Reise', clevel: 'Führungsebene', ciso: 'CISO',
+      journey: 'Reise', overview: 'Übersicht', ciso: 'CISO',
       architect: 'Architekt', engineer: 'Ingenieur', runs: 'Läufe',
-      admin: 'Administration', system: 'System',
+      admin: 'Administration', system: 'System', bestpractices: 'Best Practices',
     },
     items: {
       dashboard: 'Dashboard', catalogue: 'Kontrollen-Katalog',
@@ -38,6 +38,9 @@ const de: PartialTranslations = {
       controlspacks: 'Kontrollen Upgrade', passports: 'Projektpässe', badge: 'Badge-Integration',
       leaderboard: 'Bestenliste', journey: 'Reifegrad-Reise',
       userprefs: 'Meine Einstellungen',
+      reference: 'Referenz-Architektur',
+      antipattern: 'Anti-Muster Museum',
+      bestpractices: 'Best-Practice-Bereich',
     },
   },
 
@@ -1331,6 +1334,14 @@ const de: PartialTranslations = {
       manageControls: 'Individuelle Kontrollen verwalten',
       catalogueLink: 'Kontrollen-Katalog',
       singlePointTruth: 'Einzelne Quelle der Wahrheit',
+    },
+
+    antipattern: {
+      title: 'Anti-Muster Museum',
+      subtitle: 'Side-by-side "Bad vs. Good" code comparisons for each WAF++ pillar',
+      bestpractices: 'Best-Practice-Bereich',
+      failingInfo: 'Side-by-side Vergleiche f端r {{pillar}}-Probleme anzeigen',
+      viewBestPractices: 'Best Practices anzeigen',
     },
 
     settingsPage: {

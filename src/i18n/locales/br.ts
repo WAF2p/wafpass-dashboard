@@ -18,9 +18,9 @@ const br: PartialTranslations = {
 
   nav: {
     sections: {
-      journey: 'Jornada', clevel: 'C-Level', ciso: 'CISO',
+      journey: 'Jornada', overview: 'Visão Geral', ciso: 'CISO',
       architect: 'Arquiteto', engineer: 'Engenheiro', runs: 'Execuções',
-      admin: 'Admin', system: 'Sistema',
+      admin: 'Admin', system: 'Sistema', bestpractices: 'Melhores Práticas',
     },
     items: {
       dashboard: 'Painel', catalogue: 'Catálogo de Controles',
@@ -37,7 +37,8 @@ const br: PartialTranslations = {
       apikeys: 'Chaves API', sso: 'Config. SSO', groupmappings: 'Mapeamento de Grupos',
       controlspacks: 'Upgrade de Controles', passports: 'Passaportes de Projeto', badge: 'Integração de Badge',
       leaderboard: 'Hall da Fama', journey: 'Jornada de Maturidade',
-      userprefs: 'Minhas Preferências',
+      userprefs: 'Minhas Preferências', reference: 'Arquitetura de Referência',
+      antipattern: 'Museu de Anti-Padrões', bestpractices: 'Área de Melhores Práticas',
     },
   },
 
@@ -137,7 +138,6 @@ const br: PartialTranslations = {
       footerLocal: 'Autenticação local · Contate seu administrador para criar ou redefinir sua conta.',
       footerSso: 'Autenticação local e SSO ativadas · Contate seu administrador para acesso.',
     },
-
     findings: {
       searchPlaceholder: 'Buscar controles, recursos…',
       allStatuses: 'Todos os status',
@@ -630,6 +630,18 @@ const br: PartialTranslations = {
       pack: '{{count}} pacote{{s}}', howItWorks: 'Como Funciona', uploadZipStep: 'Upload ZIP: empacote seus arquivos *.yml de controle em um .zip e faça upload diretamente do seu navegador.', syncStep: 'Sincronizar do Diretório: coloque arquivos YAML atualizados no WAFPASS_CONTROLS_DIR no servidor e dispare uma sincronização.',
       immutableSnapshot: 'Qualquer método armazena um snapshot imutável completo e upsert todos os controles no catálogo, então marca o novo pacote como ativo.', rollBack: 'Para desfazer, clique em Ativar em qualquer pacote histórico — o snapshot armazenado é re-aplicado sem precisar acesso ao sistema de arquivos.',
       manageControls: 'Gerenciar Controles Individuais', catalogueLink: 'Catálogo de Controles', singlePointTruth: 'Único Ponto de Verdade',
+    },
+
+    antipattern: {
+      title: 'Museu de Anti-Padrões',
+      subtitle: 'Comparações lado a lado de "Mal vs. Bom" para cada pilar WAF++',
+      bestpractices: 'Área de Melhores Práticas',
+      failingInfo: 'Ver comparações lado a lado para problemas de {{pillar}}',
+      viewBestPractices: 'Ver Melhores Práticas',
+    },
+    reference: {
+      title: 'Arquitetura de Referência',
+      subtitle: 'Referência da arquitetura WAF++ para implementações de infraestrutura',
     },
 
     settingsPage: {

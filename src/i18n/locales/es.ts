@@ -18,9 +18,9 @@ const es: PartialTranslations = {
 
   nav: {
     sections: {
-      journey: 'Viaje', clevel: 'Dirección', ciso: 'CISO',
+      journey: 'Viaje', overview: 'Descripción general', ciso: 'CISO',
       architect: 'Arquitecto', engineer: 'Ingeniero', runs: 'Ejecuciones',
-      admin: 'Administración', system: 'Sistema',
+      admin: 'Administración', system: 'Sistema', bestpractices: 'Mejores Prácticas',
     },
     items: {
       dashboard: 'Panel de control', catalogue: 'Catálogo de controles',
@@ -37,7 +37,8 @@ const es: PartialTranslations = {
       apikeys: 'Claves API', sso: 'Ajustes SSO', groupmappings: 'Mapeo de grupos',
       controlspacks: 'Mejora de controles', passports: 'Pasaportes de proyecto', badge: 'Integración de insignia',
       leaderboard: 'Tabla de honor', journey: 'Viaje de madurez',
-      userprefs: 'Mis preferencias',
+      userprefs: 'Mis preferencias', reference: 'Arquitectura de Referencia',
+      antipattern: 'Museo de Anti-Patrón', bestpractices: 'Área de Mejores Prácticas',
     },
   },
 
@@ -1349,6 +1350,18 @@ const es: PartialTranslations = {
       manageControls: 'Gestionar controles individuales',
       catalogueLink: 'Catálogo de controles',
       singlePointTruth: 'Punto único de verdad',
+    },
+
+    antipattern: {
+      title: 'Museo de Anti-Patrón',
+      subtitle: 'Comparaciones lado a lado de "Malo vs. Bueno" para cada pilar WAF++',
+      bestpractices: 'Área de Mejores Prácticas',
+      failingInfo: 'Ver comparaciones lado a lado para problemas de {{pillar}}',
+      viewBestPractices: 'Ver Mejores Prácticas',
+    },
+    reference: {
+      title: 'Arquitectura de Referencia',
+      subtitle: 'Referencia de arquitectura WAF++ para implementaciones de infraestructura',
     },
   },
 }

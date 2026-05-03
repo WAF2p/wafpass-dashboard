@@ -59,13 +59,14 @@ export interface Translations {
   nav: {
     sections: {
       journey: string
-      clevel: string
+      overview: string
       ciso: string
       architect: string
       engineer: string
       runs: string
       admin: string
       system: string
+      bestpractices: string
     }
     items: {
       dashboard: string
@@ -104,6 +105,9 @@ export interface Translations {
       leaderboard: string
       journey: string
       userprefs: string
+      reference: string
+      antipattern: string
+      bestpractices: string
     }
   }
 
@@ -826,6 +830,19 @@ export interface Translations {
       gapsLabel: string            // "{{count}} gaps"
     }
 
+    antipattern: {
+      title: string
+      subtitle: string
+      bestpractices: string
+      failingInfo: string
+      viewBestPractices: string
+    }
+
+    reference: {
+      title: string
+      subtitle: string
+    }
+
     settingsPage: {
       sectionMaturity: string
       sectionScan: string
@@ -1520,3 +1537,5 @@ export type DeepPartial<T> = T extends object
   : T
 
 export type PartialTranslations = DeepPartial<Translations>
+
+export type TFunction = (key: string, vars?: Record<string, string | number>) => string

@@ -75,13 +75,14 @@ const xx: PartialTranslations = {
     // Section headings in the sidebar
     sections: {
       journey: 'Journey',       // Top-level section containing project passports & maturity
-      clevel: 'C-Level',        // Executive / management views
+      overview: 'Overview',     // Executive / management views
       ciso: 'CISO',             // Security officer views
       architect: 'Architect',   // Infrastructure architect views
       engineer: 'Engineer',     // Developer / engineering views
       runs: 'Runs',             // Scan run management
       admin: 'Admin',           // User & access administration
       system: 'System',         // System-wide settings
+      bestpractices: 'Best Practices',
     },
     // Individual navigation items
     items: {

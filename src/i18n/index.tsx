@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import type { Translations, PartialTranslations } from './types'
+import type { Translations, PartialTranslations, TFunction } from './types'
 import en from './locales/en'
 import de from './locales/de'
 import fr from './locales/fr'
@@ -30,8 +30,6 @@ function buildTranslations(langCode: string): Translations {
   if (!locale || langCode === 'en') return en as Translations
   return deepMerge(en as Translations, locale as Partial<Translations>)
 }
-
-type TFunction = (key: string, vars?: Record<string, string | number>) => string
 
 function makeTFn(translations: Translations): TFunction {
   return (key: string, vars?: Record<string, string | number>): string => {
@@ -77,3 +75,6 @@ export function I18nProvider({ lang, children }: I18nProviderProps) {
 export function useI18n(): I18nContextValue {
   return useContext(I18nContext)
 }
+
+// Re-export TFunction from types for convenience
+export type { TFunction }

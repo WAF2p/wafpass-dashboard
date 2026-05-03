@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Finding, RunDetail, upsertWaiver, fetchFindingComments, createFindingComment, deleteFindingComment, FindingComment } from '../api'
 import { appendAuditEvent } from '../audit'
-import { useI18n } from '../i18n'
+import { useI18n, type TFunction } from '../i18n'
 import { useAuth } from '../AuthContext'
 import { buildHash, parseHash, FilterState } from '../routing'
 
@@ -202,7 +202,7 @@ function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
   )
 }
 
-function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () => void; t: (k: string) => string }) {
+function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () => void; t: TFunction }) {
   const { user } = useAuth()
   const [comments, setComments] = useState<FindingComment[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -303,6 +303,46 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
             <code style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{finding.control_id}</code>
           </div>
         )}
+
+        {/* Anti-Pattern Museum link */}
+        <div style={{ padding: '0.75rem', background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text)' }}>
+            <div style={{ fontWeight: 700, color: '#fbbf24', marginBottom: '0.15rem' }}>{t('pages.antipattern.bestpractices')}</div>
+            <div style={{ color: 'var(--muted)' }}>
+              {finding.status === 'FAIL'
+                ? t('pages.antipattern.failingInfo', { pillar: finding.pillar || '' })
+                : t('pages.antipattern.subtitle')}
+            </div>
+          </div>
+          {finding.pillar && (
+            <a
+              href={`#/antipattern?pillar=${finding.pillar.toLowerCase()}`}
+              onClick={(e) => {
+                e.preventDefault()
+                window.location.href = `#/antipattern?pillar=${finding.pillar?.toLowerCase()}`
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.4rem 0.8rem',
+                background: 'var(--waf-brand)',
+                color: '#fff',
+                borderRadius: 7,
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a16.041 16.041 0 00-4.243-4.243l4.243 4.243M10.172 13.828a16.041 16.041 0 01-4.243-4.243l4.243 4.243M15.45 7.276a9.95 9.95 0 014.243 4.243M7.276 15.45a9.95 9.95 0 00-4.243 4.243m0-4.243a9.95 9.95 0 014.243-4.243" />
+              </svg>
+              {t('pages.antipattern.viewBestPractices')}
+            </a>
+          )}
+        </div>
 
         {/* Comments section */}
         {error && (

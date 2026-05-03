@@ -50,6 +50,8 @@ const BadgePage              = lazy(() => import('./pages/BadgePage'))
 const LeaderboardPage        = lazy(() => import('./pages/LeaderboardPage'))
 const MaturityJourneyPage    = lazy(() => import('./pages/MaturityJourneyPage'))
 const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
+const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
+const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -72,6 +74,7 @@ const PAGES_WITHOUT_RUN_META = new Set<Page>([
   'runs', 'diff', 'catalogue', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'audit', 'evidence', 'feedback',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
+  'reference', 'antipattern',
 ])
 
 function AuthenticatedApp({ user, role, onLogout }: {
@@ -431,6 +434,10 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ModuleScorePage run={run} />
           ) : page === 'cost' ? (
             <CostImpactPage run={run} />
+          ) : page === 'reference' ? (
+            <ReferenceArchitecturePage />
+          ) : page === 'antipattern' ? (
+            <AntiPatternMuseumPage />
           ) : null}
         </Suspense>
         </main>

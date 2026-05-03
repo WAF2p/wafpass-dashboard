@@ -18,9 +18,9 @@ const fr: PartialTranslations = {
 
   nav: {
     sections: {
-      journey: 'Parcours', clevel: 'Direction', ciso: 'RSSI',
+      journey: 'Parcours', overview: 'Vue d\'ensemble', ciso: 'RSSI',
       architect: 'Architecte', engineer: 'Ingénieur', runs: 'Exécutions',
-      admin: 'Administration', system: 'Système',
+      admin: 'Administration', system: 'Système', bestpractices: 'Meilleures pratiques',
     },
     items: {
       dashboard: 'Tableau de bord', catalogue: 'Catalogue des contrôles',

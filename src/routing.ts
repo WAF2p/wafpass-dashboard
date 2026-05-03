@@ -4,6 +4,7 @@ export const ALL_PAGES = [
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
+  'reference', 'antipattern',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -48,6 +49,8 @@ export const PAGE_TITLE: Record<Page, string> = {
   leaderboard:     'Hall of Fame',
   journey:         'Maturity Journey',
   userprefs:       'My Preferences',
+  reference:       'Reference Architecture',
+  antipattern:     'Anti-Pattern Museum',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
@@ -88,6 +91,8 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   leaderboard:     'Top sovereign projects by Tier 5 tenure and most improved teams in the last 30 days',
   journey:         'Your flight from ground to cruise altitude — the story of building secure cloud infrastructure',
   userprefs:       'Appearance, navigation defaults, date formats, and report behaviour — stored in this browser',
+  reference:       'Complete system architecture documentation — wafpass-core, wafpass-server, wafpass-dashboard',
+  antipattern:     "Side-by-side 'Bad vs. Good' code comparisons for each WAF++ pillar",
 }
 
 export interface FilterState {

@@ -69,6 +69,21 @@ That's all. The language switcher in **My Preferences** and the **Default Interf
 
 ---
 
+## Existing languages
+
+| Code | Language | Coverage |
+|------|----------|----------|
+| `en` | English  | 100% (base) |
+| `de` | Deutsch  | 100% |
+| `fr` | Français | 100% |
+| `es` | Español  | 100% |
+| `pt` | Português | 100% |
+| `el` | Ελληνικά | 100% |
+
+The `pt` locale includes translations for the findings comments section (`pages.findings.commentSection`, `pages.findings.commentBtn`, `pages.findings.commentAuthor`).
+
+---
+
 ## Translation rules
 
 ### Keys are fixed — only translate values
@@ -173,6 +188,10 @@ Missing keys silently resolve to English. There are no runtime errors for missin
 | `de` | Deutsch  | 100% |
 | `fr` | Français | 100% |
 | `es` | Español  | 100% |
+| `pt` | Português | 100% |
+| `el` | Ελληνικά | 100% |
+
+The `pt` and `el` locales include translations for the findings comments section (`pages.findings.commentSection`, `pages.findings.commentBtn`, `pages.findings.commentAuthor`).
 
 ---
 
