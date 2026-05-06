@@ -50,6 +50,7 @@ const BadgePage              = lazy(() => import('./pages/BadgePage'))
 const LeaderboardPage        = lazy(() => import('./pages/LeaderboardPage'))
 const MaturityJourneyPage    = lazy(() => import('./pages/MaturityJourneyPage'))
 const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
+const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
 
@@ -74,7 +75,7 @@ const PAGES_WITHOUT_RUN_META = new Set<Page>([
   'runs', 'diff', 'catalogue', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'audit', 'evidence', 'feedback',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
-  'reference', 'antipattern',
+  'reference', 'antipattern', 'globaldashboard',
 ])
 
 function AuthenticatedApp({ user, role, onLogout }: {
@@ -159,7 +160,15 @@ function AuthenticatedApp({ user, role, onLogout }: {
   useEffect(() => {
     fetchUserPrefsFromServer().then(serverPrefs => {
       if (serverPrefs && Object.keys(serverPrefs).length > 0) {
-        const merged = { ...DEFAULT_USER_PREFS, ...serverPrefs } as UserPreferences
+        // Get local prefs first to preserve language preference
+        const localPrefs = loadUserPrefs()
+        // Server prefs win for all keys EXCEPT language (local preference takes priority)
+        const serverPrefsTyped = serverPrefs as Partial<UserPreferences>
+        const merged: UserPreferences = {
+          ...DEFAULT_USER_PREFS,
+          ...serverPrefsTyped,
+          language: localPrefs.language && localPrefs.language !== '' ? localPrefs.language : (serverPrefsTyped.language || ''),
+        }
         setUserPrefs(merged)
         saveUserPrefs(merged)
       }
@@ -317,6 +326,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <UserPreferencesPage prefs={userPrefs} user={user} syncStatus={prefsSyncStatus} onChange={handleUserPrefsChange} />
           ) : page === 'journey' ? (
             <MaturityJourneyPage run={run} runs={runs} maturityLevel={maturityLevel} settings={settings} waiverCount={waiverCount} riskCount={riskCount} navigate={navigate} />
+          ) : page === 'globaldashboard' ? (
+            <GlobalDashboardPage runs={runs} navigate={navigate} />
           ) : page === 'leaderboard' ? (
             <LeaderboardPage />
           ) : page === 'badge' ? (

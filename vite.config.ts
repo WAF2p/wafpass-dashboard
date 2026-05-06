@@ -31,15 +31,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // React and React DOM
-          'react': ['react', 'react-dom'],
-          // Recharts is a large dependency with many subcomponents
-          // It will be loaded once and cached across chart pages
-          'recharts': ['recharts'],
-          // Leaflet (large, only used in Regions page)
-          'leaflet': ['leaflet', 'react-leaflet'],
-        },
+        manualChunks: {},
       },
     },
   },

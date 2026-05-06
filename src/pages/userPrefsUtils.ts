@@ -12,7 +12,7 @@ export interface UserPreferences {
 export const DEFAULT_USER_PREFS: UserPreferences = {
   pdfAutoOpen: false,
   hideDisabledMenuItems: false,
-  defaultPage: 'dashboard',
+  defaultPage: 'globaldashboard',
   dateFormat: 'absolute',
   showInlineHelp: true,
   sidebarCompact: false,

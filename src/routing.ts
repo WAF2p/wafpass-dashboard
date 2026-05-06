@@ -1,5 +1,5 @@
 export const ALL_PAGES = [
-  'dashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
+  'dashboard', 'globaldashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
@@ -13,6 +13,7 @@ export const PAGE_SET = new Set<string>(ALL_PAGES)
 
 export const PAGE_TITLE: Record<Page, string> = {
   dashboard:       'Executive Dashboard',
+  globaldashboard: 'Global Overview',
   catalogue:       'Controls Catalogue',
   findings:        'Scan Findings',
   compliance:      'Compliance Matrix',
@@ -55,6 +56,7 @@ export const PAGE_TITLE: Record<Page, string> = {
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
   dashboard:       'Risk posture overview across all WAF++ pillars',
+  globaldashboard: 'Global view: project portfolio, maturity journey, and control matrix',
   catalogue:       'All WAF++ framework controls and your custom controls — browse, filter, author, and export',
   findings:        'Detailed results from the selected run',
   compliance:      'Pillar coverage, pass rates and regulatory framework mapping',

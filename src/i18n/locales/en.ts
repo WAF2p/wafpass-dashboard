@@ -14,6 +14,7 @@ const en: Translations = {
     copy: 'Copy', copied: 'Copied!', export: 'Export', download: 'Download',
     more: 'more…', showLess: 'Show less', notMapped: 'Not mapped',
     preview: 'Preview', default: 'Default', custom: 'Custom', optional: 'Optional',
+    view: 'View', health: 'Healthy', needsAttention: 'Needs Attention', improving: 'Improving',
   },
 
   nav: {
@@ -23,7 +24,7 @@ const en: Translations = {
       admin: 'Admin', system: 'System', bestpractices: 'Best Practices',
     },
     items: {
-      dashboard: 'Dashboard', catalogue: 'Controls Catalogue',
+      dashboard: 'Dashboard', globaldashboard: 'Global Overview', catalogue: 'Controls Catalogue',
       findings: 'Findings', compliance: 'Compliance Matrix',
       gapanalysis: 'Gap Analysis', regions: 'Deployed Regions',
       exploitpath: 'Exploit Paths', blastradius: 'Blast Radius',
@@ -1143,6 +1144,34 @@ const en: Translations = {
       bpControls: 'Controls',
       bpWaivers: 'Waivers',
       bpRisk: 'Risk Acc.',
+    },
+
+    globaldashboard: {
+      operationalCenter: 'Operational Center',
+      featuredProject: 'Featured Project',
+      maturityDistribution: 'Maturity Distribution',
+      topProjects: 'Top Projects by Maturity',
+      pillarHealth: 'Infrastructure Pillar Health',
+      pillarScores: 'Pillar Scores',
+      score: 'Score',
+      level: 'Level',
+      pillarLevel: 'L{{level}}',
+      lastScan: 'Last Scan',
+      avgScore: 'Avg Score',
+      totalProjects: 'Total Projects',
+      noFeaturedProjects: 'No featured projects yet. Complete your first scan to see your top performer here.',
+      topPerformingProject: 'Top performing project at',
+      showingXPillars: 'Showing {{count}} pillars total',
+      noActivity: 'No activity yet',
+      runScansHint: 'Run scans to see activity here',
+      latestScans: 'Latest scans and project updates',
+      noProjects: 'No projects yet',
+      globalScore: 'Global Score',
+      healthy: 'Healthy',
+      needsAttention: 'Needs Attention',
+      improving: 'Improving',
+      scanCompleted: 'Scan completed with score {{score}}/100',
+      recentActivity: 'Recent Activity',
     },
 
     moduleScore: {

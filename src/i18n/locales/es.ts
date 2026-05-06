@@ -14,6 +14,7 @@ const es: PartialTranslations = {
     copy: 'Copiar', copied: '¡Copiado!', export: 'Exportar', download: 'Descargar',
     more: 'más…', showLess: 'Mostrar menos', notMapped: 'Sin mapear',
     preview: 'Vista previa', default: 'Predeterminado', custom: 'Personalizado', optional: 'Opcional',
+    view: 'Ver', health: 'Saludable', needsAttention: 'Necesita Atención', improving: 'Mejorando',
   },
 
   nav: {
@@ -23,7 +24,7 @@ const es: PartialTranslations = {
       admin: 'Administración', system: 'Sistema', bestpractices: 'Mejores Prácticas',
     },
     items: {
-      dashboard: 'Panel de control', catalogue: 'Catálogo de controles',
+      dashboard: 'Panel de control', globaldashboard: 'Vista Global', catalogue: 'Catálogo de controles',
       findings: 'Hallazgos', compliance: 'Matriz de cumplimiento',
       gapanalysis: 'Análisis de brechas', regions: 'Regiones desplegadas',
       exploitpath: 'Rutas de explotación', blastradius: 'Radio de impacto',
@@ -1110,6 +1111,7 @@ const es: PartialTranslations = {
       bpWaivers: 'Exenciones',
       bpRisk: 'Acep. riesgo',
     },
+
     moduleScore: {
       noFindings: 'Sin hallazgos con direcciones de recurso en esta ejecución.',
       filterPlaceholder: 'Filtrar módulos…',
@@ -1350,6 +1352,34 @@ const es: PartialTranslations = {
       manageControls: 'Gestionar controles individuales',
       catalogueLink: 'Catálogo de controles',
       singlePointTruth: 'Punto único de verdad',
+    },
+
+    globaldashboard: {
+      operationalCenter: 'Centro Operativo',
+      featuredProject: 'Proyecto Destacado',
+      maturityDistribution: 'Distribución de Madurez',
+      topProjects: 'Mejores Proyectos por Madurez',
+      pillarHealth: 'Salud de Pilares de Infraestructura',
+      pillarScores: 'Puntuaciones de Pilares',
+      score: 'Puntuación',
+      level: 'Nivel',
+      lastScan: 'Último Escaneo',
+      avgScore: 'Puntuación Promedio',
+      totalProjects: 'Total de Proyectos',
+      noFeaturedProjects: 'Aún no hay proyectos destacados. Complete su primer escaneo para ver su mejor rendimiento aquí.',
+      topPerformingProject: 'Mejor proyecto con nivel de madurez',
+      showingXPillars: 'Mostrando {{count}} pilares en total',
+      noActivity: 'Sin actividad aún',
+      runScansHint: 'Ejecute escaneos para ver actividad aquí',
+      latestScans: 'Últimos escaneos y actualizaciones de proyectos',
+      noProjects: 'Sin proyectos aún',
+      globalScore: 'Puntuación Global',
+      healthy: 'Saludable',
+      needsAttention: 'Necesita Atención',
+      improving: 'Mejorando',
+      scanCompleted: 'Escaneo completado con puntuación {{score}}/100',
+      recentActivity: 'Actividad Reciente',
+      pillarLevel: 'L{{level}}',
     },
 
     antipattern: {

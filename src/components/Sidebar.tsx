@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RunDetail, RunSummary, getActiveControlPack } from '../api'
 import { hasMinRole } from '../AuthContext'
 import { getMaturityMeta, Settings } from '../pages/settingsUtils'
 import { Page, scoreColor } from '../routing'
 import { useI18n } from '../i18n'
+import { loadUserPrefs, saveUserPrefs, UserPreferences } from '../pages/userPrefsUtils'
 
 export interface SidebarProps {
   run: RunDetail | null
@@ -49,28 +50,14 @@ function buildNavSections(
   waiverCount: number,
   riskCount: number,
   failCount: number,
+  packControlCount: number,
   t: (key: string) => string,
 ): NavSection[] {
   return [
     {
-      id: 'projects', label: t('nav.sections.journey'), color: '#14b8a6', minRole: 'clevel',
+      id: 'overview', label: t('nav.sections.overview'), color: '#f59e0b',
       items: [
-        { page: 'passports',   label: t('nav.items.passports'),   icon: 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2' },
-        { page: 'badge',       label: t('nav.items.badge'),       icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
-        { page: 'leaderboard', label: t('nav.items.leaderboard'), icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
-        { page: 'journey',     label: t('nav.items.journey'),     icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8' },
-      ],
-    },
-    {
-      id: 'bestpractices', label: t('nav.sections.bestpractices'), color: '#10b981', minRole: 'clevel',
-      items: [
-        { page: 'reference',   label: t('nav.items.reference'),   icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4' },
-        { page: 'antipattern', label: t('nav.items.antipattern'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-      ],
-    },
-    {
-      id: 'clevel', label: t('nav.sections.overview'), color: '#f59e0b',
-      items: [
+        { page: 'globaldashboard', label: t('nav.items.globaldashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
         { page: 'dashboard',   label: t('nav.items.dashboard'),  icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
         { page: 'compliance',  label: t('nav.items.compliance'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
         {
@@ -92,6 +79,22 @@ function buildNavSections(
             return n > 0 ? { label: String(n), variant: 'fail' as const } : null
           })(),
         },
+      ],
+    },
+    {
+      id: 'projects', label: t('nav.sections.journey'), color: '#14b8a6', minRole: 'clevel',
+      items: [
+        { page: 'passports',   label: t('nav.items.passports'),   icon: 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2' },
+        { page: 'badge',       label: t('nav.items.badge'),       icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
+        { page: 'leaderboard', label: t('nav.items.leaderboard'), icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
+        { page: 'journey',     label: t('nav.items.journey'),     icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8' },
+      ],
+    },
+    {
+      id: 'bestpractices', label: t('nav.sections.bestpractices'), color: '#10b981', minRole: 'clevel',
+      items: [
+        { page: 'reference',   label: t('nav.items.reference'),   icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4' },
+        { page: 'antipattern', label: t('nav.items.antipattern'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
       ],
     },
     {
@@ -118,7 +121,7 @@ function buildNavSections(
         {
           page: 'catalogue', label: t('nav.items.catalogue'),
           icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4',
-          badge: { label: run ? String(run.controls_meta.length || run.controls_loaded || 0) : '73+', variant: 'neutral' as const },
+          badge: { label: run ? String(Math.max(run.controls_meta.length || 0, run.controls_loaded || 0, packControlCount || 0)) : '73+', variant: 'neutral' as const },
         },
         { page: 'exploitpath', label: t('nav.items.exploitpath'), danger: true, icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
         {
@@ -250,6 +253,121 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
   )
 }
 
+function LanguageSwitcher() {
+  const { lang } = useI18n()
+  const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const languages = [
+    { code: 'en', flag: '🇬🇧', label: 'English' },
+    { code: 'de', flag: '🇩🇪', label: 'Deutsch' },
+    { code: 'fr', flag: '🇫🇷', label: 'Français' },
+    { code: 'es', flag: '🇪🇸', label: 'Español' },
+    { code: 'pt', flag: '🇵🇹', label: 'Português' },
+    { code: 'br', flag: '🇧🇷', label: 'Português BR' },
+    { code: 'el', flag: '🇬🇷', label: 'Ελληνικά' },
+  ]
+
+  const currentLang = languages.find(l => l.code === lang) || languages[0]
+
+  const handleSelect = (code: string) => {
+    setShowMenu(false)
+    const prefs: UserPreferences = { ...loadUserPrefs(), language: code }
+    saveUserPrefs(prefs)
+    window.location.reload()
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMenu])
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex' }}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setShowMenu(!showMenu)
+        }}
+        title="Language"
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--sidebar-muted)',
+          padding: '0.2rem',
+          borderRadius: '4px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+        }}
+      >
+        <span style={{ fontSize: '0.85rem' }}>{currentLang.flag}</span>
+      </button>
+      {showMenu && (
+        <div
+          ref={menuRef}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            right: 0,
+            bottom: '100%',
+            marginBottom: '0.25rem',
+            maxHeight: '240px',
+            overflow: 'auto',
+            minWidth: '160px',
+            maxWidth: '200px',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+          }}
+        >
+            {languages.map((l) => (
+              <button
+                key={l.code}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleSelect(l.code)
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  color: lang === l.code ? 'var(--text)' : 'var(--text-secondary)',
+                }}
+              >
+                <span>{l.flag}</span>
+                <span>{l.label}</span>
+                {lang === l.code && (
+                  <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--waf-brand)' }}>✓</span>
+                )}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Sidebar({
   run, runs, runsError, page, role, user,
   maturityLevel, settings, hideDisabledMenuItems, waiverCount, riskCount, failCount,
@@ -259,32 +377,37 @@ export default function Sidebar({
   const hide = hideDisabledMenuItems
   const { t } = useI18n()
 
-  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t)
-  const visibleSections = allSections.filter(s => hasMinRole(role, s.minRole ?? s.id))
-
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem('wafpass_nav_expanded') ?? '{}') } catch { return {} }
   })
 
-  const [activePackVersion, setActivePackVersion] = useState<string | null>(null)
   const [controlsCount, setControlsCount] = useState<number>(0)
+  const [packControlCount, setPackControlCount] = useState<number>(0)
 
-  // Fetch active control pack info on mount and when run changes
+  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, packControlCount, t)
+  const visibleSections = allSections.filter(s => hasMinRole(role, s.minRole ?? s.id))
+
+  // Use max of run count and pack count for accurate display
   useEffect(() => {
-    let cancelled = false
+    if (run) {
+      const runCount = run.controls_meta?.length || run.controls_loaded || 0
+      const count = Math.max(runCount, packControlCount || 0)
+      setControlsCount(count)
+    } else {
+      setControlsCount(packControlCount || 0)
+    }
+  }, [run?.id, run?.controls_meta?.length, run?.controls_loaded, packControlCount])
+
+  // Fetch active control pack to get the current control count
+  useEffect(() => {
     getActiveControlPack().then(pack => {
-      if (!cancelled && pack) {
-        setActivePackVersion(pack.version)
-        setControlsCount(pack.control_count)
+      if (pack) {
+        setPackControlCount(pack.control_count)
       }
     }).catch(() => {
-      // Fallback to run data if API fails
-      if (run?.controls_loaded != null) {
-        setControlsCount(run.controls_loaded)
-      }
+      // Ignore errors
     })
-    return () => { cancelled = true }
-  }, [run?.id])
+  }, [])
 
   function toggleSection(id: string) {
     setExpandedSections(prev => {
@@ -436,25 +559,14 @@ export default function Sidebar({
         <div style={{ padding: '0.625rem 1.25rem', borderTop: '1px solid var(--sidebar-border)' }}>
           <div style={{ fontSize: '0.62rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Policy Version</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {activePackVersion ? (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                background: 'rgba(0,148,255,0.15)', border: '1px solid rgba(0,148,255,0.35)',
-                borderRadius: '999px', padding: '0.18rem 0.6rem',
-                fontSize: '0.72rem', fontWeight: 700, color: '#60a5fa', letterSpacing: '0.02em',
-              }}>
-                {activePackVersion}
-              </span>
-            ) : (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                background: 'rgba(0,148,255,0.15)', border: '1px solid rgba(0,148,255,0.35)',
-                borderRadius: '999px', padding: '0.18rem 0.6rem',
-                fontSize: '0.72rem', fontWeight: 700, color: '#60a5fa', letterSpacing: '0.02em',
-              }}>
-                v1.0.0
-              </span>
-            )}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+              background: 'rgba(0,148,255,0.15)', border: '1px solid rgba(0,148,255,0.35)',
+              borderRadius: '999px', padding: '0.18rem 0.6rem',
+              fontSize: '0.72rem', fontWeight: 700, color: '#60a5fa', letterSpacing: '0.02em',
+            }}>
+              v1.0.0
+            </span>
             {controlsCount > 0 && (
               <span style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>{controlsCount} controls</span>
             )}
@@ -494,6 +606,7 @@ export default function Sidebar({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </button>
+        <LanguageSwitcher />
         <button
           onClick={onLogout}
           title="Sign out"

@@ -54,6 +54,10 @@ export interface Translations {
     default: string
     custom: string
     optional: string
+    view: string       // "View" (as in "View Passports")
+    health: string
+    needsAttention: string
+    improving: string
   }
 
   nav: {
@@ -70,6 +74,7 @@ export interface Translations {
     }
     items: {
       dashboard: string
+      globaldashboard: string
       catalogue: string
       findings: string
       compliance: string
@@ -1312,6 +1317,34 @@ export interface Translations {
       bpControls: string
       bpWaivers: string
       bpRisk: string
+    }
+
+    globaldashboard: {
+      operationalCenter: string
+      featuredProject: string
+      maturityDistribution: string
+      topProjects: string
+      pillarHealth: string
+      pillarScores: string
+      score: string
+      level: string
+      lastScan: string
+      avgScore: string
+      totalProjects: string
+      noFeaturedProjects: string
+      topPerformingProject: string
+      showingXPillars: string
+      noActivity: string
+      runScansHint: string
+      latestScans: string
+      noProjects: string
+      globalScore: string
+      healthy: string
+      needsAttention: string
+      improving: string
+      scanCompleted: string
+      recentActivity: string
+      pillarLevel: string
     }
 
     moduleScore: {
