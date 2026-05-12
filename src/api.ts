@@ -832,7 +832,7 @@ export interface ProjectPassport {
   description: string
   criticality: string   // critical | high | medium | low | ""
   environment: string   // production | staging | development | mixed | ""
-  cloud_provider: string // aws | azure | gcp | multi | other | ""
+  cloud_provider: string // aws | azure | gcp | alicloud | yandex | oci | ovh | hetzner | stackit | multi | other | ""
   repository_url: string
   documentation_url: string
   tags: string[]

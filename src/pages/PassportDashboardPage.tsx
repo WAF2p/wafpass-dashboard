@@ -28,11 +28,17 @@ const ENV_META: Record<string, { label: string; color: string }> = {
 }
 
 const CLOUD_META: Record<string, { label: string; color: string }> = {
-  aws:   { label: 'AWS',         color: '#f97316' },
-  azure: { label: 'Azure',       color: '#2b7fff' },
-  gcp:   { label: 'GCP',         color: '#22c55e' },
-  multi: { label: 'Multi-Cloud', color: '#8b5cf6' },
-  other: { label: 'Other',       color: '#94a3b8' },
+  aws:      { label: 'AWS',         color: '#f97316' },
+  azure:    { label: 'Azure',       color: '#2b7fff' },
+  gcp:      { label: 'GCP',         color: '#22c55e' },
+  alicloud: { label: 'Alibaba Cloud', color: '#ff6a00' },
+  yandex:   { label: 'Yandex Cloud',  color: '#fcdb03' },
+  oci:      { label: 'OCI',           color: '#c74634' },
+  ovh:      { label: 'OVH',           color: '#0046a3' },
+  hetzner:  { label: 'Hetzner',       color: '#ff0000' },
+  stackit:  { label: 'STACKIT',       color: '#242424' },
+  multi:    { label: 'Multi-Cloud',   color: '#8b5cf6' },
+  other:    { label: 'Other',         color: '#94a3b8' },
 }
 
 const EMPTY_PASSPORT: ProjectPassportUpsert = {
@@ -1154,12 +1160,18 @@ function PassportEditModal({
               { value: 'mixed',       label: 'Mixed' },
             ]} />
             <FormSelect label="Cloud Provider" value={form.cloud_provider} onChange={v => set('cloud_provider', v)} options={[
-              { value: '',      label: '— Select —' },
-              { value: 'aws',   label: 'AWS' },
-              { value: 'azure', label: 'Azure' },
-              { value: 'gcp',   label: 'GCP' },
-              { value: 'multi', label: 'Multi-Cloud' },
-              { value: 'other', label: 'Other' },
+              { value: '',       label: '— Select —' },
+              { value: 'aws',    label: 'AWS' },
+              { value: 'azure',  label: 'Azure' },
+              { value: 'gcp',    label: 'GCP' },
+              { value: 'alicloud', label: 'Alibaba Cloud' },
+              { value: 'yandex',   label: 'Yandex Cloud' },
+              { value: 'oci',      label: 'OCI' },
+              { value: 'ovh',      label: 'OVH' },
+              { value: 'hetzner',  label: 'Hetzner' },
+              { value: 'stackit',  label: 'STACKIT' },
+              { value: 'multi',    label: 'Multi-Cloud' },
+              { value: 'other',    label: 'Other' },
             ]} />
           </div>
 

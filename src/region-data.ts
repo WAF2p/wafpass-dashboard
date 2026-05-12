@@ -49,6 +49,52 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "us-phoenix-1":[33.45,-112.07],"us-ashburn-1":[39.03,-77.47],"eu-frankfurt-1":[50.11,8.68],
   "uk-london-1":[51.51,-0.13],"ap-tokyo-1":[35.68,139.65],"ap-sydney-1":[-33.87,151.21],
   "ap-mumbai-1":[19.08,72.88],"sa-saopaulo-1":[-23.55,-46.63],"ca-toronto-1":[43.65,-79.38],
+  // StackIT
+  "de-fld-1-stackit":[49.9945,8.2432],"de-fld-2-stackit":[49.9945,8.2432],"de-ham-1-stackit":[53.5511,9.9937],
+  "de-ham-2-stackit":[53.5511,9.9937],"de-muc-1-stackit":[48.1296,11.5238],"de-muc-2-stackit":[48.1296,11.5238],
+  "at-vie-1-stackit":[48.2082,16.3738],"eu-central-1-stackit":[48.2082,16.3738],"eu-central-2-stackit":[48.2082,16.3738],
+  "eu-central-3-stackit":[48.2082,16.3738],"eu-central-4-stackit":[48.2082,16.3738],"eu-central-5-stackit":[48.2082,16.3738],
+  "eu-central-6-stackit":[48.2082,16.3738],"eu-central-7-stackit":[48.2082,16.3738],"eu-central-8-stackit":[48.2082,16.3738],
+  "us-east-1-stackit":[39.0063,-77.4880],"us-east-2-stackit":[39.0063,-77.4880],"us-east-3-stackit":[39.0063,-77.4880],
+  "us-east-4-stackit":[39.0063,-77.4880],"us-east-5-stackit":[39.0063,-77.4880],"us-east-6-stackit":[39.0063,-77.4880],
+  "us-east-7-stackit":[39.0063,-77.4880],"us-east-8-stackit":[39.0063,-77.4880],"ca-east-1-stackit":[45.5017,-73.5673],
+  "ca-east-2-stackit":[45.5017,-73.5673],"apac-southeast-1-stackit":[-33.8678,151.2097],"apac-southeast-2-stackit":[-33.8678,151.2097],
+  "apac-southeast-3-stackit":[-33.8678,151.2097],"apac-southeast-4-stackit":[-33.8678,151.2097],"apac-southeast-5-stackit":[-33.8678,151.2097],
+  "apac-southeast-6-stackit":[-33.8678,151.2097],"apac-southeast-7-stackit":[-33.8678,151.2097],"apac-southeast-8-stackit":[-33.8678,151.2097],
+  // OpenStack/StackIT simple region name
+  "DE":[52.5200,13.4050],
+  // OVH
+  "gra-ovh":[43.7172,1.0925],"bhs-ovh":[48.7528,-71.3535],"bhs2-ovh":[48.7528,-71.3535],"bhs3-ovh":[48.7528,-71.3535],
+  "rbx-ovh":[43.6324,1.3757],"ukh-ovh":[51.5243,-0.1224],"de-fld-ovh":[49.9945,8.2432],"de-fld2-ovh":[49.9945,8.2432],
+  "de-fld3-ovh":[49.9945,8.2432],"de-fld4-ovh":[49.9945,8.2432],"de-fld5-ovh":[49.9945,8.2432],"de-fld6-ovh":[49.9945,8.2432],
+  "de-fld7-ovh":[49.9945,8.2432],"de-fld8-ovh":[49.9945,8.2432],"bhs4-ovh":[48.7528,-71.3535],"bhs5-ovh":[48.7528,-71.3535],
+  "bhs6-ovh":[48.7528,-71.3535],"bhs7-ovh":[48.7528,-71.3535],"bhs8-ovh":[48.7528,-71.3535],"bhs9-ovh":[48.7528,-71.3535],
+  "rbx2-ovh":[43.6324,1.3757],"rbx3-ovh":[43.6324,1.3757],"rbx4-ovh":[43.6324,1.3757],"rbx5-ovh":[43.6324,1.3757],
+  "rbx6-ovh":[43.6324,1.3757],"rbx7-ovh":[43.6324,1.3757],"rbx8-ovh":[43.6324,1.3757],"rbx9-ovh":[43.6324,1.3757],
+  "ukh2-ovh":[51.5243,-0.1224],"ukh3-ovh":[51.5243,-0.1224],"ukh4-ovh":[51.5243,-0.1224],"ukh5-ovh":[51.5243,-0.1224],
+  "ukh6-ovh":[51.5243,-0.1224],"ukh7-ovh":[51.5243,-0.1224],"ukh8-ovh":[51.5243,-0.1224],"ukh9-ovh":[51.5243,-0.1224],
+  "us-mia-ovh":[25.7617,-80.1918],"us-mia2-ovh":[25.7617,-80.1918],"us-mia3-ovh":[25.7617,-80.1918],
+  "us-mia4-ovh":[25.7617,-80.1918],"us-mia5-ovh":[25.7617,-80.1918],"us-mia6-ovh":[25.7617,-80.1918],
+  "us-las-ovh":[36.1699,-115.1398],"us-las2-ovh":[36.1699,-115.1398],"us-las3-ovh":[36.1699,-115.1398],
+  "us-las4-ovh":[36.1699,-115.1398],"us-las5-ovh":[36.1699,-115.1398],"us-las6-ovh":[36.1699,-115.1398],
+  "us-ord-ovh":[41.9742,-87.9073],"us-ord2-ovh":[41.9742,-87.9073],"us-ord3-ovh":[41.9742,-87.9073],
+  "us-ord4-ovh":[41.9742,-87.9073],"us-ord5-ovh":[41.9742,-87.9073],"us-ord6-ovh":[41.9742,-87.9073],
+  "us-phx-ovh":[33.4484,-112.0740],"us-phx2-ovh":[33.4484,-112.0740],"us-phx3-ovh":[33.4484,-112.0740],
+  "us-phx4-ovh":[33.4484,-112.0740],"us-phx5-ovh":[33.4484,-112.0740],"us-phx6-ovh":[33.4484,-112.0740],
+  "us-sea-ovh":[47.6062,-122.3321],"us-sea2-ovh":[47.6062,-122.3321],"us-sea3-ovh":[47.6062,-122.3321],
+  "us-sea4-ovh":[47.6062,-122.3321],"us-sea5-ovh":[47.6062,-122.3321],"us-sea6-ovh":[47.6062,-122.3321],
+  "ca-slo-ovh":[46.2098,-71.2445],"ca-slo2-ovh":[46.2098,-71.2445],"ca-slo3-ovh":[46.2098,-71.2445],
+  "ca-slo4-ovh":[46.2098,-71.2445],"ca-slo5-ovh":[46.2098,-71.2445],"ca-slo6-ovh":[46.2098,-71.2445],
+  "gra2-ovh":[43.7172,1.0925],"gra3-ovh":[43.7172,1.0925],"gra4-ovh":[43.7172,1.0925],"gra5-ovh":[43.7172,1.0925],
+  "gra6-ovh":[43.7172,1.0925],"gra7-ovh":[43.7172,1.0925],"gra8-ovh":[43.7172,1.0925],"gra9-ovh":[43.7172,1.0925],
+  // Hetzner
+  "fs-hetzner":[53.5511,9.9937],"nbg-hetzner":[49.9945,8.2432],"us-hetzner":[37.7749,-122.4194],"ca-hetzner":[43.6532,-79.3832],
+  "eu-hetzner":[50.1109,8.6821],"apac-hetzner":[-33.8688,151.2093],
+  // Additional Hetzner region names (without -hetzner suffix)
+  "fsn1":[53.5511,9.9937],"fsn2":[53.5511,9.9937],"fsn3":[53.5511,9.9937],
+  "nbg1":[49.9945,8.2432],"nbg2":[49.9945,8.2432],"nbg3":[49.9945,8.2432],"hel1":[53.5511,9.9937],
+  // Simple OVH region names (without -ovh suffix) - coordinates from nearby locations
+  "GRA":[43.7172,1.0925],"BHS":[48.7528,-71.3535],"RBX":[43.6324,1.3757],"UK":[51.5243,-0.1224],"WAW":[52.2370,21.0168],
 }
 
 export const REGION_LABELS: Record<string, string> = {
@@ -91,6 +137,46 @@ export const REGION_LABELS: Record<string, string> = {
   "ap-mumbai-1":"Mumbai, India","sa-saopaulo-1":"São Paulo, Brazil","ca-toronto-1":"Toronto, Canada",
   "cn-hangzhou":"Hangzhou, China","cn-shanghai":"Shanghai, China","cn-beijing":"Beijing, China",
   "cn-shenzhen":"Shenzhen, China","cn-hongkong":"Hong Kong",
+  // StackIT
+  "de-fld-1-stackit":"Falkenstein, Germany","de-fld-2-stackit":"Falkenstein, Germany","de-ham-1-stackit":"Hamburg, Germany",
+  "de-ham-2-stackit":"Hamburg, Germany","de-muc-1-stackit":"Munich, Germany","de-muc-2-stackit":"Munich, Germany",
+  "at-vie-1-stackit":"Vienna, Austria","eu-central-1-stackit":"Frankfurt, Germany","eu-central-2-stackit":"Frankfurt, Germany",
+  "eu-central-3-stackit":"Frankfurt, Germany","eu-central-4-stackit":"Frankfurt, Germany","eu-central-5-stackit":"Frankfurt, Germany",
+  "eu-central-6-stackit":"Frankfurt, Germany","eu-central-7-stackit":"Frankfurt, Germany","eu-central-8-stackit":"Frankfurt, Germany",
+  // OpenStack/StackIT simple region name
+  "DE":"Berlin, Germany",
+  "us-east-1-stackit":"Falkenstein, Germany","us-east-2-stackit":"Falkenstein, Germany","us-east-3-stackit":"Falkenstein, Germany",
+  "us-east-4-stackit":"Falkenstein, Germany","us-east-5-stackit":"Falkenstein, Germany","us-east-6-stackit":"Falkenstein, Germany",
+  "us-east-7-stackit":"Falkenstein, Germany","us-east-8-stackit":"Falkenstein, Germany","ca-east-1-stackit":"Quebec City, Canada",
+  "ca-east-2-stackit":"Quebec City, Canada","apac-southeast-1-stackit":"Sydney, Australia","apac-southeast-2-stackit":"Sydney, Australia",
+  "apac-southeast-3-stackit":"Sydney, Australia","apac-southeast-4-stackit":"Sydney, Australia","apac-southeast-5-stackit":"Sydney, Australia",
+  "apac-southeast-6-stackit":"Sydney, Australia","apac-southeast-7-stackit":"Sydney, Australia","apac-southeast-8-stackit":"Sydney, Australia",
+  // OVH
+  "gra-ovh":"Gradignan, France","bhs-ovh":"Beauharnois, Canada","bhs2-ovh":"Beauharnois, Canada","bhs3-ovh":"Beauharnois, Canada",
+  "rbx-ovh":"Roubaix, France","ukh-ovh":"Bishops Stortford, UK","de-fld-ovh":"Falkenstein, Germany","de-fld2-ovh":"Falkenstein, Germany",
+  "de-fld3-ovh":"Falkenstein, Germany","de-fld4-ovh":"Falkenstein, Germany","de-fld5-ovh":"Falkenstein, Germany","de-fld6-ovh":"Falkenstein, Germany",
+  "de-fld7-ovh":"Falkenstein, Germany","de-fld8-ovh":"Falkenstein, Germany","bhs4-ovh":"Beauharnois, Canada","bhs5-ovh":"Beauharnois, Canada",
+  "bhs6-ovh":"Beauharnois, Canada","bhs7-ovh":"Beauharnois, Canada","bhs8-ovh":"Beauharnois, Canada","bhs9-ovh":"Beauharnois, Canada",
+  "rbx2-ovh":"Roubaix, France","rbx3-ovh":"Roubaix, France","rbx4-ovh":"Roubaix, France","rbx5-ovh":"Roubaix, France",
+  "rbx6-ovh":"Roubaix, France","rbx7-ovh":"Roubaix, France","rbx8-ovh":"Roubaix, France","rbx9-ovh":"Roubaix, France",
+  "ukh2-ovh":"Bishops Stortford, UK","ukh3-ovh":"Bishops Stortford, UK","ukh4-ovh":"Bishops Stortford, UK","ukh5-ovh":"Bishops Stortford, UK",
+  "ukh6-ovh":"Bishops Stortford, UK","ukh7-ovh":"Bishops Stortford, UK","ukh8-ovh":"Bishops Stortford, UK","ukh9-ovh":"Bishops Stortford, UK",
+  "us-mia-ovh":"Miami, USA","us-mia2-ovh":"Miami, USA","us-mia3-ovh":"Miami, USA","us-mia4-ovh":"Miami, USA","us-mia5-ovh":"Miami, USA","us-mia6-ovh":"Miami, USA",
+  "us-las-ovh":"Las Vegas, USA","us-las2-ovh":"Las Vegas, USA","us-las3-ovh":"Las Vegas, USA","us-las4-ovh":"Las Vegas, USA","us-las5-ovh":"Las Vegas, USA","us-las6-ovh":"Las Vegas, USA",
+  "us-ord-ovh":"Chicago, USA","us-ord2-ovh":"Chicago, USA","us-ord3-ovh":"Chicago, USA","us-ord4-ovh":"Chicago, USA","us-ord5-ovh":"Chicago, USA","us-ord6-ovh":"Chicago, USA",
+  "us-phx-ovh":"Phoenix, USA","us-phx2-ovh":"Phoenix, USA","us-phx3-ovh":"Phoenix, USA","us-phx4-ovh":"Phoenix, USA","us-phx5-ovh":"Phoenix, USA","us-phx6-ovh":"Phoenix, USA",
+  "us-sea-ovh":"Seattle, USA","us-sea2-ovh":"Seattle, USA","us-sea3-ovh":"Seattle, USA","us-sea4-ovh":"Seattle, USA","us-sea5-ovh":"Seattle, USA","us-sea6-ovh":"Seattle, USA",
+  "ca-slo-ovh":"Quebec City, Canada","ca-slo2-ovh":"Quebec City, Canada","ca-slo3-ovh":"Quebec City, Canada","ca-slo4-ovh":"Quebec City, Canada","ca-slo5-ovh":"Quebec City, Canada","ca-slo6-ovh":"Quebec City, Canada",
+  "gra2-ovh":"Gradignan, France","gra3-ovh":"Gradignan, France","gra4-ovh":"Gradignan, France","gra5-ovh":"Gradignan, France","gra6-ovh":"Gradignan, France","gra7-ovh":"Gradignan, France",
+  "gra8-ovh":"Gradignan, France","gra9-ovh":"Gradignan, France",
+  // Simple OVH region names (without -ovh suffix)
+  "GRA":"Gravelines, France","BHS":"Bahia, Brazil","RBX":"Robopolis, Brazil","UK":"London, UK","WAW":"Warsaw, Poland",
+  // Hetzner
+  "fs-hetzner":"Falkenstein, Germany","nbg-hetzner":"Nuremberg, Germany","us-hetzner":"US East (Hillsboro)","ca-hetzner":"Canada East (Montreal)",
+  "eu-hetzner":"EU Central (Nuremberg)","apac-hetzner":"APAC (Hong Kong)",
+  // Additional Hetzner region names (without -hetzner suffix)
+  "fsn1":"Falkenstein, Germany","fsn2":"Falkenstein, Germany","fsn3":"Falkenstein, Germany",
+  "nbg1":"Nuremberg, Germany","nbg2":"Nuremberg, Germany","nbg3":"Nuremberg, Germany","hel1":"Helsinki, Finland",
 }
 
 export const PROVIDER_COLORS: Record<string, string> = {
@@ -100,4 +186,7 @@ export const PROVIDER_COLORS: Record<string, string> = {
   alicloud: '#ff6a00',
   yandex:   '#fcdb03',
   oci:      '#c74634',
+  ovh:      '#0046a3',
+  hetzner:  '#ff0000',
+  stackit:  '#242424',
 }

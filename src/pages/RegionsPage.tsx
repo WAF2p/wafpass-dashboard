@@ -13,6 +13,9 @@ const PROVIDER_LABEL: Record<string, string> = {
   alicloud: 'Alibaba Cloud',
   yandex:   'Yandex Cloud',
   oci:      'Oracle Cloud Infrastructure',
+  ovh:      'OVH Cloud',
+  hetzner:  'Hetzner Cloud',
+  stackit:  'STACKIT',
 }
 
 function detectProvider(entry: string[]): string {
@@ -23,6 +26,9 @@ function detectProvider(entry: string[]): string {
   if (r.match(/^(europe-|us-central|asia-|southamerica-|northamerica-|australia-southeast|africa-south)/)) return 'gcp'
   if (r.match(/^(eu-frankfurt|us-ashburn|us-phoenix|uk-london|ap-tokyo|ap-sydney|ap-mumbai|sa-saopaulo|ca-toronto)/)) return 'oci'
   if (r.match(/^cn-/)) return 'alicloud'
+  if (r.match(/^(de|fr|nl|uk|us|ca|br|pl|se|it|es|at|ch|be|ie|dk|no|fi|lt|lv|ee|bg|ro|hr|sk|cz|hu|gr|pt|ie|ru|tr|ua|by|kz|md|uz|tj|kg|am|az|ge|mk|rs|ba|me|al|gr|tr|il|ae|sa|qa|in|jp|cn|sg|my|th|vn|ph|id|nz|au)(-ovh|-stackit|-hetzner)?$/)) return 'ovh'
+  if (r.match(/^(fs|hi|nbg|us|ca|eu|)(-ovh|-stackit|-hetzner)?$/)) return 'hetzner'
+  if (r.match(/^(de|eu|us|ca|apac|)(-ovh|-stackit|-hetzner)?$/)) return 'stackit'
   return 'unknown'
 }
 
@@ -46,7 +52,7 @@ export default function RegionsPage({ run }: Props) {
     grouped[provider].push(entry)
   }
 
-  const providerOrder = ['aws', 'azure', 'gcp', 'oci', 'alicloud', 'yandex', 'unknown']
+  const providerOrder = ['aws', 'azure', 'gcp', 'ovh', 'hetzner', 'stackit', 'oci', 'alicloud', 'yandex', 'unknown']
   const sortedProviders = Object.keys(grouped).sort(
     (a, b) => providerOrder.indexOf(a) - providerOrder.indexOf(b)
   )
