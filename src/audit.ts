@@ -1,3 +1,5 @@
+import { pushAuditEvent } from './api'
+
 // ─── Audit event model ────────────────────────────────────────────────────────
 
 export type AuditCategory = 'waiver' | 'risk' | 'scan' | 'finding'
@@ -64,6 +66,19 @@ export function appendAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>): v
     log.unshift(entry)                          // newest first
     if (log.length > MAX_EVENTS) log.length = MAX_EVENTS
     localStorage.setItem(AUDIT_KEY, JSON.stringify(log))
+    // Fire-and-forget push to server (no-op if unauthenticated)
+    pushAuditEvent({
+      client_id: entry.id,
+      actor: entry.actor,
+      category: entry.category,
+      action: entry.action,
+      subject_id: entry.subject_id,
+      subject_type: entry.subject_type,
+      summary: entry.summary,
+      timestamp: entry.timestamp,
+      before: entry.before,
+      after: entry.after,
+    })
   } catch { /* storage full — silently drop */ }
 }
 

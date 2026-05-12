@@ -23,17 +23,57 @@ No state management library (no Redux, no Zustand). No CSS framework. No compone
 
 ```
 src/
-├── main.tsx              # ReactDOM.createRoot, mounts App
-├── index.css             # Global CSS custom properties + utility classes
-├── App.tsx               # Root: routing, sidebar, header, page dispatch
-├── api.ts                # All fetch() calls + TypeScript interfaces
-├── audit.ts              # localStorage audit log + first-seen tracking
-├── controls-data.ts      # Hardcoded metadata for all 73 controls
-├── region-data.ts        # Cloud region coordinates and metadata
-├── pages/                # One file per page (27 pages)
+├── main.tsx                     # ReactDOM.createRoot, wraps App in <AuthProvider>
+├── index.css                    # Global CSS custom properties + utility classes
+├── App.tsx                      # Root: auth guard, routing, sidebar, header, page dispatch
+├── AuthContext.tsx               # Token storage, login/logout/refresh, useAuth() hook
+├── api.ts                       # All fetch() calls + TypeScript interfaces (auth-gated)
+├── audit.ts                     # localStorage audit log + first-seen tracking
+├── controls-data.ts             # Hardcoded metadata for all 73 controls
+├── region-data.ts               # Cloud region coordinates and metadata
+├── pages/
+│   ├── LoginPage.tsx            # Login form + SSO redirect handling
+│   ├── DashboardPage.tsx        # Executive KPIs, pillar radar, trend chart
+│   ├── ProjectOverviewPage.tsx  # Project passport cards with maturity tiers
+│   ├── PassportDashboardPage.tsx # Single-project passport detail view
+│   ├── BadgePage.tsx            # Maturity badge + achievement verification snippets
+│   ├── LeaderboardPage.tsx      # Top sovereign and most improved rankings
+│   ├── ControlsCataloguePage.tsx # Browse and author controls
+│   ├── ControlsPage.tsx         # Run-specific controls view
+│   ├── FindingsPage.tsx         # Filterable findings table with bulk actions
+│   ├── CompliancePage.tsx       # Pillar coverage, pass rates, regulatory mapping
+│   ├── GapAnalysisPage.tsx      # Shortest path to framework compliance
+│   ├── ChangesPage.tsx          # Terraform plan changes
+│   ├── DriftDetectionPage.tsx   # Run-over-run control status drift
+│   ├── SkippedControlsPage.tsx  # Controls skipped due to no matching IaC resources
+│   ├── RegionsPage.tsx          # Cloud regions interactive map
+│   ├── ExploitPathsPage.tsx     # Attack chain visualization
+│   ├── BlastRadiusPage.tsx      # Failing resource propagation graph (D3)
+│   ├── DependencyGraphPage.tsx  # Full resource dependency graph (D3)
+│   ├── RemediationSprintPage.tsx # Prioritised fix queue with score projections
+│   ├── SecretScanPage.tsx       # Hardcoded credential findings
+│   ├── ModuleScorePage.tsx      # Per-Terraform-module pass rate
+│   ├── CostImpactPage.tsx       # $/month impact of failing WAF-COST controls
+│   ├── RunsListPage.tsx         # All scan runs with scores
+│   ├── RunDiffPage.tsx          # Finding-level diff between two runs
+│   ├── AuditLogPage.tsx         # Waivers, risk, and scan event timeline
+│   ├── EvidencePage.tsx         # Evidence Locker — lock packages, display QR codes
+│   ├── RunScanPage.tsx          # Trigger a scan or generate a CLI command
+│   ├── SandboxPage.tsx          # Test HCL against controls (mock + real engine)
+│   ├── WaiversPage.tsx          # Manage and export control waivers
+│   ├── RiskAcceptancePage.tsx   # Formally accept risks with approver sign-off
+│   ├── AccessRolesPage.tsx      # Role hierarchy and permission overview
+│   ├── SsoSettingsPage.tsx      # Configure OIDC / SAML2 providers (admin)
+│   ├── GroupMappingsPage.tsx    # Map IdP groups to WAF++ roles (admin)
+│   ├── ApiManagementPage.tsx    # Manage API keys for CI/CD (admin)
+│   ├── UserManagementPage.tsx   # Create, edit, deactivate users
+│   ├── SettingsPage.tsx         # Maturity level, feature toggles, PDF config
+│   ├── UserPreferencesPage.tsx  # Appearance, navigation defaults, date formats
+│   ├── ReferenceArchitecturePage.tsx # WAF++ Reference Architecture documentation
+│   └── FeedbackPage.tsx         # Send feedback to the WAF++ team
 └── components/
-    ├── RunSelectorModal.tsx   # Run picker modal
-    └── PdfReport.tsx          # Print-to-PDF report layout
+    ├── RunSelectorModal.tsx     # Run picker modal
+    └── PdfReport.tsx            # Print-to-PDF report layout with dark mode support
 ```
 
 ---
@@ -48,7 +88,12 @@ No React Router. Custom hash-based routing is implemented directly in `App.tsx`.
 #/dashboard              → page "dashboard", no run
 #/findings?run=abc123    → page "findings", run "abc123"
 #/settings               → page "settings", no run required
+#/userprefs              → page "userprefs", no run required (preferences page)
 ```
+
+**Pages without run metadata in header:** `runs`, `diff`, `catalogue`, `settings`, `runscan`, `sandbox`, `waivers`, `risk`, `audit`, `evidence`, `feedback`, `projectoverview`, `passports`, `badge`, `leaderboard`, `journey`, `userprefs`.
+
+These pages don't show the "Run X from Y" chip in the top header because they don't require or benefit from run context.
 
 ### Key functions
 
@@ -77,9 +122,104 @@ On mount, `parseHash().runId` is captured in `initialHashRunId` (a `useRef`). Af
 
 ---
 
+## Authentication (`AuthContext.tsx`)
+
+### Token flow — local login
+
+```
+LoginPage
+    │  login(username, password)
+    ▼
+api.ts: POST /auth/login
+    │
+    │  {access_token, refresh_token, user}
+    ▼
+AuthContext
+    ├─ localStorage.setItem('wafpass_access_token', ...)
+    ├─ localStorage.setItem('wafpass_refresh_token', ...)
+    ├─ localStorage.setItem('wafpass_auth_user', JSON.stringify(user))
+    └─ setState({ user, accessToken, role })
+
+App.tsx checks: if (!user) → <LoginPage />
+               else       → <AuthenticatedApp />
+```
+
+### Token flow — SSO (OIDC / SAML2)
+
+```
+LoginPage
+    │  user clicks "Sign in with OIDC / SAML2"
+    ▼
+window.location = /auth/oidc/authorize  (or /auth/saml/login)
+    │
+    ▼
+Server performs IdP redirect → callback → JWKS signature verification
+    │  (OIDC: id_token verified against IdP public key; nonce validated)
+    │  302 redirect to dashboard
+    │  ?sso_ok=1&at=<access_token>&rt=<refresh_token>&u=<base64_user>
+    ▼
+LoginPage (on mount, detects sso_ok=1 in URL params)
+    ├─ extract at, rt, u from URLSearchParams
+    ├─ decode user: JSON.parse(atob(u))
+    ├─ AuthContext.loginWithTokens(at, rt, user)
+    │   ├─ localStorage.setItem('wafpass_access_token', at)
+    │   ├─ localStorage.setItem('wafpass_refresh_token', rt)
+    │   └─ localStorage.setItem('wafpass_auth_user', JSON.stringify(user))
+    └─ window.history.replaceState(null, '', pathname + '#/dashboard')
+       (clears tokens from URL / browser history immediately)
+```
+
+The tokens arrive via URL query parameters, which is a standard OAuth 2.0 pattern for SPA redirects. The URL is cleaned up synchronously via `replaceState` before any navigation can leak them. The server ensures the tokens are only issued after full IdP verification — the dashboard trusts and stores what the server provides.
+
+### On-mount session restore
+
+1. Read `wafpass_access_token` from localStorage
+2. Decode the JWT payload (`atob(token.split('.')[1])`) — check `exp`
+3. If valid → restore session immediately (no network round-trip)
+4. If expired but `wafpass_refresh_token` exists → `POST /auth/refresh` → store new access token
+5. If refresh fails → clear all tokens → show LoginPage
+
+### `useAuth()` hook
+
+```typescript
+const { user, role, accessToken, isLoading, login, logout } = useAuth()
+```
+
+### Role-filtered nav
+
+`App.tsx` computes `visibleSections` by filtering `navSections` with:
+
+```typescript
+const visibleSections = navSections.filter(s => hasMinRole(role, s.id))
+```
+
+`hasMinRole(userRole, minimum)` returns true when `ROLE_HIERARCHY.indexOf(userRole) >= ROLE_HIERARCHY.indexOf(minimum)`. Section IDs (`clevel`, `ciso`, `architect`, `engineer`) map directly to the role names so no separate mapping is needed.
+
+| User role | Visible sections |
+|---|---|
+| `clevel` | C-Level only |
+| `ciso` | C-Level, CISO |
+| `architect` | C-Level, CISO, Architect |
+| `engineer` | All sections |
+
+### Auth headers in api.ts
+
+Every `fetch()` call in `api.ts` passes `_authHeaders()`:
+
+```typescript
+function _authHeaders(): Record<string, string> {
+  const t = localStorage.getItem('wafpass_access_token')
+  return t ? { Authorization: `Bearer ${t}` } : {}
+}
+```
+
+This reads directly from localStorage rather than React state so it works outside component render cycles (e.g. in event handlers and `useEffect`).
+
+---
+
 ## State management
 
-All state lives in `App.tsx` and is passed down as props. There is no context API or shared store.
+All state lives in `App.tsx` and is passed down as props. Auth state lives in `AuthContext` (React context).
 
 ### App-level state
 
@@ -159,6 +299,15 @@ try {
     }
 }
 ```
+
+### Findings comments API
+
+The findings comments endpoints (`/findings-comments`, `/secret-findings-comments`) support:
+- `fetchFindingComments(findingId)` — list comments for a finding
+- `createFindingComment(findingId, message)` — add a comment
+- `deleteFindingComment(commentId)` — remove a comment
+
+All require Bearer JWT authentication (clevel+ role).
 
 ---
 
@@ -316,39 +465,39 @@ The nginx config (`nginx.conf`) proxies API paths to `wafpass-server:8000` (Dock
 
 ---
 
+## Evidence Locker architecture
+
+`EvidencePage.tsx` has two rendering modes:
+
+**Local (browser-only):** Generates a self-contained HTML string via `generateHtml()` and triggers a browser download. All data comes from `run`, `waivers`, `risks`, and `auditLog` already in React state — no server round-trip.
+
+**Server-locked:** Calls `createEvidence()` in `api.ts` which POSTs to `/evidence`. The server:
+1. Computes `SHA-256(canonical_json(snapshot))` and stores it in `hash_digest`.
+2. Generates a `public_token` (32-char URL-safe random) for the unauthenticated auditor URL.
+3. Returns `EvidenceOut` including `id`, `hash_digest`, `public_token`.
+
+The dashboard then renders:
+- The SHA-256 hash digest (copyable, for independent verification against `/evidence/{id}/snapshot`).
+- The public auditor URL (`/evidence/p/{token}`) as a copyable link.
+- A QR code image fetched from `/evidence/{id}/qr.svg` (SVG generated server-side by the `segno` library; falls back to a placeholder if not installed).
+
+The QR code encodes the public URL so auditors can scan it with a phone to access the frozen HTML report without logging in.
+
+## Achievement and Badge architecture
+
+`BadgePage.tsx` calls `fetchBadgeStatus(project)` which reads `/public/badge/{project}/json` — a public, no-auth endpoint that returns the latest run's tier level, label, color, and score. The page generates ready-to-paste badge snippets for Markdown, HTML, AsciiDoc, reStructuredText, Org-mode, and JSON.
+
+`LeaderboardPage.tsx` calls `GET /leaderboard` and renders two ranked tables. Both use `ProjectPassport` display names and owner metadata when available.
+
+Achievement verification tokens are surfaced as `GET /public/achievements/{token}` — a fully rendered HTML page served directly by the server with no React dependency. The page shows the tier badge, score, pillar scores at achievement time, and the verification token in a monospace box.
+
+---
+
 ## Technical debt
 
-### No tests
+### 401 not automatically handled
 
-There are no unit or integration tests. The TypeScript compiler catches type errors, but there are no Jest/Vitest tests for component logic, API functions, or audit utilities.
-
-### Monolithic App.tsx
-
-`App.tsx` is ~630 lines handling routing, sidebar, header, state, and run loading. It has grown organically. The sidebar could be extracted to a `Sidebar.tsx` component, and the run-loading logic could move to a custom hook.
-
-### Inline styles everywhere
-
-All styling uses inline `style` objects. This is consistent and avoids CSS class collision but makes theming difficult and produces verbose JSX. No CSS module or styled-component is used.
-
-### Chart library coverage
-
-Recharts is used for radar and bar charts. D3 is used ad-hoc in BlastRadiusPage and DependencyGraphPage. The two libraries overlap; all charts could be unified on one library.
-
-### No code splitting
-
-The entire application (~1.3 MB minified) is in one chunk. Pages like DependencyGraphPage (which uses D3) and RegionsPage (which uses Leaflet + its CSS) contribute significantly. Lazy-loading page components with `React.lazy()` + `Suspense` would improve first-load performance.
-
-### localStorage as team cache
-
-Waivers and risk acceptances sync with the server but fall back to localStorage when offline. This works for single-user use but means two teammates with different local caches may see different waiver lists momentarily. The server is authoritative; the cache is best-effort.
-
-### Audit log is browser-local
-
-Audit events are recorded in `localStorage` per browser. There is no server-side audit log. Events cannot be shared across teammates, and they are lost if `localStorage` is cleared. A future version should persist audit events to the server.
-
-### `controls-data.ts` duplication
-
-`controls-data.ts` contains hardcoded metadata for all 73 controls (IDs, titles, pillars, severities). This duplicates the information in the server's controls catalogue. It is used as a fallback when no run is loaded. As the control set grows this file needs manual updates.
+When a server returns 401 (expired token, not refreshed), api.ts throws `Error('HTTP 401')`. The page shows an error message but doesn't redirect to login. A centralised 401 interceptor (e.g. `authedFetch()` wrapper that calls `AuthContext.logout()` on 401) would improve the UX, but requires injecting the React context into api.ts — deferred to Phase 2.
 
 ---
 

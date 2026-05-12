@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from 'recharts'
 import { RunSummary } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props {
   runs: RunSummary[]
@@ -33,6 +34,7 @@ function fmt(iso: string) {
 function fmtFull(iso: string) {
   return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
+const PAGE_SIZE = 50
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 function ScoreTooltip({ active, payload, label }: any) {
@@ -76,6 +78,7 @@ function PillarTooltip({ active, payload, label }: any) {
 
 // ── Trend view ────────────────────────────────────────────────────────────────
 function TrendView({ runs, onSelect }: Props) {
+  const { t } = useI18n()
   const sorted = useMemo(
     () => [...runs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
     [runs]
@@ -161,7 +164,7 @@ function TrendView({ runs, onSelect }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: scoreColor(firstRun.score), lineHeight: 1 }}>{firstRun.score}</div>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>first</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.first')}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
             <svg width="28" height="12" viewBox="0 0 28 12">
@@ -177,12 +180,12 @@ function TrendView({ runs, onSelect }: Props) {
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: scoreColor(lastRun.score), lineHeight: 1 }}>{lastRun.score}</div>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>latest</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.latest')}</div>
           </div>
         </div>
         <div style={{ width: '1px', height: '28px', background: 'var(--border)' }} />
         <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-          {projects.length} project{projects.length !== 1 ? 's' : ''}
+          {t('pages.runs.projects', { count: projects.length })}
         </div>
         {branches.length > 1 && (
           <>
@@ -191,7 +194,7 @@ function TrendView({ runs, onSelect }: Props) {
               value={branchFilter} onChange={e => setBranchFilter(e.target.value)}
               className="filter-select" style={{ fontSize: '0.75rem' }}
             >
-              <option value="">All branches</option>
+              <option value="">{t('pages.runs.allBranches')}</option>
               {branches.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
           </>
@@ -202,7 +205,7 @@ function TrendView({ runs, onSelect }: Props) {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Overall Score Over Time
+            {t('pages.runs.overallScore')}
           </span>
           <div style={{ display: 'flex', gap: '1.25rem', marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -216,7 +219,7 @@ function TrendView({ runs, onSelect }: Props) {
         <div style={{ padding: '1rem 0.5rem 0.5rem' }}>
           {sorted.length < 2 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              Run at least 2 scans to see a trend.
+              {t('pages.runs.needTwoScans')}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
@@ -267,7 +270,7 @@ function TrendView({ runs, onSelect }: Props) {
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Pillar Scores Over Time
+              {t('pages.runs.pillarScores')}
             </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1px', background: 'var(--border)' }}>
@@ -293,7 +296,7 @@ function TrendView({ runs, onSelect }: Props) {
                   </div>
                   {data.length < 2 ? (
                     <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>single run</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.runs.singleRun')}</span>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={72}>
@@ -342,7 +345,31 @@ function ScoreBadge({ score }: { score: number }) {
   )
 }
 
-const COL_HEADERS = ['Project', 'Branch', 'Score', 'Framework', 'Triggered by', 'Controls', 'Date']
+const STAGE_COLORS: Record<string, { bg: string; text: string }> = {
+  prod:       { bg: '#fef2f2', text: '#b91c1c' },
+  production: { bg: '#fef2f2', text: '#b91c1c' },
+  staging:    { bg: '#fff7ed', text: '#c2410c' },
+  stage:      { bg: '#fff7ed', text: '#c2410c' },
+  dev:        { bg: '#f0fdf4', text: '#15803d' },
+  development:{ bg: '#f0fdf4', text: '#15803d' },
+  test:       { bg: '#eff6ff', text: '#1d4ed8' },
+  qa:         { bg: '#faf5ff', text: '#7e22ce' },
+}
+
+function StageBadge({ stage }: { stage: string }) {
+  if (!stage) return <span style={{ color: 'var(--muted)' }}>—</span>
+  const colors = STAGE_COLORS[stage.toLowerCase()] ?? { bg: '#f1f5f9', text: '#475569' }
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '0.15rem 0.5rem', borderRadius: '999px',
+      background: colors.bg, color: colors.text,
+      fontWeight: 600, fontSize: '0.75rem', whiteSpace: 'nowrap',
+    }}>
+      {stage}
+    </span>
+  )
+}
 
 function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void }) {
   return (
@@ -357,6 +384,7 @@ function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void
         {r.git_sha && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>{r.git_sha.slice(0, 7)}</div>}
       </td>
       <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{r.branch || '—'}</td>
+      <td style={{ padding: '0.75rem 1rem' }}><StageBadge stage={r.stage} /></td>
       <td style={{ padding: '0.75rem 1rem' }}><ScoreBadge score={r.score} /></td>
       <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)', fontFamily: 'monospace', fontSize: '0.78rem' }}>{r.iac_framework}</td>
       <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{r.triggered_by}</td>
@@ -371,12 +399,14 @@ function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void
 }
 
 function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: string) => void }) {
+  const { t } = useI18n()
+  const colHeaders = [t('pages.runs.colProject'), t('pages.runs.colBranch'), t('pages.runs.colStage'), t('pages.runs.colScore'), t('pages.runs.colFramework'), t('pages.runs.colTriggeredBy'), t('pages.runs.colControls'), t('pages.runs.colDate')]
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
         <thead>
           <tr style={{ background: 'var(--bg)' }}>
-            {COL_HEADERS.map(h => (
+            {colHeaders.map(h => (
               <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                 {h}
               </th>
@@ -393,15 +423,36 @@ function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: stri
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function RunsListPage({ runs, onSelect }: Props) {
+  const { t } = useI18n()
   const [viewMode, setViewMode] = useState<'all' | 'project' | 'trend'>('all')
+  const [stageFilter, setStageFilter] = useState('')
+  const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE)
 
   if (runs.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        No runs yet. Run <code>wafpass check --push http://localhost:8000/runs</code> to record your first scan.
+        {t('pages.runs.noRuns')} <code>wafpass check --push http://localhost:8000/runs</code>
       </div>
     )
   }
+
+  const stages = useMemo(
+    () => [...new Set(runs.map(r => r.stage).filter(Boolean))].sort(),
+    [runs]
+  )
+
+  // Filter and slice runs for display
+  const filteredRuns = useMemo(
+    () => stageFilter ? runs.filter(r => r.stage === stageFilter) : runs,
+    [runs, stageFilter]
+  )
+
+  const displayedRuns = useMemo(
+    () => filteredRuns.slice(0, displayLimit),
+    [filteredRuns, displayLimit]
+  )
+
+  const hasMoreRuns = displayLimit < filteredRuns.length
 
   const btnBase: React.CSSProperties = {
     padding: '0.3rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem',
@@ -411,25 +462,52 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   const btnInactive: React.CSSProperties = { ...btnBase, background: '#fff', color: 'var(--muted)' }
 
   const vm = viewMode as string
+  const stageSelect = stages.length > 0 ? (
+    <>
+      <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
+      <select
+        value={stageFilter} onChange={e => setStageFilter(e.target.value)}
+        className="filter-select" style={{ fontSize: '0.75rem' }}
+      >
+        <option value="">{t('pages.runs.allStages')}</option>
+        {stages.map(s => <option key={s} value={s}>{s}</option>)}
+      </select>
+    </>
+  ) : null
+
   const toolbar = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)', gap: '0.4rem' }}>
-      <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}>View:</span>
-      <button style={vm === 'all'     ? btnActive : btnInactive} onClick={() => setViewMode('all')}>All runs</button>
-      <button style={vm === 'project' ? btnActive : btnInactive} onClick={() => setViewMode('project')}>Project</button>
-      <button style={vm === 'trend'   ? btnActive : btnInactive} onClick={() => setViewMode('trend')}>Trend</button>
+      {stageSelect}
+      <div style={{ flex: 1 }} />
+      <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}></span>
+      <button style={vm === 'all'     ? btnActive : btnInactive} onClick={() => setViewMode('all')}>{t('pages.runs.viewAll')}</button>
+      <button style={vm === 'project' ? btnActive : btnInactive} onClick={() => setViewMode('project')}>{t('pages.runs.viewProject')}</button>
+      <button style={vm === 'trend'   ? btnActive : btnInactive} onClick={() => setViewMode('trend')}>{t('pages.runs.viewTrend')}</button>
     </div>
   )
 
   if (viewMode === 'trend') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', alignSelf: 'center', marginRight: '0.35rem' }}>View:</span>
-          <button style={btnInactive} onClick={() => setViewMode('all')}>All runs</button>
-          <button style={btnInactive} onClick={() => setViewMode('project')}>Project</button>
-          <button style={btnActive}   onClick={() => setViewMode('trend')}>Trend</button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', alignItems: 'center' }}>
+          {stages.length > 0 && (
+            <>
+              <select
+                value={stageFilter} onChange={e => setStageFilter(e.target.value)}
+                className="filter-select" style={{ fontSize: '0.75rem' }}
+              >
+                <option value="">{t('pages.runs.allStages')}</option>
+                {stages.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
+            </>
+          )}
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}></span>
+          <button style={btnInactive} onClick={() => setViewMode('all')}>{t('pages.runs.viewAll')}</button>
+          <button style={btnInactive} onClick={() => setViewMode('project')}>{t('pages.runs.viewProject')}</button>
+          <button style={btnActive}   onClick={() => setViewMode('trend')}>{t('pages.runs.viewTrend')}</button>
         </div>
-        <TrendView runs={runs} onSelect={onSelect} />
+        <TrendView runs={displayedRuns} onSelect={onSelect} />
       </div>
     )
   }
@@ -438,14 +516,30 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     return (
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {toolbar}
-        <RunsTable runs={runs} onSelect={onSelect} />
+        <RunsTable runs={displayedRuns} onSelect={onSelect} />
+        {hasMoreRuns && (
+          <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border)' }}>
+            <button
+              onClick={() => setDisplayLimit(prev => prev + PAGE_SIZE)}
+              style={{
+                display: 'block', margin: '0 auto',
+                padding: '0.5rem 1rem', borderRadius: '8px',
+                border: '1px solid var(--border)', background: 'var(--surface)',
+                color: 'var(--text)', fontSize: '0.75rem', fontWeight: 600,
+                cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              {t('pages.runs.loadMore', { count: Math.min(PAGE_SIZE, filteredRuns.length - displayLimit) })}
+            </button>
+          </div>
+        )}
       </div>
     )
   }
 
-  // Group by project
+  // Group by project - use filtered runs for grouping, but only display paginated
   const groupMap = new Map<string, RunSummary[]>()
-  for (const r of runs) {
+  for (const r of filteredRuns) {
     const key = r.project || '(no project)'
     if (!groupMap.has(key)) groupMap.set(key, [])
     groupMap.get(key)!.push(r)
@@ -462,8 +556,15 @@ export default function RunsListPage({ runs, onSelect }: Props) {
         {toolbar}
       </div>
       {groups.map(([project, groupRuns]) => {
-        const scores   = groupRuns.map(r => r.score)
-        const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        // For project view, we only show runs that are within displayLimit of the filtered runs
+        const displayedGroupRuns = groupRuns.filter(r => {
+          const index = filteredRuns.indexOf(r)
+          return index >= 0 && index < displayLimit
+        })
+        const scores   = displayedGroupRuns.map(r => r.score)
+        const avgScore = displayedGroupRuns.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+          : 0
         const color    = scoreColor(avgScore)
         const isUnnamed = project === '(no project)'
         return (
@@ -476,13 +577,28 @@ export default function RunsListPage({ runs, onSelect }: Props) {
                 {groupRuns.length} run{groupRuns.length !== 1 ? 's' : ''}
               </span>
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
-                avg score <span style={{ fontWeight: 700, color, fontSize: '0.8rem' }}>{avgScore}</span>
+                {t('pages.runs.avgScore')} <span style={{ fontWeight: 700, color, fontSize: '0.8rem' }}>{avgScore}</span>
               </span>
             </div>
-            <RunsTable runs={groupRuns} onSelect={onSelect} />
+            <RunsTable runs={displayedGroupRuns} onSelect={onSelect} />
           </div>
         )
       })}
+      {hasMoreRuns && (
+        <div style={{ textAlign: 'center', padding: '1rem' }}>
+          <button
+            onClick={() => setDisplayLimit(prev => prev + PAGE_SIZE)}
+            style={{
+              padding: '0.5rem 1rem', borderRadius: '8px',
+              border: '1px solid var(--border)', background: 'var(--surface)',
+              color: 'var(--text)', fontSize: '0.75rem', fontWeight: 600,
+              cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            {t('pages.runs.loadMore', { count: Math.min(PAGE_SIZE, filteredRuns.length - displayLimit) })}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

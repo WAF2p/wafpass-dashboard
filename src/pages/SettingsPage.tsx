@@ -1,230 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { SERVER_URL_KEY } from '../api'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface ReportSections {
-  executiveSummary: boolean   // Score KPIs, run metadata
-  pillarBreakdown: boolean    // Pillar scores table
-  criticalFindings: boolean   // Critical & high failures
-  complianceMatrix: boolean   // Regulatory readiness + category pass rates
-  architecturalDebt: boolean  // Pillar × severity heatmap
-  allFindings: boolean        // Full findings table
-  remediationPlan: boolean    // Quick wins + remediation guidance
-  cloudFootprint: boolean     // Detected regions & providers
-  planChanges: boolean        // Terraform plan changes
-}
-
-export interface Settings {
-  // Scan
-  defaultIac: string
-  failOn: string
-  defaultSeverity: string
-  activePillars: string[]
-  // Intelligence
-  secretScanner: boolean
-  autoFix: boolean
-  blastRadius: boolean
-  driftDetection: boolean
-  complianceGating: boolean
-  riskScoring: boolean
-  dependencyGraph: boolean
-  // Observability
-  carbonTracking: boolean
-  evidenceCollection: boolean
-  multiCloudNormalization: boolean
-  // UX
-  pdfAutoOpen: boolean
-  hideDisabledMenuItems: boolean
-  // PDF Report
-  reportSections: ReportSections
-}
-
-export interface MaturityState {
-  level: number
-  settings: Settings
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const ALL_PILLARS = ['security', 'cost', 'operations', 'reliability', 'performance', 'sovereign', 'sustainability']
-
-// Controls per pillar and severity (derived from ./pass/controls/)
-const PILLAR_COUNTS: Record<string, number> = {
-  security: 13, cost: 10, operations: 10, reliability: 10,
-  performance: 10, sovereign: 10, sustainability: 10,
-}
-const SEV_COUNTS = { critical: 8, high: 34, medium: 28, low: 3 }
-const TOTAL_CONTROLS = 73
-
-function controlsForLevel(level: number): number {
-  const sevThresholds: Record<number, string[]> = {
-    1: ['critical'],
-    2: ['critical', 'high'],
-    3: ['critical', 'high', 'medium'],
-    4: ['critical', 'high', 'medium', 'low'],
-    5: ['critical', 'high', 'medium', 'low'],
-  }
-  const pillarsForLevel: Record<number, string[]> = {
-    1: ['security'],
-    2: ['security', 'cost'],
-    3: ['security', 'cost', 'operations', 'reliability'],
-    4: ALL_PILLARS.filter(p => p !== 'sustainability'),
-    5: ALL_PILLARS,
-  }
-  const sevs = new Set(sevThresholds[level] ?? [])
-  // Approximate: total controls × fraction of severities × fraction of pillars
-  const sevFraction = Object.entries(SEV_COUNTS)
-    .filter(([s]) => sevs.has(s))
-    .reduce((n, [, c]) => n + c, 0) / TOTAL_CONTROLS
-  const pillarCount = pillarsForLevel[level].reduce((n, p) => n + PILLAR_COUNTS[p], 0)
-  return Math.round(pillarCount * sevFraction)
-}
-
-const DEFAULT_REPORT_SECTIONS: ReportSections = {
-  executiveSummary: true,
-  pillarBreakdown: false,
-  criticalFindings: false,
-  complianceMatrix: false,
-  architecturalDebt: false,
-  allFindings: false,
-  remediationPlan: false,
-  cloudFootprint: false,
-  planChanges: false,
-}
-
-const DEFAULT_SETTINGS: Settings = {
-  defaultIac: 'terraform',
-  failOn: 'fail',
-  defaultSeverity: '',
-  activePillars: ALL_PILLARS,
-  secretScanner: true,
-  autoFix: true,
-  blastRadius: true,
-  driftDetection: false,
-  complianceGating: false,
-  riskScoring: false,
-  dependencyGraph: false,
-  carbonTracking: false,
-  evidenceCollection: false,
-  multiCloudNormalization: false,
-  pdfAutoOpen: false,
-  hideDisabledMenuItems: false,
-  reportSections: DEFAULT_REPORT_SECTIONS,
-}
-
-const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
-  1: {
-    secretScanner: false, autoFix: false, blastRadius: false,
-    driftDetection: false, complianceGating: false, riskScoring: false,
-    dependencyGraph: false, carbonTracking: false, evidenceCollection: false,
-    multiCloudNormalization: false,
-    failOn: 'fail', defaultSeverity: 'critical',
-    activePillars: ['security'],
-    reportSections: { executiveSummary: true, pillarBreakdown: false, criticalFindings: false, complianceMatrix: false, architecturalDebt: false, allFindings: false, remediationPlan: false, cloudFootprint: false, planChanges: false },
-  },
-  2: {
-    secretScanner: true, autoFix: false, blastRadius: true,
-    driftDetection: false, complianceGating: false, riskScoring: false,
-    dependencyGraph: false, carbonTracking: false, evidenceCollection: false,
-    multiCloudNormalization: false,
-    failOn: 'fail', defaultSeverity: 'high',
-    activePillars: ['security', 'cost'],
-    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: false, architecturalDebt: false, allFindings: false, remediationPlan: false, cloudFootprint: false, planChanges: false },
-  },
-  3: {
-    secretScanner: true, autoFix: true, blastRadius: true,
-    driftDetection: true, complianceGating: true, riskScoring: true,
-    dependencyGraph: false, carbonTracking: false, evidenceCollection: false,
-    multiCloudNormalization: false,
-    failOn: 'fail', defaultSeverity: 'medium',
-    activePillars: ['security', 'cost', 'operations', 'reliability'],
-    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: false, cloudFootprint: false, planChanges: false },
-  },
-  4: {
-    secretScanner: true, autoFix: true, blastRadius: true,
-    driftDetection: true, complianceGating: true, riskScoring: true,
-    dependencyGraph: true, carbonTracking: false, evidenceCollection: true,
-    multiCloudNormalization: true,
-    failOn: 'skip', defaultSeverity: '',
-    activePillars: ALL_PILLARS.filter(p => p !== 'sustainability'),
-    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: true, cloudFootprint: true, planChanges: false },
-  },
-  5: {
-    secretScanner: true, autoFix: true, blastRadius: true,
-    driftDetection: true, complianceGating: true, riskScoring: true,
-    dependencyGraph: true, carbonTracking: true, evidenceCollection: true,
-    multiCloudNormalization: true,
-    failOn: 'skip', defaultSeverity: '',
-    activePillars: ALL_PILLARS,
-    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: true, cloudFootprint: true, planChanges: true },
-  },
-}
-
-export const MATURITY_META = [
-  {
-    level: 1, label: 'L1 · Foundational', short: 'Foundational',
-    color: '#d97706', textColor: '#fbbf24', bg: 'rgba(217,119,6,',
-    desc: 'Critical-only security checks. No automation.',
-    tagline: 'First scan · quick health check · zero noise',
-    newAt: 'Critical security controls, minimal configuration',
-  },
-  {
-    level: 2, label: 'L2 · Operational', short: 'Operational',
-    color: '#0094FF', textColor: '#60a5fa', bg: 'rgba(0,148,255,',
-    desc: 'Security + cost compliance, high+ severity, secret scanning.',
-    tagline: 'Regular security ops · cost governance · team awareness',
-    newAt: 'Secret scanner, blast radius, cost pillar, high-severity controls',
-  },
-  {
-    level: 3, label: 'L3 · Governed', short: 'Governed',
-    color: '#0891b2', textColor: '#22d3ee', bg: 'rgba(8,145,178,',
-    desc: 'Multi-pillar, CI gating, auto-fix, risk scoring.',
-    tagline: 'Mature engineering · CI/CD enforcement · remediation',
-    newAt: 'Auto-fix, compliance gating, risk scoring, ops & reliability pillars',
-  },
-  {
-    level: 4, label: 'L4 · Optimized', short: 'Optimized',
-    color: '#7c3aed', textColor: '#c4b5fd', bg: 'rgba(124,58,237,',
-    desc: 'All controls, drift detection, dependency graphs, evidence.',
-    tagline: 'Platform teams · full control inventory · audit-ready',
-    newAt: 'Drift detection, dependency graph, evidence collection, multi-cloud, all non-sustainability pillars',
-  },
-  {
-    level: 5, label: 'L5 · Excellence', short: 'Excellence',
-    color: '#059669', textColor: '#34d399', bg: 'rgba(5,150,105,',
-    desc: 'All 73 controls · carbon tracking · continuous compliance.',
-    tagline: 'Cloud CoE · regulated industries · full intelligence',
-    newAt: 'Carbon tracking, sustainability pillar — full multi-cloud intelligence stack',
-  },
-]
-
-// ─── Persistence ──────────────────────────────────────────────────────────────
-
-export function loadMaturityState(): MaturityState {
-  const settings = { ...DEFAULT_SETTINGS }
-  const level = 1
-  try {
-    const s = localStorage.getItem('wafpass_settings')
-    if (s) Object.assign(settings, JSON.parse(s))
-  } catch {}
-  try {
-    const m = localStorage.getItem('wafpass_maturity')
-    if (m) return { level: parseInt(m) || 1, settings }
-  } catch {}
-  return { level, settings }
-}
-
-export function saveMaturityState(level: number, settings: Settings) {
-  try {
-    localStorage.setItem('wafpass_settings', JSON.stringify(settings))
-    localStorage.setItem('wafpass_maturity', String(level))
-  } catch {}
-}
-
-export function getMaturityMeta(level: number) {
-  return MATURITY_META.find(m => m.level === level) ?? MATURITY_META[0]
-}
+import { FRAMEWORKS } from '../controls-data'
+import { LOCALES, useI18n } from '../i18n'
+import {
+  ALL_PILLARS, controlsForLevel, DEFAULT_REPORT_SECTIONS,
+  getMaturityMeta, MATURITY_META, MATURITY_PRESETS, PILLAR_COUNTS, saveMaturityState, TOTAL_CONTROLS,
+  type ReportSections, type Settings,
+} from './settingsUtils'
+export type { MaturityState, ReportSections, Settings } from './settingsUtils'
+export { getMaturityMeta, loadMaturityState, MATURITY_META, saveMaturityState } from './settingsUtils'
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -279,6 +63,7 @@ interface Props {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage({ maturityLevel, settings, onChange }: Props) {
+  const { t } = useI18n()
   const [level, setLevel] = useState(maturityLevel)
   const [s, setS] = useState<Settings>(settings)
   const [saved, setSaved] = useState(false)
@@ -340,7 +125,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
   const controlCount = controlsForLevel(level)
 
   const selectStyle: React.CSSProperties = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem', outline: 'none',
     width: '100%',
   }
@@ -371,16 +156,14 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
     ['evidenceCollection',    'Evidence Collection',      'Auto-collect compliance evidence artefacts for audit trails', 'governance'],
     ['multiCloudNormalization','Multi-Cloud Normalization','Normalise findings across AWS, Azure, GCP, and other providers', 'visibility'],
     ['carbonTracking',        'Carbon Tracking',          'Estimate CO₂ footprint and surface high-emission resource patterns', 'sustainability'],
-    ['pdfAutoOpen',           'Auto-open PDF Report',     'Open generated PDF report in browser immediately after creation', 'ux'],
-    ['hideDisabledMenuItems', 'Hide disabled menu items', 'Remove sidebar entries for features that are turned off in settings', 'ux'],
   ]
 
   // Group toggles by category for display
   const toggleGroups: Record<string, typeof intelligenceToggles> = {}
-  for (const t of intelligenceToggles) {
-    const cat = t[3]
+  for (const tog of intelligenceToggles) {
+    const cat = tog[3]
     if (!toggleGroups[cat]) toggleGroups[cat] = []
-    toggleGroups[cat].push(t)
+    toggleGroups[cat].push(tog)
   }
 
   const categoryLabels: Record<string, string> = {
@@ -389,8 +172,32 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
     governance: 'Governance & Compliance',
     visibility: 'Visibility & Insights',
     sustainability: 'Sustainability',
-    ux: 'Interface',
   }
+
+  // Regulatory scope data derived from FRAMEWORKS
+  const allRegions = (() => {
+    const seen = new Map<string, { region: string; country: string; flag: string }>()
+    for (const fw of FRAMEWORKS) {
+      if (!seen.has(fw.region)) seen.set(fw.region, { region: fw.region, country: fw.country, flag: fw.flag })
+    }
+    return [...seen.values()]
+  })()
+
+  const REGION_PRESETS = [
+    { label: '🌍 International', regions: ['global'],                         desc: 'Global standards only' },
+    { label: '🇪🇺 Europe',        regions: ['global', 'eu', 'gb', 'de', 'fr', 'nl', 'es'], desc: 'EU + member states' },
+    { label: '🇩🇪 Germany',       regions: ['global', 'eu', 'de'],             desc: 'International + EU + Germany' },
+  ]
+
+  function toggleRegion(region: string) {
+    const current = s.regulatoryRegions ?? ['global', 'eu', 'de']
+    const next = current.includes(region)
+      ? current.filter(r => r !== region)
+      : [...current, region]
+    setS({ ...s, regulatoryRegions: next.length > 0 ? next : ['global'] })
+  }
+
+  const activeRegions = s.regulatoryRegions ?? ['global', 'eu', 'de']
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -398,7 +205,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
       {/* ── Maturity Level ─────────────────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-          Maturity Level
+          {t('pages.settingsPage.sectionMaturity')}
         </h2>
 
         {/* 5-level selector grid */}
@@ -429,7 +236,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   </div>
                   {active && (
                     <span style={{ fontSize: '0.62rem', fontWeight: 700, color: m.textColor, background: `${m.bg}0.15)`, padding: '0.1rem 0.4rem', borderRadius: '999px', border: `1px solid ${m.color}55` }}>
-                      Active
+                      {t('pages.settingsPage.activeLabel')}
                     </span>
                   )}
                 </div>
@@ -453,19 +260,19 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           {/* Left: tagline + control count */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Active at this level
+              {t('pages.settingsPage.activeAtLevel')}
             </div>
             <div style={{ fontSize: '0.8rem', color: meta.textColor, fontWeight: 600, lineHeight: 1.4 }}>
               {meta.tagline}
             </div>
             <div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.35rem' }}>Control coverage</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.35rem' }}>{t('pages.settingsPage.controlCoverage')}</div>
               <ProgressBar value={controlCount} total={TOTAL_CONTROLS} color={meta.color} />
             </div>
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-              Severity threshold:{' '}
+              {t('pages.settingsPage.severityThreshold')}{' '}
               <span style={{ fontWeight: 700, color: meta.textColor }}>
-                {level === 1 ? 'Critical only' : level === 2 ? 'High+' : level === 3 ? 'Medium+' : 'All'}
+                {level === 1 ? t('pages.settingsPage.criticalOnly') : level === 2 ? t('pages.settingsPage.highPlus') : level === 3 ? t('pages.settingsPage.mediumPlus') : t('pages.settingsPage.allSeverities')}
               </span>
             </div>
           </div>
@@ -473,7 +280,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           {/* Middle: pillars */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Pillars covered
+              {t('pages.settingsPage.pillarsCovered')}
             </div>
             {ALL_PILLARS.map(p => {
               const preset = MATURITY_PRESETS[level] as Settings
@@ -497,13 +304,13 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           {/* Right: what's new at this level */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {level === 1 ? 'Starting point' : `Added vs L${level - 1}`}
+              {level === 1 ? t('pages.settingsPage.startingPoint') : t('pages.settingsPage.addedVsLevel', { level: level - 1 })}
             </div>
             <div style={{ fontSize: '0.76rem', color: 'var(--muted)', lineHeight: 1.55 }}>
               {meta.newAt}
             </div>
             <div style={{ marginTop: '0.35rem', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Intelligence active
+              {t('pages.settingsPage.intelligenceActive')}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
               {intelligenceToggles
@@ -527,11 +334,11 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         {/* Scan Configuration */}
         <div className="card">
           <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1.1rem' }}>
-            Scan Configuration
+            {t('pages.settingsPage.sectionScan')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <label style={labelStyle}>Default IaC Framework</label>
+              <label style={labelStyle}>{t('pages.settingsPage.defaultIacLabel')}</label>
               <select value={s.defaultIac} onChange={e => setS({ ...s, defaultIac: e.target.value })} style={selectStyle}>
                 <option value="terraform">Terraform</option>
                 <option value="cdk">AWS CDK</option>
@@ -542,7 +349,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>Used when --iac is not specified on CLI</div>
             </div>
             <div>
-              <label style={labelStyle}>Fail-On Behaviour</label>
+              <label style={labelStyle}>{t('pages.settingsPage.failOnLabel')}</label>
               <select value={s.failOn} onChange={e => setS({ ...s, failOn: e.target.value })} style={selectStyle}>
                 <option value="fail">Exit non-zero on FAIL findings</option>
                 <option value="skip">Exit non-zero on FAIL + SKIP findings</option>
@@ -551,7 +358,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>Controls CI/CD exit code — affects pipeline gating</div>
             </div>
             <div>
-              <label style={labelStyle}>Minimum Severity</label>
+              <label style={labelStyle}>{t('pages.settingsPage.minSeverityLabel')}</label>
               <select value={s.defaultSeverity} onChange={e => setS({ ...s, defaultSeverity: e.target.value })} style={selectStyle}>
                 <option value="">All severities (73 controls)</option>
                 <option value="critical">Critical only (~8 controls)</option>
@@ -566,7 +373,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         {/* Pillar Coverage */}
         <div className="card">
           <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1.1rem' }}>
-            Pillar Coverage
+            {t('pages.settingsPage.sectionPillars')}
           </h2>
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.9rem', lineHeight: 1.55 }}>
             Choose which WAF++ control pillars are evaluated in every scan. Disabling a pillar reduces scan time and noise for teams not yet responsible for that domain.
@@ -586,7 +393,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     </span>
                   </div>
                   {!active && (
-                    <span style={{ fontSize: '0.65rem', color: '#dc2626', fontWeight: 600 }}>off</span>
+                    <span style={{ fontSize: '0.65rem', color: '#dc2626', fontWeight: 600 }}>{t('pages.settingsPage.offLabel')}</span>
                   )}
                 </div>
               )
@@ -607,7 +414,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
       {/* ── Intelligence & Feature Toggles ─────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
-          Intelligence & Features
+          {t('pages.settingsPage.sectionIntelligence')}
         </h2>
         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1.1rem', lineHeight: 1.55 }}>
           Fine-tune the intelligence capabilities beyond the maturity preset. Enabling a feature here overrides the preset without changing your maturity level.
@@ -640,10 +447,109 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         </div>
       </div>
 
+      {/* ── Default Interface Language ─────────────────────────────────────── */}
+      <div className="card">
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
+          {t('pages.settingsPage.sectionLanguage')}
+        </h2>
+        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1rem', lineHeight: 1.55 }}>
+          Applied to all users who have not set a personal language preference.
+        </div>
+        <select
+          value={s.defaultLanguage ?? 'en'}
+          onChange={e => setS(prev => ({ ...prev, defaultLanguage: e.target.value }))}
+          style={{
+            background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
+            borderRadius: 8, padding: '0.45rem 0.75rem', fontSize: '0.82rem', outline: 'none', cursor: 'pointer',
+          }}
+        >
+          {Object.values(LOCALES).map(l => (
+            <option key={l.meta!.code} value={l.meta!.code}>
+              {l.meta!.flag} {l.meta!.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* ── Regulatory Scope ───────────────────────────────────────────────── */}
+      <div className="card">
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
+          {t('pages.settingsPage.sectionRegulatory')}
+        </h2>
+        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1.1rem', lineHeight: 1.55 }}>
+          Set which countries' and regions' regulatory frameworks are active by default in the Compliance Matrix and reports. Users can always adjust their view per session. At least one region must remain selected.
+        </div>
+
+        {/* Presets */}
+        <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.1rem', flexWrap: 'wrap' }}>
+          {REGION_PRESETS.map(preset => {
+            const isActive = preset.regions.length === activeRegions.length &&
+              preset.regions.every(r => activeRegions.includes(r))
+            return (
+              <button key={preset.label}
+                onClick={() => setS({ ...s, regulatoryRegions: preset.regions })}
+                style={{
+                  padding: '0.4rem 0.9rem', borderRadius: 8, cursor: 'pointer',
+                  fontSize: '0.82rem', fontWeight: 600,
+                  border: `1px solid ${isActive ? 'var(--waf-brand)' : 'var(--border)'}`,
+                  background: isActive ? 'rgba(0,148,255,0.12)' : 'var(--bg)',
+                  color: isActive ? 'var(--waf-brand)' : 'var(--text)',
+                  transition: 'all 0.15s',
+                }}>
+                {preset.label}
+                <span style={{ marginLeft: '0.4rem', fontSize: '0.68rem', color: isActive ? 'var(--waf-brand)' : 'var(--muted)', fontWeight: 400 }}>
+                  {preset.desc}
+                </span>
+              </button>
+            )
+          })}
+          <button
+            onClick={() => setS({ ...s, regulatoryRegions: allRegions.map(r => r.region) })}
+            style={{
+              padding: '0.4rem 0.9rem', borderRadius: 8, cursor: 'pointer',
+              fontSize: '0.82rem', fontWeight: 600,
+              border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)',
+            }}>
+            {t('pages.settingsPage.allRegionsBtn')}
+          </button>
+        </div>
+
+        {/* Individual region toggles */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+          {allRegions.map(({ region, country, flag }) => {
+            const active = activeRegions.includes(region)
+            return (
+              <button key={region}
+                onClick={() => toggleRegion(region)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                  padding: '0.3rem 0.75rem', borderRadius: 999, cursor: 'pointer',
+                  fontSize: '0.78rem', fontWeight: 600,
+                  border: `1px solid ${active ? 'var(--waf-brand)' : 'var(--border)'}`,
+                  background: active ? 'rgba(0,148,255,0.12)' : 'var(--bg)',
+                  color: active ? 'var(--waf-brand)' : 'var(--muted)',
+                  transition: 'all 0.15s',
+                }}>
+                <span style={{ fontSize: '1rem', lineHeight: 1 }}>{flag}</span>
+                {country}
+                {active && <span style={{ fontSize: '0.65rem', color: 'var(--waf-brand)' }}>✓</span>}
+              </button>
+            )
+          })}
+        </div>
+
+        <div style={{ marginTop: '0.9rem', fontSize: '0.72rem', color: 'var(--muted)', padding: '0.4rem 0.65rem', background: 'var(--bg)', borderRadius: 6, border: '1px solid var(--border)' }}>
+          Active: <strong style={{ color: 'var(--text)' }}>{activeRegions.length}</strong> region{activeRegions.length !== 1 ? 's' : ''} ·{' '}
+          <strong style={{ color: 'var(--text)' }}>
+            {FRAMEWORKS.filter(fw => activeRegions.includes(fw.region)).length}
+          </strong> frameworks in scope
+        </div>
+      </div>
+
       {/* ── PDF Report Sections ────────────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
-          PDF Report Sections
+          {t('pages.settingsPage.sectionPdf')}
         </h2>
         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1.1rem', lineHeight: 1.55 }}>
           Choose which sections are included when you export a run as PDF. Defaults follow your maturity level preset.
@@ -682,7 +588,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
       {/* ── Connection & Real Engine ───────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
-          Connection & Real Engine
+          {t('pages.settingsPage.sectionConnection')}
         </h2>
         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1.25rem', lineHeight: 1.55 }}>
           Configure the backend server URL and enable the real WAF++ engine in the Architect Sandbox.
@@ -704,7 +610,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   onBlur={e => { saveServerUrl(e.target.value); checkConnection(e.target.value) }}
                   placeholder="http://localhost:8000"
                   style={{
-                    flex: 1, background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+                    flex: 1, background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
                     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem', outline: 'none',
                   }}
                 />
@@ -715,7 +621,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     borderRadius: '8px', padding: '0.4rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap',
                   }}
                 >
-                  Test
+                  {t('pages.settingsPage.testBtn')}
                 </button>
               </div>
               <div style={{ marginTop: '0.3rem', fontSize: '0.71rem', color: 'var(--muted)' }}>
@@ -734,7 +640,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 <span style={{ fontSize: '0.6rem' }}>
                   {serverStatus === 'ok' ? '●' : serverStatus === 'checking' ? '○' : '✕'}
                 </span>
-                {serverStatus === 'checking' ? 'Checking…' : serverStatusMsg}
+                {serverStatus === 'checking' ? t('pages.settingsPage.checking') : serverStatusMsg}
               </div>
             )}
 
@@ -811,7 +717,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             padding: '0.6rem 1.75rem', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
           }}
         >
-          Save Settings
+          {t('pages.settingsPage.saveBtn')}
         </button>
         <button
           onClick={() => applyMaturity(level)}
@@ -821,9 +727,9 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             cursor: 'pointer',
           }}
         >
-          Reset to L{level} preset
+          {t('pages.settingsPage.resetBtn', { level })}
         </button>
-        {saved && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 600 }}>Saved!</span>}
+        {saved && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 600 }}>{t('pages.settingsPage.savedMsg')}</span>}
       </div>
 
     </div>

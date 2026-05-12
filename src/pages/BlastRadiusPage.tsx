@@ -10,6 +10,7 @@
 
 import { useState, useMemo, useRef } from 'react'
 import { RunDetail, Finding } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -190,6 +191,7 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function BlastRadiusPage({ run }: Props) {
+  const { t } = useI18n()
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [search, setSearch]         = useState('')
   const [sevFilter, setSevFilter]   = useState('')
@@ -237,8 +239,8 @@ export default function BlastRadiusPage({ run }: Props) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <div style={{ fontWeight: 700, fontSize: '1rem' }}>No failing resources</div>
-        <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>All controls are passing in this run.</div>
+        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{t('pages.blastRadius.noFailingResources')}</div>
+        <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>{t('pages.blastRadius.allPassing')}</div>
       </div>
     )
   }
@@ -250,12 +252,12 @@ export default function BlastRadiusPage({ run }: Props) {
       <div className="card" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
         <div>
           <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--waf-danger)', lineHeight: 1 }}>{allNodes.length}</span>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>failing resources</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{t('pages.blastRadius.failingResources')}</span>
         </div>
         <div style={{ width: '1px', height: '32px', background: 'var(--border)', flexShrink: 0 }} />
         <div>
           <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{edges.length}</span>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>inferred dependencies</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{t('pages.blastRadius.inferredDeps')}</span>
         </div>
         <div style={{ width: '1px', height: '32px', background: 'var(--border)', flexShrink: 0 }} />
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -270,16 +272,16 @@ export default function BlastRadiusPage({ run }: Props) {
           ))}
         </div>
         <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.45 }}>
-          Click a resource to inspect failures and dependencies
+          {t('pages.blastRadius.clickNode')}
         </div>
       </div>
 
       {/* ── Filter bar ── */}
       <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <input type="text" placeholder="Search resource…" value={search} onChange={e => setSearch(e.target.value)}
+        <input type="text" placeholder={t('pages.blastRadius.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)}
           style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.375rem 0.75rem', fontSize: '0.82rem', color: 'var(--text)', outline: 'none', width: '240px' }} />
         <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} className="filter-select">
-          <option value="">All severities</option>
+          <option value="">{t('pages.blastRadius.allSeverities')}</option>
           {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         {(search || sevFilter) && (
@@ -289,7 +291,7 @@ export default function BlastRadiusPage({ run }: Props) {
           </button>
         )}
         <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--muted)' }}>
-          {nodes.length} of {allNodes.length} resources
+          {t('pages.blastRadius.resourcesOf', { count: String(nodes.length), total: String(allNodes.length) })}
         </span>
       </div>
 
@@ -361,7 +363,7 @@ export default function BlastRadiusPage({ run }: Props) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Failing controls */}
                     <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
-                      Failing Controls ({n.controlIds.length})
+                      {t('pages.blastRadius.failingControls', { count: String(n.controlIds.length) })}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
                       {n.controlIds.map(cid => {
@@ -385,11 +387,11 @@ export default function BlastRadiusPage({ run }: Props) {
                     {hasLinks && (
                       <div>
                         <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
-                          Structural Connections
+                          {t('pages.blastRadius.structuralConnections')}
                         </div>
                         {upstream.length > 0 && (
                           <div style={{ marginBottom: '0.35rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>Depends on:</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>{t('pages.blastRadius.dependsOn')}</span>
                             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                               {upstream.map(dep => (
                                 <button key={dep.id} onClick={e => { e.stopPropagation(); navigateTo(dep.id) }}
@@ -402,7 +404,7 @@ export default function BlastRadiusPage({ run }: Props) {
                         )}
                         {downstream.length > 0 && (
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>Used by:</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>{t('pages.blastRadius.usedBy')}</span>
                             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                               {downstream.map(dep => (
                                 <button key={dep.id} onClick={e => { e.stopPropagation(); navigateTo(dep.id) }}
@@ -421,7 +423,7 @@ export default function BlastRadiusPage({ run }: Props) {
                   {hasLinks && (
                     <div style={{ width: '240px', flexShrink: 0 }}>
                       <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
-                        Dependency Map
+                        {t('pages.blastRadius.dependencyMap')}
                       </div>
                       <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg)' }}>
                         <MiniGraph
@@ -432,7 +434,7 @@ export default function BlastRadiusPage({ run }: Props) {
                         />
                       </div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.35rem', lineHeight: 1.4, textAlign: 'center' }}>
-                        Click a node to jump to that resource
+                        {t('pages.blastRadius.clickNode')}
                       </div>
                     </div>
                   )}

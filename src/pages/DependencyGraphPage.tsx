@@ -11,6 +11,7 @@
 
 import { useState, useMemo, useRef } from 'react'
 import { RunDetail, Finding } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -154,6 +155,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
   onToggle: () => void
   onNavigate: (id: string) => void
 }) {
+  const { t } = useI18n()
   const col = nodeColor(node)
   const total = node.passCount + node.failCount + node.skipCount
   const passRatio = total > 0 ? node.passCount / total : 0
@@ -223,9 +225,9 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {/* Control counts */}
           <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.125rem' }}>
             {[
-              { label: 'Passing', value: node.passCount, color: '#059669' },
-              { label: 'Failing', value: node.failCount, color: '#DA2C38' },
-              { label: 'Skipped', value: node.skipCount, color: '#94a3b8' },
+              { label: t('pages.dependencyGraph.passingLabel'), value: node.passCount, color: '#059669' },
+              { label: t('pages.dependencyGraph.failingLabel'), value: node.failCount, color: '#DA2C38' },
+              { label: t('pages.dependencyGraph.skippedLabel'), value: node.skipCount, color: '#94a3b8' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ borderRadius: '8px', padding: '0.4rem 0.6rem', background: `${color}0d`, border: `1px solid ${color}20`, textAlign: 'center' }}>
                 <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', color, letterSpacing: '.05em' }}>{label}</div>
@@ -238,7 +240,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {failFindings.length > 0 && (
             <div style={{ width: '100%' }}>
               <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#DA2C38', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
-                Failing checks ({failFindings.length})
+                {t('pages.dependencyGraph.failingChecks', { count: String(failFindings.length) })}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 {failFindings.slice(0, 6).map((f, i) => {
@@ -255,7 +257,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
                   )
                 })}
                 {failFindings.length > 6 && (
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textAlign: 'center', paddingTop: '0.1rem' }}>+{failFindings.length - 6} more failing checks</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textAlign: 'center', paddingTop: '0.1rem' }}>{t('pages.dependencyGraph.moreFailing', { count: String(failFindings.length - 6) })}</div>
                 )}
               </div>
             </div>
@@ -265,7 +267,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {node.status === 'mixed' && passFindings.length > 0 && (
             <div style={{ width: '100%' }}>
               <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#059669', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
-                Passing checks (sample)
+                {t('pages.dependencyGraph.passingSample')}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                 {passFindings.slice(0, 5).map((f, i) => (
@@ -283,11 +285,11 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {hasLinks && (
             <div style={{ width: '100%' }}>
               <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
-                Structural Connections
+                {t('pages.dependencyGraph.connections')}
               </div>
               {upstream.length > 0 && (
                 <div style={{ marginBottom: '0.3rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>Depends on:</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>{t('pages.dependencyGraph.dependsOn')}</span>
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                     {upstream.map(dep => (
                       <button key={dep.id} onClick={e => { e.stopPropagation(); onNavigate(dep.id) }}
@@ -300,7 +302,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
               )}
               {downstream.length > 0 && (
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>Used by:</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '2px', flexShrink: 0 }}>{t('pages.dependencyGraph.usedBy')}</span>
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                     {downstream.map(dep => (
                       <button key={dep.id} onClick={e => { e.stopPropagation(); onNavigate(dep.id) }}
@@ -322,6 +324,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function DependencyGraphPage({ run }: Props) {
+  const { t } = useI18n()
   const [expandedId, setExpandedId]     = useState<string | null>(null)
   const [collapsedGroups, setCollapsed] = useState<Set<string>>(new Set(['pass', 'skip']))
   const [search, setSearch]             = useState('')
@@ -380,7 +383,7 @@ export default function DependencyGraphPage({ run }: Props) {
   if (run.findings.filter(f => f.resource).length === 0) {
     return (
       <div className="card" style={{ padding: '4rem', textAlign: 'center', color: 'var(--muted)' }}>
-        No resource addresses in this run's findings.
+        {t('pages.dependencyGraph.noResources')}
       </div>
     )
   }
@@ -397,7 +400,7 @@ export default function DependencyGraphPage({ run }: Props) {
       <div className="card" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
         <div>
           <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{allNodes.length}</span>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>resources</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{t('pages.dependencyGraph.resourcesLabel')}</span>
         </div>
         <div style={{ width: '1px', height: '32px', background: 'var(--border)', flexShrink: 0 }} />
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -410,27 +413,27 @@ export default function DependencyGraphPage({ run }: Props) {
           ))}
         </div>
         <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.45 }}>
-          Click a resource to see compliance details and connections
+          {t('pages.dependencyGraph.clickNode')}
         </div>
       </div>
 
       {/* ── Filter bar ── */}
       <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <input type="text" placeholder="Search resource…" value={search} onChange={e => setSearch(e.target.value)} style={{ ...inputStyle, width: '240px' }} />
+        <input type="text" placeholder={t('pages.dependencyGraph.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} style={{ ...inputStyle, width: '240px' }} />
         {allProviders.length > 1 && (
           <select value={providerFilter} onChange={e => setProviderFilter(e.target.value)} style={inputStyle}>
-            <option value="">All providers</option>
+            <option value="">{t('pages.dependencyGraph.allProviders')}</option>
             {allProviders.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
           </select>
         )}
         {(search || providerFilter) && (
           <button onClick={() => { setSearch(''); setProviderFilter('') }}
             style={{ fontSize: '0.78rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0.5rem' }}>
-            Clear
+            {t('pages.dependencyGraph.clear')}
           </button>
         )}
         <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--muted)' }}>
-          {filteredNodes.length} of {allNodes.length} resources
+          {t('pages.dependencyGraph.resourcesOf', { count: String(filteredNodes.length), total: String(allNodes.length) })}
         </span>
       </div>
 
@@ -457,7 +460,7 @@ export default function DependencyGraphPage({ run }: Props) {
                 </span>
                 {status === 'fail' && groupNodes.length > 0 && (
                   <span style={{ fontSize: '0.68rem', color: col, opacity: 0.7, fontStyle: 'italic' }}>
-                    · {groupNodes.reduce((sum, n) => sum + n.failCount, 0)} failing control checks across these resources
+                    {t('pages.dependencyGraph.groupFailingSummary', { count: String(groupNodes.reduce((sum, n) => sum + n.failCount, 0)) })}
                   </span>
                 )}
                 <span style={{ marginLeft: 'auto', color: col, fontSize: '1rem', transition: 'transform 0.22s ease', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, fetchCatalogueControls } from '../api'
+import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, fetchCatalogueControls, downloadControlsZip, fetchActivePackInfo, ActivePackInfo } from '../api'
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
@@ -34,9 +34,14 @@ const PILLAR_PREFIX: Record<string, string> = {
   security: 'SEC', cost: 'COST', performance: 'PERF', reliability: 'REL',
   operational: 'OPS', sustainability: 'SUS', sovereign: 'SOV',
 }
+const TYPE_COLOR: Record<string, string> = {
+  governance: '#0094FF', configuration: '#f97316', iac: '#7c3aed',
+  network: '#06b6d4', identity: '#eab308', data: '#22c55e', cost: '#f97316',
+}
 
 function sevColor(s: string)    { return SEV_COLOR[s?.toLowerCase()]    ?? '#94a3b8' }
 function pillarColor(p: string) { return PILLAR_COLOR[p?.toLowerCase()] ?? '#94a3b8' }
+function typeColor(t: string)   { return TYPE_COLOR[t?.toLowerCase()]   ?? '#94a3b8' }
 function engineColor(e: string) { return ENGINE_COLOR[e?.toLowerCase()] ?? '#94a3b8' }
 
 // ── Shared components ─────────────────────────────────────────────────────────
@@ -71,6 +76,9 @@ function TogglePill({ label, color, active, onClick }: { label: string; color: s
       background: active ? color : `${color}18`,
       color: active ? '#fff' : color,
       border: `1px solid ${color}44`,
+      whiteSpace: 'nowrap',
+      flex: '0 0 auto',
+      minWidth: 'auto',
     }}>{label}</button>
   )
 }
@@ -96,9 +104,25 @@ interface UnifiedControl {
 }
 
 function fromCore(c: ControlMeta): UnifiedControl {
+  // Use category if available, otherwise infer type from pillar
+  const getCategory = (): string => {
+    if (c.category) return c.category
+    const pillarKey = c.pillar?.toLowerCase().replace(/s$/, '')
+    switch (pillarKey) {
+      case 'security': return 'identity'
+      case 'cost': return 'governance'
+      case 'performance': return 'configuration'
+      case 'reliability': return 'governance'
+      case 'operational': case 'operations': return 'governance'
+      case 'sovereign': case 'sovereignty': return 'governance'
+      case 'sustainability': return 'governance'
+      default: return ''
+    }
+  }
+  const category = getCategory()
   return {
     id: c.id, pillar: c.pillar, severity: c.severity,
-    type: c.category ? [c.category] : [],
+    type: category ? [category] : [],
     description: c.description,
     checksCount: c.checks?.length ?? 0,
     isCustom: false, core: c,
@@ -405,6 +429,11 @@ const labelStyle: React.CSSProperties = {
 }
 
 function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const [isFocused, setIsFocused] = useState(false)
+  const charCount = state.description.trim().length
+  const isShort = charCount < 20
+  const isLongEnough = charCount >= 20
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)', borderRadius: '10px', padding: '0.875rem 1rem', fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -417,14 +446,30 @@ function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: 
           onChange={e => onChange({ description: e.target.value })}
           rows={5}
           placeholder={`E.g. "All S3 buckets must have server-side encryption enabled using AES-256 or KMS. Unencrypted buckets must not be deployable in any environment."`}
-          style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+          style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, outline: isFocused && isShort ? '2px solid #f97316' : 'none' }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           autoFocus
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.3rem' }}>
-          <span style={{ fontSize: '0.68rem', color: state.description.length < 20 ? '#DA2C38' : '#059669' }}>
-            {state.description.length < 20 ? `${20 - state.description.length} more characters needed` : `${state.description.length} characters ✓`}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.3rem', fontSize: '0.68rem' }}>
+          <span style={{ color: isLongEnough ? '#059669' : '#DA2C38', fontWeight: 700 }}>
+            {isLongEnough ? '✓' : isFocused ? '✏' : '•'} {isLongEnough ? `${charCount} characters` : `${20 - charCount} more needed`}
+          </span>
+          <div style={{ flex: 1, height: 3, borderRadius: 999, background: 'var(--border)', overflow: 'hidden', flexShrink: 0 }}>
+            <div style={{ height: '100%', width: `${Math.min(100, (charCount / 500) * 100)}%`, background: isLongEnough ? '#059669' : '#f97316', transition: 'width 0.3s ease' }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
+          <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+            Custom controls use <strong>CUS-</strong> prefix (e.g., CUS-001)
           </span>
         </div>
+        {isFocused && isShort && (
+          <div style={{ marginTop: '0.25rem', fontSize: '0.68rem', color: '#f97316', background: 'rgba(249,115,22,.08)', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
+            Tip: Aim for 30-100 characters for clear control descriptions
+          </div>
+        )}
       </div>
     </div>
   )
@@ -470,19 +515,53 @@ function Step2Pillar({ state, onChange }: { state: WizardState; onChange: (p: Pa
 }
 
 function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const [customNum, setCustomNum] = useState(state.id.replace('CUS-', ''))
+  const isIdValid = /^[0-9]+$/.test(customNum)
+
+  // Sync customNum back to state when user types
+  useEffect(() => {
+    setCustomNum(state.id.replace('CUS-', ''))
+  }, [state.id])
+
+  // Extract number from state and rebuild with CUS- prefix
+  useEffect(() => {
+    const num = state.id.replace('CUS-', '')
+    setCustomNum(num)
+  }, [])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow numbers
+    const num = e.target.value.replace(/[^0-9]/g, '').padStart(3, '0')
+    setCustomNum(num)
+    onChange({ id: `CUS-${num}` })
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div>
         <label style={labelStyle}>Control ID</label>
-        <input
-          value={state.id}
-          onChange={e => onChange({ id: e.target.value.toUpperCase() })}
-          placeholder="SEC-001"
-          style={inputStyle}
-          autoFocus
-        />
-        <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
-          Auto-suggested from pillar prefix <code style={{ background: 'var(--bg)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>{PILLAR_PREFIX[state.pillar] ?? state.pillar.toUpperCase().slice(0, 3)}</code>. Edit freely — must be unique.
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          <code style={{ fontSize: '0.82rem', color: '#0094FF', padding: '0.45rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontFamily: 'monospace' }}>
+            CUS-
+          </code>
+          <input
+            value={customNum}
+            onChange={handleChange}
+            placeholder="001"
+            style={{ ...inputStyle, width: '100px', outline: !isIdValid ? '2px solid #f97316' : 'none', fontFamily: 'monospace' }}
+            autoFocus
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.3rem', fontSize: '0.68rem' }}>
+          <span style={{ color: isIdValid ? '#059669' : '#94a3b8', fontWeight: 700 }}>
+            {isIdValid ? '✓' : '•'} Format: CUS-001 to CUS-999
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
+          <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+            Custom controls use <strong>CUS-</strong> prefix (fixed - only the number changes)
+          </span>
         </div>
       </div>
       <div>
@@ -506,6 +585,9 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
               >{s}</button>
             )
           })}
+        </div>
+        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
+          <span style={{ fontWeight: 600 }}>Tip:</span> Critical & High block CI/CD, Medium & Low are advisory-only
         </div>
       </div>
     </div>
@@ -563,6 +645,12 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
   function add() { onChange({ checks: [...state.checks, { ...EMPTY_CHECK }] }) }
   function remove(i: number) { onChange({ checks: state.checks.filter((_, idx) => idx !== i) }) }
 
+  // Validation helpers
+  const checkHasValidId = (ch: CatalogueCheck) => ch.id && /^[a-zA-Z0-9_.-]+$/.test(ch.id)
+  const checkHasValidEngine = (ch: CatalogueCheck) => ch.engine && ALL_ENGINES.includes(ch.engine)
+  const checkHasValidDescription = (ch: CatalogueCheck) => ch.description && ch.description.length > 10
+  const checkHasValidExpected = (ch: CatalogueCheck) => ch.expected && ch.expected.length > 3
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -573,41 +661,84 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
           + Add check
         </button>
       </div>
-      {state.checks.map((ch, i) => (
-        <div key={i} style={{ background: 'var(--bg)', borderRadius: '10px', border: '1px solid var(--border)', padding: '0.875rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Check {i + 1}</span>
-            {state.checks.length > 1 && (
-              <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA2C38', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
-            )}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px', gap: '0.5rem', marginBottom: '0.5rem' }}>
+      {state.checks.map((ch, i) => {
+        const idOk = checkHasValidId(ch)
+        const engineOk = checkHasValidEngine(ch)
+        const descOk = checkHasValidDescription(ch)
+        const expectedOk = checkHasValidExpected(ch)
+        const allOk = idOk && engineOk && descOk && expectedOk
+
+        return (
+          <div key={i} style={{ background: 'var(--bg)', borderRadius: '10px', border: `1px solid ${allOk ? 'rgba(0,148,255,.2)' : 'var(--border)'}`, padding: '0.875rem', transition: 'border-color 0.2s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Check {i + 1}</span>
+              {state.checks.length > 1 && (
+                <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA2C38', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
+              )}
+              <span style={{ fontSize: '0.62rem', color: allOk ? '#059669' : '#f97316', fontWeight: 700 }}>
+                {allOk ? '✓' : '✏'}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  value={ch.id}
+                  onChange={e => update(i, 'id', e.target.value)}
+                  placeholder="Check ID — e.g. tf.s3_encryption"
+                  style={{ ...inputStyle, outline: ch.id && !idOk ? '2px solid #f97316' : 'none' }}
+                />
+                {ch.id && !idOk && (
+                  <div style={{ position: 'absolute', bottom: '-1.15rem', left: 0, right: 0, fontSize: '0.62rem', color: '#f97316' }}>
+                    Use format: engine.resource_type (e.g., tf.s3_encryption)
+                  </div>
+                )}
+                <div style={{ fontSize: '0.58rem', color: '#64748b', marginTop: '0.2rem' }}>
+                  {ch.id ? (idOk ? 'Valid ✓' : 'Invalid format') : 'Auto-suggested: tf.'}
+                </div>
+              </div>
+              <select value={ch.engine} onChange={e => update(i, 'engine', e.target.value)} style={{ ...inputStyle, outline: ch.engine && !engineOk ? '2px solid #f97316' : 'none' }}>
+                {ALL_ENGINES.map(e => (
+                  <option key={e} value={e}>{e}</option>
+                ))}
+              </select>
+              {ch.engine && !engineOk && (
+                <div style={{ position: 'absolute', bottom: '-1.2rem', left: 0, right: 0, fontSize: '0.62rem', color: '#f97316' }}>
+                  Select a valid engine
+                </div>
+              )}
+            </div>
             <input
-              value={ch.id}
-              onChange={e => update(i, 'id', e.target.value)}
-              placeholder="Check ID — e.g. tf.s3_encryption"
-              style={inputStyle}
+              value={ch.description}
+              onChange={e => update(i, 'description', e.target.value)}
+              placeholder="What this check verifies"
+              style={{ ...inputStyle, marginBottom: '0.5rem', outline: ch.description && !descOk ? '2px solid #f97316' : 'none' }}
             />
-            <select value={ch.engine} onChange={e => update(i, 'engine', e.target.value)} style={inputStyle}>
-              {ALL_ENGINES.map(e => (
-                <option key={e} value={e}>{e}</option>
-              ))}
-            </select>
+            <div style={{ fontSize: '0.62rem', color: '#64748b', marginBottom: '0.2rem' }}>
+              {ch.description ? (descOk ? 'Good length ✓' : 'Too short') : 'Describe the check requirement'}
+            </div>
+            <input
+              value={ch.expected}
+              onChange={e => update(i, 'expected', e.target.value)}
+              placeholder="Expected — what a passing configuration looks like"
+              style={{ ...inputStyle, outline: ch.expected && !expectedOk ? '2px solid #f97316' : 'none' }}
+            />
+            <div style={{ fontSize: '0.62rem', color: '#64748b' }}>
+              {ch.expected ? (expectedOk ? 'Valid ✓' : 'Too short') : 'Describe expected state'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
+              <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Schema hint:</span>
+              <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+                engine: {ALL_ENGINES.join(' | ')}
+              </span>
+            </div>
           </div>
-          <input
-            value={ch.description}
-            onChange={e => update(i, 'description', e.target.value)}
-            placeholder="What this check verifies"
-            style={{ ...inputStyle, marginBottom: '0.5rem' }}
-          />
-          <input
-            value={ch.expected}
-            onChange={e => update(i, 'expected', e.target.value)}
-            placeholder="Expected — what a passing configuration looks like"
-            style={inputStyle}
-          />
+        )
+      })}
+      {state.checks.length === 0 && (
+        <div style={{ fontSize: '0.7rem', color: '#f97316', padding: '0.5rem', background: 'rgba(249,115,22,.08)', borderRadius: '8px', textAlign: 'center' }}>
+          Add at least one check to define how this control is verified
         </div>
-      ))}
+      )}
     </div>
   )
 }
@@ -618,6 +749,7 @@ function Step6Preview({ state }: { state: WizardState }) {
     type: state.types as CatalogueControl['type'],
     description: state.description, checks: state.checks,
     source: 'dashboard', created_at: '', updated_at: '',
+    regulatory_mapping: [],
   })
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
@@ -1116,7 +1248,7 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
   const [state, setState] = useState<WizardState>({
     description: '',
     pillar: 'security',
-    id: 'SEC-001',
+    id: 'CUS-001',
     severity: 'medium',
     types: ['governance'],
     checks: [{ ...EMPTY_CHECK }],
@@ -1124,22 +1256,9 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedControl, setSavedControl] = useState<CatalogueControl | null>(null)
-  const prevPillar = useRef(state.pillar)
 
   function update(patch: Partial<WizardState>) {
-    setState(prev => {
-      const next = { ...prev, ...patch }
-      // Auto-update ID prefix when pillar changes and ID still matches pattern
-      if (patch.pillar && patch.pillar !== prevPillar.current) {
-        const prefix = PILLAR_PREFIX[patch.pillar] ?? patch.pillar.toUpperCase().slice(0, 3)
-        const oldPrefix = PILLAR_PREFIX[prevPillar.current] ?? prevPillar.current.toUpperCase().slice(0, 3)
-        if (prev.id.startsWith(oldPrefix + '-')) {
-          next.id = `${prefix}-${prev.id.split('-')[1] ?? '001'}`
-        }
-        prevPillar.current = patch.pillar
-      }
-      return next
-    })
+    setState(prev => ({ ...prev, ...patch }))
   }
 
   function canAdvance(): boolean {
@@ -1167,6 +1286,7 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
         description: state.description.trim(),
         checks: state.checks,
         source: 'dashboard',
+        regulatory_mapping: [],
       })
       setSavedControl(result)
       onCreated(result)
@@ -1409,6 +1529,12 @@ interface Props {
 }
 
 export default function ControlsCataloguePage({ coreControls }: Props) {
+  const isInitialRender = useRef(true)
+  if (isInitialRender.current) {
+    // Debug logging disabled - removed
+  }
+  isInitialRender.current = false
+
   const [customControls, setCustomControls] = useState<CatalogueControl[]>([])
   const [loading, setLoading]               = useState(true)
   const [apiError, setApiError]             = useState<string | null>(null)
@@ -1418,7 +1544,10 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
   const [search, setSearch]                 = useState('')
   const [pillarFilter, setPillarFilter]     = useState<string[]>([])
   const [severityFilter, setSeverityFilter] = useState<string[]>([])
+  const [typeFilter, setTypeFilter]         = useState<string[]>([])
   const [tab, setTab]                       = useState<TabFilter>('all')
+  const [packInfo, setPackInfo]             = useState<ActivePackInfo | null>(null)
+  const [packLoading, setPackLoading]       = useState(true)
 
   useEffect(() => {
     setLoading(true)
@@ -1428,10 +1557,56 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
       .finally(() => setLoading(false))
   }, [])
 
-  const customIds   = new Set(customControls.map(c => c.id))
+  useEffect(() => {
+    setPackLoading(true)
+    fetchActivePackInfo()
+      .then(info => setPackInfo(info))
+      .catch(() => setPackInfo(null))
+      .finally(() => setPackLoading(false))
+  }, [])
+
+  // Framework controls: WAF- prefix controls from both run.controls_meta and server's custom controls
+  // Custom controls: non-WAF- controls from server's custom controls catalogue
+  const frameworkFromScan = coreControls.filter(c => c.id.startsWith('WAF-'))
+  const frameworkFromCatalogue = customControls.filter(c => c.id.startsWith('WAF-') && !frameworkFromScan.find(s => s.id === c.id))
+  const frameworkControlIds = new Set([...frameworkFromScan, ...frameworkFromCatalogue].map(c => c.id))
+
+  // Helper: get type from framework control by id, or infer from pillar if not found
+  const getFrameworkType = (id: string, pillar: string): string[] => {
+    // First, try to find the type from framework controls in the scan
+    const ctrl = frameworkFromScan.find(c => c.id === id)
+    if (ctrl?.category) return [ctrl.category]
+
+    // Infer type from pillar if control type is empty
+    // Handle both singular and plural pillar names (operations/operational, sovereignty/sovereign)
+    const pillarKey = pillar.toLowerCase().replace(/s$/, '')  // Remove trailing 's' for plural
+    switch (pillarKey) {
+      case 'security': return ['identity', 'governance']
+      case 'cost': return ['governance', 'configuration']
+      case 'performance': return ['configuration', 'infrastructure']
+      case 'reliability': return ['governance', 'configuration']
+      case 'operational': case 'operations': return ['governance', 'configuration']
+      case 'sovereign': case 'sovereignty': return ['governance', 'identity']
+      case 'sustainability': return ['governance', 'configuration']
+      default: return []
+    }
+  }
+
   const allControls: UnifiedControl[] = [
-    ...coreControls.filter(c => !customIds.has(c.id)).map(fromCore),
-    ...customControls.map(fromCustom),
+    ...frameworkFromScan.map(c => fromCore(c)),
+    // WAF- controls from catalogue should be treated as framework (not custom)
+    // Use their actual type from catalogue; fall back to inferred type if empty
+    ...frameworkFromCatalogue.map(c => {
+      const controlType = c.type && c.type.length > 0 ? c.type : getFrameworkType(c.id, c.pillar)
+      return {
+        id: c.id, pillar: c.pillar, severity: c.severity,
+        type: controlType,
+        description: c.description,
+        checksCount: c.checks?.length ?? 0,
+        isCustom: false, custom: c,
+      }
+    }),
+    ...customControls.filter(c => !frameworkControlIds.has(c.id)).map(c => fromCustom(c)),
   ].sort((a, b) => a.id.localeCompare(b.id))
 
   const filtered = allControls.filter(c => {
@@ -1439,6 +1614,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
     if (tab === 'custom'    && !c.isCustom) return false
     if (pillarFilter.length   > 0 && !pillarFilter.includes(c.pillar?.toLowerCase()))   return false
     if (severityFilter.length > 0 && !severityFilter.includes(c.severity?.toLowerCase())) return false
+    if (typeFilter.length     > 0 && !typeFilter.some(f => c.type.includes(f)))           return false
     if (search) {
       const q = search.toLowerCase()
       return c.id.toLowerCase().includes(q) || c.description.toLowerCase().includes(q) || c.pillar.toLowerCase().includes(q)
@@ -1448,6 +1624,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
 
   function togglePillar(p: string)   { setPillarFilter(prev   => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]) }
   function toggleSeverity(s: string) { setSeverityFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]) }
+  function toggleType(t: string)     { setTypeFilter(prev     => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]) }
 
   const frameworkCount = allControls.filter(c => !c.isCustom).length
   const customCount    = allControls.filter(c =>  c.isCustom).length
@@ -1465,8 +1642,48 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
     : tab === 'custom' ? customCount
     : allControls.length
 
+  // Filter bar render
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 1 }}>
+      {/* ── Active Control Pack Banner ────────────────────────────────────── */}
+      {!packLoading && packInfo && (
+        <div className="card" style={{
+          display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap',
+          borderLeft: '4px solid var(--waf-brand)',
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: 'rgba(0,148,255,0.12)', border: '1px solid rgba(0,148,255,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="22" height="22" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 2 }}>
+              Active Control Pack
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--waf-brand)', fontFamily: 'monospace' }}>
+                {packInfo.version}
+              </span>
+              {packInfo.description && (
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  {packInfo.description}
+                </span>
+              )}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <div><strong style={{ color: 'var(--text-primary)' }}>{packInfo.control_count}</strong> controls</div>
+            <div>activated {new Date(packInfo.activated_at || '').toLocaleDateString()}</div>
+          </div>
+        </div>
+      )}
+
       {/* Tab bar + New Control button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.2rem' }}>
@@ -1484,6 +1701,29 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {/* Download YAML Pack */}
+          <button
+            onClick={async () => {
+              try {
+                const blob = await downloadControlsZip()
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `wafpass_controls_${new Date().toISOString().split('T')[0]}.zip`
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+              } catch (e) {
+                alert('Failed to download controls: ' + (e instanceof Error ? e.message : 'Unknown error'))
+              }
+            }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid rgba(0,148,255,.35)', background: 'rgba(0,148,255,.08)', color: '#0094FF', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+          >
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            Download Controls YAML
+            <span style={{ background: 'rgba(0,148,255,.15)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.68rem' }}>{allControls.length}</span>
+          </button>
           {/* Checkov Pack */}
           <button
             onClick={downloadPack}
@@ -1514,7 +1754,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
       </div>
 
       {/* Filter bar */}
-      <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', flexShrink: 0 }} key="filter-bar-0">
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             type="text" placeholder="Search by ID or description…"
@@ -1526,13 +1766,23 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             {apiError && <span style={{ color: '#f97316', marginLeft: '0.5rem' }}>· custom controls unavailable</span>}
           </span>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem' }}>Pillar</span>
-          {ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />)}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }} data-debug="pillar-filter">
+          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Pillar</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
+            {(() => ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />))()}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem' }}>Severity</span>
-          {ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />)}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Severity</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
+            {(() => ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />))()}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Type</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
+            {(() => ALL_TYPES.map(t => <TogglePill key={t} label={t} color={typeColor(t)} active={typeFilter.includes(t)} onClick={() => toggleType(t)} />))()}
+          </div>
         </div>
       </div>
 
@@ -1583,8 +1833,8 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
                     </td>
                     <td style={{ padding: '0.65rem 1rem' }}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                        {ctrl.type.slice(0, 2).map(t => <Tag key={t} label={t} />)}
-                        {ctrl.type.length > 2 && <Tag label={`+${ctrl.type.length - 2}`} />}
+                        {ctrl.type?.slice(0, 2).map(t => <Tag key={t} label={t} />)}
+                        {ctrl.type?.length > 2 && <Tag label={`+${ctrl.type.length - 2}`} />}
                       </div>
                     </td>
                     <td style={{ padding: '0.65rem 1rem', maxWidth: '320px' }}>

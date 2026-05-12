@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRun, Finding, PlanChange, RunDetail, RunSummary } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props {
   run: RunDetail
@@ -105,6 +106,7 @@ function computeComplianceDrift(base: RunDetail, head: RunDetail): {
 // ─── Score Trend Sparkline ────────────────────────────────────────────────────
 
 function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; currentId: string }) {
+  const { t } = useI18n()
   const sorted = [...projectRuns].sort(
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   ).slice(-12)
@@ -112,7 +114,7 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
   if (sorted.length < 2) {
     return (
       <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
-        Need at least 2 runs to show trend
+        {t('pages.driftDetection.complianceRequires')}
       </div>
     )
   }
@@ -317,6 +319,7 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DriftDetectionPage({ run, runs }: Props) {
+  const { t } = useI18n()
   const [prevRun, setPrevRun]       = useState<RunDetail | null>(null)
   const [prevLoading, setPrevLoading] = useState(false)
   const [tab, setTab]               = useState<'regressed' | 'recovered' | 'state'>('regressed')
@@ -421,13 +424,13 @@ export default function DriftDetectionPage({ run, runs }: Props) {
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
             {hasDrift
-              ? `Configuration drift detected in ${run.project}`
-              : `No drift detected — ${run.project} is stable`}
+              ? t('pages.driftDetection.driftDetected', { project: run.project })
+              : t('pages.driftDetection.noDrift', { project: run.project })}
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
             {prevRun
-              ? `Compared against run from ${new Date(prevRun.created_at).toLocaleString()} · branch ${prevRun.branch}`
-              : 'No previous run found for this project — showing current state only'}
+              ? t('pages.driftDetection.comparedAgainst', { date: new Date(prevRun.created_at).toLocaleString(), branch: prevRun.branch })
+              : t('pages.driftDetection.noPrevRun')}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -439,37 +442,37 @@ export default function DriftDetectionPage({ run, runs }: Props) {
               }}>
                 {scoreDelta > 0 ? '+' : ''}{scoreDelta}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>score Δ</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.scoreDeltaLabel')}</div>
             </div>
           )}
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: regressed.length > 0 ? '#dc2626' : '#059669' }}>
               {regressed.length}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>regressions</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.regressionsLabel')}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: recovered.length > 0 ? '#059669' : 'var(--text-muted)' }}>
               {recovered.length}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>recovered</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.recoveredLabel')}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: filteredStateDrift.length > 0 ? '#d97706' : 'var(--text-muted)' }}>
               {filteredStateDrift.length}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>state changes</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.stateChangesLabel')}</div>
           </div>
           {secStateChanges > 0 && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 24, fontWeight: 800, color: '#dc2626' }}>{secStateChanges}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>security attrs</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.securityAttrsLabel')}</div>
             </div>
           )}
           {nonCompliantDrift > 0 && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 24, fontWeight: 800, color: '#7c3aed' }}>{nonCompliantDrift}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>drift + non-compliant</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.driftNonCompliant')}</div>
             </div>
           )}
         </div>
@@ -483,9 +486,9 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {/* Tab bar */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid var(--card-border)' }}>
             {([
-              ['regressed', `Regressions (${regressed.length})`, '#dc2626'],
-              ['recovered', `Recovered (${recovered.length})`, '#059669'],
-              ['state',     `State Drift (${filteredStateDrift.length})`, '#d97706'],
+              ['regressed', t('pages.driftDetection.tabRegressions', { count: String(regressed.length) }), '#dc2626'],
+              ['recovered', t('pages.driftDetection.tabRecovered',   { count: String(recovered.length) }), '#059669'],
+              ['state',     t('pages.driftDetection.tabStateDrift',  { count: String(filteredStateDrift.length) }), '#d97706'],
             ] as [string, string, string][]).map(([key, label, color]) => (
               <button key={key} onClick={() => setTab(key as typeof tab)} style={{
                 padding: '8px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
@@ -503,18 +506,18 @@ export default function DriftDetectionPage({ run, runs }: Props) {
             <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
               <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)}
                 style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: 12 }}>
-                <option value="">All pillars</option>
+                <option value="">{t('pages.driftDetection.allPillars')}</option>
                 {pillars.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
               <select value={sevFilter} onChange={e => setSevFilter(e.target.value)}
                 style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: 12 }}>
-                <option value="">All severities</option>
+                <option value="">{t('pages.driftDetection.allSeverities')}</option>
                 {['critical', 'high', 'medium', 'low', 'info'].map(s => <option key={s} value={s}>{s}</option>)}
               </select>
               {(pillarFilter || sevFilter) && (
                 <button onClick={() => { setPillarFilter(''); setSevFilter('') }}
                   style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>
-                  Clear
+                  {t('pages.driftDetection.clear')}
                 </button>
               )}
             </div>
@@ -531,7 +534,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                   color: actionFilter === a ? (ACTION_META[a]?.color ?? 'var(--text-primary)') : 'var(--text-muted)',
                   fontWeight: actionFilter === a ? 700 : 400,
                 }}>
-                  {a === 'all' ? 'All' : (ACTION_META[a]?.label ?? a)}
+                  {a === 'all' ? t('pages.driftDetection.allFilter') : (ACTION_META[a]?.label ?? a)}
                 </button>
               ))}
             </div>
@@ -540,7 +543,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {/* Loading state */}
           {prevLoading && (
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: 14 }}>
-              Loading previous run…
+              {t('pages.driftDetection.loadingPrev')}
             </div>
           )}
 
@@ -552,10 +555,9 @@ export default function DriftDetectionPage({ run, runs }: Props) {
               color: 'var(--text-muted)', fontSize: 14,
             }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-              <strong>No previous run found for project "{run.project}"</strong>
+              <strong>{t('pages.driftDetection.noPrevRunProject', { project: run.project })}</strong>
               <div style={{ marginTop: 6, fontSize: 12 }}>
-                Compliance drift requires at least two runs for the same project.
-                Run WAF++ again after making changes to see what regressed or recovered.
+                {t('pages.driftDetection.complianceRequires')} {t('pages.driftDetection.complianceRequiresDetail')}
               </div>
             </div>
           )}
@@ -567,12 +569,12 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                 textAlign: 'center', padding: '32px', border: '1px dashed var(--card-border)',
                 borderRadius: 10, color: '#059669', fontSize: 14,
               }}>
-                ✅ No regressions — nothing that was passing is now failing
+                {t('pages.driftDetection.noRegressions')}
               </div>
             ) : (
               <>
                 <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
-                  {filteredRegressed.length} control{filteredRegressed.length !== 1 ? 's' : ''} that passed in the previous run are now failing — these represent active compliance regression.
+                  {t('pages.driftDetection.regressionSummary', { count: String(filteredRegressed.length), s: filteredRegressed.length !== 1 ? 's' : '' })}
                 </div>
                 {filteredRegressed.map((item, i) => (
                   <DriftCard key={i} item={item} direction="regressed" />
@@ -588,12 +590,12 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                 textAlign: 'center', padding: '32px', border: '1px dashed var(--card-border)',
                 borderRadius: 10, color: 'var(--text-muted)', fontSize: 14,
               }}>
-                No controls recovered since last run
+                {t('pages.driftDetection.noRecoveredRun')}
               </div>
             ) : (
               <>
                 <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
-                  {filteredRecovered.length} control{filteredRecovered.length !== 1 ? 's' : ''} that were failing in the previous run are now passing — good progress.
+                  {t('pages.driftDetection.recoveredSummary', { count: String(filteredRecovered.length), s: filteredRecovered.length !== 1 ? 's' : '' })}
                 </div>
                 {filteredRecovered.map((item, i) => (
                   <DriftCard key={i} item={item} direction="recovered" />
@@ -611,9 +613,9 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                 color: 'var(--text-muted)', fontSize: 14,
               }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-                <strong>No Terraform plan attached to this run</strong>
+                <strong>{t('pages.driftDetection.noTerraformPlan')}</strong>
                 <div style={{ marginTop: 6, fontSize: 12 }}>
-                  Pass <code style={{ background: 'var(--bg-secondary)', padding: '1px 4px', borderRadius: 3 }}>--plan-file plan.json</code> to WAF++ to capture state drift from your Terraform plan.
+                  {t('pages.driftDetection.noTerraformPlanDesc')}
                 </div>
               </div>
             ) : filteredStateDrift.length === 0 ? (
@@ -621,14 +623,13 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                 textAlign: 'center', padding: '32px', border: '1px dashed var(--card-border)',
                 borderRadius: 10, color: '#059669', fontSize: 14,
               }}>
-                ✅ No actionable state changes in the attached plan
+                {t('pages.driftDetection.noStateChanges')}
               </div>
             ) : (
               <>
                 <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
-                  {filteredStateDrift.length} resource{filteredStateDrift.length !== 1 ? 's' : ''} with
-                  infrastructure state changes — <strong style={{ color: '#dc2626' }}>{secStateChanges}</strong> involve security-sensitive attributes
-                  {nonCompliantDrift > 0 && <>, <strong style={{ color: '#7c3aed' }}>{nonCompliantDrift}</strong> are also non-compliant</>}.
+                  {t('pages.driftDetection.stateDriftSummary', { count: String(filteredStateDrift.length), s: filteredStateDrift.length !== 1 ? 's' : '' })} — <strong style={{ color: '#dc2626' }}>{secStateChanges}</strong> {t('pages.driftDetection.securityAttr').toLowerCase()}
+                  {nonCompliantDrift > 0 && <>, <strong style={{ color: '#7c3aed' }}>{nonCompliantDrift}</strong> {t('pages.driftDetection.driftNonCompliant')}</>}.
                 </div>
                 {filteredStateDrift.map((c, i) => (
                   <StateDriftCard key={i} change={c} failingResources={failingResources} />
@@ -644,13 +645,13 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {/* Score trend */}
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '16px' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
-              Score trend · {run.project}
+              {t('pages.driftDetection.scoreTrend')} · {run.project}
             </div>
             <ScoreTrend projectRuns={projectRuns} currentId={run.id} />
             <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)' }}>
-              <span>oldest</span>
-              <span>{projectRuns.length} run{projectRuns.length !== 1 ? 's' : ''}</span>
-              <span>latest</span>
+              <span>{t('pages.driftDetection.oldest')}</span>
+              <span>{t('pages.driftDetection.runsLabel', { count: String(projectRuns.length), s: projectRuns.length !== 1 ? 's' : '' })}</span>
+              <span>{t('pages.driftDetection.latest')}</span>
             </div>
           </div>
 
@@ -658,7 +659,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {prevRun && (
             <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '16px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
-                Pillar score delta
+                {t('pages.driftDetection.pillarDelta')}
               </div>
               {Object.entries(run.pillar_scores).map(([pillar, score]) => {
                 const prev = prevRun.pillar_scores[pillar] ?? score
@@ -696,7 +697,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {run.plan_changes && (
             <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '16px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
-                Plan summary
+                {t('pages.driftDetection.planSummary')}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {(Object.entries(run.plan_changes.summary) as [string, number][])
@@ -717,7 +718,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                   })}
               </div>
               <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-muted)' }}>
-                Terraform {run.plan_changes.terraform_version} · scanned {new Date(run.plan_changes.scanned_at).toLocaleString()}
+                {t('pages.driftDetection.terraform')} {run.plan_changes.terraform_version} · scanned {new Date(run.plan_changes.scanned_at).toLocaleString()}
               </div>
             </div>
           )}
@@ -726,7 +727,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {prevRun && (
             <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '16px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>
-                Baseline run
+                {t('pages.driftDetection.baselineRun')}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
                 <div><strong>Branch:</strong> {prevRun.branch}</div>

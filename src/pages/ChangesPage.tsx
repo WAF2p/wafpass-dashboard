@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRun, Finding, PlanChange, PlanChanges, RunDetail, RunSummary } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail; runs: RunSummary[] }
 
@@ -195,10 +196,11 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
 }
 
 function TailbreakAlert({ type }: { type: string }) {
+  const { t } = useI18n()
   const risks = getTailbreakRisks(type)
   return (
     <div style={{ padding: '0.7rem 0.85rem', borderRadius: '8px', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.22)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#dc2626' }}>⚠ Potential tailbreaks</div>
+      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#dc2626' }}>{t('pages.changes.tailbreakAlert')}</div>
       <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
         {risks.map((r, i) => <li key={i} style={{ fontSize: '0.77rem', color: '#7f1d1d', lineHeight: 1.55 }}>{r}</li>)}
       </ul>
@@ -207,13 +209,14 @@ function TailbreakAlert({ type }: { type: string }) {
 }
 
 function CreateDetail({ after, afterUnknown }: { after: Attrs | null | undefined; afterUnknown?: Attrs | null }) {
+  const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'rgba(22,163,74,.07)', border: '1px solid rgba(22,163,74,.2)', fontSize: '0.77rem', color: '#14532d' }}>
-        This resource will be <strong>created</strong>. Attributes marked <em>(computed at apply)</em> will be assigned by the provider.
+        This resource will be <strong>created</strong>. Attributes marked <em>({t('pages.changes.computedAtApply').replace('(', '').replace(')', '')})</em> will be assigned by the provider.
       </div>
       <div>
-        <SectionLabel>Attributes to be created</SectionLabel>
+        <SectionLabel>{t('pages.changes.attrToBeCreated')}</SectionLabel>
         <DiffTable before={null} after={after} afterUnknown={afterUnknown} diffOnly={false} beforeLabel="Before (does not exist)" afterLabel="After (planned values)" />
       </div>
     </div>
@@ -221,13 +224,14 @@ function CreateDetail({ after, afterUnknown }: { after: Attrs | null | undefined
 }
 
 function UpdateDetail({ before, after, afterUnknown }: { before: Attrs | null | undefined; after: Attrs | null | undefined; afterUnknown?: Attrs | null }) {
+  const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'rgba(217,119,6,.07)', border: '1px solid rgba(217,119,6,.2)', fontSize: '0.77rem', color: '#78350f' }}>
         This resource will be <strong>updated in-place</strong> — no downtime from replacement. Only changed attributes are shown.
       </div>
       <div>
-        <SectionLabel>Changed attributes</SectionLabel>
+        <SectionLabel>{t('pages.changes.changedAttrs')}</SectionLabel>
         <DiffTable before={before} after={after} afterUnknown={afterUnknown} />
       </div>
     </div>
@@ -235,11 +239,12 @@ function UpdateDetail({ before, after, afterUnknown }: { before: Attrs | null | 
 }
 
 function DeleteDetail({ before, type }: { before: Attrs | null | undefined; type: string }) {
+  const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <TailbreakAlert type={type} />
       <div>
-        <SectionLabel>Current state (will be destroyed)</SectionLabel>
+        <SectionLabel>{t('pages.changes.currentState')}</SectionLabel>
         <DiffTable before={before} after={null} diffOnly={false} beforeLabel="Before (current values)" afterLabel="After (will be destroyed)" />
       </div>
     </div>
@@ -247,6 +252,7 @@ function DeleteDetail({ before, type }: { before: Attrs | null | undefined; type
 }
 
 function ReplaceDetail({ before, after, afterUnknown, type }: { before: Attrs | null | undefined; after: Attrs | null | undefined; afterUnknown?: Attrs | null; type: string }) {
+  const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'rgba(124,58,237,.07)', border: '1px solid rgba(124,58,237,.2)', fontSize: '0.77rem', color: '#4c1d95' }}>
@@ -254,7 +260,7 @@ function ReplaceDetail({ before, after, afterUnknown, type }: { before: Attrs | 
       </div>
       <TailbreakAlert type={type} />
       <div>
-        <SectionLabel>Changed attributes</SectionLabel>
+        <SectionLabel>{t('pages.changes.changedAttrs')}</SectionLabel>
         <DiffTable before={before} after={after} afterUnknown={afterUnknown} />
       </div>
     </div>
@@ -262,6 +268,7 @@ function ReplaceDetail({ before, after, afterUnknown, type }: { before: Attrs | 
 }
 
 function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: () => void }) {
+  const { t } = useI18n()
   const { color, bg, label, icon } = actionMeta(change.action)
   const before = change.before as Attrs | null | undefined
   const after  = change.after  as Attrs | null | undefined
@@ -273,8 +280,8 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '1560px', maxWidth: '95vw', maxHeight: '86vh',
-        background: '#fff', borderRadius: '14px',
-        boxShadow: '0 24px 64px rgba(15,23,42,.22)',
+        background: 'var(--card-bg)', borderRadius: '14px',
+        boxShadow: '0 24px 64px rgba(0,0,0,.4)',
         display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden',
       }}>
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
@@ -297,7 +304,7 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
           {change.action === 'replace' && <ReplaceDetail before={before} after={after} afterUnknown={afterUnknown} type={change.type} />}
         </div>
         <div style={{ padding: '0.65rem 1.25rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.4rem 1.1rem', borderRadius: '7px', border: '1px solid var(--border)', background: '#fff', color: 'var(--text)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>Close</button>
+          <button onClick={onClose} style={{ padding: '0.4rem 1.1rem', borderRadius: '7px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>{t('pages.changes.close')}</button>
         </div>
       </div>
     </>
@@ -342,6 +349,7 @@ function SummaryPill({ count, action }: { count: number; action: string }) {
 }
 
 function NoChanges({ plan }: { plan: PlanChanges }) {
+  const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 2rem', gap: '1rem', textAlign: 'center' }}>
       <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', background: 'rgba(22,163,74,.1)', border: '2px solid rgba(22,163,74,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -350,15 +358,16 @@ function NoChanges({ plan }: { plan: PlanChanges }) {
         </svg>
       </div>
       <div>
-        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#16a34a' }}>No Infrastructure Changes</div>
-        <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginTop: '0.35rem' }}>This plan contains no resource additions, modifications, replacements, or deletions.</div>
+        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#16a34a' }}>{t('pages.changes.noPlanChanges')}</div>
+        <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginTop: '0.35rem' }}>{t('pages.changes.noPlanChangesDesc')}</div>
       </div>
-      {plan.summary.no_op > 0 && <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{plan.summary.no_op} resource{plan.summary.no_op !== 1 ? 's' : ''} in state — all up to date</div>}
+      {plan.summary.no_op > 0 && <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t('pages.changes.resourcesUpToDate', { count: String(plan.summary.no_op), s: plan.summary.no_op !== 1 ? 's' : '' })}</div>}
     </div>
   )
 }
 
 function NoPlanData({ run }: { run: RunDetail }) {
+  const { t } = useI18n()
   const iacPath = run.path || run.source_paths?.[0] || '/path/to/terraform'
   const iac = run.iac_framework && run.iac_framework !== 'terraform' ? ` --iac ${run.iac_framework}` : ''
   const pushUrl = window.location.origin
@@ -369,19 +378,19 @@ function NoPlanData({ run }: { run: RunDetail }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '680px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '1rem 1.1rem', borderRadius: '10px', background: 'rgba(148,163,184,.08)', border: '1px solid rgba(148,163,184,.2)' }}>
         <div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>No plan data for this run</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>{t('pages.changes.noPlanData')}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-            Re-run with a Terraform plan JSON to see resource change analysis here.
+            {t('pages.changes.noPlanDataDesc')}
           </div>
         </div>
       </div>
       <div>
-        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>How to include plan data</div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.changes.howToIncludePlan')}</div>
         <div style={{ position: 'relative' }}>
           <pre style={{ background: '#0f172a', color: '#e2e8f0', borderRadius: '8px', padding: '0.875rem 3rem 0.875rem 0.875rem', fontSize: '0.78rem', overflowX: 'auto', lineHeight: 1.8, margin: 0 }}>{cmd}</pre>
           <button onClick={() => navigator.clipboard.writeText(cmd).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })}
             style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: '5px', color: copied ? '#22c55e' : '#94a3b8', fontSize: '0.65rem', padding: '0.2rem 0.5rem', cursor: 'pointer' }}>
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? t('common.copied') : t('common.copy')}
           </button>
         </div>
       </div>
@@ -423,6 +432,7 @@ function computeDrift(base: RunDetail, head: RunDetail) {
 }
 
 function DriftCard({ item, direction }: { item: DriftItem; direction: 'regressed' | 'recovered' }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const color = direction === 'regressed' ? (SEV_COLOR[item.severity?.toLowerCase()] ?? '#94a3b8') : '#059669'
   return (
@@ -442,7 +452,7 @@ function DriftCard({ item, direction }: { item: DriftItem; direction: 'regressed
           <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.message}</div>
           {item.remediation && (
             <div style={{ marginTop: 8, padding: '8px 10px', background: 'var(--bg-secondary)', borderRadius: 6, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-secondary)' }}>Remediation:</strong> {item.remediation}
+              <strong style={{ color: 'var(--text-secondary)' }}>{t('pages.changes.remediation')}</strong> {item.remediation}
             </div>
           )}
           <div style={{ marginTop: 6, display: 'flex', gap: 6 }}>
@@ -458,13 +468,14 @@ function DriftCard({ item, direction }: { item: DriftItem; direction: 'regressed
 // ─── Score Trend Sparkline ────────────────────────────────────────────────────
 
 function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; currentId: string }) {
+  const { t } = useI18n()
   const sorted = [...projectRuns]
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     .slice(-12)
 
   if (sorted.length < 2) return (
     <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
-      Need at least 2 runs to show trend
+      {t('pages.changes.needMoreRuns')}
     </div>
   )
 
@@ -500,6 +511,7 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
 // ─── Right Sidebar ────────────────────────────────────────────────────────────
 
 function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; prevRun: RunDetail | null }) {
+  const { t } = useI18n()
   const projectRuns = useMemo(() =>
     runs.filter(r => r.project === run.project)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
@@ -511,17 +523,17 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
 
       {/* Score trend */}
       <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Score trend · {run.project}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{t('pages.changes.scoreTrend')} · {run.project}</div>
         <ScoreTrend projectRuns={projectRuns} currentId={run.id} />
         <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
-          <span>oldest</span><span>{projectRuns.length} run{projectRuns.length !== 1 ? 's' : ''}</span><span>latest</span>
+          <span>{t('pages.changes.oldest')}</span><span>{t('pages.changes.runsLabel', { count: String(projectRuns.length), s: projectRuns.length !== 1 ? 's' : '' })}</span><span>{t('pages.changes.latest')}</span>
         </div>
       </div>
 
       {/* Pillar delta */}
       {prevRun && (
         <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Pillar score delta</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{t('pages.changes.pillarDelta')}</div>
           {Object.entries(run.pillar_scores).map(([pillar, score]) => {
             const prev = prevRun.pillar_scores[pillar] ?? score
             const delta = score - prev
@@ -548,7 +560,7 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
       {/* Plan summary */}
       {run.plan_changes && (
         <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Plan summary</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{t('pages.changes.planSummary')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {(Object.entries(run.plan_changes.summary) as [string, number][]).filter(([, v]) => v > 0).map(([key, val]) => {
               const meta = actionMeta(key === 'add' ? 'create' : key === 'change' ? 'update' : key === 'destroy' ? 'delete' : key)
@@ -570,7 +582,7 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
       {/* Baseline run */}
       {prevRun && (
         <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Drift baseline</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>{t('pages.changes.driftBaseline')}</div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
             <div><strong>Branch:</strong> {prevRun.branch}</div>
             <div><strong>Score:</strong> {prevRun.score}</div>
@@ -586,6 +598,7 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
 // ─── Plan Changes Tab ─────────────────────────────────────────────────────────
 
 function PlanChangesTab({ run }: { run: RunDetail }) {
+  const { t } = useI18n()
   const plan = run.plan_changes
   const [actionFilter, setActionFilter] = useState('')
   const [providerFilter, setProviderFilter] = useState('')
@@ -607,17 +620,17 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
     return true
   })
 
-  const selectStyle = { background: '#fff', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none' }
+  const selectStyle = { background: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none' }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {selected && <ChangeDetailModal change={selected} onClose={() => setSelected(null)} />}
 
       <div style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: 'rgba(0,148,255,.05)', border: '1px solid rgba(0,148,255,.15)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
-        <div><span style={{ fontWeight: 600, color: 'var(--text)' }}>Terraform</span>{plan.terraform_version && <span style={{ marginLeft: '0.35rem', fontFamily: 'monospace' }}>v{plan.terraform_version}</span>}</div>
-        {plan.scanned_at && <div>Plan captured: <span style={{ color: 'var(--text)' }}>{new Date(plan.scanned_at).toLocaleString()}</span></div>}
+        <div><span style={{ fontWeight: 600, color: 'var(--text)' }}>{t('pages.changes.terraform')}</span>{plan.terraform_version && <span style={{ marginLeft: '0.35rem', fontFamily: 'monospace' }}>v{plan.terraform_version}</span>}</div>
+        {plan.scanned_at && <div>{t('pages.changes.planCaptured')} <span style={{ color: 'var(--text)' }}>{new Date(plan.scanned_at).toLocaleString()}</span></div>}
         <div style={{ marginLeft: 'auto', fontWeight: 600, color: totalChanges > 0 ? '#d97706' : '#16a34a' }}>
-          {totalChanges === 0 ? 'No changes' : `${totalChanges} resource change${totalChanges !== 1 ? 's' : ''}`}
+          {totalChanges === 0 ? t('pages.changes.noChanges') : t('pages.changes.resourceChanges', { count: String(totalChanges), s: totalChanges !== 1 ? 's' : '' })}
         </div>
       </div>
 
@@ -632,15 +645,15 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
             <SummaryPill count={plan.summary.destroy} action="delete"  />
             {plan.summary.no_op > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '10px', background: 'var(--bg)', border: '1px solid var(--border)', fontSize: '0.72rem', color: 'var(--muted)' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{plan.summary.no_op}</span><span>unchanged</span>
+                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{plan.summary.no_op}</span><span>{t('pages.changes.unchanged')}</span>
               </div>
             )}
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <input placeholder="Search address or type…" value={search} onChange={e => setSearch(e.target.value)} style={{ ...selectStyle, flex: '1', minWidth: '200px' }} />
+            <input placeholder={t('pages.changes.searchAddressOrType')} value={search} onChange={e => setSearch(e.target.value)} style={{ ...selectStyle, flex: '1', minWidth: '200px' }} />
             <select value={actionFilter} onChange={e => setActionFilter(e.target.value)} style={selectStyle}>
-              <option value="">All actions</option>
+              <option value="">{t('pages.changes.allActions')}</option>
               <option value="create">Add</option>
               <option value="update">Change</option>
               <option value="replace">Replace</option>
@@ -648,7 +661,7 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
             </select>
             {providers.length > 1 && (
               <select value={providerFilter} onChange={e => setProviderFilter(e.target.value)} style={selectStyle}>
-                <option value="">All providers</option>
+                <option value="">{t('pages.changes.allProviders')}</option>
                 {providers.map(p => <option key={p}>{p}</option>)}
               </select>
             )}
@@ -669,12 +682,12 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
                 <tbody>
                   {filtered.map((c, i) => <ChangeRow key={i} change={c} onClick={() => setSelected(c)} />)}
                   {filtered.length === 0 && (
-                    <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>No changes match the current filters.</td></tr>
+                    <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>{t('pages.changes.noMatchFilter')}</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-            {filtered.length > 0 && <div style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.7rem', color: 'var(--muted)' }}>Click any row to view detailed change information</div>}
+            {filtered.length > 0 && <div style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.changes.clickForDetail')}</div>}
           </div>
 
           {plan.changes.length > 0 && (() => {
@@ -694,7 +707,7 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
             if (!rows.length) return null
             return (
               <div className="card">
-                <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.875rem' }}>Breakdown by Resource Type</h2>
+                <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.875rem' }}>{t('pages.changes.byResourceType')}</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {rows.map(([type, counts]) => {
                     const total = counts.add + counts.update + counts.delete + counts.replace
@@ -727,6 +740,7 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
   items: DriftItem[]; direction: 'regressed' | 'recovered'
   loading: boolean; prevRun: RunDetail | null
 }) {
+  const { t } = useI18n()
   const [pillarFilter, setPillarFilter] = useState('')
   const [sevFilter, setSevFilter] = useState('')
 
@@ -735,19 +749,19 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
     (!pillarFilter || i.pillar === pillarFilter) && (!sevFilter || i.severity?.toLowerCase() === sevFilter)
   ), [items, pillarFilter, sevFilter])
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 14 }}>Loading baseline run…</div>
+  if (loading) return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 14 }}>{t('pages.changes.loadingBaseline')}</div>
 
   if (!prevRun) return (
     <div style={{ textAlign: 'center', padding: '40px 20px', border: '1px dashed var(--card-border)', borderRadius: 10, color: 'var(--text-muted)', fontSize: 14 }}>
       <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
-      <strong>No previous run found for this project</strong>
-      <div style={{ marginTop: 6, fontSize: 12 }}>Drift detection requires at least two runs for the same project.</div>
+      <strong>{t('pages.changes.noPreviousRun')}</strong>
+      <div style={{ marginTop: 6, fontSize: 12 }}>{t('pages.changes.needAtLeastTwo')}</div>
     </div>
   )
 
   const emptyMsg = direction === 'regressed'
-    ? '✅ No regressions — nothing that was passing is now failing'
-    : 'No controls recovered since the last run'
+    ? t('pages.changes.noRegressions')
+    : t('pages.changes.noRecovered')
 
   return (
     <div>
@@ -755,18 +769,18 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
         <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
           <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)}
             style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: 12 }}>
-            <option value="">All pillars</option>
+            <option value="">{t('pages.changes.allPillars')}</option>
             {pillars.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
           <select value={sevFilter} onChange={e => setSevFilter(e.target.value)}
             style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: 12 }}>
-            <option value="">All severities</option>
+            <option value="">{t('pages.changes.allSeverities')}</option>
             {['critical', 'high', 'medium', 'low', 'info'].map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           {(pillarFilter || sevFilter) && (
             <button onClick={() => { setPillarFilter(''); setSevFilter('') }}
               style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>
-              Clear
+              {t('pages.changes.clear')}
             </button>
           )}
         </div>
@@ -779,7 +793,9 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
       ) : (
         <>
           <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
-            {filtered.length} control{filtered.length !== 1 ? 's' : ''} {direction === 'regressed' ? 'that passed in the baseline are now failing' : 'that were failing in the baseline are now passing'}.
+            {direction === 'regressed'
+              ? t('pages.changes.driftSummaryRegressed', { count: String(filtered.length), s: filtered.length !== 1 ? 's' : '' })
+              : t('pages.changes.driftSummaryRecovered', { count: String(filtered.length), s: filtered.length !== 1 ? 's' : '' })}
           </div>
           {filtered.map((item, i) => <DriftCard key={i} item={item} direction={direction} />)}
         </>
@@ -791,6 +807,7 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ChangesPage({ run, runs }: Props) {
+  const { t } = useI18n()
   const [tab, setTab] = useState<'plan' | 'regressed' | 'recovered'>('plan')
   const [prevRun, setPrevRun] = useState<RunDetail | null>(null)
   const [prevLoading, setPrevLoading] = useState(false)
@@ -822,11 +839,10 @@ export default function ChangesPage({ run, runs }: Props) {
 
   const scoreDelta = prevRun ? run.score - prevRun.score : null
 
-  // Tab definitions
   const tabs: [typeof tab, string, string][] = [
-    ['plan',       `Plan Changes (${planTotal})`,       '#2563eb'],
-    ['regressed',  `Regressions (${regressed.length})`, '#dc2626'],
-    ['recovered',  `Recovered (${recovered.length})`,   '#059669'],
+    ['plan',       t('pages.changes.tabPlanChanges', { count: String(planTotal) }),       '#2563eb'],
+    ['regressed',  t('pages.changes.tabRegressed',   { count: String(regressed.length) }), '#dc2626'],
+    ['recovered',  t('pages.changes.tabRecovered',   { count: String(recovered.length) }), '#059669'],
   ]
 
   return (
@@ -839,25 +855,25 @@ export default function ChangesPage({ run, runs }: Props) {
             <div style={{ fontSize: 22, fontWeight: 800, color: scoreDelta > 0 ? '#059669' : scoreDelta < 0 ? '#dc2626' : 'var(--text-muted)' }}>
               {scoreDelta > 0 ? '+' : ''}{scoreDelta}
             </div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>score Δ vs baseline</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{t('pages.changes.scoreDelta')}</div>
           </div>
         )}
         {planTotal > 0 && (
           <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--card-bg)', border: '1px solid var(--card-border)', textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#d97706' }}>{planTotal}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>infra changes</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{t('pages.changes.infraChanges')}</div>
           </div>
         )}
         {regressed.length > 0 && (
           <div style={{ padding: '10px 16px', borderRadius: 8, background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.2)', textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#dc2626' }}>{regressed.length}</div>
-            <div style={{ fontSize: 10, color: '#dc2626' }}>regressions</div>
+            <div style={{ fontSize: 10, color: '#dc2626' }}>{t('pages.changes.regressionsLabel')}</div>
           </div>
         )}
         {recovered.length > 0 && (
           <div style={{ padding: '10px 16px', borderRadius: 8, background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.2)', textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#059669' }}>{recovered.length}</div>
-            <div style={{ fontSize: 10, color: '#059669' }}>recovered</div>
+            <div style={{ fontSize: 10, color: '#059669' }}>{t('pages.changes.recoveredLabel')}</div>
           </div>
         )}
       </div>

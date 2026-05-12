@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { RunDetail, Finding, SecretFinding } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -63,6 +64,8 @@ function StatusBadge({ status }: { status: string }) {
 function RawSecretCard({ sf }: { sf: SecretFinding }) {
   const [open, setOpen] = useState(false)
   const sev = (sf.severity ?? 'HIGH').toUpperCase()
+  const hasComments = (sf.comment_count ?? 0) > 0
+  const commentCount = sf.comment_count ?? 0
 
   return (
     <div
@@ -93,6 +96,18 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
             <SevBadge sev={sf.severity} />
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#DA2C38' }}>{sf.pattern_name}</span>
+            {hasComments && (
+              <span style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                borderRadius: '999px',
+                padding: '0.05rem 0.4rem',
+                background: 'rgba(0,148,255,.15)',
+                color: '#0094ff',
+              }}>
+                {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+              </span>
+            )}
           </div>
           {/* File + line */}
           <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -119,7 +134,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
       </div>
 
       {open && (
-        <div style={{ padding: '0 0.875rem 0.875rem 3.75rem', borderTop: '1px solid rgba(218,44,56,.15)', paddingTop: '0.75rem', background: '#fafbfc' }}>
+        <div style={{ padding: '0 0.875rem 0.875rem 3.75rem', borderTop: '1px solid rgba(218,44,56,.15)', paddingTop: '0.75rem', background: 'var(--bg)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div>
               <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>Pattern</div>
@@ -145,12 +160,15 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
 function ControlFindingCard({ finding }: { finding: Finding }) {
   const [open, setOpen] = useState(false)
   const isFail = finding.status?.toUpperCase() === 'FAIL'
+  const hasComments = (finding.comment_count ?? 0) > 0
+  const commentCount = finding.comment_count ?? 0
+
   return (
     <div
       style={{
         borderRadius: '10px',
         border: isFail ? '1px solid rgba(218,44,56,.25)' : '1px solid var(--border)',
-        background: '#fff', overflow: 'hidden', cursor: 'pointer',
+        background: 'var(--surface)', overflow: 'hidden', cursor: 'pointer',
       }}
       onClick={() => setOpen(o => !o)}
     >
@@ -161,6 +179,18 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
             <SevBadge sev={finding.severity} />
             <StatusBadge status={finding.status} />
             <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontFamily: 'monospace' }}>{finding.check_id}</span>
+            {hasComments && (
+              <span style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                borderRadius: '999px',
+                padding: '0.05rem 0.4rem',
+                background: 'rgba(0,148,255,.15)',
+                color: '#0094ff',
+              }}>
+                {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+              </span>
+            )}
           </div>
           <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{finding.check_title}</div>
           {finding.resource && (
@@ -173,7 +203,7 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
         </svg>
       </div>
       {open && (
-        <div style={{ padding: '0 0.875rem 0.75rem 2.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.625rem', background: '#fafbfc' }}>
+        <div style={{ padding: '0 0.875rem 0.75rem 2.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.625rem', background: 'var(--bg)' }}>
           {finding.message && <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.6, marginBottom: '0.5rem' }}>{finding.message}</div>}
           {finding.remediation && (
             <div>
@@ -193,7 +223,7 @@ function StatBox({ label, value, color, sub }: { label: string; value: string | 
   return (
     <div style={{
       flex: 1, minWidth: '100px', borderRadius: '10px', padding: '0.75rem 1rem',
-      background: color ? `${color}0d` : '#fafbfc',
+      background: color ? `${color}0d` : 'var(--bg)',
       border: `1px solid ${color ? `${color}30` : 'var(--border)'}`,
     }}>
       <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: color ?? 'var(--muted)', marginBottom: '0.2rem' }}>{label}</div>
@@ -217,6 +247,7 @@ function SectionLabel({ color, dot, children }: { color: string; dot?: boolean; 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function SecretScanPage({ run }: Props) {
+  const { t } = useI18n()
   const [search, setSearch] = useState('')
   const [sevFilter, setSevFilter] = useState('')
 
@@ -248,7 +279,7 @@ export default function SecretScanPage({ run }: Props) {
   const hasAlarm = rawSecrets.length > 0 || failPosture.length > 0
 
   const selectStyle: React.CSSProperties = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none',
   }
 
@@ -276,8 +307,8 @@ export default function SecretScanPage({ run }: Props) {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fef2f2', letterSpacing: '-0.01em' }}>
               {rawSecrets.length > 0
-                ? `${rawSecrets.length} HARDCODED SECRET${rawSecrets.length !== 1 ? 'S' : ''} DETECTED IN SOURCE CODE`
-                : `${failPosture.length} SECRETS MANAGEMENT ISSUE${failPosture.length !== 1 ? 'S' : ''} DETECTED`}
+                ? t('pages.secretScan.alarmTitle', { count: String(rawSecrets.length) })
+                : t('pages.secretScan.secretsIssue')}
             </div>
             <div style={{ fontSize: '0.8rem', color: '#fca5a5', marginTop: '0.2rem' }}>
               {rawSecrets.length > 0
@@ -317,7 +348,7 @@ export default function SecretScanPage({ run }: Props) {
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ecfdf5' }}>No hardcoded secrets detected</div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ecfdf5' }}>{t('pages.secretScan.cleanTitle')}</div>
             <div style={{ fontSize: '0.78rem', color: '#6ee7b7', marginTop: '0.15rem' }}>
               The secret scanner found no hardcoded credentials in this run's IaC source files.
             </div>
@@ -328,13 +359,13 @@ export default function SecretScanPage({ run }: Props) {
       {/* ── Stats strip ── */}
       {(rawSecrets.length > 0 || postureFindings.length > 0) && (
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <StatBox label="Scanner hits" value={rawSecrets.length}
+          <StatBox label={t('pages.secretScan.scannerHits')} value={rawSecrets.length}
             color={rawSecrets.length > 0 ? '#DA2C38' : undefined} sub="hardcoded in source" />
-          <StatBox label="Critical" value={critCount} color={critCount > 0 ? '#DA2C38' : undefined} />
-          <StatBox label="High" value={highCount} color={highCount > 0 ? '#f97316' : undefined} />
-          <StatBox label="Posture fails" value={failPosture.length}
+          <StatBox label={t('pages.secretScan.critical')} value={critCount} color={critCount > 0 ? '#DA2C38' : undefined} />
+          <StatBox label={t('pages.secretScan.high')} value={highCount} color={highCount > 0 ? '#f97316' : undefined} />
+          <StatBox label={t('pages.secretScan.postureFailures')} value={failPosture.length}
             color={failPosture.length > 0 ? '#d97706' : undefined} sub="control checks" />
-          <StatBox label="Posture checks" value={postureFindings.length} />
+          <StatBox label={t('pages.secretScan.postureChecks')} value={postureFindings.length} />
         </div>
       )}
 
@@ -351,24 +382,24 @@ export default function SecretScanPage({ run }: Props) {
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: rawSecrets.length > 0 ? '#DA2C38' : 'var(--text)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            Hardcoded Credential Scan
+            {t('pages.secretScan.hardcodedScanTitle')}
           </span>
           {rawSecrets.length > 0 && (
             <span style={{ fontSize: '0.68rem', fontWeight: 700, borderRadius: '999px', padding: '0.1rem 0.5rem', background: 'rgba(218,44,56,.15)', color: '#DA2C38' }}>
-              {rawSecrets.length} found
+              {t('pages.secretScan.foundCount', { count: String(rawSecrets.length) })}
             </span>
           )}
           <div style={{ flex: 1 }} />
           {rawSecrets.length > 0 && (
             <>
               <input
-                placeholder="Filter by file, pattern…"
+                placeholder={t('pages.secretScan.filterPlaceholder')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{ ...selectStyle, minWidth: '160px' }}
               />
               <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} style={selectStyle}>
-                <option value="">All severities</option>
+                <option value="">{t('pages.secretScan.allSeverities')}</option>
                 <option value="CRITICAL">CRITICAL</option>
                 <option value="HIGH">HIGH</option>
               </select>
@@ -382,14 +413,14 @@ export default function SecretScanPage({ run }: Props) {
               <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ margin: '0 auto 0.5rem', opacity: 0.25, display: 'block' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              No hardcoded secrets in this run.
+              {t('pages.secretScan.noSecrets')}
               {run.secret_findings === undefined || (run.secret_findings as SecretFinding[] | null) === null
-                ? <><br /><span style={{ fontSize: '0.75rem' }}>Update the CLI and re-push to include secret scanner results.</span></>
+                ? <><br /><span style={{ fontSize: '0.75rem' }}>{t('pages.secretScan.updateCliHint')}</span></>
                 : null}
             </div>
           ) : filteredRaw.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--muted)', fontSize: '0.82rem' }}>
-              No results match the current filter.
+              {t('pages.secretScan.noMatchFilter')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -407,19 +438,19 @@ export default function SecretScanPage({ run }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-              Secrets Management Posture
+              {t('pages.secretScan.postureTitle')}
             </span>
             <span style={{ fontSize: '0.65rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
               {failPosture.length > 0 ? `${failPosture.length} failing · ` : ''}{postureFindings.length} total control checks
             </span>
           </div>
           <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {failPosture.length > 0 && <SectionLabel color="#DA2C38" dot>Failing</SectionLabel>}
+            {failPosture.length > 0 && <SectionLabel color="#DA2C38" dot>{t('pages.secretScan.failingLabel')}</SectionLabel>}
             {failPosture.map((f, i) => <ControlFindingCard key={`f-${i}`} finding={f} />)}
             {postureFindings.filter(f => f.status?.toUpperCase() !== 'FAIL').length > 0 && (
               <>
                 <div style={{ height: '0.25rem' }} />
-                <SectionLabel color="var(--muted)" dot>Passing / Waived</SectionLabel>
+                <SectionLabel color="var(--muted)" dot>{t('pages.secretScan.passingLabel')}</SectionLabel>
                 {postureFindings.filter(f => f.status?.toUpperCase() !== 'FAIL').map((f, i) => (
                   <ControlFindingCard key={`p-${i}`} finding={f} />
                 ))}
@@ -432,7 +463,7 @@ export default function SecretScanPage({ run }: Props) {
       {/* ── Remediation reference ── */}
       <div className="card" style={{ padding: '1rem 1.25rem' }}>
         <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.75rem' }}>
-          Remediation Reference — move to a secrets manager
+          {t('pages.secretScan.remediationRef')}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
           {[

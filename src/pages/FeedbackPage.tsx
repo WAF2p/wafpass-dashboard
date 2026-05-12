@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useI18n } from '../i18n'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,21 +111,14 @@ const PRIORITIES: { label: Priority; color: string }[] = [
   { label: 'Urgent', color: '#dc2626' },
 ]
 
-// ─── Rating labels ────────────────────────────────────────────────────────────
 
-const RATING_LABELS: Record<number, string> = {
-  1: '1 – Poor',
-  2: '2 – Fair',
-  3: '3 – Good',
-  4: '4 – Great',
-  5: '5 – Excellent',
-}
 
 const MAX_CHARS = 2000
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FeedbackPage() {
+  const { t } = useI18n()
   const [category, setCategory]     = useState<Category>('General Feedback')
   const [rating, setRating]         = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -209,6 +203,14 @@ export default function FeedbackPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
+  const ratingLabel: Record<number, string> = {
+    1: t('pages.feedbackPage.ratingPoor'),
+    2: t('pages.feedbackPage.ratingFair'),
+    3: t('pages.feedbackPage.ratingGood'),
+    4: t('pages.feedbackPage.ratingVeryGood'),
+    5: t('pages.feedbackPage.ratingExcellent'),
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '760px', margin: '0 auto' }}>
 
@@ -221,9 +223,7 @@ export default function FeedbackPage() {
       }}>
         <span style={{ color: '#0094FF', flexShrink: 0 }}><MailIcon /></span>
         <span style={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
-          Feedback is sent directly to our team at{' '}
-          <strong style={{ color: '#0094FF' }}>feedback@waf2p.dev</strong>
-          {' '}— We read every message.
+          {t('pages.feedbackPage.teamNote')}
         </span>
       </div>
 
@@ -236,13 +236,13 @@ export default function FeedbackPage() {
           color: '#065f46', fontSize: '0.875rem', fontWeight: 600,
         }}>
           <span style={{ fontSize: '1rem' }}>✓</span>
-          Your email client has been opened with the feedback pre-filled. Thank you!
+          {t('pages.feedbackPage.emailClientOpened')}
         </div>
       )}
 
       {/* ── Category selector ────────────────────────────────────────────────── */}
       <div className="card">
-        <div style={labelStyle}>Category</div>
+        <div style={labelStyle}>{t('pages.feedbackPage.category')}</div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {CATEGORIES.map(cat => {
             const active = category === cat.label
@@ -273,7 +273,7 @@ export default function FeedbackPage() {
 
       {/* ── Rating ──────────────────────────────────────────────────────────── */}
       <div className="card">
-        <div style={labelStyle}>Overall Rating</div>
+        <div style={labelStyle}>{t('pages.feedbackPage.rating')}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           {[1, 2, 3, 4, 5].map(n => (
             <button
@@ -294,7 +294,7 @@ export default function FeedbackPage() {
           ))}
           {displayRating > 0 && (
             <span style={{ fontSize: '0.82rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
-              {RATING_LABELS[displayRating]}
+              {ratingLabel[displayRating]}
             </span>
           )}
         </div>
@@ -302,7 +302,7 @@ export default function FeedbackPage() {
 
       {/* ── Priority ────────────────────────────────────────────────────────── */}
       <div className="card">
-        <div style={labelStyle}>Priority</div>
+        <div style={labelStyle}>{t('pages.feedbackPage.priority')}</div>
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
           {PRIORITIES.map(p => {
             const active = priority === p.label
@@ -337,9 +337,7 @@ export default function FeedbackPage() {
       <div className="card">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
-            <label style={labelStyle}>
-              Name <span style={{ color: '#dc2626' }}>*</span>
-            </label>
+            <label style={labelStyle}>{t('pages.feedbackPage.nameLabel')}</label>
             <input
               type="text"
               value={name}
@@ -347,12 +345,10 @@ export default function FeedbackPage() {
               placeholder="Your name"
               style={inputStyle(errors.name)}
             />
-            {errors.name && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>Name is required</div>}
+            {errors.name && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>{t('pages.feedbackPage.nameRequired')}</div>}
           </div>
           <div>
-            <label style={labelStyle}>
-              Email <span style={{ color: '#dc2626' }}>*</span>
-            </label>
+            <label style={labelStyle}>{t('pages.feedbackPage.emailLabel')}</label>
             <input
               type="email"
               value={email}
@@ -360,10 +356,10 @@ export default function FeedbackPage() {
               placeholder="you@company.com"
               style={inputStyle(errors.email)}
             />
-            {errors.email && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>Email is required</div>}
+            {errors.email && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>{t('pages.feedbackPage.emailRequired')}</div>}
           </div>
           <div>
-            <label style={labelStyle}>Company <span style={{ fontSize: '0.68rem', fontWeight: 400, color: 'var(--muted)', textTransform: 'none' }}>(optional)</span></label>
+            <label style={labelStyle}>{t('pages.feedbackPage.companyLabel')}</label>
             <input
               type="text"
               value={company}
@@ -373,9 +369,7 @@ export default function FeedbackPage() {
             />
           </div>
           <div>
-            <label style={labelStyle}>
-              Subject <span style={{ color: '#dc2626' }}>*</span>
-            </label>
+            <label style={labelStyle}>{t('pages.feedbackPage.subjectLabel')}</label>
             <input
               type="text"
               value={subject}
@@ -383,14 +377,14 @@ export default function FeedbackPage() {
               placeholder="Short description"
               style={inputStyle(errors.subject)}
             />
-            {errors.subject && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>Subject is required</div>}
+            {errors.subject && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>{t('pages.feedbackPage.subjectRequired')}</div>}
           </div>
         </div>
       </div>
 
       {/* ── Message ──────────────────────────────────────────────────────────── */}
       <div className="card">
-        <label style={labelStyle}>Message</label>
+        <label style={labelStyle}>{t('pages.feedbackPage.messageLabel')}</label>
         <div style={{ position: 'relative' }}>
           <textarea
             value={message}
@@ -425,7 +419,7 @@ export default function FeedbackPage() {
             style={{ width: '16px', height: '16px', accentColor: 'var(--waf-brand)', cursor: 'pointer', flexShrink: 0 }}
           />
           <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>
-            You may contact me about this feedback
+            {t('pages.feedbackPage.contactConsent')}
           </span>
         </label>
       </div>
@@ -442,10 +436,10 @@ export default function FeedbackPage() {
             boxShadow: '0 4px 16px rgba(0,148,255,0.25)',
           }}
         >
-          Send Feedback
+          {t('pages.feedbackPage.sendBtn')}
         </button>
         <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-          Opens your email client with the form pre-filled.
+          {t('pages.feedbackPage.emailClientHint')}
         </span>
       </div>
 

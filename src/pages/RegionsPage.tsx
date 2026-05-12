@@ -2,6 +2,7 @@ import { RunDetail } from '../api'
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { REGION_COORDS, REGION_LABELS, PROVIDER_COLORS } from '../region-data'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail }
 
@@ -12,6 +13,9 @@ const PROVIDER_LABEL: Record<string, string> = {
   alicloud: 'Alibaba Cloud',
   yandex:   'Yandex Cloud',
   oci:      'Oracle Cloud Infrastructure',
+  ovh:      'OVH Cloud',
+  hetzner:  'Hetzner Cloud',
+  stackit:  'STACKIT',
 }
 
 function detectProvider(entry: string[]): string {
@@ -22,21 +26,24 @@ function detectProvider(entry: string[]): string {
   if (r.match(/^(europe-|us-central|asia-|southamerica-|northamerica-|australia-southeast|africa-south)/)) return 'gcp'
   if (r.match(/^(eu-frankfurt|us-ashburn|us-phoenix|uk-london|ap-tokyo|ap-sydney|ap-mumbai|sa-saopaulo|ca-toronto)/)) return 'oci'
   if (r.match(/^cn-/)) return 'alicloud'
+  if (r.match(/^(de|fr|nl|uk|us|ca|br|pl|se|it|es|at|ch|be|ie|dk|no|fi|lt|lv|ee|bg|ro|hr|sk|cz|hu|gr|pt|ie|ru|tr|ua|by|kz|md|uz|tj|kg|am|az|ge|mk|rs|ba|me|al|gr|tr|il|ae|sa|qa|in|jp|cn|sg|my|th|vn|ph|id|nz|au)(-ovh|-stackit|-hetzner)?$/)) return 'ovh'
+  if (r.match(/^(fs|hi|nbg|us|ca|eu|)(-ovh|-stackit|-hetzner)?$/)) return 'hetzner'
+  if (r.match(/^(de|eu|us|ca|apac|)(-ovh|-stackit|-hetzner)?$/)) return 'stackit'
   return 'unknown'
 }
 
 export default function RegionsPage({ run }: Props) {
+  const { t } = useI18n()
   const regions = run.detected_regions ?? []
 
   if (regions.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        No deployed regions detected for this run.
+        {t('pages.regions.noRegions')}
       </div>
     )
   }
 
-  // Group by provider
   const grouped: Record<string, string[][]> = {}
   for (const entry of regions) {
     if (!Array.isArray(entry) || entry.length === 0) continue
@@ -45,12 +52,11 @@ export default function RegionsPage({ run }: Props) {
     grouped[provider].push(entry)
   }
 
-  const providerOrder = ['aws', 'azure', 'gcp', 'oci', 'alicloud', 'yandex', 'unknown']
+  const providerOrder = ['aws', 'azure', 'gcp', 'ovh', 'hetzner', 'stackit', 'oci', 'alicloud', 'yandex', 'unknown']
   const sortedProviders = Object.keys(grouped).sort(
     (a, b) => providerOrder.indexOf(a) - providerOrder.indexOf(b)
   )
 
-  // Build map markers
   const markers: { region: string; provider: string; coords: [number, number] }[] = []
   for (const entry of regions) {
     if (!Array.isArray(entry) || entry.length === 0) continue
@@ -62,10 +68,9 @@ export default function RegionsPage({ run }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Summary KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Regions</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.regions.totalRegions')}</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--waf-brand)' }}>{regions.length}</div>
         </div>
         {sortedProviders.map(provider => (
@@ -80,12 +85,11 @@ export default function RegionsPage({ run }: Props) {
         ))}
       </div>
 
-      {/* World map */}
       {markers.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
           <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Deployment Map
+              {t('pages.regions.deploymentMap')}
             </h2>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               {sortedProviders.map(p => (
@@ -96,28 +100,13 @@ export default function RegionsPage({ run }: Props) {
               ))}
             </div>
           </div>
-          <MapContainer
-            center={[20, 10]}
-            zoom={2}
-            style={{ height: '420px', width: '100%' }}
-            scrollWheelZoom={false}
-          >
+          <MapContainer center={[20, 10]} zoom={2} style={{ height: '420px', width: '100%' }} scrollWheelZoom={false}>
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             {markers.map((m, i) => (
-              <CircleMarker
-                key={i}
-                center={m.coords}
-                radius={8}
-                pathOptions={{
-                  color: PROVIDER_COLORS[m.provider] ?? '#94a3b8',
-                  fillColor: PROVIDER_COLORS[m.provider] ?? '#94a3b8',
-                  fillOpacity: 0.75,
-                  weight: 2,
-                }}
-              >
+              <CircleMarker key={i} center={m.coords} radius={8} pathOptions={{ color: PROVIDER_COLORS[m.provider] ?? '#94a3b8', fillColor: PROVIDER_COLORS[m.provider] ?? '#94a3b8', fillOpacity: 0.75, weight: 2 }}>
                 <Tooltip>
                   <div style={{ fontSize: '0.8rem' }}>
                     <strong>{m.region}</strong><br />
@@ -131,7 +120,6 @@ export default function RegionsPage({ run }: Props) {
         </div>
       )}
 
-      {/* Provider sections */}
       {sortedProviders.map(provider => {
         const color = PROVIDER_COLORS[provider] ?? '#94a3b8'
         const label = PROVIDER_LABEL[provider] ?? provider.toUpperCase()
@@ -140,16 +128,11 @@ export default function RegionsPage({ run }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color, flexShrink: 0, boxShadow: `0 0 6px ${color}88` }} />
               <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{label}</h2>
-              <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{grouped[provider].length} regions</span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{t('pages.regions.regionsCount', { count: String(grouped[provider].length) })}</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {grouped[provider].map((entry, i) => (
-                <div key={i} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                  padding: '0.35rem 0.75rem', borderRadius: '8px',
-                  background: 'var(--bg)', border: `1px solid ${color}33`,
-                  fontSize: '0.82rem', fontFamily: 'monospace', color: 'var(--text)',
-                }}>
+                <div key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: `1px solid ${color}33`, fontSize: '0.82rem', fontFamily: 'monospace', color: 'var(--text)' }}>
                   <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, flexShrink: 0 }} />
                   {entry[0]}
                   {REGION_LABELS[entry[0]] && (
@@ -164,11 +147,10 @@ export default function RegionsPage({ run }: Props) {
         )
       })}
 
-      {/* Source paths */}
       {run.source_paths && run.source_paths.length > 0 && (
         <div className="card">
           <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
-            Scanned Source Paths
+            {t('pages.regions.scannedPaths')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {run.source_paths.map((p, i) => (

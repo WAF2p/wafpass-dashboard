@@ -1,21 +1,22 @@
 import { RunDetail } from '../api'
+import { useI18n } from '../i18n'
 
 interface Props { run: RunDetail | null }
 
 export default function SkippedControlsPage({ run }: Props) {
+  const { t } = useI18n()
+
   if (!run) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--muted)', fontSize: '0.85rem' }}>
-        No run loaded — select a run from the sidebar to view skipped controls.
+        {t('pages.skippedControls.noRun')}
       </div>
     )
   }
 
-  // Get waivers and risks from localStorage
   const waivers = JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}') as Record<string, any>
   const risks = JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}') as Record<string, any>
 
-  // Build a map of control_id → all finding statuses for that control
   const findingsByControl = new Map<string, string[]>()
   for (const f of run.findings) {
     const statuses = findingsByControl.get(f.control_id) ?? []
@@ -23,10 +24,6 @@ export default function SkippedControlsPage({ run }: Props) {
     findingsByControl.set(f.control_id, statuses)
   }
 
-  // A control is "skipped" if:
-  // 1. It has no findings at all (engine found no matching resources)
-  // 2. All its findings have status SKIP or WAIVED
-  // 3. It has an active waiver or risk acceptance in localStorage
   const skippedControls = run.controls_meta.filter(ctrl => {
     const statuses = findingsByControl.get(ctrl.id)
     const isEngineSkip = !statuses || statuses.length === 0
@@ -44,7 +41,6 @@ export default function SkippedControlsPage({ run }: Props) {
     if (!statuses || statuses.length === 0) {
       return { type: 'Engine', reason: 'No matching resources found in Terraform configuration', owner: 'System', expiry: null }
     }
-    // All findings are SKIP or WAIVED
     const allMessages = run.findings.filter(f => f.control_id === ctrlId).map(f => f.message).filter(Boolean)
     return {
       type: 'Engine/Policy',
@@ -59,9 +55,9 @@ export default function SkippedControlsPage({ run }: Props) {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
           <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-            Skipped Controls Analysis
+            {t('pages.skippedControls.title')}
             <span style={{ marginLeft: '0.75rem', fontWeight: 400, fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'none', letterSpacing: 0 }}>
-              {skippedControls.length} of {run.controls_meta.length} controls
+              {t('pages.skippedControls.controlsOf', { skipped: String(skippedControls.length), total: String(run.controls_meta.length) })}
             </span>
           </h2>
         </div>
@@ -69,19 +65,23 @@ export default function SkippedControlsPage({ run }: Props) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ background: 'var(--bg)' }}>
-                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Control ID</th>
-                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Title</th>
-                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Skip Type</th>
-                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reason</th>
-                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Owner</th>
-                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expiry</th>
+                {[
+                  t('pages.skippedControls.colControl'),
+                  t('pages.skippedControls.colTitle'),
+                  t('pages.skippedControls.colSkipType'),
+                  t('pages.skippedControls.colReason'),
+                  t('pages.skippedControls.colOwner'),
+                  t('pages.skippedControls.colExpiry'),
+                ].map(h => (
+                  <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {skippedControls.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
-                    No skipped controls for this run.
+                    {t('pages.skippedControls.noSkipped')}
                   </td>
                 </tr>
               ) : (
