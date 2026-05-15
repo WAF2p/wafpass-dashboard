@@ -179,6 +179,7 @@ function DiffCard({ item }: { item: DiffItem }) {
           )}
         </div>
       )}
+
     </div>
   )
 }
@@ -503,6 +504,7 @@ export default function RunDiffPage({ runs }: Props) {
           )}
         </div>
       )}
+
     </div>
   )
 }

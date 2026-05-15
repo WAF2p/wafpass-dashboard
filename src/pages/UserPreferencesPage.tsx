@@ -221,6 +221,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
             </button>
           </div>
         </div>
+
       </div>
 
     </div>

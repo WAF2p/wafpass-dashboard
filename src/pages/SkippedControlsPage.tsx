@@ -110,6 +110,7 @@ export default function SkippedControlsPage({ run }: Props) {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   )

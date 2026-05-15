@@ -441,6 +441,7 @@ export default function FeedbackPage() {
         <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
           {t('pages.feedbackPage.emailClientHint')}
         </span>
+
       </div>
 
     </div>

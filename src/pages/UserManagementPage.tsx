@@ -768,6 +768,7 @@ export default function UserManagementPage() {
             </table>
           )}
         </div>
+
       </section>
     </div>
   )

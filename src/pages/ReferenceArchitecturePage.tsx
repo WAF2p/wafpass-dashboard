@@ -2102,17 +2102,6 @@ jobs:
         </a>
       </div>
 
-      {/* Footer */}
-      <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border)', color: 'var(--muted)' }}>
-        <p style={{ fontSize: '0.75rem', margin: '0 0 0.5rem' }}>
-          WAF++ Reference Architecture v1.0.0
-        </p>
-        <p style={{ fontSize: '0.7rem', margin: 0 }}>
-          This reference architecture demonstrates how to implement all WAF++ controls in production-ready
-          Terraform infrastructure. Each section includes code examples, compliance checklists, and why-it-works
-          explanations. This serves as the authoritative example for all WAF++ pillar implementations.
-        </p>
-      </div>
     </div>
   )
 }

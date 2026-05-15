@@ -723,6 +723,7 @@ export default function MaturityJourneyPage({
             </div>
           ))}
         </div>
+
       </div>
 
     </div>

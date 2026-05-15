@@ -445,6 +445,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
           </div>
         </>
       )}
+
     </div>
   )
 }

@@ -540,6 +540,7 @@ export default function SsoSettingsPage() {
 
       <OidcSection  initial={oidcCfg}  onSaved={load} />
       <Saml2Section initial={saml2Cfg} onSaved={load} />
+
     </div>
   )
 }

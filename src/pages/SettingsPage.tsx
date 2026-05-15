@@ -219,31 +219,31 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
                   gap: '0.5rem', padding: '0.9rem 1rem',
-                  borderRadius: '12px', border: `2px solid ${active ? m.color : 'var(--border)'}`,
-                  background: active ? `${m.bg}0.08)` : 'var(--bg)',
+                  borderRadius: '12px', border: `2px solid ${active ? 'transparent' : 'var(--border)'}`,
+                  background: active ? m.color : 'var(--bg)',
                   cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'border-color 0.15s, background 0.15s',
+                  transition: 'all 0.15s',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '50%',
-                    background: `${m.bg}0.18)`, border: `2px solid ${m.color}`,
+                    background: active ? m.color : 'var(--bg)', border: `2px solid ${active ? m.color : 'var(--border)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.72rem', fontWeight: 800, color: m.textColor, flexShrink: 0,
+                    fontSize: '0.72rem', fontWeight: 800, color: active ? '#ffffff' : 'var(--text)', flexShrink: 0,
                   }}>
                     L{m.level}
                   </div>
                   {active && (
-                    <span style={{ fontSize: '0.62rem', fontWeight: 700, color: m.textColor, background: `${m.bg}0.15)`, padding: '0.1rem 0.4rem', borderRadius: '999px', border: `1px solid ${m.color}55` }}>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#ffffff', background: m.color, padding: '0.1rem 0.4rem', borderRadius: '999px', border: `1px solid ${m.color}` }}>
                       {t('pages.settingsPage.activeLabel')}
                     </span>
                   )}
                 </div>
-                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: active ? m.textColor : 'var(--text)', lineHeight: 1.2 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: active ? '#ffffff' : 'var(--text)', lineHeight: 1.2 }}>
                   {m.short}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.45 }}>
+                <div style={{ fontSize: '0.72rem', color: active ? '#ffffff' : 'var(--muted)', lineHeight: 1.45 }}>
                   {m.desc}
                 </div>
               </button>
@@ -254,7 +254,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         {/* Impact panel for selected level */}
         <div style={{
           padding: '1rem 1.25rem', borderRadius: '10px',
-          background: `${meta.bg}0.06)`, border: `1px solid ${meta.color}44`,
+          background: 'var(--bg)', border: `2px solid ${meta.color}`,
           display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem',
         }}>
           {/* Left: tagline + control count */}
@@ -262,7 +262,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {t('pages.settingsPage.activeAtLevel')}
             </div>
-            <div style={{ fontSize: '0.8rem', color: meta.textColor, fontWeight: 600, lineHeight: 1.4 }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text)', fontWeight: 600, lineHeight: 1.4 }}>
               {meta.tagline}
             </div>
             <div>
@@ -271,7 +271,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             </div>
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
               {t('pages.settingsPage.severityThreshold')}{' '}
-              <span style={{ fontWeight: 700, color: meta.textColor }}>
+              <span style={{ fontWeight: 700, color: 'var(--text)' }}>
                 {level === 1 ? t('pages.settingsPage.criticalOnly') : level === 2 ? t('pages.settingsPage.highPlus') : level === 3 ? t('pages.settingsPage.mediumPlus') : t('pages.settingsPage.allSeverities')}
               </span>
             </div>
@@ -287,7 +287,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               const active = (preset.activePillars ?? []).includes(p)
               return (
                 <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.76rem' }}>
-                  <span style={{ fontSize: '0.8rem' }}>{active ? '✓' : '○'}</span>
+                  <span style={{ fontSize: '0.8rem', color: active ? meta.color : 'var(--muted)' }}>{active ? '✓' : '○'}</span>
                   <span style={{ color: active ? 'var(--text)' : 'var(--muted)', fontWeight: active ? 600 : 400 }}>
                     {PILLAR_ICONS[p]} {p.charAt(0).toUpperCase() + p.slice(1)}
                   </span>
@@ -318,7 +318,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 .map(([key, label]) => (
                   <span key={key} style={{
                     padding: '0.1rem 0.45rem', borderRadius: '999px', fontSize: '0.64rem', fontWeight: 600,
-                    background: `${meta.bg}0.15)`, color: meta.textColor,
+                    background: `${meta.color}20`, color: meta.color,
                     border: `1px solid ${meta.color}44`,
                   }}>{label}</span>
                 ))
@@ -730,6 +730,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           {t('pages.settingsPage.resetBtn', { level })}
         </button>
         {saved && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 600 }}>{t('pages.settingsPage.savedMsg')}</span>}
+
       </div>
 
     </div>

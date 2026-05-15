@@ -1458,17 +1458,6 @@ resource "aws_db_instance" "main" {
         </div>
       </section>
 
-      {/* Footer */}
-      <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border)', color: 'var(--muted)' }}>
-        <p style={{ fontSize: '0.75rem', margin: '0 0 0.5rem' }}>
-          WAF++ Anti-Pattern Museum v1.0.0
-        </p>
-        <p style={{ fontSize: '0.7rem', margin: 0 }}>
-          This museum showcases common infrastructure anti-patterns with WAF++-compliant alternatives.
-          Each section shows what not to do and why, followed by the recommended approach.
-          Use this to train your team and prevent common security mistakes.
-        </p>
-      </div>
     </div>
   )
 }

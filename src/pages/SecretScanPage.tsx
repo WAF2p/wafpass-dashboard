@@ -486,6 +486,7 @@ export default function SecretScanPage({ run }: Props) {
           <strong style={{ color: 'var(--text)' }}>Suppress a specific line</strong> (use sparingly — add a justification):<br />
           <code style={{ fontSize: '0.72rem' }}>{'  password = "..." # wafpass:ignore-secret  reason: non-sensitive test placeholder'}</code>
         </div>
+
       </div>
     </div>
   )

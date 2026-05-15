@@ -464,6 +464,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
           </div>
         </>
       )}
+
     </div>
   )
 }
