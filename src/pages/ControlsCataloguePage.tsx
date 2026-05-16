@@ -1875,6 +1875,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           }}
         />
       )}
+
     </div>
   )
 }

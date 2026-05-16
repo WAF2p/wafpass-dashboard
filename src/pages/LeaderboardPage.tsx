@@ -320,6 +320,7 @@ export default function LeaderboardPage() {
         label={t('pages.leaderboard.mostImproved')}
         color="#22c55e"
       />
+
     </div>
   )
 }

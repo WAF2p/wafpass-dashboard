@@ -741,6 +741,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
         </div>
       </div>
 
+
       {stateDrift.length === 0 && (
         <></>
       )}

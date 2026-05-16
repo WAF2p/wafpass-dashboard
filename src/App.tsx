@@ -1,16 +1,16 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { ControlMeta, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, pushUserPrefsToServer } from './api'
 import { useAuth } from './AuthContext'
-import { useTheme } from './theme'
 import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
 import RunSelectorModal from './components/RunSelectorModal'
 const UserPreferencesPage    = lazy(() => import('./pages/UserPreferencesPage'))
-import Sidebar from './components/Sidebar'
+import TopNavigation from './components/TopNavigation'
+import Footer from './components/Footer'
 import PdfReport from './components/PdfReport'
 import { loadMaturityState, saveMaturityState, Settings } from './pages/settingsUtils'
 import { DEFAULT_USER_PREFS, loadUserPrefs, saveUserPrefs, UserPreferences } from './pages/userPrefsUtils'
-import { buildHash, Page, PAGE_SUBTITLE, PAGE_TITLE, parseHash } from './routing'
+import { buildHash, Page, parseHash } from './routing'
 import { useControlsCatalogue } from './useControlsCatalogue'
 import { useRunLoader } from './useRunLoader'
 
@@ -70,20 +70,12 @@ export default function App() {
   return <AuthenticatedApp user={user} role={role ?? 'clevel'} onLogout={logout} />
 }
 
-// Pages that show no run metadata chip in the header
-const PAGES_WITHOUT_RUN_META = new Set<Page>([
-  'runs', 'diff', 'catalogue', 'settings', 'runscan', 'sandbox',
-  'waivers', 'risk', 'audit', 'evidence', 'feedback',
-  'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
-  'reference', 'antipattern', 'globaldashboard',
-])
 
 function AuthenticatedApp({ user, role, onLogout }: {
   user: { username: string; display_name: string; image_url: string; role: string }
   role: string
   onLogout(): Promise<void>
 }) {
-  const { themeName, toggleTheme } = useTheme()
   // Capture the hash run ID once on mount for deep-link restoration
   const [initialRunId] = useState(() => parseHash().runId)
   const [page, setPage] = useState<Page>(() => parseHash().page)
@@ -91,23 +83,16 @@ function AuthenticatedApp({ user, role, onLogout }: {
   const [userPrefs, setUserPrefs] = useState<UserPreferences>(loadUserPrefs)
   const [prefsSyncStatus, setPrefsSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
   const prefsSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [linkCopied, setLinkCopied] = useState(false)
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [waiverCount, setWaiverCount] = useState(0)
   const [riskCount, setRiskCount] = useState(0)
   const mounted = useRef(false)
 
-  const { runs, selectedId, setSelectedId, run, loadingRun, runsError, refetchRuns } = useRunLoader(initialRunId)
+  const { runs, selectedId, setSelectedId, run, loadingRun, refetchRuns } = useRunLoader(initialRunId)
 
   function navigate(newPage: Page) {
     setPage(newPage)
     window.history.pushState(null, '', buildHash(newPage, selectedId))
-  }
-
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href)
-      .then(() => { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) })
-      .catch(() => {})
   }
 
   // Keep URL in sync with page changes
@@ -202,7 +187,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
 
   return (
     <I18nProvider lang={effectiveLang}>
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       {showRunModal && (
         <RunSelectorModal
           runs={runs}
@@ -212,111 +197,27 @@ function AuthenticatedApp({ user, role, onLogout }: {
         />
       )}
 
-      <Sidebar
-        run={run}
-        runs={runs}
-        runsError={runsError}
-        page={page}
-        role={role}
-        user={user}
-        maturityLevel={maturityLevel}
-        settings={settings}
-        hideDisabledMenuItems={userPrefs.hideDisabledMenuItems}
-        waiverCount={waiverCount}
-        riskCount={riskCount}
-        failCount={failCount}
-        navigate={navigate}
-        onShowRunModal={() => setShowRunModal(true)}
-        onOpenUserPrefs={() => navigate('userprefs')}
-        onLogout={onLogout}
-      />
-
-      <div className="app-main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)' }}>
-        {/* Header */}
-        <header style={{
-          background: 'var(--header-bg)', backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid var(--border)', padding: '0.75rem 1.5rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0,
-        }}>
-          <div>
-            <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-              {PAGE_TITLE[page]}
-            </h1>
-            <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: 0 }}>
-              {PAGE_SUBTITLE[page]}
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {run && !PAGES_WITHOUT_RUN_META.has(page) && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                {run.project && <><strong style={{ color: 'var(--text)' }}>{run.project}</strong> · </>}
-                {run.branch && <>{run.branch} · </>}
-                {new Date(run.created_at).toLocaleString()}
-              </span>
-            )}
-            <button
-              onClick={toggleTheme}
-              title={themeName === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: '30px', height: '30px', borderRadius: '8px',
-                background: 'var(--bg)', color: 'var(--muted)',
-                border: '1px solid var(--border)',
-                cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
-              }}
-            >
-              {themeName === 'dark'
-                ? <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" strokeWidth={2}/><path strokeLinecap="round" strokeWidth={2} d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                : <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-              }
-            </button>
-            <button
-              onClick={copyLink}
-              title="Copy link to this page"
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.35rem',
-                padding: '0.35rem 0.7rem', borderRadius: '8px',
-                background: linkCopied ? 'rgba(34,197,94,.12)' : 'var(--bg)',
-                color: linkCopied ? '#15803d' : 'var(--muted)',
-                border: `1px solid ${linkCopied ? 'rgba(34,197,94,.4)' : 'var(--border)'}`,
-                cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
-                transition: 'all 0.15s',
-              }}
-            >
-              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {linkCopied
-                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                }
-              </svg>
-              {linkCopied ? 'Copied!' : 'Copy link'}
-            </button>
-            {run && page === 'dashboard' && (
-              <button
-                onClick={() => window.print()}
-                title={userPrefs.pdfAutoOpen ? 'Share as PDF (auto-open enabled in preferences)' : 'Share as PDF'}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.4rem',
-                  padding: '0.4rem 0.875rem', borderRadius: '8px',
-                  background: userPrefs.pdfDarkMode ? 'rgba(34,197,94,.2)' : 'var(--waf-brand)',
-                  color: userPrefs.pdfDarkMode ? '#22c55e' : '#fff',
-                  border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem',
-                  boxShadow: '0 2px 8px rgba(0,148,255,.30)',
-                }}
-              >
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Share as PDF
-                {userPrefs.pdfDarkMode && <span style={{ fontSize: '0.6rem', fontWeight: 400, opacity: 0.8 }}>DM</span>}
-              </button>
-            )}
-          </div>
-        </header>
+      <div className="app-main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {/* Desktop navigation: Top navigation for desktop, Sidebar hidden on mobile */}
+        <TopNavigation
+          run={run}
+          runs={runs}
+          page={page}
+          role={role}
+          user={user}
+          maturityLevel={maturityLevel}
+          settings={settings}
+          waiverCount={waiverCount}
+          riskCount={riskCount}
+          failCount={failCount}
+          navigate={navigate}
+          onOpenUserPrefs={() => navigate('userprefs')}
+          onLogout={onLogout}
+          onShowRunModal={() => setShowRunModal(true)}
+        />
 
         {/* Page content */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', margin: '20px' }}>
         <Suspense fallback={
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
             <div className="spinner" />
@@ -452,15 +353,17 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : null}
         </Suspense>
         </main>
+        {/* PDF report — hidden in normal view, printed only */}
+        {run && (
+          <div id="wafpass-pdf-root" style={{ display: 'none' }}>
+            <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
+          </div>
+        )}
+        {/* Footer - at bottom, full width, dark background */}
+        <Footer />
       </div>
-
-      {/* PDF report — hidden in normal view, printed only */}
-      {run && (
-        <div id="wafpass-pdf-root" style={{ display: 'none' }}>
-          <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
-        </div>
-      )}
     </div>
+
     </I18nProvider>
   )
 }

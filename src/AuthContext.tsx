@@ -6,7 +6,7 @@
  * refresh token exists we try a silent refresh before showing the login page.
  */
 import { createContext, useContext, useEffect, useState } from 'react'
-import { loginUser, logoutUser, refreshAccessToken, type UserOut } from './api'
+import { loginUser, logoutUser, refreshAccessToken, fetchUsers, type UserOut } from './api'
 
 // ── Role hierarchy (mirrors backend ROLE_HIERARCHY) ────────────────────────
 export const ROLE_HIERARCHY = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
@@ -110,6 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const u = JSON.parse(userStr) as UserOut
       _applyTokens(access, u)
       setIsLoading(false)
+      // Fetch full user profile to get image_url and other potentially missing fields
+      fetchUsers()
+        .then(users => {
+          const fullUser = users.find(user => user.username === u.username)
+          if (fullUser) {
+            localStorage.setItem(USER_KEY, JSON.stringify(fullUser))
+            setUser(fullUser)
+          }
+        })
+        .catch(() => {})
       return
     }
 
@@ -120,6 +130,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem(REFRESH_KEY, refresh_token)
           const u = JSON.parse(userStr) as UserOut
           _applyTokens(access_token, u)
+          // Fetch full user profile to get image_url and other potentially missing fields
+          fetchUsers()
+            .then(users => {
+              const fullUser = users.find(user => user.username === u.username)
+              if (fullUser) {
+                localStorage.setItem(USER_KEY, JSON.stringify(fullUser))
+                setUser(fullUser)
+              }
+            })
+            .catch(() => {})
         })
         .catch(() => _clearAll())
         .finally(() => setIsLoading(false))
@@ -135,6 +155,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(REFRESH_KEY, resp.refresh_token)
     localStorage.setItem(USER_KEY, JSON.stringify(resp.user))
     _applyTokens(resp.access_token, resp.user)
+    // Fetch full user profile to get image_url and other potentially missing fields
+    fetchUsers()
+      .then(users => {
+        const fullUser = users.find(u => u.username === username)
+        if (fullUser) {
+          localStorage.setItem(USER_KEY, JSON.stringify(fullUser))
+          setUser(fullUser)
+        }
+      })
+      .catch(() => {})
   }
 
   function loginWithTokens(accessToken: string, refreshToken: string, userObj: UserOut) {

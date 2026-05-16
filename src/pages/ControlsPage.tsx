@@ -481,6 +481,7 @@ export default function ControlsPage({ controls, findings }: Props) {
           />
         </>
       )}
+
     </>
   )
 }

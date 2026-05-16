@@ -35,8 +35,8 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose }
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)',
-          zIndex: 100, backdropFilter: 'blur(2px)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)',
+          zIndex: 9999, backdropFilter: 'blur(4px)',
         }}
       />
 
@@ -44,7 +44,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose }
       <div style={{
         position: 'fixed', top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        zIndex: 101, width: '660px', maxWidth: '95vw',
+        zIndex: 10000, width: '660px', maxWidth: '95vw',
         background: 'var(--surface)', borderRadius: '16px',
         border: '1px solid var(--border)', boxShadow: '0 24px 80px rgba(0,0,0,.22)',
         display: 'flex', flexDirection: 'column', maxHeight: '80vh',

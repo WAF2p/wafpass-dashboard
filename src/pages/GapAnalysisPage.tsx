@@ -643,6 +643,7 @@ export default function GapAnalysisPage({ run }: Props) {
 
           {/* ── Requirements map tab ─────────────────────────────────────── */}
           {tab === 'requirements' && <RequirementsMap items={allItems} framework={framework} />}
+
         </>
       )}
     </div>

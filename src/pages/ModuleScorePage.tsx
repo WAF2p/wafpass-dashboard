@@ -574,6 +574,7 @@ export default function ModuleScorePage({ run }: Props) {
               </div>
             )}
         </div>
+
       </div>
     </div>
   )

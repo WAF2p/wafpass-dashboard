@@ -459,6 +459,7 @@ export default function CostImpactPage({ run }: Props) {
           </div>
         </>
       )}
+
     </div>
   )
 }
