@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Page } from '../routing'
+import { NotificationBell } from './NotificationBell'
+import { hasMinRole } from '../AuthContext'
 
 function chunkArray<T>(array: T[], size: number): T[][] {
   const result: T[][] = []
@@ -8,7 +10,6 @@ function chunkArray<T>(array: T[], size: number): T[][] {
   }
   return result
 }
-import { hasMinRole } from '../AuthContext'
 import { Settings, getMaturityMeta } from '../pages/settingsUtils'
 import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
@@ -494,6 +495,7 @@ export default function TopNavigation({
 }: TopNavigationProps) {
   const { t, lang } = useI18n()
   const [linkCopied, setLinkCopied] = useState(false)
+  const showNotifications = role === 'admin'
 
 
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t)
@@ -574,26 +576,32 @@ export default function TopNavigation({
         </div>
 
         {/* Dark mode toggle */}
-        <button
-          onClick={() => {
-            const html = document.documentElement
-            const isDark = html.getAttribute('data-theme') === 'dark'
-            html.setAttribute('data-theme', isDark ? 'light' : 'dark')
-          }}
-          title={document.documentElement.getAttribute('data-theme') === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '0.5rem', borderRadius: '8px',
-            background: 'var(--sidebar-surf)', color: 'var(--sidebar-text)',
-            border: '1px solid var(--sidebar-border)',
-            cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
-          }}
-        >
-          {document.documentElement.getAttribute('data-theme') === 'dark'
-            ? <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" strokeWidth={2}/><path strokeLinecap="round" strokeWidth={2} d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-            : <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-          }
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Notifications bell (admin only) */}
+          {showNotifications && <NotificationBell navigate={navigate} />}
+
+          {/* Dark mode toggle */}
+          <button
+            onClick={() => {
+              const html = document.documentElement
+              const isDark = html.getAttribute('data-theme') === 'dark'
+              html.setAttribute('data-theme', isDark ? 'light' : 'dark')
+            }}
+            title={document.documentElement.getAttribute('data-theme') === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '0.5rem', borderRadius: '8px',
+              background: 'var(--sidebar-surf)', color: 'var(--sidebar-text)',
+              border: '1px solid var(--sidebar-border)',
+              cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+            }}
+          >
+            {document.documentElement.getAttribute('data-theme') === 'dark'
+              ? <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" strokeWidth={2}/><path strokeLinecap="round" strokeWidth={2} d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              : <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            }
+          </button>
+        </div>
 
         {/* Copy link */}
         <button
