@@ -55,6 +55,7 @@ const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
 const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
+const LegalPage              = lazy(() => import('./pages/LegalPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -358,6 +359,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ReferenceArchitecturePage />
           ) : page === 'antipattern' ? (
             <AntiPatternMuseumPage />
+          ) : page === 'legal' ? (
+            <LegalPage />
           ) : null}
         </Suspense>
         </main>

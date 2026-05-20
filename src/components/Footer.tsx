@@ -6,6 +6,11 @@ const FOOTER_LINKS = [
   { href: 'https://waf2p.dev/blog', label: 'Blog' },
 ] as const;
 
+const FOOTER_LINKS_WITH_LEGAL = [
+  ...FOOTER_LINKS,
+  { href: '#/legal', label: 'Legal' },
+] as const;
+
 export default function Footer() {
   return (
     <footer className="footer" style={{
@@ -48,7 +53,7 @@ export default function Footer() {
             <span style={{ fontSize: '1.5rem' }}>🚀</span>
           </div>
           <div style={{
-            fontSize: '0.8rem',
+            fontSize: '0.72rem',
             color: 'var(--footer-muted)',
             textAlign: 'center',
             display: 'flex',
@@ -61,6 +66,15 @@ export default function Footer() {
             <span>Open Source</span>
             <span style={{ opacity: 0.5 }}>•</span>
             <span>Community Driven</span>
+          </div>
+          <div style={{
+            fontSize: '0.68rem',
+            color: 'var(--footer-muted)',
+            textAlign: 'center',
+            maxWidth: '320px',
+            lineHeight: 1.5,
+          }}>
+            WAF++ is an open-source framework distributed free of charge. We do not sell the framework or its utilities. Official certification services (hosting/audit) will be available from 2030.
           </div>
         </div>
 
@@ -161,7 +175,7 @@ export default function Footer() {
             alignItems: 'center',
             flexWrap: 'wrap',
           }}>
-            {FOOTER_LINKS.map(link => (
+            {FOOTER_LINKS_WITH_LEGAL.map(link => (
               <a
                 key={link.href}
                 href={link.href}

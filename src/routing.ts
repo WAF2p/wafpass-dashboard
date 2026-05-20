@@ -4,7 +4,7 @@ export const ALL_PAGES = [
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
-  'reference', 'antipattern', 'notifications',
+  'reference', 'antipattern', 'notifications', 'legal',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -53,6 +53,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   reference:       'Reference Architecture',
   antipattern:     'Anti-Pattern Museum',
   notifications:   'Notifications',
+  legal:           'Legal Notice',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
@@ -97,6 +98,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   reference:       'Complete system architecture documentation — wafpass-core, wafpass-server, wafpass-dashboard',
   antipattern:     "Side-by-side 'Bad vs. Good' code comparisons for each WAF++ pillar",
   notifications:   'System notifications — updates, urgent alerts, and important announcements',
+  legal:           'Liability disclaimer, terms of use, and open source notice',
 }
 
 export interface FilterState {
