@@ -1170,4 +1170,254 @@ export async function updateMyProfile(payload: { display_name?: string; image_ur
   return res.json() as Promise<UserOut>
 }
 
+// ── Framework Update Info API ─────────────────────────────────────────────────
 
+export async function fetchUpdateInfo(): Promise<UpdateInfo> {
+  const res = await fetch(`${getApiBase()}/framework-update-info.yml`)
+  if (!res.ok) throw new Error(`Failed to fetch update info: ${res.status}`)
+  const text = await res.text()
+  return parseUpdateInfoYaml(text)
+}
+
+export interface UpdateInfo {
+  version: string
+  generated_at: string
+  service: string
+  framework_de: {
+    repo_path: string
+    git_branch: string
+    last_commit: {
+      hash: string
+      author: string
+      date: string
+      message: string
+    }
+    version: {
+      current: string
+      display: string
+      prerelease: boolean
+    }
+  }
+  framework_en: {
+    repo_path: string
+    git_branch: string
+    last_commit: {
+      hash: string
+      author: string
+      date: string
+      message: string
+    }
+    version: {
+      current: string
+      display: string
+      prerelease: boolean
+    }
+  }
+  checks: {
+    last_run: string
+    next_run: string
+    status: string
+    error: string | null
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseUpdateInfoYaml(text: string): UpdateInfo {
+  // Simple YAML parser for the update info structure
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result: any = {}
+  let currentKey: string | null = null
+  let currentSubKey: string | null = null
+
+  for (const line of text.split('\n')) {
+    if (!line.trim() || line.trim().startsWith('#')) continue
+
+    const indent = line.match(/^[ \t]*/)?.[0].length || 0
+    const content = line.trim()
+
+    if (content.includes(':')) {
+      // Split on first colon only to handle values containing colons (like dates)
+      const colonIndex = content.indexOf(':')
+      const key = content.substring(0, colonIndex).trim()
+      const value = content.substring(colonIndex + 1).trim()
+      const cleanValue = value.replace(/^["']|["']$/g, '')
+
+      if (indent === 0) {
+        if (key === 'version' || key === 'service') {
+          result[key] = cleanValue
+        } else if (key === 'framework_de' || key === 'framework_en') {
+          currentKey = key
+          result[key] = {}
+        } else if (key === 'checks') {
+          currentKey = 'checks'
+          result['checks'] = {}
+        } else if (key === 'generated_at') {
+          result[key] = cleanValue
+        }
+      } else if (indent === 2 && currentKey && currentKey.startsWith('framework')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const frameworkObj: any = result[currentKey]
+        if (key === 'repo_path' || key === 'git_branch') {
+          frameworkObj[key] = cleanValue
+        } else if (key === 'last_commit') {
+          currentSubKey = 'last_commit'
+          frameworkObj['last_commit'] = {}
+        } else if (key === 'version') {
+          currentSubKey = 'version'
+          frameworkObj['version'] = {}
+        }
+      } else if (indent === 4 && currentSubKey && currentKey) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parent = result[currentKey] as any
+        const child = parent[currentSubKey] as any
+        // Convert prerelease string to boolean
+        if (key === 'prerelease') {
+          child[key] = cleanValue.toLowerCase() === 'true'
+        } else {
+          child[key] = cleanValue
+        }
+      } else if (indent === 2 && currentKey === 'checks') {
+        if (key === 'last_run' || key === 'next_run' || key === 'status') {
+          result['checks'][key] = cleanValue
+        } else if (key === 'error') {
+          const errorValue = value === 'null' ? null : cleanValue
+          result['checks']['error'] = errorValue as string | null
+        }
+      } else if (key === 'generated_at') {
+        result[key] = cleanValue
+      }
+    }
+  }
+
+  const parsed = {
+    version: result.version || '1.0',
+    generated_at: result.generated_at || '',
+    service: result.service || 'wafpass-server',
+    framework_de: result.framework_de || {
+      repo_path: '',
+      git_branch: '',
+      last_commit: { hash: '', author: '', date: '', message: '' },
+      version: { current: '', display: '', prerelease: false },
+    },
+    framework_en: result.framework_en || {
+      repo_path: '',
+      git_branch: '',
+      last_commit: { hash: '', author: '', date: '', message: '' },
+      version: { current: '', display: '', prerelease: false },
+    },
+    checks: result.checks || {
+      last_run: '',
+      next_run: '',
+      status: 'unknown',
+      error: null,
+    },
+  }
+
+  return parsed
+}
+
+// ── Notifications API ─────────────────────────────────────────────────────────
+
+export type NotificationCategory = 'info' | 'warning' | 'urgent' | 'success'
+export type NotificationReadStatus = 'read' | 'unread'
+export type NotificationTargetRole = 'admin' | 'clevel' | 'architect' | 'engineer' | 'all'
+
+export interface Notification {
+  id: string
+  title: string
+  message: string
+  category: NotificationCategory
+  is_read: boolean
+  created_at: string
+  expires_at?: string
+  triggered_by: string
+  target_role?: NotificationTargetRole
+}
+
+export interface NotificationCreate {
+  title: string
+  message: string
+  category: NotificationCategory
+  expires_at?: string
+  target_role?: NotificationTargetRole
+}
+
+export interface NotificationUpdate {
+  title?: string
+  message?: string
+  category?: NotificationCategory
+  is_read?: boolean
+}
+
+export async function fetchNotifications(): Promise<Notification[]> {
+  const res = await fetch(`${getApiBase()}/notifications`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json() as ApiEnvelope<Notification[]>
+  return json.data
+}
+
+export async function createNotification(payload: NotificationCreate): Promise<Notification> {
+  const res = await fetch(`${getApiBase()}/notifications`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  const json = await res.json() as ApiEnvelope<Notification>
+  return json.data
+}
+
+export async function triggerTestNotification(payload: NotificationCreate): Promise<Notification> {
+  const res = await fetch(`${getApiBase()}/notifications/test`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Test failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Test failed')
+  }
+  const json = await res.json() as ApiEnvelope<Notification>
+  return json.data
+}
+
+export async function triggerNotification(payload: NotificationCreate & { target_role?: string }): Promise<Notification> {
+  const res = await fetch(`${getApiBase()}/notifications/trigger`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Trigger failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Trigger failed')
+  }
+  const json = await res.json() as ApiEnvelope<Notification>
+  return json.data
+}
+
+export async function markAsRead(id: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/notifications/${encodeURIComponent(id)}/read`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+}
+
+export async function markAllAsRead(): Promise<void> {
+  const res = await fetch(`${getApiBase()}/notifications/read-all`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+}
+
+export async function deleteNotification(id: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/notifications/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}

@@ -10,7 +10,9 @@ import {
   syncControlPack,
   uploadControlPack,
   activateControlPack,
+  fetchUpdateInfo,
   type ControlPackOut,
+  type UpdateInfo,
 } from '../api'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -41,9 +43,11 @@ function ActiveBadge() {
 
 export default function ControlsPacksPage() {
   const { t } = useI18n()
-  const [packs, setPacks]         = useState<ControlPackOut[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState<string | null>(null)
+  const [packs, setPacks]           = useState<ControlPackOut[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [error, setError]           = useState<string | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [updateLoading, setUpdateLoading] = useState(true)
   const [activeTab, setActiveTab]         = useState<'sync' | 'upload'>('upload')
   const [syncVersion, setSyncVersion]     = useState('')
   const [syncDesc, setSyncDesc]           = useState('')
@@ -70,6 +74,17 @@ export default function ControlsPacksPage() {
   }
 
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    setUpdateLoading(true)
+    fetchUpdateInfo()
+      .then(setUpdateInfo)
+      .catch((e: Error) => {
+        console.error('Failed to fetch framework update info:', e)
+        setUpdateInfo(null)
+      })
+      .finally(() => setUpdateLoading(false))
+  }, [])
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
@@ -169,6 +184,56 @@ export default function ControlsPacksPage() {
             <div>{t('pages.controlspacks.activated')} {fmtDate(activePack.activated_at)}</div>
           </div>
         )}
+      </div>
+
+      {/* ── Framework Update Reference ─────────────────────────────────────── */}
+      <div className="card" style={{
+        display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap',
+        borderLeft: '4px solid #0094FF',
+      }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+          background: 'rgba(0,148,255,0.12)', border: '1px solid rgba(0,148,255,0.25)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="22" height="22" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 2 }}>
+            WAF++ Framework Reference
+          </div>
+          {updateLoading ? (
+            <div style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
+              Loading latest version information...
+            </div>
+          ) : updateInfo ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text)', fontFamily: 'monospace' }}>
+                  {updateInfo.version}
+                </span>
+                <span style={{ padding: '0.1rem 0.5rem', borderRadius: '999px', background: 'rgba(0,148,255,.12)', color: '#0094FF', fontSize: '0.68rem', fontWeight: 600 }}>
+                  {updateInfo.generated_at ? `Updated: ${new Date(updateInfo.generated_at).toLocaleDateString()}` : ''}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>DE:</strong> {updateInfo.framework_de.version.display} (commit {updateInfo.framework_de.last_commit.hash?.substring(0, 8) || '—'})
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>EN:</strong> {updateInfo.framework_en.version.display} (commit {updateInfo.framework_en.last_commit.hash?.substring(0, 8) || '—'})
+                </span>
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: '0.82rem', color: '#f97316' }}>
+              Failed to load version information
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Import new pack (tabbed: Upload ZIP / Sync from directory) ── */}
@@ -509,24 +574,6 @@ export default function ControlsPacksPage() {
           <li>Either method stores a full immutable snapshot and upserts all controls into the catalogue, then marks the new pack as active.</li>
           <li>To roll back, click <strong>Activate</strong> on any historical pack — the stored snapshot is re-applied without needing filesystem access.</li>
         </ol>
-      </div>
-
-      {/* ── Controls Catalogue ──────────────────────────────────────────── */}
-      <div className="card" style={{ background: 'var(--bg)', border: '1px solid var(--card-border)' }}>
-        <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 10 }}>
-          Manage Individual Controls
-        </div>
-        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-          For custom control authoring, filtering, and viewing control details, visit the{' '}
-          <a href="/controls/catalogue" style={{ color: 'var(--waf-brand)', fontWeight: 600, textDecoration: 'none' }}>
-            Controls Catalogue
-          </a>
-          <span style={{ display: 'block', marginTop: '0.5rem' }}>
-            <span style={{ background: 'rgba(5,150,105,0.12)', color: '#059669', padding: '0.2rem 0.5rem', borderRadius: 4, fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
-              Single Point of Truth
-            </span>
-          </span>
-        </div>
       </div>
 
     </div>

@@ -113,6 +113,7 @@ export interface Translations {
       reference: string
       antipattern: string
       bestpractices: string
+      notifications: string
     }
   }
 
@@ -1561,6 +1562,38 @@ export interface Translations {
       manageControls: string
       catalogueLink: string
       singlePointTruth: string
+    }
+
+    notifications: {
+      title: string
+      subtitle: string
+      pageDescription: string
+      unread: string
+      read: string
+      noNotifications: string
+      noUnread: string
+      noRead: string
+      markAllRead: string
+      marked: string
+      create: string
+      cancel: string
+      test: string
+      testTitle: string
+      testMessage: string
+      titlePlaceholder: string
+      messagePlaceholder: string
+      message: string
+      category: string
+      send: string
+      filterBy: string
+      all: string
+      viewAll: string
+      settings: {
+        test: string
+        testDesc: string
+        testBtn: string
+        testSent: string
+      }
     }
   }
 }

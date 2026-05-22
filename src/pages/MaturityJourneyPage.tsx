@@ -662,7 +662,7 @@ export default function MaturityJourneyPage({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
                       <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60a5fa', fontFamily: 'monospace' }}>{f.control_id}</span>
-                      <Pill color={sevColor} bg={`${sevColor}18`} border={`${sevColor}35`}>{f.severity}</Pill>
+                      <Pill color={sevColor} bg={`${sevColor}18`} border={`${sevColor}35`}>{f.severity?.toUpperCase()}</Pill>
                       <Pill color="#94a3b8" bg="rgba(71,85,105,0.12)" border="rgba(71,85,105,0.2)">{f.pillar}</Pill>
                     </div>
                     <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

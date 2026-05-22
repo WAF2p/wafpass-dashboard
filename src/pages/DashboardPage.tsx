@@ -80,8 +80,9 @@ function ScoreGauge({ score }: { score: number }) {
 }
 
 function SevBadge({ sev }: { sev: string }) {
-  const c = SEVERITY_COLOR[sev] ?? '#94a3b8'
-  return <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: hex(c, 0.14), color: c, fontSize: '0.62rem', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{sev}</span>
+  const sevUpper = sev.toUpperCase()
+  const c = SEVERITY_COLOR[sevUpper] ?? '#94a3b8'
+  return <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: hex(c, 0.14), color: c, fontSize: '0.62rem', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{sevUpper}</span>
 }
 
 function CardLabel({ children }: { children: React.ReactNode }) {
@@ -755,7 +756,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
                     <span style={{ fontFamily: 'monospace', fontSize: '0.67rem', color: 'var(--muted)' }}>{f.control_id}</span>
-                    <SevBadge sev={sev} />
+                    <SevBadge sev={sev.toUpperCase()} />
                   </div>
                   <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.35, marginBottom: '0.3rem' }}>
                     {f.check_title || f.check_id}

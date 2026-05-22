@@ -5,6 +5,7 @@ import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
 import RunSelectorModal from './components/RunSelectorModal'
 const UserPreferencesPage    = lazy(() => import('./pages/UserPreferencesPage'))
+const NotificationsPage      = lazy(() => import('./pages/NotificationsPage'))
 import TopNavigation from './components/TopNavigation'
 import Footer from './components/Footer'
 import PdfReport from './components/PdfReport'
@@ -13,6 +14,7 @@ import { DEFAULT_USER_PREFS, loadUserPrefs, saveUserPrefs, UserPreferences } fro
 import { buildHash, Page, parseHash } from './routing'
 import { useControlsCatalogue } from './useControlsCatalogue'
 import { useRunLoader } from './useRunLoader'
+import { NotificationProvider } from './notifications/context'
 
 const ControlsCataloguePage  = lazy(() => import('./pages/ControlsCataloguePage'))
 const DashboardPage          = lazy(() => import('./pages/DashboardPage'))
@@ -53,6 +55,7 @@ const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
 const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
+const LegalPage              = lazy(() => import('./pages/LegalPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -67,7 +70,11 @@ export default function App() {
 
   if (!user) return <LoginPage />
 
-  return <AuthenticatedApp user={user} role={role ?? 'clevel'} onLogout={logout} />
+  return (
+    <NotificationProvider>
+      <AuthenticatedApp user={user} role={role ?? 'clevel'} onLogout={logout} />
+    </NotificationProvider>
+  )
 }
 
 
@@ -262,6 +269,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <AccessRolesPage />
           ) : page === 'feedback' ? (
             <FeedbackPage />
+          ) : page === 'notifications' ? (
+            <NotificationsPage />
           ) : page === 'settings' ? (
             <SettingsPage maturityLevel={maturityLevel} settings={settings} onChange={handleSettingsChange} />
           ) : page === 'runscan' ? (
@@ -350,6 +359,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ReferenceArchitecturePage />
           ) : page === 'antipattern' ? (
             <AntiPatternMuseumPage />
+          ) : page === 'legal' ? (
+            <LegalPage />
           ) : null}
         </Suspense>
         </main>

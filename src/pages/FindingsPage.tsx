@@ -270,7 +270,7 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
       <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Pill label={finding.status} color={STATUS_COLOR[finding.status] ?? '#94a3b8'} />
-          <Pill label={finding.severity} color={SEVERITY_COLOR[finding.severity] ?? '#94a3b8'} />
+          <Pill label={finding.severity.toUpperCase()} color={SEVERITY_COLOR[finding.severity.toUpperCase()] ?? '#94a3b8'} />
           {finding.pillar && <Pill label={finding.pillar} color="var(--waf-brand)" />}
         </div>
         <div>
@@ -518,6 +518,14 @@ export default function FindingsPage({ run }: Props) {
   const { t } = useI18n()
   const findings = run.findings
 
+  // Debug: log severity values to console
+  useEffect(() => {
+    const severities = findings.map(f => f.severity)
+    const uniqueSeverities = Array.from(new Set(severities))
+    console.log('FindingsPage - severity values:', uniqueSeverities)
+    console.log('FindingsPage - sample findings:', findings.slice(0, 3).map(f => ({ id: f.check_id, severity: f.severity, status: f.status })))
+  }, [findings])
+
   // Initialize filters from URL on mount
   const initialFilters = useMemo(() => {
     const { filters } = parseHash()
@@ -565,6 +573,18 @@ export default function FindingsPage({ run }: Props) {
                         f.check_id?.toLowerCase().includes(search.toLowerCase()) ||
                         f.resource?.toLowerCase().includes(search.toLowerCase()))
   ), [findings, statusFilter, severityFilter, pillarFilter, search])
+
+  // Debug: show all severity values in the filtered list
+  useEffect(() => {
+    if (filtered.length > 0) {
+      const severityCounts: Record<string, number> = {}
+      filtered.forEach(f => {
+        const sev = f.severity
+        severityCounts[sev] = (severityCounts[sev] || 0) + 1
+      })
+      console.log('FindingsPage - filtered severity counts:', severityCounts)
+    }
+  }, [filtered])
 
   const allFilteredKeys = useMemo(() => new Set(filtered.map(rowKey)), [filtered])
   const checkedInView   = useMemo(() => filtered.filter(f => checked.has(rowKey(f))), [filtered, checked])
@@ -783,7 +803,7 @@ export default function FindingsPage({ run }: Props) {
                       {f.pillar && <Pill label={f.pillar} color="var(--waf-brand)" />}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      <Pill label={f.severity} color={SEVERITY_COLOR[f.severity] ?? '#94a3b8'} />
+                      <Pill label={f.severity.toUpperCase()} color={SEVERITY_COLOR[f.severity.toUpperCase()] ?? '#94a3b8'} />
                     </td>
                     <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
                       <Pill label={f.status} color={STATUS_COLOR[f.status] ?? '#94a3b8'} />
