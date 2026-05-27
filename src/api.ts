@@ -456,6 +456,17 @@ export async function createCatalogueControl(payload: Omit<CatalogueControl, 'cr
   return json.data
 }
 
+export async function deleteCatalogueControl(controlId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/controls/${encodeURIComponent(controlId)}`, {
+    method: 'DELETE',
+    headers: _authHeaders(),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Failed to delete control: ${res.status} ${text}`)
+  }
+}
+
 // ── Authentication API ────────────────────────────────────────────────────────
 
 export interface UserOut {

@@ -43,11 +43,11 @@ export interface MaturityState {
   settings: Settings
 }
 
-export const ALL_PILLARS = ['security', 'cost', 'operations', 'reliability', 'performance', 'sovereign', 'sustainability']
+export const ALL_PILLARS = ['security', 'cost', 'operations', 'reliability', 'performance', 'sovereign', 'sustainability', 'agentic']
 
 export const PILLAR_COUNTS: Record<string, number> = {
   security: 13, cost: 10, operations: 10, reliability: 10,
-  performance: 10, sovereign: 10, sustainability: 10,
+  performance: 10, sovereign: 10, sustainability: 10, agentic: 0,
 }
 export const SEV_COUNTS = { critical: 8, high: 34, medium: 28, low: 3 }
 export const TOTAL_CONTROLS = 73
@@ -66,6 +66,7 @@ export function controlsForLevel(level: number): number {
     3: ['security', 'cost', 'operations', 'reliability'],
     4: ALL_PILLARS.filter(p => p !== 'sustainability'),
     5: ALL_PILLARS,
+    6: ALL_PILLARS,
   }
   const sevs = new Set(sevThresholds[level] ?? [])
   const sevFraction = Object.entries(SEV_COUNTS)
@@ -145,6 +146,15 @@ export const MATURITY_PRESETS: Record<number, Partial<Settings>> = {
     reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: true, cloudFootprint: true, planChanges: false },
   },
   5: {
+    secretScanner: true, autoFix: true, blastRadius: true,
+    driftDetection: true, complianceGating: true, riskScoring: true,
+    dependencyGraph: true, carbonTracking: true, evidenceCollection: true,
+    multiCloudNormalization: true,
+    failOn: 'skip', defaultSeverity: '',
+    activePillars: ALL_PILLARS,
+    reportSections: { executiveSummary: true, pillarBreakdown: true, criticalFindings: true, complianceMatrix: true, architecturalDebt: true, allFindings: true, remediationPlan: true, cloudFootprint: true, planChanges: true },
+  },
+  6: {
     secretScanner: true, autoFix: true, blastRadius: true,
     driftDetection: true, complianceGating: true, riskScoring: true,
     dependencyGraph: true, carbonTracking: true, evidenceCollection: true,

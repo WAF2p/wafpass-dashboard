@@ -304,7 +304,7 @@ export default function MaturityJourneyPage({
     return { name: fw, total: fwControls.length, passing, pct }
   })
 
-  const PILLARS = ['security', 'reliability', 'cost', 'operational', 'sovereign', 'sustainability', 'performance']
+  const PILLARS = ['security', 'reliability', 'cost', 'operations', 'sovereign', 'sustainability', 'performance', 'agentic']
   const pillarStats = PILLARS.map(p => {
     const pControls = run?.controls_meta.filter(c => c.pillar === p) ?? []
     if (!pControls.length) return { name: p, total: 0, passing: 0, pct: 0 }

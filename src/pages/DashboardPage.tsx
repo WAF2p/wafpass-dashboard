@@ -23,14 +23,26 @@ const SEVERITY_COLOR: Record<string, string> = {
   LOW:      '#22c55e',
 }
 
-const PILLAR_COLOR: Record<string, string> = {
-  security:      '#DA2C38',
-  operations:    '#0094FF',
-  cost:          '#22c55e',
-  reliability:   '#7c3aed',
-  performance:   '#eab308',
-  sustainability:'#0d9488',
-  sovereignty:   '#0ea5e9',
+// ── Pillar metadata for consistent display of all 8 pillars ──────────────────
+const PILLAR_META: { key: string; label: string; color: string }[] = [
+  { key: 'security',    label: 'Security',    color: '#DA2C38' },
+  { key: 'cost',        label: 'Cost',        color: '#0094FF' },
+  { key: 'operations',  label: 'Operations',  color: '#8b5cf6' },
+  { key: 'performance', label: 'Performance', color: '#f97316' },
+  { key: 'reliability', label: 'Reliability', color: '#22c55e' },
+  { key: 'sovereign',   label: 'Sovereignty', color: '#eab308' },
+  { key: 'sustainability', label: 'Sustainability', color: '#14b8a6' },
+  { key: 'agentic',     label: 'Agentic',     color: '#ec4899' },
+]
+
+// Legacy PILLAR_COLOR map for backwards compatibility
+const PILLAR_COLOR: Record<string, string> = Object.fromEntries(
+  PILLAR_META.map(p => [p.key, p.color])
+)
+
+function normalizePillarName(p: string): string {
+  if (p === 'operational') return 'operations'
+  return p
 }
 
 const PROVIDER_COLOR: Record<string, string> = {
@@ -311,7 +323,12 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
     .map(s => ({ name: s, value: allFails.filter(f => f.severity?.toUpperCase() === s).length }))
     .filter(d => d.value > 0)
 
-  const pillarData = Object.entries(run.pillar_scores).map(([p, s]) => ({ pillar: p, score: s }))
+  // Build pillar data for all 8 pillars, using run.pillar_scores or defaulting to 0
+  const pillarData = PILLAR_META.map(({ key, label }) => ({
+    key: key,                    // for matching with findings
+    pillar: label,               // for display
+    score: (run.pillar_scores?.[key] ?? 0) as number,
+  }))
 
   const detectedRegions = run.detected_regions ?? []
   const providerCounts  = detectedRegions.reduce<Record<string, number>>((acc, [, prov]) => {
@@ -350,19 +367,24 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
     : 0
 
   // ── Pillar health ────────────────────────────────────────────────────────
-  const pillarHealth = pillarData.map(({ pillar, score }) => {
-    const pf    = findings.filter(f => f.pillar === pillar)
+  const pillarHealth = pillarData.map(({ key, pillar, score }) => {
+    const normalizedPillar = normalizePillarName(key)
+    const pf    = findings.filter(f => normalizePillarName(f.pillar ?? '') === normalizedPillar)
     const fails = pf.filter(f => f.status?.toUpperCase() === 'FAIL').length
-    return { pillar, score, fails, total: pf.length }
+    return { key, pillar, score, fails, total: pf.length }
   }).sort((a, b) => a.score - b.score)
 
   // ── Heatmap ─────────────────────────────────────────────────────────────
-  const pillars = Array.from(new Set(findings.map(f => f.pillar).filter((p): p is string => Boolean(p)))).sort()
-  const heatmap = pillars.flatMap(p => SEVERITIES.map(s => ({
-    pillar: p, severity: s,
-    count: allFails.filter(f => f.pillar === p && f.severity?.toUpperCase() === s).length,
-  })))
-  const heatMax = heatmap.reduce((m, c) => Math.max(m, c.count), 1)
+  // Build heatmap entries for all 8 pillars (including those with score 0)
+  const heatmapAll = PILLAR_META.flatMap(({ key: pillar }) => {
+    const normalizedPillar = normalizePillarName(pillar)
+    return SEVERITIES.map(s => ({
+      pillar: normalizedPillar,
+      severity: s,
+      count: allFails.filter(f => normalizePillarName(f.pillar ?? '') === normalizedPillar && f.severity?.toUpperCase() === s).length,
+    }))
+  })
+  const heatMax = heatmapAll.reduce((m, c) => Math.max(m, c.count), 1)
 
   // ── Quick wins ───────────────────────────────────────────────────────────
   const SWEIGHT: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
@@ -538,8 +560,8 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         <div className="card">
           <CardLabel>{t('pages.dashboard.pillarHealth')}</CardLabel>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '0.6rem' }}>
-            {pillarHealth.map(({ pillar, score, fails, total }) => {
-              const pColor = PILLAR_COLOR[pillar] ?? '#888'
+            {pillarHealth.map(({ key, pillar, score, fails, total }) => {
+              const pColor = PILLAR_COLOR[key] ?? '#888'
               const sColor = scoreColor(score)
               const pct    = total > 0 ? Math.round(((total - fails) / total) * 100) : 100
               return (
@@ -601,10 +623,10 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
           {pillarData.length > 0 && (
             <div className="card">
               <CardLabel>{t('pages.dashboard.scoreByPillar')}</CardLabel>
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={pillarData} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--muted)' }} />
-                  <YAxis type="category" dataKey="pillar" width={95} tick={{ fontSize: 11, fill: 'var(--text)' }} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: 'var(--muted)' }} />
+                  <YAxis type="category" dataKey="pillar" width={80} tick={{ fontSize: 10, fill: 'var(--text)' }} />
                   <Tooltip contentStyle={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.78rem' }} />
                   <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                     {pillarData.map(d => <Cell key={d.pillar} fill={scoreColor(d.score)} />)}
@@ -651,7 +673,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
       {/* ══════════════════════════════════════════════════════════════════
           7. ARCHITECTURAL DEBT HEATMAP
       ══════════════════════════════════════════════════════════════════ */}
-      {pillars.length > 0 && (
+      {allFails.length > 0 && (
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -676,11 +698,11 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                 </tr>
               </thead>
               <tbody>
-                {pillars.map(p => (
-                  <tr key={p} style={{ borderTop: '1px solid var(--border)' }}>
-                    <td style={{ padding: '0.45rem 0.75rem', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{p}</td>
+                {PILLAR_META.map(({ key: pillar, label }) => (
+                  <tr key={pillar} style={{ borderTop: '1px solid var(--border)' }}>
+                    <td style={{ padding: '0.45rem 0.75rem', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{label}</td>
                     {SEVERITIES.map(s => {
-                      const count = heatmap.find(c => c.pillar === p && c.severity === s)?.count ?? 0
+                      const count = heatmapAll.find(c => c.pillar === pillar && c.severity === s)?.count ?? 0
                       const intensity = count === 0 ? 0 : 0.15 + (count / heatMax) * 0.75
                       const col = SEVERITY_COLOR[s] ?? '#94a3b8'
                       return (
@@ -688,7 +710,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                           <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '2.1rem', height: '1.875rem', borderRadius: '5px', background: count === 0 ? 'transparent' : hex(col, intensity), color: count === 0 ? '#cbd5e1' : col, fontWeight: count > 0 ? 700 : 400, transition: 'transform 0.1s', cursor: count > 0 ? 'default' : undefined }}
                             onMouseEnter={e => { if (count > 0) (e.currentTarget as HTMLElement).style.transform = 'scale(1.12)' }}
                             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = '' }}
-                            title={count > 0 ? `${p} / ${s}: ${count} failing` : undefined}
+                            title={count > 0 ? `${label} / ${s}: ${count} failing` : undefined}
                           >
                             {count === 0 ? '—' : count}
                           </div>

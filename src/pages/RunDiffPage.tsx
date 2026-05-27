@@ -25,7 +25,14 @@ const PILLAR_META: { key: string; label: string; color: string }[] = [
   { key: 'reliability',    label: 'Reliability',     color: '#22c55e' },
   { key: 'sovereign',      label: 'Sovereignty',     color: '#eab308' },
   { key: 'sustainability', label: 'Sustainability',  color: '#14b8a6' },
+  { key: 'agentic',        label: 'Agentic',        color: '#ec4899' },
 ]
+
+// Normalize pillar names: database uses "operational", dashboard uses "operations"
+function normalizePillarName(pillar: string): string {
+  if (pillar === 'operational') return 'operations'
+  return pillar
+}
 
 function scoreColor(s: number) {
   return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
@@ -319,12 +326,25 @@ export default function RunDiffPage({ runs }: Props) {
   // Pillar deltas
   const pillarDeltas = useMemo(() => {
     if (!baseSummary || !headSummary) return []
+    // Build normalized pillar_scores maps for base and head
+    const normalizeScores = (scores: Record<string, number> | undefined): Record<string, number> => {
+      const normalized: Record<string, number> = {}
+      if (scores) {
+        for (const [key, value] of Object.entries(scores)) {
+          normalized[normalizePillarName(key)] = value
+        }
+      }
+      return normalized
+    }
+    const baseScores = normalizeScores(baseSummary.pillar_scores)
+    const headScores = normalizeScores(headSummary.pillar_scores)
+
     return PILLAR_META.map(p => {
-      const base = baseSummary.pillar_scores?.[p.key] ?? null
-      const head = headSummary.pillar_scores?.[p.key] ?? null
+      const base = baseScores[p.key] ?? null
+      const head = headScores[p.key] ?? null
       const delta = base != null && head != null ? head - base : null
       return { ...p, base, head, delta }
-    }).filter(p => p.base != null || p.head != null)
+    })
   }, [baseSummary, headSummary])
 
   const sameRun = baseId === headId

@@ -1,9 +1,26 @@
 import { useMemo, useState } from 'react'
 import { RunDetail, ControlMeta } from '../api'
-import { FRAMEWORKS, PILLAR_COLOR } from '../controls-data'
+import { FRAMEWORKS } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
 import type { Settings } from './settingsUtils'
 import { useI18n } from '../i18n'
+
+// All 8 pillars including agentic
+const PILLAR_META: { key: string; label: string; color: string }[] = [
+  { key: 'security',       label: 'Security',       color: '#DA2C38' },
+  { key: 'cost',           label: 'Cost',           color: '#f97316' },
+  { key: 'operations',     label: 'Operations',     color: '#8b5cf6' },
+  { key: 'performance',    label: 'Performance',    color: '#eab308' },
+  { key: 'reliability',    label: 'Reliability',    color: '#0094FF' },
+  { key: 'sovereign',      label: 'Sovereignty',    color: '#06b6d4' },
+  { key: 'sustainability', label: 'Sustainability',  color: '#22c55e' },
+  { key: 'agentic',        label: 'Agentic',       color: '#ec4899' },
+]
+
+function normalizePillarName(p: string): string {
+  if (p === 'operational') return 'operations'
+  return p
+}
 
 interface Props { run: RunDetail; settings?: Settings }
 
@@ -42,7 +59,8 @@ export default function CompliancePage({ run, settings }: Props) {
   const [fwSearch, setFwSearch]   = useState('')
   const [sortKey, setSortKey]     = useState<SortKey>('country')
   const findings = run.findings
-  const pillars = Array.from(new Set(findings.map(f => f.pillar).filter((p): p is string => Boolean(p)))).sort()
+  // Use all 8 pillars from PILLAR_META for consistent display
+  const pillars = PILLAR_META.map(p => normalizePillarName(p.key))
 
   // Prefer run.controls_meta (from engine), fall back to server catalogue / static
   const controlsCatalogue: ControlMeta[] = useMemo(() =>
@@ -51,15 +69,18 @@ export default function CompliancePage({ run, settings }: Props) {
   )
 
   // ── Pillar tab ──────────────────────────────────────────────────────────
-  const pillarStats = pillars.map(p => {
-    const pf = findings.filter(f => f.pillar === p)
+  const pillarStats = PILLAR_META.map(pm => {
+    const normalizedPillar = normalizePillarName(pm.key)
+    const pf = findings.filter(f => normalizePillarName(f.pillar ?? '') === normalizedPillar)
     const total  = pf.length
     const pass   = pf.filter(f => f.status?.toUpperCase() === 'PASS').length
     const fail   = pf.filter(f => f.status?.toUpperCase() === 'FAIL').length
     const waived = pf.filter(f => f.status?.toUpperCase() === 'WAIVED').length
     const passRate = total > 0 ? Math.round((pass / total) * 100) : 0
-    const score  = run.pillar_scores[p] ?? passRate
-    return { pillar: p, total, pass, fail, waived, passRate, score }
+    // Check both the normalized pillar name and original key in pillar_scores
+    const rawScore = run.pillar_scores?.[normalizedPillar] ?? run.pillar_scores?.[pm.key]
+    const score  = rawScore ?? passRate
+    return { key: pm.key, pillar: normalizedPillar, total, pass, fail, waived, passRate, score, color: pm.color }
   })
 
   const severities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
@@ -107,24 +128,21 @@ export default function CompliancePage({ run, settings }: Props) {
             <>
               {/* Pillar cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
-                {pillarStats.map(s => {
-                  const pc = PILLAR_COLOR[s.pillar] ?? 'var(--waf-brand)'
-                  return (
-                    <div key={s.pillar} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderLeft: `3px solid ${pc}` }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ fontWeight: 700, color: 'var(--text)', textTransform: 'capitalize' }}>{s.pillar}</div>
-                        <div style={{ fontWeight: 800, fontSize: '1.25rem', color: scoreColor(s.score) }}>{s.score}</div>
-                      </div>
-                      <ProgressBar value={s.score} />
-                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
-                        <span style={{ color: '#22c55e' }}>✓ {s.pass}</span>
-                        {s.fail > 0 && <span style={{ color: '#DA2C38' }}>✗ {s.fail}</span>}
-                        {s.waived > 0 && <span style={{ color: '#a78bfa' }}>~ {s.waived}</span>}
-                        <span style={{ color: 'var(--muted)', marginLeft: 'auto' }}>{s.total} total</span>
-                      </div>
+                {pillarStats.map(s => (
+                  <div key={s.key} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderLeft: `3px solid ${s.color}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text)', textTransform: 'capitalize' }}>{s.pillar}</div>
+                      <div style={{ fontWeight: 800, fontSize: '1.25rem', color: scoreColor(s.score) }}>{s.score}</div>
                     </div>
-                  )
-                })}
+                    <ProgressBar value={s.score} />
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
+                      <span style={{ color: '#22c55e' }}>✓ {s.pass}</span>
+                      {s.fail > 0 && <span style={{ color: '#DA2C38' }}>✗ {s.fail}</span>}
+                      {s.waived > 0 && <span style={{ color: '#a78bfa' }}>~ {s.waived}</span>}
+                      <span style={{ color: 'var(--muted)', marginLeft: 'auto' }}>{s.total} total</span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Severity breakdown table */}
@@ -148,14 +166,14 @@ export default function CompliancePage({ run, settings }: Props) {
                     </thead>
                     <tbody>
                       {pillarStats.map(s => (
-                        <tr key={s.pillar} style={{ borderTop: '1px solid var(--border)' }}>
+                        <tr key={s.key} style={{ borderTop: '1px solid var(--border)' }}>
                           <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text)', textTransform: 'capitalize' }}>{s.pillar}</td>
                           <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                             <span style={{ fontWeight: 700, color: scoreColor(s.passRate) }}>{s.passRate}%</span>
                           </td>
                           {severities.map(sev => {
                             const count = findings.filter(f =>
-                              f.pillar === s.pillar &&
+                              normalizePillarName(f.pillar ?? '') === s.pillar &&
                               f.severity?.toUpperCase() === sev &&
                               f.status?.toUpperCase() === 'FAIL'
                             ).length

@@ -1412,6 +1412,7 @@ const en: Translations = {
       sectionRegulatory: 'Regulatory Scope',
       sectionPdf: 'PDF Report Sections',
       sectionConnection: 'Connection & Real Engine',
+      sectionVersion: 'Version Information',
       activeAtLevel: 'Active at this level',
       controlCoverage: 'Control coverage',
       severityThreshold: 'Severity threshold:',
@@ -1434,6 +1435,8 @@ const en: Translations = {
       defaultIacLabel: 'Default IaC Framework',
       failOnLabel: 'Fail-On Behaviour',
       minSeverityLabel: 'Minimum Severity',
+      debugInfo: 'Server and engine versions for debugging',
+      versionInfo: 'Version Information',
     },
 
     notifications: {

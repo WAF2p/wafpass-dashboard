@@ -60,7 +60,14 @@ const PILLAR_META: { key: string; label: string; color: string }[] = [
   { key: 'reliability',    label: 'Reliability',     color: '#22c55e' },
   { key: 'sovereign',      label: 'Sovereignty',     color: '#eab308' },
   { key: 'sustainability', label: 'Sustainability',  color: '#14b8a6' },
+  { key: 'agentic',        label: 'Agentic',        color: '#ec4899' },
 ]
+
+// Normalize pillar names: database uses "operational", dashboard uses "operations"
+function normalizePillarName(pillar: string): string {
+  if (pillar === 'operational') return 'operations'
+  return pillar
+}
 
 function scoreColor(s: number) {
   return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
@@ -138,14 +145,20 @@ function buildModules(findings: Finding[], overallScore: number): ModuleData[] {
       )
       .slice(0, 5)
 
+    // Normalize findings' pillar names for matching with PILLAR_META keys
+    const normalizedFindings = mFindings.map(f => ({
+      ...f,
+      pillar: f.pillar ? normalizePillarName(f.pillar) : undefined
+    }))
+
     // Pillar scores
     const pillarScores = PILLAR_META.map(p => {
-      const pf = mFindings.filter(f => f.pillar?.toLowerCase() === p.key)
+      const pf = normalizedFindings.filter(f => f.pillar?.toLowerCase() === p.key)
       const pPass = pf.filter(f => f.status?.toUpperCase() === 'PASS').length
       const pFail = pf.filter(f => f.status?.toUpperCase() === 'FAIL').length
       const pScore = pPass + pFail > 0 ? Math.round((pPass / (pPass + pFail)) * 100) : -1
       return { ...p, pass: pPass, fail: pFail, score: pScore }
-    }).filter(p => p.pass + p.fail > 0)
+    })
 
     // Worst severity in this module's failures
     const worstSeverity = critFail > 0 ? 'CRITICAL' : highFail > 0 ? 'HIGH' : medFail > 0 ? 'MEDIUM' : lowFail > 0 ? 'LOW' : 'PASS'
