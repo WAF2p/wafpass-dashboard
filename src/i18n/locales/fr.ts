@@ -1287,6 +1287,7 @@ const fr: PartialTranslations = {
       sectionRegulatory: 'Périmètre réglementaire',
       sectionPdf: 'Sections de rapport PDF',
       sectionConnection: 'Connexion & Moteur réel',
+      sectionVersion: 'Informations de version',
       activeAtLevel: 'Actif à ce niveau',
       controlCoverage: 'Couverture des contrôles',
       severityThreshold: 'Seuil de gravité :',
@@ -1309,6 +1310,8 @@ const fr: PartialTranslations = {
       defaultIacLabel: 'Framework IaC par défaut',
       failOnLabel: 'Comportement en cas d\'échec',
       minSeverityLabel: 'Gravité minimale',
+      debugInfo: 'Versions du serveur et du moteur pour le débogage',
+      versionInfo: 'Informations de Version',
     },
 
     controlspacks: {

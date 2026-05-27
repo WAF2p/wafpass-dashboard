@@ -1,4 +1,5 @@
-/** Static WAF++ controls reference data (19 controls, 8 pillars). */
+/** Static WAF++ controls reference data. 73 framework controls + custom controls across 8 pillars.
+ * Note: Agentic controls (8th pillar) are coming soon - watch waf2p.dev for updates. */
 
 export interface AutomatedCheck {
   id: string
@@ -332,4 +333,5 @@ export const PILLAR_COLOR: Record<string, string> = {
   sustainability: '#22c55e',
   performance:    '#eab308',
   governance:     '#94a3b8',
+  agentic:        '#ec4899',
 }

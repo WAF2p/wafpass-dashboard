@@ -4,11 +4,29 @@ import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
 import { MATURITY_META } from './settingsUtils'
 
+// ── Pillar metadata ───────────────────────────────────────────────────────────
+const PILLAR_META: { key: string; label: string; color: string }[] = [
+  { key: 'security', label: 'Security', color: '#DA2C38' },
+  { key: 'cost', label: 'Cost', color: '#0094FF' },
+  { key: 'operations', label: 'Operations', color: '#8b5cf6' },
+  { key: 'performance', label: 'Performance', color: '#f97316' },
+  { key: 'reliability', label: 'Reliability', color: '#22c55e' },
+  { key: 'sovereign', label: 'Sovereignty', color: '#eab308' },
+  { key: 'sustainability', label: 'Sustainability', color: '#14b8a6' },
+  { key: 'agentic', label: 'Agentic', color: '#ec4899' },
+]
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const MATURITY_THRESHOLDS: Record<number, number> = { 1: 0, 2: 40, 3: 60, 4: 75, 5: 90 }
 
 // ── Helper functions ─────────────────────────────────────────────────────────
+
+// Normalize pillar names: database may have "operational", use "operations"
+function normalizePillarName(pillar: string): string {
+  if (pillar === 'operational') return 'operations'
+  return pillar
+}
 
 function getMaturityForScore(score: number) {
   return [...MATURITY_META].reverse().find(m => score >= MATURITY_THRESHOLDS[m.level]) ?? MATURITY_META[0]
@@ -298,7 +316,6 @@ export interface GlobalDashboardProps {
 export default function GlobalDashboardPage({
   runs, navigate,
 }: GlobalDashboardProps) {
-  console.log('GlobalDashboardPage rendered with runs:', runs?.length, 'navigate:', typeof navigate)
   const { t } = useI18n()
 
   // State - must be at top level, before any returns
@@ -507,11 +524,11 @@ export default function GlobalDashboardPage({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {[
-                { label: 'L5 - Cruise (90+)', count: maturityDistribution.L5, color: '#059669' },
-                { label: 'L4 - Takeoff (75-89)', count: maturityDistribution.L4, color: '#8b5cf6' },
-                { label: 'L3 - Boarding (40-59)', count: maturityDistribution.L3, color: '#0094FF' },
-                { label: 'L2 - Pre-Flight (20-39)', count: maturityDistribution.L2, color: '#f97316' },
-                { label: 'L1 - Hangar (0-19)', count: maturityDistribution.L1, color: '#ef4444' },
+                { label: 'L5 - Excellence (90+)', count: maturityDistribution.L5, color: '#059669' },
+                { label: 'L4 - Optimized (75-89)', count: maturityDistribution.L4, color: '#8b5cf6' },
+                { label: 'L3 - Governed (40-59)', count: maturityDistribution.L3, color: '#0094FF' },
+                { label: 'L2 - Operational (20-39)', count: maturityDistribution.L2, color: '#f97316' },
+                { label: 'L1 - Foundational (0-19)', count: maturityDistribution.L1, color: '#ef4444' },
               ].map((item) => (
                 <div key={item.label} style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -583,35 +600,46 @@ export default function GlobalDashboardPage({
             <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem' }}>
               {t('pages.globaldashboard.pillarHealth')}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-              {Object.entries(latestRun.pillar_scores).slice(0, 4).map(([pillar, score]) => {
-                const isExcellent = score >= 80
-                const isFailing = score < 60
-                const color = isExcellent ? '#059669' : isFailing ? '#DA2C38' : '#d97706'
-                return (
-                  <div key={pillar} style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem',
-                    padding: '0.6rem', borderRadius: '6px',
-                    background: 'var(--surface)', border: `1px solid ${color}30`,
-                  }}>
-                    <div style={{ fontSize: '0.55rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase' }}>
-                      {pillar}
-                    </div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: color }}>
-                      {score}/100
-                    </div>
-                    <div style={{
-                      fontSize: '0.5rem', fontWeight: 600, padding: '0.1rem 0.3rem', borderRadius: '999px',
-                      background: `${color}18`, color: color,
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
+              {/* Show all 8 pillars from PILLAR_META, using normalized pillar_scores from the run */}
+              {(() => {
+                // Normalize the run's pillar_scores
+                const normalizedScores: Record<string, number> = {}
+                if (latestRun.pillar_scores) {
+                  for (const [key, value] of Object.entries(latestRun.pillar_scores)) {
+                    normalizedScores[normalizePillarName(key)] = value
+                  }
+                }
+                return PILLAR_META.map((p: typeof PILLAR_META[0]) => {
+                  const score = normalizedScores[p.key] ?? 0
+                  const isExcellent = score >= 80
+                  const isFailing = score < 60
+                  const color = isExcellent ? '#059669' : isFailing ? '#DA2C38' : '#d97706'
+                  return (
+                    <div key={p.key} style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem',
+                      padding: '0.6rem', borderRadius: '6px',
+                      background: 'var(--surface)', border: `1px solid ${color}30`,
                     }}>
-                      {isExcellent ? t('common.health') : isFailing ? t('common.needsAttention') : t('common.improving')}
+                      <div style={{ fontSize: '0.55rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase' }}>
+                        {p.label}
+                      </div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: color }}>
+                        {score}/100
+                      </div>
+                      <div style={{
+                        fontSize: '0.5rem', fontWeight: 600, padding: '0.1rem 0.3rem', borderRadius: '999px',
+                        background: `${color}18`, color: color,
+                      }}>
+                        {isExcellent ? t('common.health') : isFailing ? t('common.needsAttention') : t('common.improving')}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              })()}
             </div>
             <div style={{ fontSize: '0.55rem', color: 'var(--muted)', marginTop: '0.5rem', textAlign: 'center' }}>
-              {t('pages.globaldashboard.showingXPillars', { count: Object.entries(latestRun.pillar_scores).length })}
+              {t('pages.globaldashboard.showingXPillars', { count: PILLAR_META.length })}
             </div>
           </div>
         )}

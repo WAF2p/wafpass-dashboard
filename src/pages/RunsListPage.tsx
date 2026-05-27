@@ -23,7 +23,14 @@ const PILLAR_META: { key: string; label: string; color: string }[] = [
   { key: 'reliability',    label: 'Reliability',    color: '#22c55e' },
   { key: 'sovereign',      label: 'Sovereignty',    color: '#eab308' },
   { key: 'sustainability', label: 'Sustainability', color: '#14b8a6' },
+  { key: 'agentic',        label: 'Agentic',        color: '#ec4899' },
 ]
+
+// Normalize pillar names: database uses "operational", dashboard uses "operations"
+function normalizePillarName(pillar: string): string {
+  if (pillar === 'operational') return 'operations'
+  return pillar
+}
 
 function scoreColor(s: number) {
   return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
@@ -109,19 +116,30 @@ function TrendView({ runs, onSelect }: Props) {
   )
 
   // Per-pillar series (all runs, combined)
-  const pillarSeries = useMemo(() =>
-    PILLAR_META.map(pm => ({
+  const pillarSeries = useMemo(() => {
+    // Build a normalized pillar_scores map for each run
+    const normalizedRunScores = sorted.map(run => {
+      const normalized: Record<string, number> = {}
+      if (run.pillar_scores) {
+        for (const [key, value] of Object.entries(run.pillar_scores)) {
+          normalized[normalizePillarName(key)] = value
+        }
+      }
+      return { id: run.id, scores: normalized }
+    })
+    const scoreMap = new Map(normalizedRunScores.map(r => [r.id, r.scores]))
+
+    return PILLAR_META.map(pm => ({
       ...pm,
       data: sorted
-        .filter(r => pm.key in r.pillar_scores)
+        .filter(r => scoreMap.get(r.id)?.[pm.key] !== undefined)
         .map(r => ({
           date: fmt(r.created_at),
-          score: r.pillar_scores[pm.key] ?? null,
+          score: scoreMap.get(r.id)?.[pm.key] ?? null,
           id: r.id,
         })),
-    })).filter(p => p.data.length > 0),
-    [sorted]
-  )
+    }))
+  }, [sorted])
 
   // Summary stats
   const firstRun = sorted[0]

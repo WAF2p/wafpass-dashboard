@@ -1354,6 +1354,7 @@ const de: PartialTranslations = {
       sectionRegulatory: 'Regulatorischer Umfang',
       sectionPdf: 'PDF-Berichtabschnitte',
       sectionConnection: 'Verbindung & Echte Engine',
+      sectionVersion: 'Versionsinformation',
       activeAtLevel: 'Aktiv auf dieser Stufe',
       controlCoverage: 'Kontrollabdeckung',
       severityThreshold: 'Schweregrad-Schwelle:',
@@ -1376,6 +1377,8 @@ const de: PartialTranslations = {
       defaultIacLabel: 'Standard-IaC-Framework',
       failOnLabel: 'Fehler-Verhalten',
       minSeverityLabel: 'Minimaler Schweregrad',
+      debugInfo: 'Server- und Engine-Versionen zur Fehlerbehebung',
+      versionInfo: 'Versionsinformation',
     },
 
     globaldashboard: {

@@ -858,6 +858,7 @@ export interface Translations {
       sectionRegulatory: string
       sectionPdf: string
       sectionConnection: string
+      sectionVersion: string
       activeAtLevel: string
       controlCoverage: string
       severityThreshold: string
@@ -880,6 +881,8 @@ export interface Translations {
       defaultIacLabel: string
       failOnLabel: string
       minSeverityLabel: string
+      debugInfo: string
+      versionInfo: string
     }
 
     badgePage: {
