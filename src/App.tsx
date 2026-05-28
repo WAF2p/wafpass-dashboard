@@ -224,7 +224,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
         />
 
         {/* Page content */}
-        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', margin: '20px' }}>
+        <main>
         <Suspense fallback={
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
             <div className="spinner" />

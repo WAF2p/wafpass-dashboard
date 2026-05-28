@@ -16,6 +16,21 @@ const PROVIDER_LABEL: Record<string, string> = {
   ovh:      'OVH Cloud',
   hetzner:  'Hetzner Cloud',
   stackit:  'STACKIT',
+  infomaniak: 'Infomaniak',
+  leafcloud:  'Leafcloud',
+  tcloud:     'T Cloud Public',
+  seeweb:     'Seeweb',
+  exoscale:   'Exoscale',
+  cyso:       'Cyso',
+  numspot:    'Numspot',
+  plusserver: 'plusserver',
+  syselev:    'SysEleven',
+  outscale:   'Outscale',
+  leaseweb:   'Leaseweb',
+  scaleway:   'Scaleway',
+  ionos:      'IONOS',
+  upcloud:    'UpCloud',
+  cleura:     'Cleura',
 }
 
 function detectProvider(entry: string[]): string {
@@ -26,6 +41,21 @@ function detectProvider(entry: string[]): string {
   if (r.match(/^(europe-|us-central|asia-|southamerica-|northamerica-|australia-southeast|africa-south)/)) return 'gcp'
   if (r.match(/^(eu-frankfurt|us-ashburn|us-phoenix|uk-london|ap-tokyo|ap-sydney|ap-mumbai|sa-saopaulo|ca-toronto)/)) return 'oci'
   if (r.match(/^cn-/)) return 'alicloud'
+  if (r.match(/^(chi|zrh|gva)-[0-9]+(-infomaniak)?$/) || r.match(/^(chi|zrh|gva)-[0-9]+-infomaniak$/)) return 'infomaniak'
+  if (r.match(/^(bru|ams|fra|mad|mil|par)-[0-9]+(-leafcloud)?$/) || r.match(/^(bru|ams|fra|mad|mil|par)-[0-9]+-leafcloud$/)) return 'leafcloud'
+  if (r.match(/^(ts|os|hk)-[0-9]+(-tcloud)?$/) || r.match(/^(ts|os|hk)-[0-9]+-tcloud$/)) return 'tcloud'
+  if (r.match(/^(mep|mil|rom)-[0-9]+(-seeweb)?$/) || r.match(/^(mep|mil|rom)-[0-9]+-seeweb$/)) return 'seeweb'
+  if (r.match(/^(ch-dk-[0-9]|de-fra-[0-9]|uk-lon-[0-9]|fr-par-[0-9])-([0-9]+-)?exoscale$/)) return 'exoscale'
+  if (r.match(/^(ams|bru|fra)-[0-9]+(-cyso)?$/) || r.match(/^(ams|bru|fra)-[0-9]+-cyso$/)) return 'cyso'
+  if (r.match(/^(ams|den)-[0-9]+(-numspot)?$/) || r.match(/^(ams|den)-[0-9]+-numspot$/)) return 'numspot'
+  if (r.match(/^(bgm|fxh)-[0-9]+(-plusserver)?$/) || r.match(/^(bgm|fxh)-[0-9]+-plusserver$/)) return 'plusserver'
+  if (r.match(/^(fra|muc)-[0-9]+(-syselev)?$/) || r.match(/^(fra|muc)-[0-9]+-syselev$/)) return 'syselev'
+  if (r.match(/^(stg|par)-[0-9]+(-outscale)?$/) || r.match(/^(stg|par)-[0-9]+-outscale$/)) return 'outscale'
+  if (r.match(/^(ams|fwm)-[0-9]+(-leaseweb)?$/) || r.match(/^(ams|fwm)-[0-9]+-leaseweb$/)) return 'leaseweb'
+  if (r.match(/^(par|ams|fr-gra)-[0-9]+(-scaleway)?$/) || r.match(/^(par|ams|fr-gra)-[0-9]+-scaleway$/)) return 'scaleway'
+  if (r.match(/^(de-fra|de-muc|de-ber|gb-lon|se-sto|es-bar|us-las)-[0-9]+(-ionos)?$/) || r.match(/^(de-fra|de-muc|de-ber|gb-lon|se-sto|es-bar|us-las)-[0-9]+-ionos$/)) return 'ionos'
+  if (r.match(/^(fi-hel|de-fra|uk-lon|us-mia|nl-ams)-[0-9]+(-upcloud)?$/) || r.match(/^(fi-hel|de-fra|uk-lon|us-mia|nl-ams)-[0-9]+-upcloud$/)) return 'upcloud'
+  if (r.match(/^(se-sto|se-Gothenburg|fi-hel|de-fra|nl-ams|uk-lon)-[0-9]+(-cleura)?$/) || r.match(/^(se-sto|se-Gothenburg|fi-hel|de-fra|nl-ams|uk-lon)-[0-9]+-cleura$/)) return 'cleura'
   if (r.match(/^(de|fr|nl|uk|us|ca|br|pl|se|it|es|at|ch|be|ie|dk|no|fi|lt|lv|ee|bg|ro|hr|sk|cz|hu|gr|pt|ie|ru|tr|ua|by|kz|md|uz|tj|kg|am|az|ge|mk|rs|ba|me|al|gr|tr|il|ae|sa|qa|in|jp|cn|sg|my|th|vn|ph|id|nz|au)(-ovh|-stackit|-hetzner)?$/)) return 'ovh'
   if (r.match(/^(fs|hi|nbg|us|ca|eu|)(-ovh|-stackit|-hetzner)?$/)) return 'hetzner'
   if (r.match(/^(de|eu|us|ca|apac|)(-ovh|-stackit|-hetzner)?$/)) return 'stackit'
@@ -38,7 +68,7 @@ export default function RegionsPage({ run }: Props) {
 
   if (regions.length === 0) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
+      <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
         {t('pages.regions.noRegions')}
       </div>
     )
@@ -52,7 +82,7 @@ export default function RegionsPage({ run }: Props) {
     grouped[provider].push(entry)
   }
 
-  const providerOrder = ['aws', 'azure', 'gcp', 'ovh', 'hetzner', 'stackit', 'oci', 'alicloud', 'yandex', 'unknown']
+  const providerOrder = ['aws', 'azure', 'gcp', 'ovh', 'hetzner', 'stackit', 'oci', 'alicloud', 'yandex', 'infomaniak', 'leafcloud', 'tcloud', 'seeweb', 'exoscale', 'cyso', 'numspot', 'plusserver', 'syselev', 'outscale', 'leaseweb', 'scaleway', 'ionos', 'upcloud', 'cleura', 'unknown']
   const sortedProviders = Object.keys(grouped).sort(
     (a, b) => providerOrder.indexOf(a) - providerOrder.indexOf(b)
   )
@@ -69,12 +99,12 @@ export default function RegionsPage({ run }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '1rem 1.5rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
           <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.regions.totalRegions')}</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--waf-brand)' }}>{regions.length}</div>
         </div>
         {sortedProviders.map(provider => (
-          <div key={provider} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', borderLeft: `3px solid ${PROVIDER_COLORS[provider] ?? '#94a3b8'}` }}>
+          <div key={provider} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '1rem 1.5rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)', borderLeft: `3px solid ${PROVIDER_COLORS[provider] ?? '#94a3b8'}` }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {PROVIDER_LABEL[provider] ?? provider.toUpperCase()}
             </div>
@@ -86,7 +116,7 @@ export default function RegionsPage({ run }: Props) {
       </div>
 
       {markers.length > 0 && (
-        <div className="card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
+        <div style={{ padding: 0, overflow: 'hidden', borderRadius: '16px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {t('pages.regions.deploymentMap')}
@@ -124,7 +154,7 @@ export default function RegionsPage({ run }: Props) {
         const color = PROVIDER_COLORS[provider] ?? '#94a3b8'
         const label = PROVIDER_LABEL[provider] ?? provider.toUpperCase()
         return (
-          <div key={provider} className="card">
+          <div key={provider} style={{ padding: '1.25rem 1.5rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color, flexShrink: 0, boxShadow: `0 0 6px ${color}88` }} />
               <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{label}</h2>
@@ -148,7 +178,7 @@ export default function RegionsPage({ run }: Props) {
       })}
 
       {run.source_paths && run.source_paths.length > 0 && (
-        <div className="card">
+        <div style={{ padding: '1.25rem 1.5rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
           <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1rem' }}>
             {t('pages.regions.scannedPaths')}
           </h2>

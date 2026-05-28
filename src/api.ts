@@ -948,13 +948,17 @@ export async function fetchServerAuditEvents(params?: {
   limit?: number
   category?: string
 }): Promise<ServerAuditEvent[]> {
-  const url = new URL(`${getApiBase()}/audit/events`, window.location.origin)
-  if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
-  if (params?.category) url.searchParams.set('category', params.category)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json() as ApiEnvelope<ServerAuditEvent[]>
-  return json.data
+  try {
+    const url = new URL(`${getApiBase()}/audit/events`, window.location.origin)
+    if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
+    if (params?.category) url.searchParams.set('category', params.category)
+    const res = await fetch(url.toString(), { headers: _authHeaders() })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const json = await res.json() as ApiEnvelope<ServerAuditEvent[]>
+    return json.data
+  } catch {
+    return []  // silent fail - audit events are optional
+  }
 }
 
 // ── Control Packs ─────────────────────────────────────────────────────────────
