@@ -132,8 +132,14 @@ export default function RegionsPage({ run }: Props) {
           </div>
           <MapContainer center={[20, 10]} zoom={2} style={{ height: '420px', width: '100%' }} scrollWheelZoom={false}>
             <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/developers/cartodb-js/">CARTO</a>'
+              className="light-mode-tiles"
+            />
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/developers/cartodb-js/">CARTO</a>'
+              className="dark-mode-tiles"
             />
             {markers.map((m, i) => (
               <CircleMarker key={i} center={m.coords} radius={8} pathOptions={{ color: PROVIDER_COLORS[m.provider] ?? '#94a3b8', fillColor: PROVIDER_COLORS[m.provider] ?? '#94a3b8', fillOpacity: 0.75, weight: 2 }}>

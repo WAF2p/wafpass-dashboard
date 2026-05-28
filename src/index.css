@@ -377,6 +377,18 @@ a { color: var(--waf-brand); text-decoration: none; }
 [data-theme="dark"] .top-header-meta { color: var(--muted); }
 
 
+/* ── Map dark mode tiles ─────────────────────────────────────────── */
+.dark-mode-tiles {
+  display: none;
+}
+[data-theme="dark"] .light-mode-tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(1.1);
+}
+[data-theme="dark"] .dark-mode-tiles {
+  display: block;
+}
+
+
 /* ── Dark mode footer overrides ──────────────────────────────────── */
 [data-theme="dark"] .footer {
   background: var(--footer-bg);

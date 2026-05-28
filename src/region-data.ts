@@ -193,6 +193,8 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "us-mia-4-upcloud":[25.7617,-80.1918],"us-mia-5-upcloud":[25.7617,-80.1918],"us-mia-6-upcloud":[25.7617,-80.1918],
   "nl-ams-1-upcloud":[52.3676,4.9041],"nl-ams-2-upcloud":[52.3676,4.9041],"nl-ams-3-upcloud":[52.3676,4.9041],
   "nl-ams-4-upcloud":[52.3676,4.9041],"nl-ams-5-upcloud":[52.3676,4.9041],"nl-ams-6-upcloud":[52.3676,4.9041],
+  // Yandex Cloud (all in Moscow)
+  "ru-central1":[55.7558,37.6173],"ru-central2":[55.7558,37.6173],
   // Cleura
   "se-sto-1-cleura":[59.3372,18.0642],"se-sto-2-cleura":[59.3372,18.0642],"se-sto-3-cleura":[59.3372,18.0642],
   "se-sto-4-cleura":[59.3372,18.0642],"se-sto-5-cleura":[59.3372,18.0642],"se-sto-6-cleura":[59.3372,18.0642],
@@ -388,6 +390,8 @@ export const REGION_LABELS: Record<string, string> = {
   "us-mia-4-upcloud":"Miami, USA","us-mia-5-upcloud":"Miami, USA","us-mia-6-upcloud":"Miami, USA",
   "nl-ams-1-upcloud":"Amsterdam, Netherlands","nl-ams-2-upcloud":"Amsterdam, Netherlands","nl-ams-3-upcloud":"Amsterdam, Netherlands",
   "nl-ams-4-upcloud":"Amsterdam, Netherlands","nl-ams-5-upcloud":"Amsterdam, Netherlands","nl-ams-6-upcloud":"Amsterdam, Netherlands",
+  // Yandex Cloud (all in Moscow)
+  "ru-central1":"Moscow, Russia","ru-central2":"Moscow, Russia",
   // Cleura
   "se-sto-1-cleura":"Stockholm, Sweden","se-sto-2-cleura":"Stockholm, Sweden","se-sto-3-cleura":"Stockholm, Sweden",
   "se-sto-4-cleura":"Stockholm, Sweden","se-sto-5-cleura":"Stockholm, Sweden","se-sto-6-cleura":"Stockholm, Sweden",
