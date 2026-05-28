@@ -32,6 +32,28 @@ function getMaturityForScore(score: number) {
   return [...MATURITY_META].reverse().find(m => score >= MATURITY_THRESHOLDS[m.level]) ?? MATURITY_META[0]
 }
 
+// Get a project index based on current date for rotation
+function getRotatedIndex<T>(items: T[], daysOffset: number = 0): number {
+  if (items.length === 0) return 0
+  // Use date-based hash for consistent rotation (changes daily)
+  const date = new Date()
+  date.setDate(date.getDate() + daysOffset)
+  const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+  let hash = 0
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash * 31 + dateStr.charCodeAt(i)) % 100000
+  }
+  return hash % items.length
+}
+
+function getBestRunForProject(project: string, runs: RunSummary[]): RunSummary | null {
+  const pRuns = runs.filter(r => (r.project || '(unnamed)') === project)
+  if (pRuns.length === 0) return null
+  return pRuns.reduce((latest, r) =>
+    new Date(r.created_at) > new Date(latest.created_at) ? r : latest
+  )
+}
+
 // ── Maturity Timeline Component ─────────────────────────────────────────────────
 
 function MaturityTimeline({ runs, passports }: { runs: RunSummary[]; passports: ProjectPassport[] }) {
@@ -40,14 +62,33 @@ function MaturityTimeline({ runs, passports }: { runs: RunSummary[]; passports: 
   // Calculate stage distribution for all projects
   const stageDistribution = useMemo(() => {
     const dist = [0, 0, 0, 0, 0, 0] // 6 stages
-    passports.forEach(passport => {
-      const projectRuns = runs.filter(r => (r.project || '(unnamed)') === passport.project)
-      if (projectRuns.length > 0) {
-        const bestScore = projectRuns.reduce((m, r) => Math.max(m, r.score), 0)
-        const stage = bestScore >= 90 ? 5 : bestScore >= 75 ? 4 : bestScore >= 60 ? 3 : bestScore >= 40 ? 2 : bestScore >= 20 ? 1 : 0
+    // Use passports if available, otherwise compute from runs directly
+    const projects = passports.length > 0 ? passports : null
+
+    if (projects) {
+      projects.forEach(passport => {
+        const projectRuns = runs.filter(r => (r.project || '(unnamed)') === passport.project)
+        if (projectRuns.length > 0) {
+          const bestScore = projectRuns.reduce((m, r) => Math.max(m, r.score), 0)
+          const stage = bestScore >= 90 ? 5 : bestScore >= 75 ? 4 : bestScore >= 60 ? 3 : bestScore >= 40 ? 2 : bestScore >= 20 ? 1 : 0
+          dist[stage]++
+        }
+      })
+    } else {
+      // Fallback: compute from runs directly
+      const projectBestScores = new Map<string, number>()
+      runs.forEach(run => {
+        const project = run.project || '(unnamed)'
+        const existing = projectBestScores.get(project)
+        if (!existing || run.score > existing) {
+          projectBestScores.set(project, run.score)
+        }
+      })
+      projectBestScores.forEach(score => {
+        const stage = score >= 90 ? 5 : score >= 75 ? 4 : score >= 60 ? 3 : score >= 40 ? 2 : score >= 20 ? 1 : 0
         dist[stage]++
-      }
-    })
+      })
+    }
     return dist
   }, [runs, passports])
 
@@ -162,57 +203,7 @@ function MaturityTimeline({ runs, passports }: { runs: RunSummary[]; passports: 
         </div>
       </div>
 
-      {/* Top projects by maturity */}
-      {totalProjects > 0 && (
-        <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '0.5rem' }}>
-            {t('pages.maturityJourney.excellenceStandard')}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {passports.sort((a, b) => {
-              const aRuns = runs.filter(r => (r.project || '(unnamed)') === a.project)
-              const bRuns = runs.filter(r => (r.project || '(unnamed)') === b.project)
-              const aBest = aRuns.reduce((m, r) => Math.max(m, r.score), 0)
-              const bBest = bRuns.reduce((m, r) => Math.max(m, r.score), 0)
-              return bBest - aBest
-            }).filter(p => {
-              const pRuns = runs.filter(r => (r.project || '(unnamed)') === p.project)
-              const bestScore = pRuns.reduce((m, r) => Math.max(m, r.score), 0)
-              return bestScore >= 75
-            }).slice(0, 5).map((passport, i) => {
-              const pRuns = runs.filter(r => (r.project || '(unnamed)') === passport.project)
-              const bestScore = pRuns.reduce((m, r) => Math.max(m, r.score), 0)
-              const maturity = getMaturityForScore(bestScore)
-              return (
-                <div key={passport.project} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                  padding: '0.6rem 0.875rem', borderRadius: '8px',
-                  background: 'var(--surface)', border: '1px solid var(--border)',
-                }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', width: '1.5rem' }}>
-                    #{i + 1}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>
-                      {passport.display_name || passport.project}
-                    </div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>
-                      {bestScore}/100 • {maturity.short}
-                    </div>
-                  </div>
-                  <div style={{
-                    padding: '0.2rem 0.5rem', borderRadius: '999px',
-                    background: `${maturity.color}18`, color: maturity.color,
-                    border: `1px solid ${maturity.color}35`,
-                  }}>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 700 }}>L{maturity.level}</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      {/* Top projects by maturity - moved to main component where topProjects is available */}
     </div>
   )
 }
@@ -342,39 +333,88 @@ export default function GlobalDashboardPage({
     )
   }, [runs])
 
-  const totalProjects = passports.length
+  // Total projects: use passports if available, otherwise count unique projects from runs
+  const totalProjects = useMemo(() => {
+    if (passports.length > 0) {
+      return passports.length
+    }
+    // Fallback: count unique projects from runs
+    const projects = new Set(runs.map(r => r.project || '(unnamed)'))
+    return projects.size
+  }, [passports, runs])
+
   const avgScore = useMemo(() => {
     if (runs.length === 0) return 0
     const total = runs.reduce((sum, r) => sum + r.score, 0)
     return Math.round(total / runs.length)
   }, [runs])
 
-  // Maturity distribution
+  // Maturity distribution: use passports if available, otherwise compute from runs
   const maturityDistribution = useMemo(() => {
     const dist = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 }
-    passports.forEach(passport => {
-      const projectRuns = runs.filter(r => (r.project || '(unnamed)') === passport.project)
-      if (projectRuns.length > 0) {
-        const bestScore = projectRuns.reduce((m, r) => Math.max(m, r.score), 0)
-        if (bestScore >= 90) dist.L5++
-        else if (bestScore >= 75) dist.L4++
-        else if (bestScore >= 60) dist.L3++
-        else if (bestScore >= 40) dist.L2++
+    if (passports.length > 0) {
+      passports.forEach(passport => {
+        const projectRuns = runs.filter(r => (r.project || '(unnamed)') === passport.project)
+        if (projectRuns.length > 0) {
+          const bestScore = projectRuns.reduce((m, r) => Math.max(m, r.score), 0)
+          if (bestScore >= 90) dist.L5++
+          else if (bestScore >= 75) dist.L4++
+          else if (bestScore >= 60) dist.L3++
+          else if (bestScore >= 40) dist.L2++
+          else dist.L1++
+        }
+      })
+    } else {
+      // Fallback: compute from runs directly
+      const projectBestScores = new Map<string, number>()
+      runs.forEach(run => {
+        const project = run.project || '(unnamed)'
+        const existing = projectBestScores.get(project)
+        if (!existing || run.score > existing) {
+          projectBestScores.set(project, run.score)
+        }
+      })
+      projectBestScores.forEach(score => {
+        if (score >= 90) dist.L5++
+        else if (score >= 75) dist.L4++
+        else if (score >= 60) dist.L3++
+        else if (score >= 40) dist.L2++
         else dist.L1++
-      }
-    })
+      })
+    }
     return dist
-  }, [runs, passports])
+  }, [passports, runs])
 
-  // Top projects by score
+  // Top projects by score (use passports if available, otherwise use runs directly)
   const topProjects = useMemo(() => {
-    const projectScores = passports.map(p => {
-      const pRuns = runs.filter(r => (r.project || '(unnamed)') === p.project)
-      const bestScore = pRuns.reduce((m, r) => Math.max(m, r.score), 0)
-      return { project: p.project, displayName: p.display_name || p.project, score: bestScore }
-    })
+    let projectScores: { project: string; displayName: string; score: number }[]
+
+    if (passports.length > 0) {
+      projectScores = passports.map(p => {
+        const pRuns = runs.filter(r => (r.project || '(unnamed)') === p.project)
+        const bestScore = pRuns.reduce((m, r) => Math.max(m, r.score), 0)
+        return { project: p.project, displayName: p.display_name || p.project, score: bestScore }
+      })
+    } else {
+      // Fallback: compute from runs directly if no passports available
+      const runScores = new Map<string, { project: string; displayName: string; score: number }>()
+      runs.forEach(run => {
+        const project = run.project || '(unnamed)'
+        const existing = runScores.get(project)
+        if (!existing || run.score > existing.score) {
+          runScores.set(project, { project, displayName: project, score: run.score })
+        }
+      })
+      projectScores = Array.from(runScores.values())
+    }
+
     return projectScores.sort((a, b) => b.score - a.score).slice(0, 5)
   }, [passports, runs])
+
+  // Top projects by maturity (excellence standard) - shows L4/L5 projects
+  const topExcellenceProjects = useMemo(() => {
+    return topProjects.filter(p => p.score >= 75).slice(0, 5)
+  }, [topProjects])
 
   // Early returns - these can happen after all hooks are defined
   if (error) {
@@ -592,6 +632,46 @@ export default function GlobalDashboardPage({
               )}
             </div>
           </div>
+
+          {/* Top projects by maturity (Excellence Standard) */}
+          {topExcellenceProjects.length > 0 && (
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '0.5rem' }}>
+                {t('pages.maturityJourney.excellenceStandard')}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {topExcellenceProjects.map((p, i) => {
+                  const maturity = getMaturityForScore(p.score)
+                  return (
+                    <div key={p.project} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.75rem',
+                      padding: '0.6rem 0.875rem', borderRadius: '8px',
+                      background: 'var(--surface)', border: '1px solid var(--border)',
+                    }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', width: '1.5rem' }}>
+                        #{i + 1}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>
+                          {p.displayName}
+                        </div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>
+                          {p.score}/100 • {maturity.short}
+                        </div>
+                      </div>
+                      <div style={{
+                        padding: '0.2rem 0.5rem', borderRadius: '999px',
+                        background: `${maturity.color}18`, color: maturity.color,
+                        border: `1px solid ${maturity.color}35`,
+                      }}>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 700 }}>L{maturity.level}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Pillar Health Summary - scaled down */}
@@ -694,14 +774,37 @@ export default function GlobalDashboardPage({
               </span>
             </div>
 
+            {/* Project of the Day badge */}
+            {topProjects.length > 0 && (() => {
+              const featuredIndex = getRotatedIndex(topProjects)
+              const p = topProjects[featuredIndex]
+              const bestRun = getBestRunForProject(p.project, runs)
+              return bestRun ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.5rem 0.75rem', borderRadius: '8px',
+                  background: 'rgba(217, 119, 6, 0.08)',
+                  border: '1px solid rgba(217, 119, 6, 0.2)',
+                  fontSize: '0.65rem',
+                }}>
+              <span>⭐</span>
+              <span style={{ color: '#d97706', fontWeight: 600 }}>
+                Project of the Day: {p.displayName}
+              </span>
+              <span style={{ marginLeft: 'auto', color: 'var(--muted)' }}>
+                {new Date().toLocaleDateString(undefined, { weekday: 'long' })}
+              </span>
+                </div>
+              ) : null
+            })()}
+
             {/* Show top performing project */}
             {topProjects.length > 0 ? (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {topProjects.slice(0, 1).map((p) => {
-                  const pRuns = runs.filter(r => (r.project || '(unnamed)') === p.project)
-                  const bestRun = pRuns.reduce((latest, r) =>
-                    new Date(r.created_at) > new Date(latest.created_at) ? r : latest
-                  )
+                {(() => {
+                  const featuredIndex = getRotatedIndex(topProjects)
+                  const p = topProjects[featuredIndex]
+                  const bestRun = getBestRunForProject(p.project, runs)
                   const maturity = getMaturityForScore(p.score)
 
                   return (
@@ -790,7 +893,7 @@ export default function GlobalDashboardPage({
                       )}
                     </div>
                   )
-                })}
+                })()}
               </div>
             ) : (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
@@ -800,9 +903,61 @@ export default function GlobalDashboardPage({
               </div>
             )}
 
-            <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)', fontSize: '0.65rem', color: 'var(--muted)', textAlign: 'center' }}>
-              {t('pages.globaldashboard.topPerformingProject')} <b style={{ fontWeight: 700 }}>{topProjects[0]?.score >= 90 ? 'L5' : topProjects[0]?.score >= 75 ? 'L4' : topProjects[0]?.score >= 60 ? 'L3' : topProjects[0]?.score >= 40 ? 'L2' : 'L1'}</b>
-            </div>
+            {/* Recent Star - projects that improved recently */}
+            {topProjects.length > 0 && (() => {
+              // Pick a different project for "Star of the Week"
+              const starIndex = getRotatedIndex(topProjects, -7)
+              const starProject = topProjects[starIndex]
+              const starRun = getBestRunForProject(starProject.project, runs)
+              const starMaturity = getMaturityForScore(starProject.score)
+
+              return (
+                <div style={{
+                  marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)',
+                  fontSize: '0.65rem', color: 'var(--muted)',
+                }}>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                    background: 'rgba(5, 150, 105, 0.1)',
+                    border: '1px solid rgba(5, 150, 105, 0.2)',
+                    borderRadius: 999, padding: '0.25rem 0.75rem', marginBottom: '1rem',
+                  }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#059669', display: 'inline-block' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#059669', letterSpacing: '0.09em', textTransform: 'uppercase' }}>
+                      Star of the Week
+                    </span>
+                  </div>
+                  <div style={{
+                    padding: '1rem', borderRadius: '10px',
+                    background: 'var(--surface)', border: `1px solid #05966920`,
+                  }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)' }}>
+                      <span style={{ marginRight: '0.5rem' }}>🚀</span>
+                      {starProject.displayName}
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                      <div>
+                        <span style={{ color: 'var(--muted)', fontSize: '0.65rem' }}>Score:</span>
+                        <span style={{ marginLeft: '0.25rem', fontWeight: 700, color: '#059669' }}>{starProject.score}/100</span>
+                      </div>
+                      <div>
+                        <span style={{ color: 'var(--muted)', fontSize: '0.65rem' }}>Level:</span>
+                        <span style={{ marginLeft: '0.25rem', fontWeight: 700, color: '#059669' }}>L{starMaturity.level}</span>
+                      </div>
+                      {starRun && (
+                        <div>
+                          <span style={{ color: 'var(--muted)', fontSize: '0.65rem' }}>Last:</span>
+                          <span style={{ marginLeft: '0.25rem', fontWeight: 600 }}>
+                            {new Date(starRun.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
           </div>
         </div>
       </div>
