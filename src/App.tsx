@@ -364,15 +364,17 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : null}
         </Suspense>
         </main>
-        {/* PDF report — hidden in normal view, printed only */}
-        {run && (
-          <div id="wafpass-pdf-root" style={{ display: 'none' }}>
-            <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
-          </div>
-        )}
-        {/* Footer - at bottom, full width, dark background */}
-        <Footer />
       </div>
+
+      {/* PDF report — hidden in normal view, printed only */}
+      {run && (
+        <div id="wafpass-pdf-root" style={{ display: 'none' }}>
+          <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
+        </div>
+      )}
+
+      {/* Footer - at bottom, full width, dark background */}
+      <Footer />
     </div>
 
     </I18nProvider>

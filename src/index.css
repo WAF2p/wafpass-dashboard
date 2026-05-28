@@ -408,14 +408,14 @@ a { color: var(--waf-brand); text-decoration: none; }
     display: none !important;
   }
 
-  /* Show only the PDF report container - full width A4 with some margins */
+  /* Show only the PDF report container - full width A4 with proper margins */
   #wafpass-pdf-root {
     display: block !important;
     position: static !important;
     width: 210mm !important;
     height: auto !important;
     max-width: 100% !important;
-    margin: 0 auto !important;
+    margin: 15mm auto !important;
     padding: 0 !important;
   }
 
@@ -430,19 +430,19 @@ a { color: var(--waf-brand); text-decoration: none; }
   /* Additional constraint for inner content (pageStyle in PdfReport) */
   #wafpass-pdf-root [style*="max-width: 800px"] {
     max-width: 100% !important;
-    padding: 0 !important;
+    padding: 15mm !important;
   }
 
   /* Scale down tables and content to fit */
   #wafpass-pdf-root table {
-    font-size: 0.65rem !important;
+    font-size: 0.7rem !important;
   }
   #wafpass-pdf-root table th,
   #wafpass-pdf-root table td {
-    padding: 0.25rem 0.35rem !important;
+    padding: 0.4rem 0.5rem !important;
   }
   #wafpass-pdf-root .cardStyle {
-    padding: 0.75rem !important;
+    padding: 1rem !important;
   }
 
   /* Light mode (default) PDF colors */
@@ -458,6 +458,29 @@ a { color: var(--waf-brand); text-decoration: none; }
   #wafpass-pdf-root [data-theme="dark"] {
     color: #f8fafc;
     background: #0b1220;
+  }
+
+  /* ── Page Numbers Top Right in WAF++ Blue ──────────────────────── */
+  @page {
+    @top-right {
+      content: "Page " counter(page) " / " counter(pages);
+      font-family: sans-serif;
+      font-size: 0.7rem;
+      color: #0094FF;
+      font-weight: 600;
+      padding-top: 8mm;
+    }
+  }
+
+  /* ── Footer Styling ────────────────────────────────────────────── */
+  #wafpass-pdf-root > div div:last-child {
+    padding-top: 0.75rem !important;
+    margin-top: 1rem !important;
+  }
+
+  /* ── Hide large footer (mobile view) ───────────────────────────── */
+  .footer {
+    display: none !important;
   }
 }
 
