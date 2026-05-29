@@ -54,7 +54,7 @@ function detectProvider(entry: string[]): string {
   if (r.match(/^(ams|fwm)-[0-9]+(-leaseweb)?$/) || r.match(/^(ams|fwm)-[0-9]+-leaseweb$/)) return 'leaseweb'
   if (r.match(/^(par|ams|fr-gra)-[0-9]+(-scaleway)?$/) || r.match(/^(par|ams|fr-gra)-[0-9]+-scaleway$/)) return 'scaleway'
   if (r.match(/^(de-fra|de-muc|de-ber|gb-lon|se-sto|es-bar|us-las)-[0-9]+(-ionos)?$/) || r.match(/^(de-fra|de-muc|de-ber|gb-lon|se-sto|es-bar|us-las)-[0-9]+-ionos$/)) return 'ionos'
-  if (r.match(/^(fi-hel|de-fra|uk-lon|us-mia|nl-ams)-[0-9]+(-upcloud)?$/) || r.match(/^(fi-hel|de-fra|uk-lon|us-mia|nl-ams)-[0-9]+-upcloud$/)) return 'upcloud'
+  if (r.match(/^(fi-hel|de-fra|uk-lon|us-iad|us-sjo|nl-ams)[0-9]+(-upcloud)?$/) || r.match(/^(fi-hel|de-fra|uk-lon|us-iad|us-sjo|nl-ams)[0-9]+-upcloud$/)) return 'upcloud'
   if (r.match(/^(se-sto|se-Gothenburg|fi-hel|de-fra|nl-ams|uk-lon)-[0-9]+(-cleura)?$/) || r.match(/^(se-sto|se-Gothenburg|fi-hel|de-fra|nl-ams|uk-lon)-[0-9]+-cleura$/)) return 'cleura'
   if (r.match(/^(de|fr|nl|uk|us|ca|br|pl|se|it|es|at|ch|be|ie|dk|no|fi|lt|lv|ee|bg|ro|hr|sk|cz|hu|gr|pt|ie|ru|tr|ua|by|kz|md|uz|tj|kg|am|az|ge|mk|rs|ba|me|al|gr|tr|il|ae|sa|qa|in|jp|cn|sg|my|th|vn|ph|id|nz|au)(-ovh|-stackit|-hetzner)?$/)) return 'ovh'
   if (r.match(/^(fs|hi|nbg|us|ca|eu|)(-ovh|-stackit|-hetzner)?$/)) return 'hetzner'
