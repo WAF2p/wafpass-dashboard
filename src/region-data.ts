@@ -63,6 +63,12 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "apac-southeast-6-stackit":[-33.8678,151.2097],"apac-southeast-7-stackit":[-33.8678,151.2097],"apac-southeast-8-stackit":[-33.8678,151.2097],
   // OpenStack/StackIT simple region name
   "DE":[52.5200,13.4050],
+  // SINA Cloud - Germany-based cloud by secunet
+  "de-ham-1-sinacloud":[53.5511,9.9937],"de-ham-2-sinacloud":[53.5511,9.9937],"de-ham-3-sinacloud":[53.5511,9.9937],
+  "de-du-1-sinacloud":[51.2277,6.7735],"de-du-2-sinacloud":[51.2277,6.7735],"de-du-3-sinacloud":[51.2277,6.7735],
+  "de-fra-1-sinacloud":[50.1109,8.6821],"de-fra-2-sinacloud":[50.1109,8.6821],"de-fra-3-sinacloud":[50.1109,8.6821],
+  // Normalized region names (without -sinacloud suffix) for grouped regions
+  "de-ham":[53.5511,9.9937],"de-du":[51.2277,6.7735],"de-fra":[50.1109,8.6821],
   // OVH
   "gra-ovh":[43.7172,1.0925],"bhs-ovh":[48.7528,-71.3535],"bhs2-ovh":[48.7528,-71.3535],"bhs3-ovh":[48.7528,-71.3535],
   "rbx-ovh":[43.6324,1.3757],"ukh-ovh":[51.5243,-0.1224],"de-fld-ovh":[49.9945,8.2432],"de-fld2-ovh":[49.9945,8.2432],
@@ -256,6 +262,12 @@ export const REGION_LABELS: Record<string, string> = {
   "eu-central-6-stackit":"Frankfurt, Germany","eu-central-7-stackit":"Frankfurt, Germany","eu-central-8-stackit":"Frankfurt, Germany",
   // OpenStack/StackIT simple region name
   "DE":"Berlin, Germany",
+  // SINA Cloud - Germany-based cloud by secunet
+  "de-ham-1-sinacloud":"Hamburg, Germany","de-ham-2-sinacloud":"Hamburg, Germany","de-ham-3-sinacloud":"Hamburg, Germany",
+  "de-du-1-sinacloud":"Düsseldorf, Germany","de-du-2-sinacloud":"Düsseldorf, Germany","de-du-3-sinacloud":"Düsseldorf, Germany",
+  "de-fra-1-sinacloud":"Frankfurt, Germany","de-fra-2-sinacloud":"Frankfurt, Germany","de-fra-3-sinacloud":"Frankfurt, Germany",
+  // Normalized region names (without -sinacloud suffix)
+  "de-ham":"Hamburg, Germany","de-du":"Düsseldorf, Germany","de-fra":"Frankfurt, Germany",
   "us-east-1-stackit":"Falkenstein, Germany","us-east-2-stackit":"Falkenstein, Germany","us-east-3-stackit":"Falkenstein, Germany",
   "us-east-4-stackit":"Falkenstein, Germany","us-east-5-stackit":"Falkenstein, Germany","us-east-6-stackit":"Falkenstein, Germany",
   "us-east-7-stackit":"Falkenstein, Germany","us-east-8-stackit":"Falkenstein, Germany","ca-east-1-stackit":"Quebec City, Canada",
@@ -427,4 +439,5 @@ export const PROVIDER_COLORS: Record<string, string> = {
   ionos:      '#FF7600',
   upcloud:    '#3498DB',
   cleura:     '#006400',
+  sinacloud:  '#0052CC',
 }

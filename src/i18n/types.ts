@@ -1458,6 +1458,7 @@ export interface Translations {
     regions: {
       noRegions: string
       totalRegions: string
+      totalAZs: string             // "{{count}} AZs"
       deploymentMap: string
       regionsCount: string         // "{{count}} regions"
       scannedPaths: string
