@@ -114,7 +114,7 @@ export interface SecretFinding {
 
 export interface RunDetail extends RunSummary {
   findings: Finding[]
-  detected_regions: string[][]
+  detected_regions: Array<[string, string, string | null]>  // Each entry is [region, provider, availability_zone]
   source_paths: string[]
   controls_meta: ControlMeta[]
   secret_findings: SecretFinding[]

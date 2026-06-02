@@ -1282,6 +1282,7 @@ const en: Translations = {
     regions: {
       noRegions: 'No deployed regions detected for this run.',
       totalRegions: 'Total Regions',
+      totalAZs: '{{count}} AZs',
       deploymentMap: 'Deployment Map',
       regionsCount: '{{count}} regions',
       scannedPaths: 'Scanned Source Paths',
