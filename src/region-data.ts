@@ -10,6 +10,10 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "eu-west-3":[48.86,2.35],"eu-north-1":[59.33,18.07],"eu-south-1":[45.46,9.19],
   "eu-south-2":[40.42,-3.70],"me-south-1":[26.07,50.55],"me-central-1":[24.47,54.37],
   "il-central-1":[32.09,34.78],"sa-east-1":[-23.55,-46.63],
+  // AWS sovereign cloud regions (US GovCloud and EU GovCloud)
+  "us-gov-west-1":[47.60,-122.33],"us-gov-east-1":[41.88,-87.63],
+  "us-east-1-sov":[37.77,-77.42],"us-west-2-sov":[45.52,-122.68],
+  "eu-west-1-sov":[53.33,-6.25],"eu-central-1-sov":[50.11,8.68],
   // Azure
   "eastus":[37.77,-77.42],"eastus2":[36.65,-78.37],"westus":[37.78,-122.40],
   "westus2":[47.61,-122.33],"westus3":[33.45,-112.07],"centralus":[41.88,-87.63],
@@ -26,6 +30,9 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "uaecentral":[24.47,54.37],"southafricanorth":[-25.73,28.22],"southafricawest":[-33.93,18.42],
   "qatarcentral":[25.28,51.56],"polandcentral":[52.23,21.01],"swedencentral":[60.67,17.14],
   "italynorth":[45.47,9.19],"israelcentral":[32.09,34.78],
+  // Azure sovereign cloud regions
+  "uksouth-sov":[51.51,-0.13],"francecentral-sov":[48.86,2.35],
+  "germanywestcentral-sov":[50.11,8.68],"norwaywest-sov":[58.97,5.73],
   // GCP
   "us-central1":[41.26,-95.86],"us-east1":[33.20,-80.00],"us-east4":[39.03,-77.47],
   "us-east5":[40.00,-83.00],"us-south1":[32.78,-96.80],"us-west1":[45.59,-122.06],
@@ -36,6 +43,8 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "europe-west4":[52.37,4.90],"europe-west6":[47.38,8.54],"europe-west8":[45.46,9.19],
   "europe-west9":[48.86,2.35],"europe-west10":[52.52,13.40],"europe-west12":[45.07,7.69],
   "europe-north1":[60.57,27.19],"europe-central2":[52.23,21.01],"europe-southwest1":[38.72,-9.14],
+  // GCP multi-regions (sovereign cloud)
+  "EU":[50.1109,8.6821],"US":[37.7749,-122.4194],"ASIA":[22.32,114.17],
   "asia-east1":[24.05,120.52],"asia-east2":[22.32,114.17],"asia-northeast1":[35.68,139.65],
   "asia-northeast2":[34.69,135.50],"asia-northeast3":[37.57,126.98],"asia-south1":[19.08,72.88],
   "asia-south2":[28.61,77.21],"asia-southeast1":[1.35,103.82],"asia-southeast2":[-6.21,106.85],
@@ -96,15 +105,21 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   // Hetzner
   "fs-hetzner":[53.5511,9.9937],"nbg-hetzner":[49.9945,8.2432],"us-hetzner":[37.7749,-122.4194],"ca-hetzner":[43.6532,-79.3832],
   "eu-hetzner":[50.1109,8.6821],"apac-hetzner":[-33.8688,151.2093],
+  "fsn-hetzner":[53.5511,9.9937],
   // Additional Hetzner region names (without -hetzner suffix)
   "fsn1":[53.5511,9.9937],"fsn2":[53.5511,9.9937],"fsn3":[53.5511,9.9937],
   "nbg1":[49.9945,8.2432],"nbg2":[49.9945,8.2432],"nbg3":[49.9945,8.2432],"hel1":[53.5511,9.9937],
+  // Simple Hetzner region names (without -hetzner suffix)
+  "fs":[53.5511,9.9937],"nbg":[49.9945,8.2432],"us":[37.7749,-122.4194],"ca":[43.6532,-79.3832],
+  "eu":[50.1109,8.6821],"apac":[-33.8688,151.2093],
   // Simple OVH region names (without -ovh suffix)
   "GRA":[43.7172,1.0925],"BHS":[48.7528,-71.3535],"RBX":[43.6324,1.3757],"UK":[51.5243,-0.1224],"WAW":[52.2370,21.0168],
   // Infomaniak
   "chi-1-infomaniak":[47.3769,8.5417],"chi-2-infomaniak":[47.3769,8.5417],"chi-3-infomaniak":[47.3769,8.5417],
   "zrh-1-infomaniak":[47.4479,8.5664],"zrh-2-infomaniak":[47.4479,8.5664],"zrh-3-infomaniak":[47.4479,8.5664],
   "gva-1-infomaniak":[46.2044,6.1432],"gva-2-infomaniak":[46.2044,6.1432],"gva-3-infomaniak":[46.2044,6.1432],
+  // Normalized Infomaniak regions
+  "chi":[47.3769,8.5417],"zrh":[47.4479,8.5664],"gva":[46.2044,6.1432],
   // Leafcloud
   "bru-1-leafcloud":[50.8503,4.3517],"bru-2-leafcloud":[50.8503,4.3517],"bru-3-leafcloud":[50.8503,4.3517],
   "ams-1-leafcloud":[52.3676,4.9041],"ams-2-leafcloud":[52.3676,4.9041],"ams-3-leafcloud":[52.3676,4.9041],
@@ -112,15 +127,21 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "mad-1-leafcloud":[40.4168,-3.7038],"mad-2-leafcloud":[40.4168,-3.7038],"mad-3-leafcloud":[40.4168,-3.7038],
   "mil-1-leafcloud":[45.4646,9.1904],"mil-2-leafcloud":[45.4646,9.1904],"mil-3-leafcloud":[45.4646,9.1904],
   "par-1-leafcloud":[48.8566,2.3522],"par-2-leafcloud":[48.8566,2.3522],"par-3-leafcloud":[48.8566,2.3522],
+  // Normalized Leafcloud regions
+  "bru":[50.8503,4.3517],"ams":[52.3676,4.9041],"fra":[50.1109,8.6821],"mad":[40.4168,-3.7038],"mil":[45.4646,9.1904],"par":[48.8566,2.3522],
   // T Cloud Public
   "ts-1-tcloud":[35.6895,139.6917],"ts-2-tcloud":[35.6895,139.6917],"ts-3-tcloud":[35.6895,139.6917],
   "ts-4-tcloud":[35.6895,139.6917],"os-1-tcloud":[34.6937,135.5023],"os-2-tcloud":[34.6937,135.5023],
   "os-3-tcloud":[34.6937,135.5023],"os-4-tcloud":[34.6937,135.5023],"hk-1-tcloud":[22.3027,114.1772],
   "hk-2-tcloud":[22.3027,114.1772],"hk-3-tcloud":[22.3027,114.1772],"hk-4-tcloud":[22.3027,114.1772],
+  // Normalized T Cloud regions
+  "ts":[35.6895,139.6917],"os":[34.6937,135.5023],"hk":[22.3027,114.1772],
   // Seeweb
   "mep-1-seeweb":[45.4646,9.1904],"mep-2-seeweb":[45.4646,9.1904],"mep-3-seeweb":[45.4646,9.1904],
   "mep-4-seeweb":[45.4646,9.1904],"mil-1-seeweb":[45.4646,9.1904],"mil-2-seeweb":[45.4646,9.1904],
   "rom-1-seeweb":[41.9028,12.4964],"rom-2-seeweb":[41.9028,12.4964],"rom-3-seeweb":[41.9028,12.4964],
+  // Normalized Seeweb regions
+  "mep":[45.4646,9.1904],"rom":[41.9028,12.4964],
   // Exoscale
   "ch-dk-2-exoscale":[47.3769,8.5417],"ch-dk-2-1-exoscale":[47.3769,8.5417],"ch-dk-2-2-exoscale":[47.3769,8.5417],
   "ch-dk-3-exoscale":[47.3769,8.5417],"ch-dk-3-1-exoscale":[47.3769,8.5417],"ch-dk-3-2-exoscale":[47.3769,8.5417],
@@ -147,11 +168,15 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "bgm-4-plusserver":[49.9945,8.2432],"bgm-5-plusserver":[49.9945,8.2432],"bgm-6-plusserver":[49.9945,8.2432],
   "fxh-1-plusserver":[50.9656,7.0261],"fxh-2-plusserver":[50.9656,7.0261],"fxh-3-plusserver":[50.9656,7.0261],
   "fxh-4-plusserver":[50.9656,7.0261],"fxh-5-plusserver":[50.9656,7.0261],"fxh-6-plusserver":[50.9656,7.0261],
+  // Normalized Plusserver regions
+  "bgm":[49.9945,8.2432],"fxh":[50.9656,7.0261],
   // SysEleven
   "fra-1-syselev":[50.1109,8.6821],"fra-2-syselev":[50.1109,8.6821],"fra-3-syselev":[50.1109,8.6821],
   "fra-4-syselev":[50.1109,8.6821],"fra-5-syselev":[50.1109,8.6821],"fra-6-syselev":[50.1109,8.6821],
   "muc-1-syselev":[48.1296,11.5238],"muc-2-syselev":[48.1296,11.5238],"muc-3-syselev":[48.1296,11.5238],
   "muc-4-syselev":[48.1296,11.5238],"muc-5-syselev":[48.1296,11.5238],"muc-6-syselev":[48.1296,11.5238],
+  // Normalized SysEleven regions
+  "muc":[48.1296,11.5238],
   // Outscale
   "stg-1-outscale":[49.9945,8.2432],"stg-2-outscale":[49.9945,8.2432],"stg-3-outscale":[49.9945,8.2432],
   "stg-4-outscale":[49.9945,8.2432],"stg-5-outscale":[49.9945,8.2432],"stg-6-outscale":[49.9945,8.2432],
@@ -159,6 +184,8 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "par-1-outscale":[48.8566,2.3522],"par-2-outscale":[48.8566,2.3522],"par-3-outscale":[48.8566,2.3522],
   "par-4-outscale":[48.8566,2.3522],"par-5-outscale":[48.8566,2.3522],"par-6-outscale":[48.8566,2.3522],
   "par-7-outscale":[48.8566,2.3522],"par-8-outscale":[48.8566,2.3522],"par-9-outscale":[48.8566,2.3522],
+  // Normalized Outscale regions
+  "stg":[49.9945,8.2432],
   // Leaseweb
   "ams-1-leaseweb":[52.3676,4.9041],"ams-2-leaseweb":[52.3676,4.9041],"ams-3-leaseweb":[52.3676,4.9041],
   "ams-4-leaseweb":[52.3676,4.9041],"ams-5-leaseweb":[52.3676,4.9041],"ams-6-leaseweb":[52.3676,4.9041],
@@ -174,6 +201,8 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "ams-4-scaleway":[52.3676,4.9041],"ams-5-scaleway":[52.3676,4.9041],"ams-6-scaleway":[52.3676,4.9041],
   "fr-gra-1-scaleway":[43.7172,1.0925],"fr-gra-2-scaleway":[43.7172,1.0925],"fr-gra-3-scaleway":[43.7172,1.0925],
   "fr-gra-4-scaleway":[43.7172,1.0925],"fr-gra-5-scaleway":[43.7172,1.0925],"fr-gra-6-scaleway":[43.7172,1.0925],
+  // Normalized Scaleway regions (without trailing number)
+  "par-scaleway":[48.8566,2.3522],"ams-scaleway":[52.3676,4.9041],"fr-gra-scaleway":[43.7172,1.0925],
   // IONOS
   "de-fra-1-ionos":[50.1109,8.6821],"de-fra-2-ionos":[50.1109,8.6821],"de-fra-3-ionos":[50.1109,8.6821],
   "de-fra-4-ionos":[50.1109,8.6821],"de-fra-5-ionos":[50.1109,8.6821],"de-fra-6-ionos":[50.1109,8.6821],
@@ -188,12 +217,22 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   "es-bar-1-ionos":[41.3851,2.1734],"es-bar-2-ionos":[41.3851,2.1734],"es-bar-3-ionos":[41.3851,2.1734],
   "us-las-1-ionos":[36.1699,-115.1398],"us-las-2-ionos":[36.1699,-115.1398],"us-las-3-ionos":[36.1699,-115.1398],
   "us-las-4-ionos":[36.1699,-115.1398],"us-las-5-ionos":[36.1699,-115.1398],"us-las-6-ionos":[36.1699,-115.1398],
+  // Normalized IONOS regions (without trailing number)
+  "de-fra-ionos":[50.1109,8.6821],"de-muc-ionos":[48.1296,11.5238],"de-ber-ionos":[52.5200,13.4050],
+  "gb-lon-ionos":[51.5114,-0.0976],"se-sto-ionos":[59.3293,18.0686],"es-bar-ionos":[41.3851,2.1734],
+  "us-las-ionos":[36.1699,-115.1398],
   // UpCloud - Official zone names: fi-hel1, fi-hel2, fi-hel3, de-fra1, de-fra2, uk-lon1, uk-lon2, us-iad1, us-sjo1
   "fi-hel1-upcloud":[60.1699,24.9384],"fi-hel2-upcloud":[60.1699,24.9384],"fi-hel3-upcloud":[60.1699,24.9384],
   "de-fra1-upcloud":[50.1109,8.6821],"de-fra2-upcloud":[50.1109,8.6821],
+  "fi-hel-upcloud":[60.1699,24.9384],
+  "de-fra-upcloud":[50.1109,8.6821],
   "uk-lon1-upcloud":[51.5114,-0.0976],"uk-lon2-upcloud":[51.5114,-0.0976],
   "us-iad1-upcloud":[39.0063,-77.4880],
   "nl-ams1-upcloud":[52.3676,4.9041],
+  "uk-lon":[51.5114,-0.0976],
+  "us-iad":[39.0063,-77.4880],
+  "nl-ams":[52.3676,4.9041],
+  "us-sjo":[37.7749,-122.4194],
   // Yandex Cloud (all in Moscow)
   "ru-central1":[55.7558,37.6173],"ru-central2":[55.7558,37.6173],
   // Cleura
@@ -241,13 +280,29 @@ export const REGION_LABELS: Record<string, string> = {
   "southafricawest":"Cape Town, South Africa","qatarcentral":"Doha, Qatar",
   "polandcentral":"Warsaw, Poland","swedencentral":"Gävle, Sweden","italynorth":"Milan, Italy",
   "israelcentral":"Tel Aviv, Israel",
-  "us-central1":"Iowa, USA","us-east1":"South Carolina, USA","us-east4":"N. Virginia, USA",
-  "us-west1":"Oregon, USA","europe-west1":"Belgium","europe-west2":"London, UK",
-  "europe-west3":"Frankfurt, Germany","europe-west4":"Netherlands","europe-west6":"Zurich, Switzerland",
+  // AWS sovereign cloud regions
+  "us-gov-west-1":"US GovCloud (West)","us-gov-east-1":"US GovCloud (East)",
+  "us-east-1-sov":"US Sovereign Cloud (East)","us-west-2-sov":"US Sovereign Cloud (West)",
+  "eu-west-1-sov":"EU Sovereign Cloud (Ireland)","eu-central-1-sov":"EU Sovereign Cloud (Frankfurt)",
+  // Azure sovereign cloud regions
+  "uksouth-sov":"UK Sovereign Cloud (London)","francecentral-sov":"France Sovereign Cloud (Paris)",
+  "germanywestcentral-sov":"Germany Sovereign Cloud (Frankfurt)","norwaywest-sov":"Norway Sovereign Cloud (Stavanger)",
+  "us-central1":"Iowa, USA","us-east1":"South Carolina, USA","us-east4":"N. Virginia, USA","us-east5":"N. Virginia, USA","us-south1":"Tennessee, USA",
+  "us-west1":"Oregon, USA","us-west2":"Washington, USA","us-west3":"Arizona, USA","us-west4":"Nevada, USA",
+  "europe-west1":"Saint-Gilles, Belgium","europe-west2":"London, UK",
+  "europe-west3":"Frankfurt, Germany","europe-west4":"Eemshaven, Netherlands","europe-west6":"Zurich, Switzerland",
+  "europe-west8":"Milan, Italy","europe-west9":"Paris, France","europe-west10":"Berlin, Germany",
+  "europe-west12":"Madrid, Spain","europe-central2":"Warsaw, Poland","europe-north1":"Helsinki, Finland",
+  "europe-southwest1":"Lisbon, Portugal",
+  // GCP multi-regions (sovereign cloud)
+  "EU":"EU Sovereign Cloud, France","US":"US Sovereign Cloud, USA","ASIA":"Asia Pacific Sovereign Cloud, Singapore",
+  "northamerica-northeast1":"Quebec, Canada","northamerica-northeast2":"Montreal, Canada",
+  "southamerica-east1":"São Paulo, Brazil","southamerica-west1":"Santiago, Chile",
   "asia-east1":"Taiwan","asia-east2":"Hong Kong","asia-northeast1":"Tokyo, Japan",
   "asia-northeast2":"Osaka, Japan","asia-northeast3":"Seoul, South Korea","asia-south1":"Mumbai, India",
-  "asia-southeast1":"Singapore","asia-southeast2":"Jakarta, Indonesia",
-  "australia-southeast1":"Sydney, Australia","me-west1":"Tel Aviv, Israel",
+  "asia-south2":"Hyderabad, India","asia-southeast1":"Singapore","asia-southeast2":"Jakarta, Indonesia",
+  "australia-southeast1":"Sydney, Australia","australia-southeast2":"Melbourne, Australia",
+  "me-west1":"Tel Aviv, Israel","me-central1":"Dubai, UAE","me-central2":"Doha, Qatar",
   "africa-south1":"Cape Town, South Africa",
   "us-phoenix-1":"Phoenix, AZ, USA","us-ashburn-1":"Ashburn, VA, USA","eu-frankfurt-1":"Frankfurt, Germany",
   "uk-london-1":"London, UK","ap-tokyo-1":"Tokyo, Japan","ap-sydney-1":"Sydney, Australia",
@@ -300,10 +355,15 @@ export const REGION_LABELS: Record<string, string> = {
   // Additional Hetzner region names (without -hetzner suffix)
   "fsn1":"Falkenstein, Germany","fsn2":"Falkenstein, Germany","fsn3":"Falkenstein, Germany",
   "nbg1":"Nuremberg, Germany","nbg2":"Nuremberg, Germany","nbg3":"Nuremberg, Germany","hel1":"Helsinki, Finland",
+  // Simple Hetzner region names (without -hetzner suffix)
+  "fs":"Falkenstein, Germany","nbg":"Nuremberg, Germany","us":"US East (Hillsboro)","ca":"Canada East (Montreal)",
+  "eu":"EU Central (Nuremberg)","apac":"APAC (Hong Kong)",
   // Infomaniak
   "chi-1-infomaniak":"Cham, Switzerland","chi-2-infomaniak":"Cham, Switzerland","chi-3-infomaniak":"Cham, Switzerland",
   "zrh-1-infomaniak":"Zurich, Switzerland","zrh-2-infomaniak":"Zurich, Switzerland","zrh-3-infomaniak":"Zurich, Switzerland",
   "gva-1-infomaniak":"Geneva, Switzerland","gva-2-infomaniak":"Geneva, Switzerland","gva-3-infomaniak":"Geneva, Switzerland",
+  // Normalized Infomaniak labels
+  "chi":"Cham, Switzerland","zrh":"Zurich, Switzerland","gva":"Geneva, Switzerland",
   // Leafcloud
   "bru-1-leafcloud":"Brussels, Belgium","bru-2-leafcloud":"Brussels, Belgium","bru-3-leafcloud":"Brussels, Belgium",
   "ams-1-leafcloud":"Amsterdam, Netherlands","ams-2-leafcloud":"Amsterdam, Netherlands","ams-3-leafcloud":"Amsterdam, Netherlands",
@@ -311,15 +371,21 @@ export const REGION_LABELS: Record<string, string> = {
   "mad-1-leafcloud":"Madrid, Spain","mad-2-leafcloud":"Madrid, Spain","mad-3-leafcloud":"Madrid, Spain",
   "mil-1-leafcloud":"Milan, Italy","mil-2-leafcloud":"Milan, Italy","mil-3-leafcloud":"Milan, Italy",
   "par-1-leafcloud":"Paris, France","par-2-leafcloud":"Paris, France","par-3-leafcloud":"Paris, France",
+  // Normalized Leafcloud labels
+  "bru":"Brussels, Belgium","ams":"Amsterdam, Netherlands","fra":"Frankfurt, Germany","mad":"Madrid, Spain","mil":"Milan, Italy","par":"Paris, France",
   // T Cloud Public
   "ts-1-tcloud":"Tokyo, Japan","ts-2-tcloud":"Tokyo, Japan","ts-3-tcloud":"Tokyo, Japan",
   "ts-4-tcloud":"Tokyo, Japan","os-1-tcloud":"Osaka, Japan","os-2-tcloud":"Osaka, Japan",
   "os-3-tcloud":"Osaka, Japan","os-4-tcloud":"Osaka, Japan","hk-1-tcloud":"Hong Kong",
   "hk-2-tcloud":"Hong Kong","hk-3-tcloud":"Hong Kong","hk-4-tcloud":"Hong Kong",
+  // Normalized T Cloud labels
+  "ts":"Tokyo, Japan","os":"Osaka, Japan","hk":"Hong Kong",
   // Seeweb
   "mep-1-seeweb":"Milan, Italy","mep-2-seeweb":"Milan, Italy","mep-3-seeweb":"Milan, Italy",
   "mep-4-seeweb":"Milan, Italy","mil-1-seeweb":"Milan, Italy","mil-2-seeweb":"Milan, Italy",
   "rom-1-seeweb":"Rome, Italy","rom-2-seeweb":"Rome, Italy","rom-3-seeweb":"Rome, Italy",
+  // Normalized Seeweb labels
+  "mep":"Milan, Italy","rom":"Rome, Italy",
   // Exoscale
   "ch-dk-2-exoscale":"Zurich, Switzerland","ch-dk-2-1-exoscale":"Zurich, Switzerland","ch-dk-2-2-exoscale":"Zurich, Switzerland",
   "ch-dk-3-exoscale":"Zurich, Switzerland","ch-dk-3-1-exoscale":"Zurich, Switzerland","ch-dk-3-2-exoscale":"Zurich, Switzerland",
@@ -329,6 +395,8 @@ export const REGION_LABELS: Record<string, string> = {
   "uk-lon-2-exoscale":"London, UK","uk-lon-2-1-exoscale":"London, UK","uk-lon-2-2-exoscale":"London, UK",
   "fr-par-1-exoscale":"Paris, France","fr-par-1-1-exoscale":"Paris, France","fr-par-1-2-exoscale":"Paris, France",
   "fr-par-2-exoscale":"Paris, France","fr-par-2-1-exoscale":"Paris, France","fr-par-2-2-exoscale":"Paris, France",
+  // Normalized Exoscale labels
+  "ch-dk":"Zurich, Switzerland","uk-lon":"London, UK","fr-par":"Paris, France",
   // Cyso
   "ams-1-cyso":"Amsterdam, Netherlands","ams-2-cyso":"Amsterdam, Netherlands","ams-3-cyso":"Amsterdam, Netherlands",
   "ams-4-cyso":"Amsterdam, Netherlands","ams-5-cyso":"Amsterdam, Netherlands","ams-6-cyso":"Amsterdam, Netherlands",
@@ -346,11 +414,15 @@ export const REGION_LABELS: Record<string, string> = {
   "bgm-4-plusserver":"Bgm, Germany","bgm-5-plusserver":"Bgm, Germany","bgm-6-plusserver":"Bgm, Germany",
   "fxh-1-plusserver":"Frankfurt, Germany","fxh-2-plusserver":"Frankfurt, Germany","fxh-3-plusserver":"Frankfurt, Germany",
   "fxh-4-plusserver":"Frankfurt, Germany","fxh-5-plusserver":"Frankfurt, Germany","fxh-6-plusserver":"Frankfurt, Germany",
+  // Normalized Plusserver labels
+  "bgm":"Bgm, Germany","fxh":"Frankfurt, Germany",
   // SysEleven
   "fra-1-syselev":"Frankfurt, Germany","fra-2-syselev":"Frankfurt, Germany","fra-3-syselev":"Frankfurt, Germany",
   "fra-4-syselev":"Frankfurt, Germany","fra-5-syselev":"Frankfurt, Germany","fra-6-syselev":"Frankfurt, Germany",
   "muc-1-syselev":"Munich, Germany","muc-2-syselev":"Munich, Germany","muc-3-syselev":"Munich, Germany",
   "muc-4-syselev":"Munich, Germany","muc-5-syselev":"Munich, Germany","muc-6-syselev":"Munich, Germany",
+  // Normalized SysEleven labels
+  "muc":"Munich, Germany",
   // Outscale
   "stg-1-outscale":"Saint-Gratien, France","stg-2-outscale":"Saint-Gratien, France","stg-3-outscale":"Saint-Gratien, France",
   "stg-4-outscale":"Saint-Gratien, France","stg-5-outscale":"Saint-Gratien, France","stg-6-outscale":"Saint-Gratien, France",
@@ -358,6 +430,8 @@ export const REGION_LABELS: Record<string, string> = {
   "par-1-outscale":"Paris, France","par-2-outscale":"Paris, France","par-3-outscale":"Paris, France",
   "par-4-outscale":"Paris, France","par-5-outscale":"Paris, France","par-6-outscale":"Paris, France",
   "par-7-outscale":"Paris, France","par-8-outscale":"Paris, France","par-9-outscale":"Paris, France",
+  // Normalized Outscale labels
+  "stg":"Saint-Gratien, France",
   // Leaseweb
   "ams-1-leaseweb":"Amsterdam, Netherlands","ams-2-leaseweb":"Amsterdam, Netherlands","ams-3-leaseweb":"Amsterdam, Netherlands",
   "ams-4-leaseweb":"Amsterdam, Netherlands","ams-5-leaseweb":"Amsterdam, Netherlands","ams-6-leaseweb":"Amsterdam, Netherlands",
@@ -388,6 +462,7 @@ export const REGION_LABELS: Record<string, string> = {
   "us-las-1-ionos":"Las Vegas, USA","us-las-2-ionos":"Las Vegas, USA","us-las-3-ionos":"Las Vegas, USA",
   "us-las-4-ionos":"Las Vegas, USA","us-las-5-ionos":"Las Vegas, USA","us-las-6-ionos":"Las Vegas, USA",
   // UpCloud
+  "fi-hel":"Helsinki, Finland",
   "fi-hel1-upcloud":"Helsinki, Finland","fi-hel2-upcloud":"Helsinki, Finland","fi-hel3-upcloud":"Helsinki, Finland",
   "de-fra1-upcloud":"Frankfurt, Germany","de-fra2-upcloud":"Frankfurt, Germany",
   "uk-lon1-upcloud":"London, UK","uk-lon2-upcloud":"London, UK",
