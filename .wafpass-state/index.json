@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "runs": [
+    {
+      "run_id": "20260530-190125-168eb0da",
+      "generated_at": "2026-05-30T19:01:25.372470+00:00",
+      "tool_version": "1.0.0",
+      "iac_plugin": "terraform",
+      "stage": "",
+      "score": 9,
+      "totals": {
+        "controls_run": 71,
+        "pass": 1,
+        "fail": 8,
+        "skip": 62,
+        "waived": 0
+      },
+      "file": "run-20260530-190125-168eb0da.json"
+    },
+    {
+      "run_id": "20260530-190149-63cee020",
+      "generated_at": "2026-05-30T19:01:49.285909+00:00",
+      "tool_version": "1.0.0",
+      "iac_plugin": "terraform",
+      "stage": "",
+      "score": 9,
+      "totals": {
+        "controls_run": 71,
+        "pass": 1,
+        "fail": 8,
+        "skip": 62,
+        "waived": 0
+      },
+      "file": "run-20260530-190149-63cee020.json"
+    },
+    {
+      "run_id": "20260530-190520-31113fc1",
+      "generated_at": "2026-05-30T19:05:20.332087+00:00",
+      "tool_version": "1.0.0",
+      "iac_plugin": "terraform",
+      "stage": "",
+      "score": 9,
+      "totals": {
+        "controls_run": 71,
+        "pass": 1,
+        "fail": 8,
+        "skip": 62,
+        "waived": 0
+      },
+      "file": "run-20260530-190520-31113fc1.json"
+    }
+  ]
+}

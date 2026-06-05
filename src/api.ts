@@ -526,7 +526,7 @@ export async function fetchUsers(): Promise<UserOut[]> {
   return res.json() as Promise<UserOut[]>
 }
 
-export async function createUser(payload: { username: string; password: string; display_name?: string; image_url?: string; role?: string }): Promise<UserOut> {
+export async function createUser(payload: { username: string; password: string; display_name?: string; image_url?: string; role?: string; group?: string }): Promise<UserOut> {
   const res = await fetch(`${getApiBase()}/auth/users`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
@@ -539,7 +539,7 @@ export async function createUser(payload: { username: string; password: string; 
   return res.json() as Promise<UserOut>
 }
 
-export async function updateUser(id: string, payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string }): Promise<UserOut> {
+export async function updateUser(id: string, payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string; group?: string }): Promise<UserOut> {
   const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
@@ -901,6 +901,103 @@ export async function deleteProject(project: string): Promise<void> {
 
 export async function deleteGroupMapping(id: string): Promise<void> {
   const res = await fetch(`${getApiBase()}/sso/group-mappings/${encodeURIComponent(id)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+// ── Project Group API ─────────────────────────────────────────────────────────
+
+export interface ProjectGroupOut {
+  id: string
+  project: string
+  group_name: string
+  created_at: string
+  created_by: string | null
+}
+
+export interface ProjectGroupCreate {
+  project: string
+  group_name: string
+}
+
+export interface GroupOut {
+  group_name: string
+  projects: string[]
+  user_count: number
+  created_at: string
+}
+
+export async function fetchAllGroups(): Promise<GroupOut[]> {
+  const res = await fetch(`${getApiBase()}/groups`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const data = await res.json()
+  console.log('Raw /groups API response:', data)
+  return data as Promise<GroupOut[]>
+}
+
+export async function fetchProjectGroups(project: string): Promise<ProjectGroupOut[]> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/groups`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<ProjectGroupOut[]>
+}
+
+export async function createProjectGroup(payload: ProjectGroupCreate): Promise<ProjectGroupOut> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(payload.project)}/groups`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ project: payload.project, group_name: payload.group_name }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  return res.json() as Promise<ProjectGroupOut>
+}
+
+export async function deleteProjectGroup(project: string, group_name: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/groups/${encodeURIComponent(group_name)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+// ── User Group API ────────────────────────────────────────────────────────────
+
+export interface UserGroupOut {
+  id: string
+  user_id: string
+  group_name: string
+  provider: string
+  created_at: string
+}
+
+export interface UserGroupCreate {
+  group_name: string
+  provider?: string
+}
+
+export async function fetchUserGroups(userId: string): Promise<UserGroupOut[]> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(userId)}/groups`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<UserGroupOut[]>
+}
+
+export async function createUserGroup(userId: string, payload: UserGroupCreate): Promise<UserGroupOut> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(userId)}/groups`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  return res.json() as Promise<UserGroupOut>
+}
+
+export async function deleteUserGroup(userId: string, group_name: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(userId)}/groups/${encodeURIComponent(group_name)}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)

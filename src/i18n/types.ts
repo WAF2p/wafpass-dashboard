@@ -113,6 +113,7 @@ export interface Translations {
       reference: string
       antipattern: string
       bestpractices: string
+      projectgroups: string
       notifications: string
     }
   }
@@ -643,6 +644,36 @@ export interface Translations {
       fieldId: string             // "ID"
       fieldCreated: string        // "Created"
       fieldCreatedBy: string      // "Created by"
+    }
+
+    projectGroups: {
+      title: string               // "Project Groups Access Control"
+      subtitle: string            // "Define which groups can access which projects for run visibility"
+      adminBadge: string          // "Admin"
+      accessDenied: string        // "Access Denied"
+      adminOnly: string           // "Admin role required to manage project groups."
+      projectsHeader: string      // "Projects"
+      projectsCount: string       // "projects"
+      selectedProject: string     // "Selected Project"
+      description: string         // "Configure group-based access to this project..."
+      groupsHeader: string        // "Group Access"
+      groupCount: string          // "groups"
+      loading: string             // "Loading group access configuration..."
+      noGroups: string            // "No group access configured for this project..."
+      addedOn: string             // "Added on"
+      deleteGroup: string         // "Remove group access"
+      groupNamePlaceholder: string // "Group name (e.g., team-security...)"
+      addBtn: string              // "Add"
+      addDesc: string             // "Add a group to this project..."
+      usersHeader: string         // "Users in Group"
+      noUsers: string             // "No users found"
+      addUserPlaceholder: string  // "Select a user to add..."
+      addUserHint: string         // "Select a user and click Add to grant them access..."
+      infoTitle: string           // "How it works"
+      infoText1: string           // "This page allows you to configure group-based access control..."
+      infoItem1: string           // "Add one or more groups to a project"
+      infoItem2: string           // "When a user logs in via SSO, their groups are fetched..."
+      infoItem3: string           // "Users can only see runs for projects they belong to..."
     }
 
     remediation: {

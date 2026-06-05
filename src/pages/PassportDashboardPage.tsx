@@ -295,6 +295,76 @@ function PassportStamp({ color, icon, title, subtitle, earned, rotation, size = 
   )
 }
 
+// ── Access denied overlay ─────────────────────────────────────────────────────
+
+function AccessDeniedOverlay({
+  onClose, project,
+}: {
+  onClose: () => void
+  project: string
+}) {
+  return (
+    <>
+      {/* Full-screen backdrop — click away closes; paddingLeft shifts centering into main content area past the 16rem sidebar */}
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 1499, background: 'rgba(0,20,40,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '16rem' }}
+        onClick={onClose}
+      >
+      <div
+        style={{
+          width: 'min(500px, calc(100vw - 18rem))',
+          background: '#f9f7f1', borderRadius: '10px', boxShadow: '0 20px 60px rgba(0,0,0,0.38)',
+          overflow: 'hidden', display: 'flex', flexDirection: 'column',
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          border: '1.5px solid rgba(0,50,80,0.18)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ position: 'relative', height: '56px', overflow: 'hidden', flexShrink: 0, background: 'linear-gradient(135deg, #b4dfe8, #8fc8d8)' }}>
+          <svg viewBox="0 0 500 56" width="100%" height="56" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0 }}>
+            <path d="M0,56 L60,26 L120,34 L180,18 L240,28 L300,16 L360,30 L420,22 L500,26 L500,56 Z" fill="rgba(255,255,255,0.1)" />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 1rem', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'rgba(0,40,70,0.7)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                WAF++ · PROJECT PASSPORT
+              </div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(0,30,60,0.85)', marginTop: '0.08rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }}>
+                {project}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', cursor: 'pointer', padding: '0.25rem', color: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ padding: '1.5rem 1.25rem', textAlign: 'center' }}>
+          <div style={{ width: '64px', height: '64px', margin: '0 auto 1rem', borderRadius: '50%', background: 'rgba(218,44,56,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="32" height="32" fill="none" stroke="#DA2C38" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(0,20,50,0.85)', marginBottom: '0.5rem' }}>Access Denied</div>
+          <div style={{ fontSize: '0.7rem', color: 'rgba(0,40,70,0.65)', lineHeight: 1.5 }}>
+            You do not have access to this project. Contact your administrator to request access.
+          </div>
+        </div>
+
+        {/* MRZ footer */}
+        <div style={{ borderTop: '1px solid rgba(0,50,80,0.1)', padding: '0.3rem 0.75rem', background: 'rgba(255,235,220,0.2)', fontFamily: '"Courier New", monospace', fontSize: '0.4rem', color: 'rgba(0,20,50,0.3)', letterSpacing: '0.04em', userSelect: 'none', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'clip' }}>
+          {`PP<NO ACCESS FOR<PROJECT`.padEnd(44, '<')}
+        </div>
+      </div>
+      </div>
+    </>
+  )
+}
+
 // ── Achievements overlay ──────────────────────────────────────────────────────
 
 function AchievementsOverlay({
@@ -1341,6 +1411,17 @@ const VIEW_MODES: { id: ViewMode; label: string; icon: string }[] = [
     icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
 ]
 
+// ── Helper to get projects user has access to based on runs (filtered by backend) ─
+
+function getAccessibleProjectsFromRuns(runs: RunSummary[], role: string): Set<string> {
+  if (role === 'admin') {
+    return new Set<string>()  // Admin has access to all, return empty set as signal
+  }
+  // Non-admin users only see runs for projects they have access to
+  // (runs are already filtered by the backend based on group access)
+  return new Set(runs.map(r => r.project || '(unnamed)').filter(Boolean))
+}
+
 export default function PassportDashboardPage({ runs, role, onOpenProject, onRefetchRuns }: Props) {
   const [passports, setPassports] = useState<ProjectPassport[]>([])
   const [loading, setLoading] = useState(true)
@@ -1351,6 +1432,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
     const saved = localStorage.getItem('wafpass_passport_view')
     return (saved === 'grid' || saved === 'wide' || saved === 'list') ? saved : 'grid'
   })
+  const [accessDeniedProject, setAccessDeniedProject] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProjectPassports()
@@ -1364,6 +1446,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
     [passports],
   )
 
+  // Get projects the user has access to (from runs) and all projects from passports
   const allProjects = useMemo(() => {
     const s = new Set<string>([
       ...runs.map(r => r.project || '(unnamed)'),
@@ -1372,6 +1455,12 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
     return Array.from(s).sort()
   }, [runs, passports])
 
+  // Filter projects based on access control
+  const accessibleProjects = useMemo(() => {
+    return getAccessibleProjectsFromRuns(runs, role)
+  }, [runs, role])
+
+  // Projects the user can see (filtered + search)
   const filtered = useMemo(() => {
     if (!search.trim()) return allProjects
     const q = search.toLowerCase()
@@ -1384,6 +1473,18 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
         || pp?.tags.some(t => t.toLowerCase().includes(q))
     })
   }, [allProjects, passportMap, search])
+
+  // Projects the user has access to and that match search
+  const accessibleFilteredProjects = useMemo(() => {
+    if (role === 'admin') return filtered  // Admin sees all
+    return filtered.filter(p => accessibleProjects.has(p))
+  }, [filtered, accessibleProjects, role])
+
+  // Projects the user doesn't have access to (but exist in passports or runs)
+  const inaccessibleProjects = useMemo(() => {
+    if (role === 'admin') return []  // Admin has access to everything
+    return allProjects.filter(p => !accessibleProjects.has(p))
+  }, [allProjects, accessibleProjects, role])
 
   async function handleSave(project: string, data: ProjectPassportUpsert) {
     const saved = await upsertProjectPassport(project, data)
@@ -1434,7 +1535,12 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
           />
         </div>
         <div style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-          {filtered.length} project{filtered.length !== 1 ? 's' : ''}
+          {accessibleFilteredProjects.length} project{accessibleFilteredProjects.length !== 1 ? 's' : ''} visible
+          {inaccessibleProjects.length > 0 && role !== 'admin' && (
+            <span style={{ marginLeft: '0.5rem', color: 'var(--waf-brand)' }}>
+              {inaccessibleProjects.length} hidden
+            </span>
+          )}
         </div>
         {/* View toggle */}
         <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
@@ -1470,66 +1576,16 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
         </div>
       ) : viewMode === 'list' ? (
         /* ── Row list ── */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {filtered.map(project => (
-            <div key={project} style={{ position: 'relative' }}>
-              <PassportRow
-                project={project}
-                passport={passportMap[project] ?? null}
-                runs={runs}
-                onClick={() => onOpenProject(project)}
-              />
-              {canEdit(role) && (
-                <>
-                  <button
-                    onClick={e => { e.stopPropagation(); openEdit(project) }}
-                    title="Edit passport"
-                    style={{
-                      position: 'absolute', top: '0.4rem', right: '3.2rem',
-                      width: '24px', height: '24px', borderRadius: '5px',
-                      background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={e => { e.stopPropagation(); handleDelete(project) }}
-                    title="Delete project"
-                    style={{
-                      position: 'absolute', top: '0.4rem', right: '0.4rem',
-                      width: '24px', height: '24px', borderRadius: '5px',
-                      background: 'rgba(218,44,56,0.3)', border: '1px solid rgba(218,44,56,0.4)',
-                      color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        /* ── Card grid (compact or wide) ── */
-        <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'wide' ? 'repeat(auto-fill, minmax(400px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
-          {filtered.map(project => {
-            const pp = passportMap[project] ?? null
-            const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
-            const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
-            const displayName = pp?.display_name || project
-            return (
+        <>
+          {/* Show accessible projects */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {accessibleFilteredProjects.map(project => (
               <div key={project} style={{ position: 'relative' }}>
-                <PassportCard
+                <PassportRow
                   project={project}
-                  passport={pp}
+                  passport={passportMap[project] ?? null}
                   runs={runs}
-                  onClick={() => { setStampsProject(null); onOpenProject(project) }}
-                  onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
+                  onClick={() => onOpenProject(project)}
                 />
                 {canEdit(role) && (
                   <>
@@ -1537,13 +1593,13 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                       onClick={e => { e.stopPropagation(); openEdit(project) }}
                       title="Edit passport"
                       style={{
-                        position: 'absolute', top: '0.5rem', right: '3.4rem',
-                        width: '26px', height: '26px', borderRadius: '6px',
-                        background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.15)',
+                        position: 'absolute', top: '0.4rem', right: '3.2rem',
+                        width: '24px', height: '24px', borderRadius: '5px',
+                        background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)',
                         color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
                     >
-                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
@@ -1551,30 +1607,173 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                       onClick={e => { e.stopPropagation(); handleDelete(project) }}
                       title="Delete project"
                       style={{
-                        position: 'absolute', top: '0.5rem', right: '0.5rem',
-                        width: '26px', height: '26px', borderRadius: '6px',
-                        background: 'rgba(218,44,56,0.35)', border: '1px solid rgba(218,44,56,0.45)',
+                        position: 'absolute', top: '0.4rem', right: '0.4rem',
+                        width: '24px', height: '24px', borderRadius: '5px',
+                        background: 'rgba(218,44,56,0.3)', border: '1px solid rgba(218,44,56,0.4)',
                         color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
                     >
-                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </>
                 )}
-                {stampsProject === project && (
-                  <AchievementsOverlay
-                    onClose={() => setStampsProject(null)}
-                    projectRuns={ppRuns}
-                    bestScore={bestScore}
-                    displayName={displayName}
-                  />
-                )}
               </div>
-            )
-          })}
-        </div>
+            ))}
+          </div>
+
+          {/* Show inaccessible projects message for non-admin users */}
+          {!canEdit(role) && inaccessibleProjects.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {inaccessibleProjects.map(project => (
+                <div key={project} style={{ position: 'relative' }}>
+                  <PassportRow
+                    project={project}
+                    passport={passportMap[project] ?? null}
+                    runs={runs}
+                    onClick={() => setAccessDeniedProject(project)}
+                  />
+                  {/* Lock icon overlay */}
+                  <div
+                    style={{
+                      position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                      padding: '0.6rem', borderRadius: '999px',
+                      background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.2)',
+                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', zIndex: 10,
+                    }}
+                    onClick={e => { e.stopPropagation(); setAccessDeniedProject(project) }}
+                    title="You don't have access to this project"
+                  >
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V9a3 3 0 00-6 0v4h6z" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        /* ── Card grid (compact or wide) ── */
+        <>
+          {/* Show accessible projects */}
+          <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'wide' ? 'repeat(auto-fill, minmax(400px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+            {accessibleFilteredProjects.map(project => {
+              const pp = passportMap[project] ?? null
+              const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
+              const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
+              const displayName = pp?.display_name || project
+              return (
+                <div key={project} style={{ position: 'relative' }}>
+                  <PassportCard
+                    project={project}
+                    passport={pp}
+                    runs={runs}
+                    onClick={() => { setStampsProject(null); onOpenProject(project) }}
+                    onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
+                  />
+                  {canEdit(role) && (
+                    <>
+                      <button
+                        onClick={e => { e.stopPropagation(); openEdit(project) }}
+                        title="Edit passport"
+                        style={{
+                          position: 'absolute', top: '0.5rem', right: '3.4rem',
+                          width: '26px', height: '26px', borderRadius: '6px',
+                          background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.15)',
+                          color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDelete(project) }}
+                        title="Delete project"
+                        style={{
+                          position: 'absolute', top: '0.5rem', right: '0.5rem',
+                          width: '26px', height: '26px', borderRadius: '6px',
+                          background: 'rgba(218,44,56,0.35)', border: '1px solid rgba(218,44,56,0.45)',
+                          color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                  {stampsProject === project && (
+                    <AchievementsOverlay
+                      onClose={() => setStampsProject(null)}
+                      projectRuns={ppRuns}
+                      bestScore={bestScore}
+                      displayName={displayName}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Show inaccessible projects for non-admin users */}
+          {!canEdit(role) && inaccessibleProjects.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'wide' ? 'repeat(auto-fill, minmax(400px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+              {inaccessibleProjects.map(project => {
+                const pp = passportMap[project] ?? null
+                const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
+                const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
+                const displayName = pp?.display_name || project
+                return (
+                  <div key={project} style={{ position: 'relative' }}>
+                    <PassportCard
+                      project={project}
+                      passport={pp}
+                      runs={runs}
+                      onClick={() => { setStampsProject(null); setAccessDeniedProject(project) }}
+                      onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
+                    />
+                    {/* Lock icon overlay */}
+                    <div
+                      style={{
+                        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                        padding: '0.6rem', borderRadius: '999px',
+                        background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.2)',
+                        color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', zIndex: 10,
+                      }}
+                      onClick={e => { e.stopPropagation(); setAccessDeniedProject(project) }}
+                      title="You don't have access to this project"
+                    >
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V9a3 3 0 00-6 0v4h6z" />
+                      </svg>
+                    </div>
+                    {stampsProject === project && (
+                      <AchievementsOverlay
+                        onClose={() => setStampsProject(null)}
+                        projectRuns={ppRuns}
+                        bestScore={bestScore}
+                        displayName={displayName}
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Access denied overlay ── */}
+      {accessDeniedProject && (
+        <AccessDeniedOverlay
+          onClose={() => setAccessDeniedProject(null)}
+          project={accessDeniedProject}
+        />
       )}
 
       {/* ── Edit modal ── */}

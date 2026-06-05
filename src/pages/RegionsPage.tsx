@@ -22,6 +22,51 @@ function stripZoneSuffix(region: string): string {
   return region
 }
 
+// Helper to get the base region for SINA Cloud (strip numeric zone suffix)
+// e.g., "de-ham-sinacloud-1" -> "de-ham-sinacloud"
+function getSinacloudBaseRegion(region: string): string {
+  // Check if this is a SINA Cloud region with a numeric zone suffix
+  const match = region.match(/^(de-[a-z]{2,3})-sinacloud-\d+$/)
+  if (match) {
+    return match[1] + '-sinacloud'
+  }
+  return region
+}
+
+// Helper to get the datacenter base for SINA Cloud regions (without zone number)
+// e.g., "de-ham-sinacloud-1" -> "de-ham-sinacloud", "de-du-sinacloud-3" -> "de-du-sinacloud"
+function getSinacloudBase(region: string | null): string | null {
+  if (!region || !region.includes('-sinacloud')) {
+    return null
+  }
+  // Match patterns like de-ham-sinacloud-1, de-du-sinacloud-2, de-fra-sinacloud-3
+  // Region prefix can be 2 or 3 letters (de-ham, de-du, de-fra)
+  const match = region.match(/^(de-[a-z]{2,3})-sinacloud(-\d+)?$/)
+  if (match) {
+    return match[1] + '-sinacloud'  // e.g., "de-ham-sinacloud", "de-du-sinacloud"
+  }
+  return null
+}
+
+// Helper to normalize SINA Cloud region names that may have malformed format
+// e.g., "de-ham-sinacloud-de-ham-1" -> "de-ham-sinacloud-1"
+// e.g., "de-fra-sinacloud-de-fra" -> "de-fra-sinacloud" (no zone)
+function normalizeSinacloudRegion(region: string | null): string {
+  if (!region) return ''
+  // Check if this looks like a malformed SINA Cloud region (contains "-sinacloud-" pattern)
+  // Region prefix can be 2 or 3 letters (de-ham, de-du, de-fra)
+  if (region.includes('-sinacloud-') && region.match(/^-de-[a-z]{2,3}-sinacloud-de-[a-z]{2,3}/)) {
+    // Extract the base (de-ham, de-du, de-fra) and the zone
+    const match = region.match(/^(de-[a-z]{2,3})-sinacloud-(de-[a-z]{2,3})(-\d+)?$/)
+    if (match) {
+      const base = match[1] // de-ham, de-du, or de-fra
+      const zone = match[3] || '' // -1, -2, -3, or empty
+      return `${base}-sinacloud${zone}`
+    }
+  }
+  return region
+}
+
 interface Props { run: RunDetail }
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -52,95 +97,110 @@ const PROVIDER_LABEL: Record<string, string> = {
   sinacloud:  'SINA Cloud',
 }
 
-function detectProvider(entry: (string | null)[]): string {
-  if (entry.length > 1 && entry[1]) return entry[1].toLowerCase()
-  const r = entry[0] ?? ''
-  if (r.match(/^(eu-|us-|ap-|sa-|ca-|me-|af-|il-)/)) return 'aws'
-  if (r.match(/^(westeurope|eastus|northeurope|germanywest|southeastasia|australiaeast|japaneast|brazilsouth|uksouth|francecentral)/)) return 'azure'
-  if (r.match(/^(europe-|us-central|asia-|southamerica-|northamerica-|australia-southeast|africa-south)/)) return 'gcp'
-  if (r.match(/^(eu-frankfurt|us-ashburn|us-phoenix|uk-london|ap-tokyo|ap-sydney|ap-mumbai|sa-saopaulo|ca-toronto)/)) return 'oci'
-  if (r.match(/^cn-/)) return 'alicloud'
-  if (r.match(/^(chi|zrh|gva)-[0-9]+(-infomaniak)?$/) || r.match(/^(chi|zrh|gva)-[0-9]+-infomaniak$/)) return 'infomaniak'
-  if (r.match(/^(bru|ams|fra|mad|mil|par)-[0-9]+(-leafcloud)?$/) || r.match(/^(bru|ams|fra|mad|mil|par)-[0-9]+-leafcloud$/)) return 'leafcloud'
-  if (r.match(/^(ts|os|hk)-[0-9]+(-tcloud)?$/) || r.match(/^(ts|os|hk)-[0-9]+-tcloud$/)) return 'tcloud'
-  if (r.match(/^(mep|mil|rom)-[0-9]+(-seeweb)?$/) || r.match(/^(mep|mil|rom)-[0-9]+-seeweb$/)) return 'seeweb'
-  if (r.match(/^(ch-dk-[0-9]|de-fra-[0-9]|uk-lon-[0-9]|fr-par-[0-9])-([0-9]+-)?exoscale$/)) return 'exoscale'
-  if (r.match(/^(ams|bru|fra)-[0-9]+(-cyso)?$/) || r.match(/^(ams|bru|fra)-[0-9]+-cyso$/)) return 'cyso'
-  if (r.match(/^(ams|den)-[0-9]+(-numspot)?$/) || r.match(/^(ams|den)-[0-9]+-numspot$/)) return 'numspot'
-  if (r.match(/^(bgm|fxh)-[0-9]+(-plusserver)?$/) || r.match(/^(bgm|fxh)-[0-9]+-plusserver$/)) return 'plusserver'
-  if (r.match(/^(fra|muc)-[0-9]+(-syselev)?$/) || r.match(/^(fra|muc)-[0-9]+-syselev$/)) return 'syselev'
-  if (r.match(/^(stg|par)-[0-9]+(-outscale)?$/) || r.match(/^(stg|par)-[0-9]+-outscale$/)) return 'outscale'
-  if (r.match(/^(ams|fwm)-[0-9]+(-leaseweb)?$/) || r.match(/^(ams|fwm)-[0-9]+-leaseweb$/)) return 'leaseweb'
-  if (r.match(/^(par|ams|fr-gra)-[0-9]+(-scaleway)?$/) || r.match(/^(par|ams|fr-gra)-[0-9]+-scaleway$/)) return 'scaleway'
-  if (r.match(/^(de-fra|de-muc|de-ber|gb-lon|se-sto|es-bar|us-las)-[0-9]+(-ionos)?$/) || r.match(/^(de-fra|de-muc|de-ber|gb-lon|se-sto|es-bar|us-las)-[0-9]+-ionos$/)) return 'ionos'
-  if (r.match(/^(fi-hel|de-fra|uk-lon|us-iad|us-sjo|nl-ams)[0-9]+(-upcloud)?$/) || r.match(/^(fi-hel|de-fra|uk-lon|us-iad|us-sjo|nl-ams)[0-9]+-upcloud$/)) return 'upcloud'
-  if (r.match(/^(se-sto|se-Gothenburg|fi-hel|de-fra|nl-ams|uk-lon)-[0-9]+(-cleura)?$/) || r.match(/^(se-sto|se-Gothenburg|fi-hel|de-fra|nl-ams|uk-lon)-[0-9]+-cleura$/)) return 'cleura'
-  // SINA Cloud - Germany-based cloud by secunet (must be checked before generic de-* patterns)
-  if (r.match(/^(de-ham-[0-9]+|de-du-[0-9]+|de-fra-[0-9]+)-sinacloud$/)) return 'sinacloud'
-  if (r.match(/^(de|fr|nl|uk|us|ca|br|pl|se|it|es|at|ch|be|ie|dk|no|fi|lt|lv|ee|bg|ro|hr|sk|cz|hu|gr|pt|ie|ru|tr|ua|by|kz|md|uz|tj|kg|am|az|ge|mk|rs|ba|me|al|gr|tr|il|ae|sa|qa|in|jp|cn|sg|my|th|vn|ph|id|nz|au)(-ovh|-stackit|-hetzner)?$/)) return 'ovh'
-  if (r.match(/^(fs|hi|nbg|us|ca|eu|)(-ovh|-stackit|-hetzner)?$/)) return 'hetzner'
-  if (r.match(/^(de|eu|us|ca|apac|)(-ovh|-stackit|-hetzner)?$/)) return 'stackit'
-  return 'unknown'
-}
-
 export default function RegionsPage({ run }: Props) {
   const { t } = useI18n()
   const [hoveredProvider, setHoveredProvider] = useState<string | null>(null)
   const detectedRegions = run.detected_regions ?? []
-  console.log('=== RegionsPage DEBUG ===')
-  console.log('detectedRegions:', detectedRegions)
-  console.log('detectedRegions length:', detectedRegions.length)
-  if (detectedRegions.length > 0) {
-    console.log('First 5 entries:', detectedRegions.slice(0, 5))
-    console.log('Entry types:', detectedRegions.map((e: any) => Array.isArray(e) ? `array[${e.length}]` : typeof e))
-  }
 
-  // Convert detected_regions (now [region, provider, az]) to just region names for grouping
-  // Handle both old 2-element format and new 3-element format
-  const regions: string[] = detectedRegions.map(entry => {
-    if (Array.isArray(entry) && entry.length >= 1) {
-      return entry[0]
-    }
-    return ''
-  }).filter(r => r !== '')
-
-  // Track AZs per region for display
-  // detectedRegions is now [[region, provider, az], ...]
-  // For regions with zones, the region field already contains the full name (e.g., "europe-west4-a")
-  // The third element (az) contains just the zone letter, but we want to show the full region name
-  const azsByRegion: Record<string, string[]> = {}
-  for (const entry of detectedRegions) {
-    if (Array.isArray(entry) && entry.length >= 3) {
-      const region = entry[0]
-      const az = entry[2]
-      if (region && az) {
-        // Store the full region name (which includes the zone) for display
-        // This allows showing "europe-west4-a" instead of just "a"
-        if (!azsByRegion[region]) azsByRegion[region] = []
-        // Deduplicate by the zone letter to avoid duplicates like "eu-central-1-a" appearing multiple times
-        if (!azsByRegion[region].includes(az)) azsByRegion[region].push(az)
-      }
-    }
-  }
-
-  // Extract unique regions for the count and map (deduplicate by region only)
-  const uniqueRegions = Array.from(new Set(regions))
-
-  // Also track unique region+provider pairs for map markers
-  const seenRegionProvider = new Set<string>()
-  const uniqueMarkers: { region: string; provider: string; azs: string[] }[] = []
-  for (const entry of detectedRegions) {
-    if (Array.isArray(entry) && entry.length >= 3) {
+  // Normalize all region names first to handle malformed SINA Cloud formats
+  const normalizedRegions: { original: string; normalized: string; provider: string; az: string | null }[] = detectedRegions
+    .filter(entry => Array.isArray(entry) && entry.length >= 3)
+    .map(entry => {
       const region = entry[0]
       const provider = entry[1]
-      if (region && provider && typeof region === 'string' && typeof provider === 'string') {
-        const key = `${region.toLowerCase()}:${provider.toLowerCase()}`
-        if (!seenRegionProvider.has(key)) {
-          seenRegionProvider.add(key)
-          const azs = azsByRegion[region] || []
-          uniqueMarkers.push({ region, provider, azs })
+      const az = entry[2]
+      const normalized = typeof region === 'string' && region.includes('sinacloud')
+        ? normalizeSinacloudRegion(region)
+        : region
+      return { original: region, normalized: typeof normalized === 'string' ? normalized : (typeof region === 'string' ? region : ''), provider: typeof provider === 'string' ? provider : '', az: typeof az === 'string' ? az : null }
+    })
+
+  // Helper to extract zone from region name when az field is None
+  function extractZoneFromRegion(region: string, provider: string): string | null {
+    // For SINA Cloud, extract numeric zone: "de-ham-sinacloud-1" -> "1"
+    if (provider === 'sinacloud' && region.includes('sinacloud')) {
+      const match = region.match(/^(de-[a-z]{2,3})-sinacloud-(\d+)$/)
+      if (match) return match[2]
+    }
+    // For Alibaba Cloud, extract zone: "cn-hangzhou-a" -> "a"
+    if (provider === 'alicloud' && region.includes('cn-')) {
+      const match = region.match(/^(cn-[a-z]+)-([a-z])$/)
+      if (match) return match[2]
+    }
+    // For providers with zone suffix like "-a", "-b", "-1"
+    // Check if region ends with hyphen + letter/number
+    const match = region.match(/^(.+)-([a-z0-9]+)$/)
+    if (match) {
+      const base = match[1]
+      const suffix = match[2]
+      // Only treat as zone if base doesn't already end with a digit (e.g., "eu-central-1-a")
+      // or if it's a known zone pattern
+      if (suffix.length === 1 || (suffix.length <= 2 && provider === 'azure')) {
+        // Check if base ends with digit (common for regions like "us-east-1")
+        if (base[base.length - 1] >= '0' && base[base.length - 1] <= '9') {
+          return suffix
+        }
+        // Also check if base looks like a region with common patterns
+        // e.g., "europe-west4", "us-central1", "asia-southeast1"
+        if (base.match(/^[a-z]+-\d+$/)) {
+          return suffix
         }
       }
+    }
+    return null
+  }
+
+  // Track AZs per region for display
+  // For regions that already contain the zone in their name (like "de-ham-sinacloud-1"),
+  // use the full region name as the AZ. For regions with separate zone (like "europe-west4" + "a"),
+  // use the zone letter.
+  const azsByRegion: Record<string, string[]> = {}
+  for (const r of normalizedRegions) {
+    // First, check if az field has the zone
+    if (r.az) {
+      if (!azsByRegion[r.normalized]) azsByRegion[r.normalized] = []
+      if (!azsByRegion[r.normalized].includes(r.az)) azsByRegion[r.normalized].push(r.az)
+    } else {
+      // No separate az field - extract zone from region name if embedded
+      // Pattern 1: zone suffix like "europe-west1-a", "us-east1-b"
+      // Pattern 2: SINA Cloud style "de-ham-sinacloud-1"
+      // Pattern 3: Alibaba Cloud style "cn-hangzhou-a"
+      const zoneFromRegion = extractZoneFromRegion(r.normalized, r.provider)
+      if (zoneFromRegion) {
+        if (!azsByRegion[r.normalized]) azsByRegion[r.normalized] = []
+        if (!azsByRegion[r.normalized].includes(zoneFromRegion)) azsByRegion[r.normalized].push(zoneFromRegion)
+      }
+    }
+  }
+
+  // Extract unique regions for the count and map
+  // For SINA Cloud, group by datacenter base (without zone number) so de-ham-1, de-ham-2, de-ham-3 become just "de-ham"
+  const seenRegionKeys = new Set<string>()
+  const uniqueRegions: string[] = []
+  for (const r of normalizedRegions) {
+    let regionKey = r.normalized
+    // For SINA Cloud, use the datacenter base without zone for grouping
+    if (r.provider === 'sinacloud') {
+      const base = getSinacloudBase(r.normalized)
+      if (base) regionKey = base
+    }
+    if (!seenRegionKeys.has(regionKey)) {
+      seenRegionKeys.add(regionKey)
+      uniqueRegions.push(regionKey)
+    }
+  }
+
+  // Also track unique region+provider pairs for map markers
+  // Include all regions that have zone info (either from az field or embedded in region name)
+  // For regions without zones, still include them but use empty/placeholder azs
+  const seenRegionProvider = new Set<string>()
+  const uniqueMarkers: { region: string; provider: string; azs: string[] }[] = []
+  for (const r of normalizedRegions) {
+    const key = `${r.normalized.toLowerCase()}:${r.provider.toLowerCase()}`
+    if (!seenRegionProvider.has(key)) {
+      seenRegionProvider.add(key)
+      const azs = azsByRegion[r.normalized] || []
+      uniqueMarkers.push({ region: r.normalized, provider: r.provider, azs })
     }
   }
 
@@ -152,13 +212,43 @@ export default function RegionsPage({ run }: Props) {
     )
   }
 
-  // Group by provider using the original detectedRegions which has provider info
-  const grouped: Record<string, Array<string | null>[]> = {}
-  for (const entry of detectedRegions) {
-    if (!Array.isArray(entry) || entry.length < 2) continue
-    const provider = detectProvider(entry)
-    if (!grouped[provider]) grouped[provider] = []
-    grouped[provider].push(entry)
+  // Helper to check if provider needs zone extraction from region name
+  function needsZoneExtraction(provider: string): boolean {
+    // These providers have zones embedded in the region name
+    const providersWithEmbeddedZones = ['sinacloud', 'stackit', 'tcloud', 'infomaniak', 'leafcloud', 'seeweb', 'exoscale', 'cyso', 'numspot', 'plusserver', 'syselev', 'outscale', 'leaseweb', 'ionos', 'upcloud', 'hetzner', 'cleura', 'scaleway', 'yandex']
+    return providersWithEmbeddedZones.includes(provider)
+  }
+
+  // Group by provider using the normalized regions
+  // For SINA Cloud, group by datacenter base (without zone number)
+  const grouped: Record<string, { base: string; entries: typeof normalizedRegions; azs: string[] }> = {}
+  for (const entry of normalizedRegions) {
+    if (!entry.provider) continue
+    const entryBase = entry.provider === 'sinacloud' && entry.normalized ? getSinacloudBase(entry.normalized) : null
+    const base = entryBase ? entryBase : entry.normalized
+    if (!grouped[entry.provider]) grouped[entry.provider] = { base, entries: [], azs: [] }
+    // For SINA Cloud, only add unique base entries (deduplicate by base region)
+    // Store the full region name with zone in entries for display
+    if (entry.provider === 'sinacloud' && entryBase) {
+      const existingBase = grouped[entry.provider].entries.find(e => getSinacloudBase(e.normalized) === entryBase)
+      if (!existingBase) {
+        // For SINA Cloud, store the base region (without zone) as normalized
+        // but keep the original region name in entries array for AZ display
+        grouped[entry.provider].entries.push({ ...entry, normalized: entryBase, az: null })
+      }
+    } else {
+      grouped[entry.provider].entries.push(entry)
+    }
+    // Collect all AZs for this provider - extract zone from region name when az field is None
+    if (entry.normalized && entry.az === null && needsZoneExtraction(entry.provider)) {
+      const zone = extractZoneFromRegion(entry.normalized, entry.provider)
+      if (zone && !grouped[entry.provider].azs.includes(zone)) {
+        grouped[entry.provider].azs.push(zone)
+      }
+    } else if (entry.az && !grouped[entry.provider].azs.includes(entry.az)) {
+      // For providers with separate az field (like Azure, GCP, Alibaba)
+      grouped[entry.provider].azs.push(entry.az)
+    }
   }
 
   const providerOrder = ['aws', 'azure', 'gcp', 'ovh', 'hetzner', 'stackit', 'sinacloud', 'oci', 'alicloud', 'yandex', 'infomaniak', 'leafcloud', 'tcloud', 'seeweb', 'exoscale', 'cyso', 'numspot', 'plusserver', 'syselev', 'outscale', 'leaseweb', 'scaleway', 'ionos', 'upcloud', 'cleura', 'unknown']
@@ -166,10 +256,13 @@ export default function RegionsPage({ run }: Props) {
     (a, b) => providerOrder.indexOf(a) - providerOrder.indexOf(b)
   )
 
-  const markers: { region: string; provider: string; coords: [number, number] }[] = []
+  const markers: { region: string; provider: string; coords: [number, number]; azs?: string[] }[] = []
   for (const m of uniqueMarkers) {
     // Look up coordinates using the base region (strip zone suffix)
-    const baseRegion = stripZoneSuffix(m.region)
+    // For SINA Cloud, strip numeric zone suffix; for others, strip letter zone suffix
+    const baseRegion = m.provider === 'sinacloud'
+      ? getSinacloudBaseRegion(m.region)
+      : stripZoneSuffix(m.region)
     const coords = REGION_COORDS[baseRegion]
     if (coords) markers.push({ region: m.region, provider: m.provider, coords })
   }
@@ -181,34 +274,38 @@ export default function RegionsPage({ run }: Props) {
           <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.regions.totalRegions')}</div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--waf-brand)' }}>{uniqueRegions.length}</div>
           <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>
-            {t('pages.regions.totalAZs', { count: String(detectedRegions.filter(e => Array.isArray(e) && e.length >= 3 && e[2]).length) })}
+            {t('pages.regions.totalAZs', { count: String(Object.values(azsByRegion).flat().length) })}
           </div>
         </div>
         {sortedProviders.map(provider => {
-          // Deduplicate entries by base region name (strip zone suffix)
-          const seenRegions = new Set<string>()
-          for (const entry of grouped[provider]) {
-            if (entry[0] && typeof entry[0] === 'string') {
-              // Strip zone suffix (e.g., "westeurope-1" -> "westeurope") for counting
-              const baseRegion = stripZoneSuffix(entry[0])
-              seenRegions.add(baseRegion)
+          const groupData = grouped[provider]
+          // For SINA Cloud, use the pre-computed grouped data with deduped regions and all AZs
+          let dedupedRegionCount = 0
+          let azs: string[] = []
+          if (provider === 'sinacloud' && groupData) {
+            dedupedRegionCount = groupData.entries.length  // 3 datacenters
+            azs = groupData.azs  // All 3 AZs (zone numbers "1", "2", "3")
+          } else {
+            // Deduplicate entries by base region name (strip zone suffix) for other providers
+            const seenRegions = new Set<string>()
+            for (const entry of groupData?.entries ?? []) {
+              if (entry.normalized) {
+                const baseRegion = stripZoneSuffix(entry.normalized)
+                seenRegions.add(baseRegion)
+              }
+            }
+            dedupedRegionCount = seenRegions.size
+            // Use pre-computed AZs from azsByRegion which extracts zones from region names
+            azs = azsByRegion[groupData?.base ?? ''] || []
+            // For providers where zones are embedded in region names (like europe-west1-a),
+            // show the full region name as the AZ display instead of just the zone letter
+            if (azs.length === 0) {
+              azs = Array.from(new Set(
+                (groupData?.entries ?? [])
+                  .map((e: any) => e.normalized)
+              ))
             }
           }
-          const dedupedRegionCount = seenRegions.size
-
-          // For providers that have zones in their region names (like europe-west4-a),
-          // extract the full region name as the "AZ" display instead of just the zone letter
-          const azs = Array.from(new Set(
-            grouped[provider]
-              .filter((e: any) => Array.isArray(e) && e.length >= 3 && e[2])
-              .map((e: any) => {
-                // If the region already contains the zone (e.g., "europe-west4-a"),
-                // use the full region name for display
-                if (e[0]) return e[0]
-                // Otherwise fall back to the zone letter
-                return e[2]
-              })
-          ));
           return (
             <div
               key={provider}
@@ -274,11 +371,21 @@ export default function RegionsPage({ run }: Props) {
               className="dark-mode-tiles"
             />
             {markers.map((m, i) => {
-              // Use base region for label lookup (strip zone suffix)
-              const baseRegion = stripZoneSuffix(m.region)
-              // For display, show the full region name (which includes the zone)
-              // as the "AZ" text - this shows "europe-west4-a" instead of just "a"
-              const azDisplay = m.region
+              // Use base region for label lookup
+              // For SINA Cloud, strip numeric zone suffix; for others, strip letter zone suffix
+              const baseRegion = m.provider === 'sinacloud'
+                ? getSinacloudBaseRegion(m.region)
+                : stripZoneSuffix(m.region)
+              // For display, show just the zone (not the full region name)
+              // For providers with embedded zones (like SINA Cloud "de-ham-sinacloud-1"),
+              // extract just the zone number/letter ("1")
+              // For others (like GCP "europe-west1-a"), use the first az from azs array
+              // If no azs available, show "N/A"
+              const azDisplay = m.azs && m.azs.length > 0
+                ? (m.provider === 'sinacloud'
+                    ? m.azs[0].replace(/^(de-[a-z]{2,3})-sinacloud-/, '') // Just the number: "1", "2", "3"
+                    : m.azs[0]) // For others, use the zone from azs array
+                : 'N/A'
               const isHovered = hoveredProvider === m.provider
               const providerColor = PROVIDER_COLORS[m.provider] ?? '#94a3b8'
               return (
@@ -313,15 +420,24 @@ export default function RegionsPage({ run }: Props) {
       {sortedProviders.map(provider => {
         const color = PROVIDER_COLORS[provider] ?? '#94a3b8'
         const label = PROVIDER_LABEL[provider] ?? provider.toUpperCase()
-        // Deduplicate entries by region name within this provider's group
-        // Each unique region should only appear once, with all its AZs combined
+        const groupData = grouped[provider]
+        // For SINA Cloud, show 3 datacenter entries (de-ham-sinacloud, de-du-sinacloud, de-fra-sinacloud)
+        // Each with all 3 of its AZs. For other providers, show each unique region.
+        const uniqueEntries: Array<{ normalized: string; provider: string; az: string | null; isSinacloudBase?: boolean }> = []
         const seenRegions = new Set<string>()
-        const uniqueEntries: Array<(string | null)[]> = []
-        for (const entry of grouped[provider]) {
-          const regionName = entry[0]
-          if (regionName && !seenRegions.has(regionName)) {
-            seenRegions.add(regionName)
-            uniqueEntries.push(entry)
+        if (groupData) {
+          for (const entry of groupData.entries) {
+            if (entry.normalized && !seenRegions.has(entry.normalized)) {
+              seenRegions.add(entry.normalized)
+              // For SINA Cloud, entries have az: null since we're storing base regions
+              // For other providers, keep the original az
+              uniqueEntries.push({
+                ...entry,
+                isSinacloudBase: provider === 'sinacloud',
+                // For SINA Cloud base entries, we'll use groupData.azs instead of entry.az
+                az: provider === 'sinacloud' ? null : entry.az
+              })
+            }
           }
         }
         return (
@@ -337,31 +453,44 @@ export default function RegionsPage({ run }: Props) {
               <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
                 {t('pages.regions.regionsCount', { count: String(uniqueEntries.length) })}
               </span>
+              {provider === 'sinacloud' && groupData && groupData.azs.length > 0 && (
+                <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+                  ({groupData.azs.length} AZs)
+                </span>
+              )}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {uniqueEntries.map((entry, i) => {
-                const regionName = entry[0]
+                const regionName = entry.normalized
                 if (!regionName || typeof regionName !== 'string') return null
                 // Use base region for label lookup (strip zone suffix)
                 const baseRegion = stripZoneSuffix(regionName)
-                // The regionName already contains the full region+zone (e.g., "europe-west4-a")
-                // For display, we show the full region name as the AZ indicator
-                const azDisplay = regionName
+                // For SINA Cloud, show all 3 AZs for each datacenter
+                // For other providers, show the region as the AZ indicator
+                const azsToShow = provider === 'sinacloud' && groupData ? groupData.azs : [regionName]
                 return (
                   <div key={i} style={{ display: 'inline-flex', flexDirection: 'column', gap: '0.15rem', padding: '0.35rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: `1px solid ${hoveredProvider === provider ? color : `${color}33`}`, fontSize: '0.82rem', fontFamily: 'monospace', color: 'var(--text)' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                       <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, flexShrink: 0 }} />
                       {regionName}
-                      {REGION_LABELS[baseRegion] && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'sans-serif' }}>
-                          · {REGION_LABELS[baseRegion]}
-                        </span>
-                      )}
+                      {(() => {
+                        // For SINA Cloud, use base region (without zone) for label lookup
+                        // For other providers, use the base region from stripZoneSuffix
+                        const lookupRegion = provider === 'sinacloud' ? getSinacloudBaseRegion(regionName) : baseRegion
+                        const label = REGION_LABELS[lookupRegion]
+                        return label && (
+                          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'sans-serif' }}>
+                            · {label}
+                          </span>
+                        )
+                      })()}
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)', opacity: 0.8 }}>
-                        AZ: {azDisplay}
-                      </span>
+                      {azsToShow.map((az, azIdx) => (
+                        <span key={azIdx} style={{ fontSize: '0.65rem', color: 'var(--muted)', opacity: 0.8 }}>
+                          {az}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )

@@ -73,11 +73,20 @@ export const REGION_COORDS: Record<string, [number, number]> = {
   // OpenStack/StackIT simple region name
   "DE":[52.5200,13.4050],
   // SINA Cloud - Germany-based cloud by secunet
-  "de-ham-1-sinacloud":[53.5511,9.9937],"de-ham-2-sinacloud":[53.5511,9.9937],"de-ham-3-sinacloud":[53.5511,9.9937],
-  "de-du-1-sinacloud":[51.2277,6.7735],"de-du-2-sinacloud":[51.2277,6.7735],"de-du-3-sinacloud":[51.2277,6.7735],
-  "de-fra-1-sinacloud":[50.1109,8.6821],"de-fra-2-sinacloud":[50.1109,8.6821],"de-fra-3-sinacloud":[50.1109,8.6821],
-  // Normalized region names (without -sinacloud suffix) for grouped regions
-  "de-ham":[53.5511,9.9937],"de-du":[51.2277,6.7735],"de-fra":[50.1109,8.6821],
+  "de-ham-sinacloud-1":[53.5511,9.9937],"de-ham-sinacloud-2":[53.5511,9.9937],"de-ham-sinacloud-3":[53.5511,9.9937],
+  "de-ham-sinacloud-4":[53.5511,9.9937],"de-ham-sinacloud-5":[53.5511,9.9937],"de-ham-sinacloud-6":[53.5511,9.9937],
+  "de-ham-sinacloud-7":[53.5511,9.9937],"de-ham-sinacloud-8":[53.5511,9.9937],"de-ham-sinacloud-9":[53.5511,9.9937],
+  "de-ham-sinacloud-10":[53.5511,9.9937],
+  "de-du-sinacloud-1":[51.2277,6.7735],"de-du-sinacloud-2":[51.2277,6.7735],"de-du-sinacloud-3":[51.2277,6.7735],
+  "de-du-sinacloud-4":[51.2277,6.7735],"de-du-sinacloud-5":[51.2277,6.7735],"de-du-sinacloud-6":[51.2277,6.7735],
+  "de-du-sinacloud-7":[51.2277,6.7735],"de-du-sinacloud-8":[51.2277,6.7735],"de-du-sinacloud-9":[51.2277,6.7735],
+  "de-du-sinacloud-10":[51.2277,6.7735],
+  "de-fra-sinacloud-1":[50.1109,8.6821],"de-fra-sinacloud-2":[50.1109,8.6821],"de-fra-sinacloud-3":[50.1109,8.6821],
+  "de-fra-sinacloud-4":[50.1109,8.6821],"de-fra-sinacloud-5":[50.1109,8.6821],"de-fra-sinacloud-6":[50.1109,8.6821],
+  "de-fra-sinacloud-7":[50.1109,8.6821],"de-fra-sinacloud-8":[50.1109,8.6821],"de-fra-sinacloud-9":[50.1109,8.6821],
+  "de-fra-sinacloud-10":[50.1109,8.6821],
+  // Normalized region names (without zone suffix) for grouped regions
+  "de-ham-sinacloud":[53.5511,9.9937],"de-du-sinacloud":[51.2277,6.7735],"de-fra-sinacloud":[50.1109,8.6821],
   // OVH
   "gra-ovh":[43.7172,1.0925],"bhs-ovh":[48.7528,-71.3535],"bhs2-ovh":[48.7528,-71.3535],"bhs3-ovh":[48.7528,-71.3535],
   "rbx-ovh":[43.6324,1.3757],"ukh-ovh":[51.5243,-0.1224],"de-fld-ovh":[49.9945,8.2432],"de-fld2-ovh":[49.9945,8.2432],
@@ -318,11 +327,20 @@ export const REGION_LABELS: Record<string, string> = {
   // OpenStack/StackIT simple region name
   "DE":"Berlin, Germany",
   // SINA Cloud - Germany-based cloud by secunet
-  "de-ham-1-sinacloud":"Hamburg, Germany","de-ham-2-sinacloud":"Hamburg, Germany","de-ham-3-sinacloud":"Hamburg, Germany",
-  "de-du-1-sinacloud":"Düsseldorf, Germany","de-du-2-sinacloud":"Düsseldorf, Germany","de-du-3-sinacloud":"Düsseldorf, Germany",
-  "de-fra-1-sinacloud":"Frankfurt, Germany","de-fra-2-sinacloud":"Frankfurt, Germany","de-fra-3-sinacloud":"Frankfurt, Germany",
-  // Normalized region names (without -sinacloud suffix)
-  "de-ham":"Hamburg, Germany","de-du":"Düsseldorf, Germany","de-fra":"Frankfurt, Germany",
+  "de-ham-sinacloud-1":"Hamburg, Germany","de-ham-sinacloud-2":"Hamburg, Germany","de-ham-sinacloud-3":"Hamburg, Germany",
+  "de-ham-sinacloud-4":"Hamburg, Germany","de-ham-sinacloud-5":"Hamburg, Germany","de-ham-sinacloud-6":"Hamburg, Germany",
+  "de-ham-sinacloud-7":"Hamburg, Germany","de-ham-sinacloud-8":"Hamburg, Germany","de-ham-sinacloud-9":"Hamburg, Germany",
+  "de-ham-sinacloud-10":"Hamburg, Germany",
+  "de-du-sinacloud-1":"Düsseldorf, Germany","de-du-sinacloud-2":"Düsseldorf, Germany","de-du-sinacloud-3":"Düsseldorf, Germany",
+  "de-du-sinacloud-4":"Düsseldorf, Germany","de-du-sinacloud-5":"Düsseldorf, Germany","de-du-sinacloud-6":"Düsseldorf, Germany",
+  "de-du-sinacloud-7":"Düsseldorf, Germany","de-du-sinacloud-8":"Düsseldorf, Germany","de-du-sinacloud-9":"Düsseldorf, Germany",
+  "de-du-sinacloud-10":"Düsseldorf, Germany",
+  "de-fra-sinacloud-1":"Frankfurt, Germany","de-fra-sinacloud-2":"Frankfurt, Germany","de-fra-sinacloud-3":"Frankfurt, Germany",
+  "de-fra-sinacloud-4":"Frankfurt, Germany","de-fra-sinacloud-5":"Frankfurt, Germany","de-fra-sinacloud-6":"Frankfurt, Germany",
+  "de-fra-sinacloud-7":"Frankfurt, Germany","de-fra-sinacloud-8":"Frankfurt, Germany","de-fra-sinacloud-9":"Frankfurt, Germany",
+  "de-fra-sinacloud-10":"Frankfurt, Germany",
+  // Normalized region names (without zone suffix)
+  "de-ham-sinacloud":"Hamburg, Germany","de-du-sinacloud":"Düsseldorf, Germany","de-fra-sinacloud":"Frankfurt, Germany",
   "us-east-1-stackit":"Falkenstein, Germany","us-east-2-stackit":"Falkenstein, Germany","us-east-3-stackit":"Falkenstein, Germany",
   "us-east-4-stackit":"Falkenstein, Germany","us-east-5-stackit":"Falkenstein, Germany","us-east-6-stackit":"Falkenstein, Germany",
   "us-east-7-stackit":"Falkenstein, Germany","us-east-8-stackit":"Falkenstein, Germany","ca-east-1-stackit":"Quebec City, Canada",

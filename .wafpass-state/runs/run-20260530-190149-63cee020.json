@@ -1,0 +1,3640 @@
+{
+  "schema_version": 1,
+  "run_id": "20260530-190149-63cee020",
+  "generated_at": "2026-05-30T19:01:49.285909+00:00",
+  "tool_version": "1.0.0",
+  "iac_plugin": "terraform",
+  "stage": "",
+  "source_paths": [
+    "/Users/lewandos/git/waf++/dummy_top"
+  ],
+  "detected_regions": [
+    {
+      "region": "cn-hangzhou",
+      "provider": "alicloud",
+      "availability_zone": null
+    },
+    {
+      "region": "eu-frankfurt-1",
+      "provider": "oci",
+      "availability_zone": "eu-frankfurt-1"
+    },
+    {
+      "region": "gra",
+      "provider": "ovh",
+      "availability_zone": "gra-ovh"
+    },
+    {
+      "region": "rbx",
+      "provider": "ovh",
+      "availability_zone": "rbx-ovh"
+    },
+    {
+      "region": "de-fld-1-stackit",
+      "provider": "stackit",
+      "availability_zone": "de-fld-1-stackit"
+    },
+    {
+      "region": "de-muc-1-stackit",
+      "provider": "stackit",
+      "availability_zone": "de-muc-1-stackit"
+    },
+    {
+      "region": "EU",
+      "provider": "gcp",
+      "availability_zone": null
+    },
+    {
+      "region": "fi-hel",
+      "provider": "upcloud",
+      "availability_zone": "fi-hel1"
+    },
+    {
+      "region": "fi-hel",
+      "provider": "upcloud",
+      "availability_zone": "fi-hel2"
+    },
+    {
+      "region": "de-fra",
+      "provider": "upcloud",
+      "availability_zone": "de-fra1"
+    }
+  ],
+  "score": 9,
+  "totals": {
+    "controls_run": 71,
+    "pass": 1,
+    "fail": 8,
+    "skip": 62,
+    "waived": 0
+  },
+  "pillar_scores": {
+    "cost": 14,
+    "operations": 13,
+    "performance": 0,
+    "reliability": 0,
+    "security": 7,
+    "sovereign": 18,
+    "sustainability": 17
+  },
+  "control_statuses": {
+    "WAF-COST-010": "FAIL",
+    "WAF-COST-020": "SKIP",
+    "WAF-COST-030": "SKIP",
+    "WAF-COST-040": "SKIP",
+    "WAF-COST-050": "SKIP",
+    "WAF-COST-060": "SKIP",
+    "WAF-COST-070": "SKIP",
+    "WAF-COST-080": "SKIP",
+    "WAF-COST-090": "SKIP",
+    "WAF-OPS-010": "SKIP",
+    "WAF-OPS-020": "FAIL",
+    "WAF-OPS-030": "SKIP",
+    "WAF-OPS-040": "SKIP",
+    "WAF-OPS-050": "SKIP",
+    "WAF-OPS-060": "SKIP",
+    "WAF-OPS-070": "SKIP",
+    "WAF-OPS-080": "SKIP",
+    "WAF-OPS-090": "SKIP",
+    "WAF-OPS-100": "SKIP",
+    "WAF-OPS-110": "SKIP",
+    "WAF-PERF-010": "SKIP",
+    "WAF-PERF-020": "SKIP",
+    "WAF-PERF-030": "SKIP",
+    "WAF-PERF-040": "SKIP",
+    "WAF-PERF-050": "SKIP",
+    "WAF-PERF-070": "SKIP",
+    "WAF-PERF-080": "SKIP",
+    "WAF-PERF-090": "SKIP",
+    "WAF-REL-010": "SKIP",
+    "WAF-REL-020": "SKIP",
+    "WAF-REL-030": "SKIP",
+    "WAF-REL-040": "SKIP",
+    "WAF-REL-050": "SKIP",
+    "WAF-REL-060": "SKIP",
+    "WAF-REL-070": "SKIP",
+    "WAF-REL-080": "SKIP",
+    "WAF-REL-090": "SKIP",
+    "WAF-REL-100": "SKIP",
+    "WAF-SEC-010": "SKIP",
+    "WAF-SEC-020": "SKIP",
+    "WAF-SEC-030": "SKIP",
+    "WAF-SEC-040": "SKIP",
+    "WAF-SEC-050": "SKIP",
+    "WAF-SEC-060": "SKIP",
+    "WAF-SEC-070": "SKIP",
+    "WAF-SEC-080": "SKIP",
+    "WAF-SEC-090": "SKIP",
+    "WAF-SEC-100": "SKIP",
+    "WAF-SEC-110": "SKIP",
+    "WAF-SEC-120": "SKIP",
+    "WAF-SEC-130": "FAIL",
+    "WAF-SOV-010": "FAIL",
+    "WAF-SOV-020": "PASS",
+    "WAF-SOV-030": "SKIP",
+    "WAF-SOV-040": "SKIP",
+    "WAF-SOV-050": "SKIP",
+    "WAF-SOV-060": "SKIP",
+    "WAF-SOV-070": "SKIP",
+    "WAF-SOV-080": "FAIL",
+    "WAF-SOV-090": "SKIP",
+    "WAF-SOV-100": "FAIL",
+    "WAF-SUS-010": "SKIP",
+    "WAF-SUS-020": "SKIP",
+    "WAF-SUS-030": "FAIL",
+    "WAF-SUS-040": "SKIP",
+    "WAF-SUS-050": "SKIP",
+    "WAF-SUS-060": "SKIP",
+    "WAF-SUS-070": "SKIP",
+    "WAF-SUS-080": "SKIP",
+    "WAF-SUS-090": "FAIL",
+    "WAF-SUS-100": "SKIP"
+  },
+  "control_details": {
+    "WAF-COST-010": {
+      "status": "FAIL",
+      "severity": "high",
+      "pillar": "cost",
+      "title": "Cost Allocation Tagging Enforced",
+      "check_results": [
+        {
+          "check_id": "waf-cost-010.tf.aws.compute-mandatory-tags",
+          "status": "FAIL",
+          "resource": "aws_s3_bucket.main",
+          "message": "Resource is missing the mandatory 'cost-center' tag.; Resource is missing the mandatory 'owner' tag.; Resource is missing the mandatory 'environment' tag.; Resource is missing the mandatory 'workload' tag."
+        },
+        {
+          "check_id": "waf-cost-010.tf.azurerm.resource-group-mandatory-tags",
+          "status": "FAIL",
+          "resource": "azurerm_resource_group.main",
+          "message": "Azure resource is missing the mandatory 'cost-center' tag.; Azure resource is missing the mandatory 'owner' tag.; Azure resource is missing the mandatory 'environment' tag.; Azure resource is missing the mandatory 'workload' tag."
+        }
+      ]
+    },
+    "WAF-COST-020": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "cost",
+      "title": "Cost Budgets & Alerting Configured",
+      "check_results": [
+        {
+          "check_id": "waf-cost-020.tf.aws.budgets-budget-exists",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-cost-020.tf.azurerm.consumption-budget-defined",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-COST-030": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "cost",
+      "title": "Resource Rightsizing & Idle Detection",
+      "check_results": [
+        {
+          "check_id": "waf-cost-030.tf.aws.ec2-rightsizing-tag-required",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-cost-030.tf.azurerm.vm-rightsizing-tag",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-COST-040": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "cost",
+      "title": "Storage & Retention Lifecycle Defined",
+      "check_results": [
+        {
+          "check_id": "waf-cost-040.tf.aws.s3-lifecycle-rule-defined",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-cost-040.tf.aws.cloudwatch-log-retention-not-zero",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-COST-050": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "cost",
+      "title": "Cost Impact Assessment in Architecture Decision Records",
+      "check_results": [
+        {
+          "check_id": "waf-cost-050.tf.any.high-lockin-resource-tagged",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-COST-060": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "cost",
+      "title": "FinOps Review Cadence",
+      "check_results": [
+        {
+          "check_id": "waf-cost-060.tf.any.finops-review-tag-current",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-COST-070": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "cost",
+      "title": "Observability & Logging Cost Tiers",
+      "check_results": [
+        {
+          "check_id": "waf-cost-070.tf.aws.cloudwatch-retention-not-infinite",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-cost-070.tf.aws.cloudwatch-operational-retention-max-365",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-COST-080": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "cost",
+      "title": "Commitment & Reserved Capacity Planning",
+      "check_results": [
+        {
+          "check_id": "waf-cost-080.tf.aws.ec2-capacity-commitment-tag",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-cost-080.tf.azurerm.vm-commitment-tag",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-COST-090": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "cost",
+      "title": "Data Transfer & Egress Cost Management",
+      "check_results": [
+        {
+          "check_id": "waf-cost-090.tf.aws.vpc-endpoint-s3-exists",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-cost-090.tf.aws.no-public-ip-internal-compute",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-010": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "operations",
+      "title": "CI/CD Pipeline Defined & Automated",
+      "check_results": [
+        {
+          "check_id": "waf-ops-010.tf.aws.codepipeline-exists",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-010.tf.azurerm.devops-pipeline-exists",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-010.tf.google.cloudbuild-trigger-exists",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-020": {
+      "status": "FAIL",
+      "severity": "high",
+      "pillar": "operations",
+      "title": "Infrastructure as Code Enforced",
+      "check_results": [
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "PASS",
+          "resource": "terraform",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "PASS",
+          "resource": "terraform",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-terraform-state-backend",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Terraform must configure a remote backend (not local state)."
+        },
+        {
+          "check_id": "waf-ops-020.tf.aws.s3-state-bucket-versioning",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-020.tf.azurerm.terraform-state-storage",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-030": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "operations",
+      "title": "Observability Stack Configured",
+      "check_results": [
+        {
+          "check_id": "waf-ops-030.tf.aws.cloudwatch-log-group-retention",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-030.tf.aws.xray-tracing-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-030.tf.azurerm.log-analytics-workspace",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-040": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "operations",
+      "title": "Alerting on Symptoms, Not Causes",
+      "check_results": [
+        {
+          "check_id": "waf-ops-040.tf.aws.cloudwatch-alarm-symptom-based",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-040.tf.azurerm.monitor-alert-symptom",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-040.tf.google.monitoring-alert-symptom",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-050": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "operations",
+      "title": "Change Management & Deployment Risk Assessment",
+      "check_results": [
+        {
+          "check_id": "waf-ops-050.tf.aws.codepipeline-manual-approval",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-050.tf.azurerm.devops-environment-approval",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-060": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "operations",
+      "title": "Runbook & Operational Documentation Coverage",
+      "check_results": [
+        {
+          "check_id": "waf-ops-060.tf.aws.cloudwatch-alarm-runbook-annotation",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-060.tf.aws.prometheus-alert-runbook-label",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-070": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "operations",
+      "title": "Post-Incident Review Process",
+      "check_results": [
+        {
+          "check_id": "waf-ops-070.tf.aws.incident-management-sns-topic",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-070.tf.azurerm.action-group-incident",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-080": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "operations",
+      "title": "Feature Flag & Safe Deployment Patterns",
+      "check_results": [
+        {
+          "check_id": "waf-ops-080.tf.aws.codedeploy-deployment-config",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-080.tf.aws.appconfig-feature-flag",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-080.tf.azurerm.traffic-manager-canary",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-090": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "operations",
+      "title": "Configuration Drift Detection & Remediation",
+      "check_results": [
+        {
+          "check_id": "waf-ops-090.tf.aws.config-rule-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-090.tf.aws.cloudtrail-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-090.tf.azurerm.policy-assignment-drift",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-100": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "operations",
+      "title": "Operational Debt Register & Review",
+      "check_results": [
+        {
+          "check_id": "waf-ops-100.tf.aws.eventbridge-ops-review-schedule",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-ops-100.tf.aws.ssm-automation-runbook",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-OPS-110": {
+      "status": "SKIP",
+      "severity": "informational",
+      "pillar": "operations",
+      "title": "Reference Architecture Documentation",
+      "check_results": []
+    },
+    "WAF-PERF-010": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "performance",
+      "title": "Compute Instance Type & Sizing Validated",
+      "check_results": [
+        {
+          "check_id": "waf-perf-010.tf.aws.ec2-current-generation",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-010.tf.azurerm.vm-sizing-documented",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-010.tf.google.gce-machine-type-validated",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-PERF-020": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "performance",
+      "title": "Auto-Scaling Configured & Tested",
+      "check_results": [
+        {
+          "check_id": "waf-perf-020.tf.aws.autoscaling-group-policy",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-020.tf.azurerm.vmss-autoscale",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-020.tf.google.managed-instance-group-autoscaler",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-PERF-030": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "performance",
+      "title": "Caching Strategy Defined & Implemented",
+      "check_results": [
+        {
+          "check_id": "waf-perf-030.tf.aws.elasticache-cluster-configured",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-030.tf.azurerm.redis-cache-premium",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-030.tf.google.memorystore-redis-ha",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-PERF-040": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "performance",
+      "title": "Database Performance Baseline & Index Strategy",
+      "check_results": [
+        {
+          "check_id": "waf-perf-040.tf.aws.rds-performance-insights",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-040.tf.azurerm.sql-query-insights",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-040.tf.google.cloudsql-insights-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-PERF-050": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "performance",
+      "title": "Performance Monitoring & SLO Definition",
+      "check_results": [
+        {
+          "check_id": "waf-perf-050.tf.aws.cloudwatch-latency-alarm",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-050.tf.azurerm.app-insights-availability",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-050.tf.google.monitoring-uptime-check",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-PERF-070": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "performance",
+      "title": "Network Latency & Topology Optimization",
+      "check_results": [
+        {
+          "check_id": "waf-perf-070.tf.aws.vpc-endpoint-s3",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-070.tf.azurerm.cdn-profile-configured",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-070.tf.google.cloud-cdn-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-PERF-080": {
+      "status": "SKIP",
+      "severity": "low",
+      "pillar": "performance",
+      "title": "Serverless & Managed Services for Variable Load",
+      "check_results": [
+        {
+          "check_id": "waf-perf-080.tf.aws.lambda-memory-timeout-configured",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-080.tf.azurerm.function-app-plan-configured",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-080.tf.google.cloud-run-min-instances",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-PERF-090": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "performance",
+      "title": "Storage I/O Performance & Throughput Optimization",
+      "check_results": [
+        {
+          "check_id": "waf-perf-090.tf.aws.ebs-gp3-volume-type",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-090.tf.azurerm.managed-disk-premium",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-perf-090.tf.google.persistent-disk-ssd",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-010": {
+      "status": "SKIP",
+      "severity": "critical",
+      "pillar": "reliability",
+      "title": "SLA & SLO Definition Documented",
+      "check_results": [
+        {
+          "check_id": "waf-rel-010.tf.aws.cloudwatch-slo-alarm",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-010.tf.azurerm.monitor-metric-alert-slo",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-010.tf.google.monitoring-alert-policy-slo",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-020": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "reliability",
+      "title": "Health Checks & Readiness Probes Configured",
+      "check_results": [
+        {
+          "check_id": "waf-rel-020.tf.aws.alb-target-group-health-check",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-020.tf.azurerm.lb-probe",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-020.tf.google.compute-health-check",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-030": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "reliability",
+      "title": "Multi-AZ High Availability Deployment",
+      "check_results": [
+        {
+          "check_id": "waf-rel-030.tf.aws.rds-multi-az",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-030.tf.aws.autoscaling-multi-az",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-030.tf.azurerm.db-availability-zone",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-030.tf.google.sql-availability-type",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-040": {
+      "status": "SKIP",
+      "severity": "critical",
+      "pillar": "reliability",
+      "title": "Backup & Recovery Validation",
+      "check_results": [
+        {
+          "check_id": "waf-rel-040.tf.aws.rds-backup-retention",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-040.tf.aws.s3-versioning",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-040.tf.azurerm.postgresql-backup",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-040.tf.google.sql-backup-config",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-050": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "reliability",
+      "title": "Circuit Breaker & Timeout Configuration",
+      "check_results": [
+        {
+          "check_id": "waf-rel-050.tf.aws.alb-idle-timeout",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-050.tf.azurerm.app-gateway-timeout",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-050.tf.google.cloud-run-timeout",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-060": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "reliability",
+      "title": "Incident Response & Runbook Readiness",
+      "check_results": [
+        {
+          "check_id": "waf-rel-060.tf.aws.sns-topic-alarm-action",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-060.tf.azurerm.action-group-configured",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-060.tf.google.monitoring-notification-channel",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-070": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "reliability",
+      "title": "Disaster Recovery Testing",
+      "check_results": [
+        {
+          "check_id": "waf-rel-070.tf.aws.route53-health-check-failover",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-070.tf.azurerm.traffic-manager-profile",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-070.tf.google.dns-managed-zone-failover",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-080": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "reliability",
+      "title": "Dependency & Upstream Resilience Management",
+      "check_results": [
+        {
+          "check_id": "waf-rel-080.tf.aws.vpc-endpoint-dependency-isolation",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-080.tf.azurerm.private-endpoint-dependency",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-080.tf.google.vpc-sc-dependency-isolation",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-090": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "reliability",
+      "title": "Chaos Engineering & Fault Injection",
+      "check_results": [
+        {
+          "check_id": "waf-rel-090.tf.aws.fis-experiment-template",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-090.tf.azurerm.chaos-studio-experiment",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-090.tf.google.fault-injection-test",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-REL-100": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "reliability",
+      "title": "Reliability Debt Register & Quarterly Review",
+      "check_results": [
+        {
+          "check_id": "waf-rel-100.tf.aws.config-conformance-pack",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-100.tf.azurerm.policy-assignment-reliability",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-rel-100.tf.google.org-policy-reliability",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-010": {
+      "status": "SKIP",
+      "severity": "critical",
+      "pillar": "security",
+      "title": "Identity & Access Management Baseline",
+      "check_results": [
+        {
+          "check_id": "waf-sec-010.tf.aws.iam-password-policy-mfa",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-020": {
+      "status": "SKIP",
+      "severity": "critical",
+      "pillar": "security",
+      "title": "Least Privilege & RBAC Enforcement",
+      "check_results": [
+        {
+          "check_id": "waf-sec-020.tf.aws.no-admin-policy-attachment",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-030": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "security",
+      "title": "Encryption at Rest with Customer-Managed Keys",
+      "check_results": [
+        {
+          "check_id": "waf-sec-030.tf.aws.rds-encryption-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-030.tf.aws.kms-key-rotation",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-040": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "security",
+      "title": "Encryption in Transit \u2013 TLS Enforcement",
+      "check_results": [
+        {
+          "check_id": "waf-sec-040.tf.aws.alb-https-listener",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-040.tf.aws.cloudfront-tls-policy",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-050": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "security",
+      "title": "Network Segmentation & Security Group Hardening",
+      "check_results": [
+        {
+          "check_id": "waf-sec-050.tf.aws.no-public-ip-internal-compute",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-050.tf.aws.no-unrestricted-ssh",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-060": {
+      "status": "SKIP",
+      "severity": "critical",
+      "pillar": "security",
+      "title": "Secrets Management \u2013 No Hardcoded Credentials",
+      "check_results": [
+        {
+          "check_id": "waf-sec-060.tf.aws.secrets-manager-exists",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-060.tf.aws.secrets-encrypted-with-cmk",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-070": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "security",
+      "title": "Vulnerability & Patch Management",
+      "check_results": [
+        {
+          "check_id": "waf-sec-070.tf.aws.ecr-image-scanning",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-070.tf.aws.ecr-immutable-tags",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-080": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "security",
+      "title": "Security Monitoring & Threat Detection",
+      "check_results": [
+        {
+          "check_id": "waf-sec-080.tf.aws.cloudtrail-multi-region",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-080.tf.aws.guardduty-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-080.tf.aws.securityhub-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-090": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "security",
+      "title": "Policy-as-Code & Compliance Automation",
+      "check_results": [
+        {
+          "check_id": "waf-sec-090.tf.aws.config-recorder-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-090.tf.aws.config-delivery-channel",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-100": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "security",
+      "title": "Incident Response Readiness",
+      "check_results": [
+        {
+          "check_id": "waf-sec-100.tf.aws.sns-security-alerts",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-100.tf.aws.cloudwatch-log-retention-security",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-110": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "security",
+      "title": "Supply Chain Security & SBOM",
+      "check_results": [
+        {
+          "check_id": "waf-sec-110.tf.aws.ecr-immutable-tags",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-110.tf.aws.ecr-scan-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-120": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "security",
+      "title": "Container & Runtime Security",
+      "check_results": [
+        {
+          "check_id": "waf-sec-120.tf.aws.eks-private-endpoint",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-120.tf.aws.ecr-scan-on-push",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SEC-130": {
+      "status": "FAIL",
+      "severity": "high",
+      "pillar": "security",
+      "title": "Data Classification & Sensitive Data Protection",
+      "check_results": [
+        {
+          "check_id": "waf-sec-130.tf.aws.data-class-tag-required",
+          "status": "FAIL",
+          "resource": "aws_s3_bucket.main",
+          "message": "Data-storing resource MUST carry a 'data-class' tag (e.g., public, internal, confidential, pii, health, financial)."
+        },
+        {
+          "check_id": "waf-sec-130.tf.aws.db-not-publicly-accessible",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sec-130.tf.aws.s3-public-access-blocked",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-010": {
+      "status": "FAIL",
+      "severity": "high",
+      "pillar": "sovereign",
+      "title": "Data Residency Policy Defined",
+      "check_results": [
+        {
+          "check_id": "waf-sov-010.tf.any.resource-tag-data-residency",
+          "status": "FAIL",
+          "resource": "aws_s3_bucket.main",
+          "message": "Resource is missing the 'data-residency' tag required by sovereignty policy.; Resource is missing the 'data-class' tag required by data classification policy."
+        },
+        {
+          "check_id": "waf-sov-010.tf.any.resource-tag-data-residency",
+          "status": "FAIL",
+          "resource": "google_storage_bucket.main",
+          "message": "Resource is missing the 'data-residency' tag required by sovereignty policy.; Resource is missing the 'data-class' tag required by data classification policy."
+        },
+        {
+          "check_id": "waf-sov-010.tf.aws.provider-region-explicit",
+          "status": "PASS",
+          "resource": "provider.aws",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-010.tf.aws.provider-region-explicit",
+          "status": "PASS",
+          "resource": "provider.aws",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-010.tf.aws.provider-region-explicit",
+          "status": "PASS",
+          "resource": "provider.aws",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-010.tf.azurerm.location-explicit",
+          "status": "PASS",
+          "resource": "azurerm_resource_group.main",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-010.tf.google.region-explicit",
+          "status": "PASS",
+          "resource": "google_storage_bucket.main",
+          "message": "All assertions passed."
+        }
+      ]
+    },
+    "WAF-SOV-020": {
+      "status": "PASS",
+      "severity": "critical",
+      "pillar": "sovereign",
+      "title": "Region Pinning Enforced (IaC)",
+      "check_results": [
+        {
+          "check_id": "waf-sov-020.tf.aws.provider-region-in-allowed-list",
+          "status": "PASS",
+          "resource": "provider.aws",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.provider-region-in-allowed-list",
+          "status": "PASS",
+          "resource": "provider.aws",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.provider-region-in-allowed-list",
+          "status": "PASS",
+          "resource": "provider.aws",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_subscription_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_tenant_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_compartment_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_cloud_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_folder_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_oauth_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_consumer_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.stackit_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.alicloud_region",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_north_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_west_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_central_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.create_s3_buckets",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_westeurope",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_northeurope",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_francecentral",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_subscription_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_tenant_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_3",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_region_fsn1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_region_nbg1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_fra_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_fra_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_muc_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_region",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_compartment_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_consumer_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_endpoint",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_par_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_par_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_ams_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.stackit_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_fi_hel1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_fi_hel2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_de_fra1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_cloud_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_folder_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_zone",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_oauth_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_subscription_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_tenant_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_compartment_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_cloud_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_folder_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_oauth_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_consumer_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.stackit_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.alicloud_region",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_north_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_west_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_central_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.create_s3_buckets",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_westeurope",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_northeurope",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_francecentral",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_subscription_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_tenant_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_3",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_region_fsn1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_region_nbg1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_fra_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_fra_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_muc_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_region",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_compartment_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_consumer_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_endpoint",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_par_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_par_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_ams_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.stackit_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_fi_hel1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_fi_hel2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_de_fra1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_cloud_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_folder_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_zone",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_oauth_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.azurerm.location-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_subscription_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_tenant_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_compartment_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_cloud_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_folder_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_oauth_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_consumer_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.stackit_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.alicloud_region",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_north_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_west_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.aws_region_eu_central_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.create_s3_buckets",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_westeurope",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_northeurope",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_region_francecentral",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_subscription_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_tenant_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.azure_client_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.gcp_region_europe_west_3",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_region_fsn1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.hcloud_region_nbg1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_fra_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_fra_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ionos_region_de_muc_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_region",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.oci_compartment_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_application_secret",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_consumer_key",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.ovh_endpoint",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_par_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_par_2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.scaleway_region_ams_1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.stackit_project_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_fi_hel1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_fi_hel2",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.upcloud_region_de_fra1",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_cloud_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_folder_id",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_zone",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.yandex_oauth_token",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.google.region-variable-validation",
+          "status": "PASS",
+          "resource": "var.common_tags",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-020.tf.aws.no-hardcoded-non-sovereign-region",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-030": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "sovereign",
+      "title": "Backup Location & Retention Controlled",
+      "check_results": [
+        {
+          "check_id": "waf-sov-030.tf.aws.db-instance-backup-retention",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-030.tf.aws.rds-cluster-backup-retention",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-030.tf.aws.dynamodb-pitr-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-030.tf.aws.backup-vault-in-approved-region",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-030.tf.azurerm.recovery-vault-location",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-030.tf.aws.s3-versioning-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-040": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "sovereign",
+      "title": "Logging & Telemetry Residency Controlled",
+      "check_results": [
+        {
+          "check_id": "waf-sov-040.tf.aws.cloudtrail-multi-region",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-040.tf.aws.cloudwatch-log-group-retention",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-040.tf.aws.vpc-flow-logs-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-040.tf.aws.cloudtrail-cloudwatch-integration",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-040.tf.aws.log-group-kms-encryption",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-050": {
+      "status": "SKIP",
+      "severity": "critical",
+      "pillar": "sovereign",
+      "title": "Key Ownership & Management Defined",
+      "check_results": [
+        {
+          "check_id": "waf-sov-050.tf.aws.kms-key-rotation-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-050.tf.aws.kms-key-deletion-window",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-050.tf.aws.s3-bucket-kms-encryption",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-050.tf.aws.ebs-volume-encrypted",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-050.tf.aws.rds-storage-encrypted",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-050.tf.azurerm.key-vault-soft-delete",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-060": {
+      "status": "SKIP",
+      "severity": "critical",
+      "pillar": "sovereign",
+      "title": "Privileged Access Controlled (Separation of Duties)",
+      "check_results": [
+        {
+          "check_id": "waf-sov-060.tf.aws.no-wildcard-iam-policy",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-060.tf.aws.no-administrator-access-managed-policy",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-060.tf.aws.iam-password-policy-configured",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-060.tf.aws.no-iam-user-direct-access-keys",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-070": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "sovereign",
+      "title": "Break-Glass Process & Logging",
+      "check_results": [
+        {
+          "check_id": "waf-sov-070.tf.aws.cloudtrail-enabled-all-regions",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-070.tf.aws.cloudtrail-s3-bucket-not-public",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-070.tf.aws.cloudwatch-alarm-root-login",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-070.tf.aws.cloudwatch-alarm-iam-policy-changes",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-070.tf.aws.cloudtrail-s3-access-logging",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-080": {
+      "status": "FAIL",
+      "severity": "medium",
+      "pillar": "sovereign",
+      "title": "Dependency & Subprocessor Inventory",
+      "check_results": [
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-providers-version-pinned",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "Provider version constraint is too broad (>= 0.0.0). Use a tightly bounded constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "PASS",
+          "resource": "terraform",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.required-terraform-version",
+          "status": "FAIL",
+          "resource": "terraform",
+          "message": "terraform block is missing required_version constraint."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.aws",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.azure",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.gcp",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.oci",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.alibaba",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.yandex",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.ovh",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.hetzner",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.stackit",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.scaleway",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.ionos",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.module-source-version-pinned",
+          "status": "SKIP",
+          "resource": "module.upcloud",
+          "message": "Some assertions skipped (unsupported operators); no failures detected."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.aws",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.azure",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.gcp",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.oci",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.alibaba",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.yandex",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.ovh",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.hetzner",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.stackit",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.scaleway",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.ionos",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-080.tf.any.no-untrusted-registry-modules",
+          "status": "PASS",
+          "resource": "module.upcloud",
+          "message": "All assertions passed."
+        }
+      ]
+    },
+    "WAF-SOV-090": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "sovereign",
+      "title": "Controlled Egress & Data Exfiltration Guardrails",
+      "check_results": [
+        {
+          "check_id": "waf-sov-090.tf.aws.no-unrestricted-egress",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-090.tf.aws.vpc-endpoint-s3",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-090.tf.aws.vpc-flow-logs-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-090.tf.aws.network-acl-no-open-egress",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-090.tf.azurerm.nsg-no-open-outbound",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SOV-100": {
+      "status": "FAIL",
+      "severity": "medium",
+      "pillar": "sovereign",
+      "title": "Exit Plan & Portability Tested",
+      "check_results": [
+        {
+          "check_id": "waf-sov-100.tf.aws.s3-lifecycle-policy-defined",
+          "status": "PASS",
+          "resource": "aws_s3_bucket.main",
+          "message": "All assertions passed."
+        },
+        {
+          "check_id": "waf-sov-100.tf.aws.s3-versioning-for-data-portability",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-100.tf.any.resource-tag-portability",
+          "status": "FAIL",
+          "resource": "aws_s3_bucket.main",
+          "message": "Resource is missing 'portability-class' tag needed for exit orchestration."
+        },
+        {
+          "check_id": "waf-sov-100.tf.any.resource-tag-portability",
+          "status": "FAIL",
+          "resource": "google_storage_bucket.main",
+          "message": "Resource is missing 'portability-class' tag needed for exit orchestration."
+        },
+        {
+          "check_id": "waf-sov-100.tf.any.no-proprietary-lock-in-patterns",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sov-100.tf.aws.rds-deletion-protection",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-010": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "sustainability",
+      "title": "Carbon Footprint Measurement & Reporting",
+      "check_results": [
+        {
+          "check_id": "waf-sus-010.tf.aws.cloudwatch-carbon-export",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-010.tf.aws.s3-carbon-export-lifecycle",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-010.tf.azurerm.log-analytics-retention",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-020": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "sustainability",
+      "title": "Energy-Efficient Compute Selection",
+      "check_results": [
+        {
+          "check_id": "waf-sus-020.tf.aws.lambda-arm64",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-020.tf.aws.ec2-no-previous-gen",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-020.tf.azurerm.vm-efficient-series",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-030": {
+      "status": "FAIL",
+      "severity": "medium",
+      "pillar": "sustainability",
+      "title": "Green Region & Carbon-Aware Workload Placement",
+      "check_results": [
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.alicloud",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.aws",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.aws",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.aws",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.azurerm",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.google",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.hcloud",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.oci",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.ovh",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.ovh",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.openstack",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.openstack",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.aws.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.yandex",
+          "message": "AWS region has a high carbon intensity. Consider us-west-2, eu-north-1, eu-west-1 for lower emissions."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.alicloud",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.aws",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.aws",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.aws",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.azurerm",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.google",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.hcloud",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.oci",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.ovh",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.ovh",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.openstack",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.openstack",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.google.preferred-regions",
+          "status": "FAIL",
+          "resource": "provider.yandex",
+          "message": "GCP region has elevated carbon intensity. Consider europe-north1, europe-west1, or us-west1."
+        },
+        {
+          "check_id": "waf-sus-030.tf.azurerm.preferred-regions",
+          "status": "FAIL",
+          "resource": "azurerm_resource_group.main",
+          "message": "Azure region may have elevated carbon intensity. Consider swedencentral, norwayeast, or northeurope."
+        }
+      ]
+    },
+    "WAF-SUS-040": {
+      "status": "SKIP",
+      "severity": "high",
+      "pillar": "sustainability",
+      "title": "Idle & Underutilized Resource Elimination",
+      "check_results": [
+        {
+          "check_id": "waf-sus-040.tf.aws.autoscaling-enabled",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-040.tf.aws.spot-instances-for-dev",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-040.tf.google.managed-instance-group-autoscaler",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-050": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "sustainability",
+      "title": "Storage Lifecycle & Data Minimization",
+      "check_results": [
+        {
+          "check_id": "waf-sus-050.tf.aws.s3-lifecycle-required",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-050.tf.aws.ebs-no-orphan",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-050.tf.azurerm.blob-lifecycle",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-060": {
+      "status": "SKIP",
+      "severity": "low",
+      "pillar": "sustainability",
+      "title": "Workload Scheduling & Time-Shifting",
+      "check_results": [
+        {
+          "check_id": "waf-sus-060.tf.aws.eventbridge-flexible-window",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-060.tf.aws.batch-compute-spot",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-060.tf.google.cloud-scheduler-timezone",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-070": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "sustainability",
+      "title": "Sustainable Software Design Standards",
+      "check_results": [
+        {
+          "check_id": "waf-sus-070.tf.aws.lambda-no-large-layers",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-070.tf.aws.sqs-not-polling",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-070.tf.google.cloud-run-min-instances-zero",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-080": {
+      "status": "SKIP",
+      "severity": "medium",
+      "pillar": "sustainability",
+      "title": "Network & Data Transfer Efficiency",
+      "check_results": [
+        {
+          "check_id": "waf-sus-080.tf.aws.cloudfront-compression",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-080.tf.aws.vpc-endpoint-s3",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-080.tf.azurerm.cdn-compression",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-090": {
+      "status": "FAIL",
+      "severity": "medium",
+      "pillar": "sustainability",
+      "title": "ESG Reporting & Compliance Automation",
+      "check_results": [
+        {
+          "check_id": "waf-sus-090.tf.aws.cost-explorer-export-s3",
+          "status": "FAIL",
+          "resource": "aws_s3_bucket.main",
+          "message": "ESG/sustainability S3 buckets should have a 'purpose' tag for audit identification."
+        },
+        {
+          "check_id": "waf-sus-090.tf.aws.budgets-sustainability-alert",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-090.tf.azurerm.cost-management-export",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    },
+    "WAF-SUS-100": {
+      "status": "SKIP",
+      "severity": "low",
+      "pillar": "sustainability",
+      "title": "Sustainability Debt Register & Quarterly Review",
+      "check_results": [
+        {
+          "check_id": "waf-sus-100.tf.aws.tag-sustainability-reviewed",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        },
+        {
+          "check_id": "waf-sus-100.tf.azurerm.sustainability-tag",
+          "status": "SKIP",
+          "resource": "(none)",
+          "message": "No matching resources found in Terraform configuration."
+        }
+      ]
+    }
+  },
+  "diff_from_previous": {
+    "previous_run_id": "20260530-190125-168eb0da",
+    "previous_generated_at": "2026-05-30T19:01:25.372470+00:00",
+    "score_delta": 0,
+    "regressions": [],
+    "improvements": [],
+    "other_changes": []
+  }
+}

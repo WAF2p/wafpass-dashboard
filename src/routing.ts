@@ -4,7 +4,7 @@ export const ALL_PAGES = [
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
-  'reference', 'antipattern', 'notifications', 'legal',
+  'reference', 'antipattern', 'notifications', 'legal', 'projectgroups',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -46,6 +46,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   controlspacks:   'Controls Upgrade',
   projectoverview: 'Project Overview',
   passports:       'Project Passports',
+  projectgroups:   'Project Groups',
   badge:           'Badge Integration',
   leaderboard:     'Hall of Fame',
   journey:         'Maturity Journey',
@@ -91,6 +92,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   controlspacks:   'Sync and activate versioned WAF++ control packs — import, roll back, and track control catalogue changes',
   projectoverview: 'Per-project score trends, maturity progression, and achievement tracking across all scans',
   passports:       'All project passports at a glance — owner, criticality, environment, recent achievements',
+  projectgroups:   'Group-based access control — assign teams to projects for run access management',
   badge:           'Embed a live status badge in GitHub/GitLab READMEs, HTML docs, AsciiDoc, RST — with CI gate examples',
   leaderboard:     'Top sovereign projects by Tier 5 tenure and most improved teams in the last 30 days',
   journey:         'Your flight from ground to cruise altitude — the story of building secure cloud infrastructure',

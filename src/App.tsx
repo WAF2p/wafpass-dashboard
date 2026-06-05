@@ -56,6 +56,7 @@ const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
 const LegalPage              = lazy(() => import('./pages/LegalPage'))
+const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -201,6 +202,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           selectedId={selectedId}
           onSelect={setSelectedId}
           onClose={() => setShowRunModal(false)}
+          role={role}
         />
       )}
 
@@ -361,6 +363,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <AntiPatternMuseumPage />
           ) : page === 'legal' ? (
             <LegalPage />
+          ) : page === 'projectgroups' ? (
+            <ProjectGroupsPage />
           ) : null}
         </Suspense>
         </main>
