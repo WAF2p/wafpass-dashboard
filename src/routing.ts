@@ -4,7 +4,7 @@ export const ALL_PAGES = [
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
-  'reference', 'antipattern', 'notifications', 'legal', 'projectgroups',
+  'reference', 'antipattern', 'notifications', 'legal', 'projectgroups', 'pipelines',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -55,6 +55,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   antipattern:     'Anti-Pattern Museum',
   notifications:   'Notifications',
   legal:           'Legal Notice',
+  pipelines:       'Pipeline Performance',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
@@ -101,6 +102,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   antipattern:     "Side-by-side 'Bad vs. Good' code comparisons for each WAF++ pillar",
   notifications:   'System notifications — updates, urgent alerts, and important announcements',
   legal:           'Liability disclaimer, terms of use, and open source notice',
+  pipelines:       'Track scan performance, pass rates, and duration across all CI/CD pipelines',
 }
 
 export interface FilterState {

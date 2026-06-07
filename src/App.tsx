@@ -57,6 +57,7 @@ const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitectu
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
 const LegalPage              = lazy(() => import('./pages/LegalPage'))
 const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
+const PipelinesPage          = lazy(() => import('./PipelinesPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -365,6 +366,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <LegalPage />
           ) : page === 'projectgroups' ? (
             <ProjectGroupsPage />
+          ) : page === 'pipelines' ? (
+            <PipelinesPage />
           ) : null}
         </Suspense>
         </main>

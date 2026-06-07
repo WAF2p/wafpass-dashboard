@@ -44,6 +44,7 @@ export interface RunSummary {
   branch: string
   git_sha: string
   triggered_by: string
+  is_cicd: boolean
   iac_framework: string
   stage: string
   score: number
@@ -52,6 +53,70 @@ export interface RunSummary {
   controls_loaded: number
   controls_run: number
   created_at: string
+}
+
+// ── Pipeline performance metrics ──────────────────────────────────────────────
+
+export interface PipelineMetrics {
+  totalRuns: number
+  passRate: number
+  avgScore: number
+  projects: number
+  recentRuns: number
+  failedRuns: number
+  skippedRuns: number
+  projectsList: ProjectRunSummary[]
+}
+
+export interface ProjectRunSummary {
+  project: string
+  avgScore: number
+  latestScore: number
+  runCount: number
+  lastRunAt: string
+}
+
+export interface RunsByDay {
+  day: string
+  count: number
+  passCount: number
+  failCount: number
+}
+
+export interface PipelineTrends {
+  runsByDay: RunsByDay[]
+  durationStats: {
+    avg: number
+    min: number
+    max: number
+    avgLabel: string
+    minLabel: string
+    maxLabel: string
+  }
+}
+
+export async function fetchPipelineMetrics(): Promise<PipelineMetrics> {
+  const url = new URL(`${getApiBase()}/pipelines/metrics`, window.location.origin)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch pipeline metrics: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<PipelineMetrics>
+  return json.data
+}
+
+export async function fetchPipelineTrends(): Promise<PipelineTrends> {
+  const url = new URL(`${getApiBase()}/pipelines/trends`, window.location.origin)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch pipeline trends: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<PipelineTrends>
+  return json.data
+}
+
+export async function fetchProjectRuns(project: string): Promise<RunSummary[]> {
+  const url = new URL(`${getApiBase()}/runs?project=${encodeURIComponent(project)}`, window.location.origin)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch project runs: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<RunSummary[]>
+  return json.data
 }
 
 export interface ControlCheckMeta {
@@ -420,6 +485,7 @@ export interface ScanRequest {
   branch?: string
   stage?: string
   triggered_by?: string
+  is_cicd?: boolean
 }
 
 export async function fetchScanStatus(): Promise<ScanStatus> {
@@ -429,10 +495,14 @@ export async function fetchScanStatus(): Promise<ScanStatus> {
 }
 
 export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
+  const body: any = { ...payload }
+  if (payload.is_cicd !== undefined) {
+    body.run = { is_cicd: payload.is_cicd }
+  }
   const res = await fetch(`${getApiBase()}/scan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }

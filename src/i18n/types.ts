@@ -58,6 +58,9 @@ export interface Translations {
     health: string
     needsAttention: string
     improving: string
+    project: string    // "Project" (as in table column header)
+    projects: string   // "Projects" (plural)
+    projects_count: string // "{{count}} project(s)"
   }
 
   nav: {
@@ -115,6 +118,7 @@ export interface Translations {
       bestpractices: string
       projectgroups: string
       notifications: string
+      pipelines: string
     }
   }
 
@@ -1629,6 +1633,48 @@ export interface Translations {
         testBtn: string
         testSent: string
       }
+    }
+
+    pipelines: {
+      title: string
+      subtitle: string
+      totalScans: string
+      allTimeExecutions: string
+      passRate: string
+      scansNeedingAttention: string
+      averageScore: string
+      activeProjects: string
+      uniqueProjectsScanned: string
+      scanFrequency: string
+      last30Days: string
+      topPerformingProjects: string
+      scanDuration: string
+      longest: string
+      average: string
+      shortest: string
+      recentRuns: string
+      date: string
+      branch: string
+      score: string
+      pillars: string
+      status: string
+      source: string
+      justNow: string
+      minutesAgo: string
+      hoursAgo: string
+      daysAgo: string
+      noPipelineData: string
+      noPipelineDataHint: string
+      noScanDataLast30Days: string
+      cicdFlagInfo: string
+      cicdFlagDescription: string
+      cicdFlagExample: string
+      loading: string
+      error: string
+      tryAgain: string
+      passLabel: string
+      needsAttentionLabel: string
+      highRiskLabel: string
     }
   }
 }
