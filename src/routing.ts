@@ -5,6 +5,7 @@ export const ALL_PAGES = [
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
   'reference', 'antipattern', 'notifications', 'legal', 'projectgroups', 'pipelines',
+  'compliance-readiness',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -56,6 +57,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   notifications:   'Notifications',
   legal:           'Legal Notice',
   pipelines:       'Pipeline Performance',
+  'compliance-readiness': 'Compliance Readiness',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
@@ -103,6 +105,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   notifications:   'System notifications — updates, urgent alerts, and important announcements',
   legal:           'Liability disclaimer, terms of use, and open source notice',
   pipelines:       'Track scan performance, pass rates, and duration across all CI/CD pipelines',
+  'compliance-readiness': 'Evidence collection status and audit readiness scores — prepare for compliance audits with offline support',
 }
 
 export interface FilterState {

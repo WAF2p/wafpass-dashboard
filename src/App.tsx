@@ -20,6 +20,7 @@ const ControlsCataloguePage  = lazy(() => import('./pages/ControlsCataloguePage'
 const DashboardPage          = lazy(() => import('./pages/DashboardPage'))
 const FindingsPage           = lazy(() => import('./pages/FindingsPage'))
 const CompliancePage         = lazy(() => import('./pages/CompliancePage'))
+const ComplianceReadinessPage = lazy(() => import('./pages/ComplianceReadinessPage'))
 const RegionsPage            = lazy(() => import('./pages/RegionsPage'))
 const ExploitPathsPage       = lazy(() => import('./pages/ExploitPathsPage'))
 const RunsListPage           = lazy(() => import('./pages/RunsListPage'))
@@ -338,6 +339,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
             <CompliancePage run={run} settings={settings} />
+          ) : page === 'compliance-readiness' ? (
+            <ComplianceReadinessPage run={run} />
           ) : page === 'gapanalysis' ? (
             <GapAnalysisPage run={run} />
           ) : page === 'changes' ? (

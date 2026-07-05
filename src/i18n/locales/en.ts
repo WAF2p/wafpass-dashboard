@@ -41,6 +41,7 @@ const en: Translations = {
       leaderboard: 'Hall of Fame', journey: 'Maturity Journey',
       userprefs: 'My Preferences', reference: 'Reference Architecture',
       antipattern: 'Anti-Pattern Museum',
+      'compliance-readiness': 'Compliance Readiness',
       bestpractices: 'Best Practice Area',
       notifications: 'Notifications',
       pipelines: 'Pipeline Performance',

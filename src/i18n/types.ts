@@ -119,6 +119,7 @@ export interface Translations {
       projectgroups: string
       notifications: string
       pipelines: string
+      'compliance-readiness': string
     }
   }
 
