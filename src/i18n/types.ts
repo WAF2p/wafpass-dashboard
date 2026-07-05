@@ -58,6 +58,9 @@ export interface Translations {
     health: string
     needsAttention: string
     improving: string
+    project: string    // "Project" (as in table column header)
+    projects: string   // "Projects" (plural)
+    projects_count: string // "{{count}} project(s)"
   }
 
   nav: {
@@ -113,7 +116,10 @@ export interface Translations {
       reference: string
       antipattern: string
       bestpractices: string
+      projectgroups: string
       notifications: string
+      pipelines: string
+      'compliance-readiness': string
     }
   }
 
@@ -645,6 +651,36 @@ export interface Translations {
       fieldCreatedBy: string      // "Created by"
     }
 
+    projectGroups: {
+      title: string               // "Project Groups Access Control"
+      subtitle: string            // "Define which groups can access which projects for run visibility"
+      adminBadge: string          // "Admin"
+      accessDenied: string        // "Access Denied"
+      adminOnly: string           // "Admin role required to manage project groups."
+      projectsHeader: string      // "Projects"
+      projectsCount: string       // "projects"
+      selectedProject: string     // "Selected Project"
+      description: string         // "Configure group-based access to this project..."
+      groupsHeader: string        // "Group Access"
+      groupCount: string          // "groups"
+      loading: string             // "Loading group access configuration..."
+      noGroups: string            // "No group access configured for this project..."
+      addedOn: string             // "Added on"
+      deleteGroup: string         // "Remove group access"
+      groupNamePlaceholder: string // "Group name (e.g., team-security...)"
+      addBtn: string              // "Add"
+      addDesc: string             // "Add a group to this project..."
+      usersHeader: string         // "Users in Group"
+      noUsers: string             // "No users found"
+      addUserPlaceholder: string  // "Select a user to add..."
+      addUserHint: string         // "Select a user and click Add to grant them access..."
+      infoTitle: string           // "How it works"
+      infoText1: string           // "This page allows you to configure group-based access control..."
+      infoItem1: string           // "Add one or more groups to a project"
+      infoItem2: string           // "When a user logs in via SSO, their groups are fetched..."
+      infoItem3: string           // "Users can only see runs for projects they belong to..."
+    }
+
     remediation: {
       quickAdd: string            // "Quick add:"
       top5roi: string             // "Top 5 by ROI"
@@ -858,6 +894,7 @@ export interface Translations {
       sectionRegulatory: string
       sectionPdf: string
       sectionConnection: string
+      sectionVersion: string
       activeAtLevel: string
       controlCoverage: string
       severityThreshold: string
@@ -880,6 +917,8 @@ export interface Translations {
       defaultIacLabel: string
       failOnLabel: string
       minSeverityLabel: string
+      debugInfo: string
+      versionInfo: string
     }
 
     badgePage: {
@@ -1455,6 +1494,7 @@ export interface Translations {
     regions: {
       noRegions: string
       totalRegions: string
+      totalAZs: string             // "{{count}} AZs"
       deploymentMap: string
       regionsCount: string         // "{{count}} regions"
       scannedPaths: string
@@ -1594,6 +1634,48 @@ export interface Translations {
         testBtn: string
         testSent: string
       }
+    }
+
+    pipelines: {
+      title: string
+      subtitle: string
+      totalScans: string
+      allTimeExecutions: string
+      passRate: string
+      scansNeedingAttention: string
+      averageScore: string
+      activeProjects: string
+      uniqueProjectsScanned: string
+      scanFrequency: string
+      last30Days: string
+      topPerformingProjects: string
+      scanDuration: string
+      longest: string
+      average: string
+      shortest: string
+      recentRuns: string
+      date: string
+      branch: string
+      score: string
+      pillars: string
+      status: string
+      source: string
+      justNow: string
+      minutesAgo: string
+      hoursAgo: string
+      daysAgo: string
+      noPipelineData: string
+      noPipelineDataHint: string
+      noScanDataLast30Days: string
+      cicdFlagInfo: string
+      cicdFlagDescription: string
+      cicdFlagExample: string
+      loading: string
+      error: string
+      tryAgain: string
+      passLabel: string
+      needsAttentionLabel: string
+      highRiskLabel: string
     }
   }
 }

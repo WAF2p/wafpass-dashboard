@@ -38,6 +38,18 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
   )
 }
 
+function SelectRow({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
+      <div>
+        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
+        {desc && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{desc}</div>}
+      </div>
+      <div>{children}</div>
+    </div>
+  )
+}
+
 const sel: React.CSSProperties = {
   background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
   borderRadius: 7, padding: '0.28rem 0.55rem', fontSize: '0.78rem', outline: 'none', cursor: 'pointer',
@@ -45,6 +57,7 @@ const sel: React.CSSProperties = {
 
 const PAGE_OPTIONS = [
   { value: 'dashboard',  label: 'Executive Dashboard' },
+  { value: 'globaldashboard', label: 'Global Overview' },
   { value: 'findings',   label: 'Scan Findings' },
   { value: 'compliance', label: 'Compliance Matrix' },
   { value: 'runs',       label: 'Run History' },
@@ -150,13 +163,13 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
             <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.navigation')}</div>
 
-            <Row label={t('prefs.defaultPage')} desc={t('prefs.defaultPageDesc')}>
+            <SelectRow label={t('prefs.defaultPage')} desc={t('prefs.defaultPageDesc')}>
               <select value={p.defaultPage} onChange={e => update({ defaultPage: e.target.value })} style={sel}>
                 {PAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
-            </Row>
+            </SelectRow>
 
-            <Row label={t('prefs.language')} desc={t('prefs.languageDesc')}>
+            <SelectRow label={t('prefs.language')} desc={t('prefs.languageDesc')}>
               <select value={p.language} onChange={e => update({ language: e.target.value })} style={sel}>
                 <option value="">{t('prefs.languageSystemDefault')}</option>
                 {Object.values(LOCALES).map(l => (
@@ -165,19 +178,19 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
                   </option>
                 ))}
               </select>
-            </Row>
+            </SelectRow>
           </div>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
             <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.dates')}</div>
 
-            <Row label={t('prefs.dateFormat')}>
+            <SelectRow label={t('prefs.dateFormat')}>
               <select value={p.dateFormat} onChange={e => update({ dateFormat: e.target.value as UserPreferences['dateFormat'] })} style={sel}>
                 <option value="relative">{t('prefs.dateRelative')}</option>
                 <option value="absolute">{t('prefs.dateAbsolute')}</option>
                 <option value="full">{t('prefs.dateFull')}</option>
               </select>
-            </Row>
+            </SelectRow>
 
             <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.55rem', borderRadius: 6, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: '0.71rem', color: 'var(--muted)' }}>
               {t('prefs.datePreview')}{' '}

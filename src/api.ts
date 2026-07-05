@@ -44,6 +44,7 @@ export interface RunSummary {
   branch: string
   git_sha: string
   triggered_by: string
+  is_cicd: boolean
   iac_framework: string
   stage: string
   score: number
@@ -52,6 +53,70 @@ export interface RunSummary {
   controls_loaded: number
   controls_run: number
   created_at: string
+}
+
+// ── Pipeline performance metrics ──────────────────────────────────────────────
+
+export interface PipelineMetrics {
+  totalRuns: number
+  passRate: number
+  avgScore: number
+  projects: number
+  recentRuns: number
+  failedRuns: number
+  skippedRuns: number
+  projectsList: ProjectRunSummary[]
+}
+
+export interface ProjectRunSummary {
+  project: string
+  avgScore: number
+  latestScore: number
+  runCount: number
+  lastRunAt: string
+}
+
+export interface RunsByDay {
+  day: string
+  count: number
+  passCount: number
+  failCount: number
+}
+
+export interface PipelineTrends {
+  runsByDay: RunsByDay[]
+  durationStats: {
+    avg: number
+    min: number
+    max: number
+    avgLabel: string
+    minLabel: string
+    maxLabel: string
+  }
+}
+
+export async function fetchPipelineMetrics(): Promise<PipelineMetrics> {
+  const url = new URL(`${getApiBase()}/pipelines/metrics`, window.location.origin)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch pipeline metrics: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<PipelineMetrics>
+  return json.data
+}
+
+export async function fetchPipelineTrends(): Promise<PipelineTrends> {
+  const url = new URL(`${getApiBase()}/pipelines/trends`, window.location.origin)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch pipeline trends: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<PipelineTrends>
+  return json.data
+}
+
+export async function fetchProjectRuns(project: string): Promise<RunSummary[]> {
+  const url = new URL(`${getApiBase()}/runs?project=${encodeURIComponent(project)}`, window.location.origin)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch project runs: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<RunSummary[]>
+  return json.data
 }
 
 export interface ControlCheckMeta {
@@ -114,7 +179,7 @@ export interface SecretFinding {
 
 export interface RunDetail extends RunSummary {
   findings: Finding[]
-  detected_regions: string[][]
+  detected_regions: Array<[string, string, string | null]>  // Each entry is [region, provider, availability_zone]
   source_paths: string[]
   controls_meta: ControlMeta[]
   secret_findings: SecretFinding[]
@@ -420,6 +485,7 @@ export interface ScanRequest {
   branch?: string
   stage?: string
   triggered_by?: string
+  is_cicd?: boolean
 }
 
 export async function fetchScanStatus(): Promise<ScanStatus> {
@@ -429,10 +495,14 @@ export async function fetchScanStatus(): Promise<ScanStatus> {
 }
 
 export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
+  const body: any = { ...payload }
+  if (payload.is_cicd !== undefined) {
+    body.run = { is_cicd: payload.is_cicd }
+  }
   const res = await fetch(`${getApiBase()}/scan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
@@ -454,6 +524,17 @@ export async function createCatalogueControl(payload: Omit<CatalogueControl, 'cr
   }
   const json = await res.json() as ApiEnvelope<CatalogueControl>
   return json.data
+}
+
+export async function deleteCatalogueControl(controlId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/controls/${encodeURIComponent(controlId)}`, {
+    method: 'DELETE',
+    headers: _authHeaders(),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Failed to delete control: ${res.status} ${text}`)
+  }
 }
 
 // ── Authentication API ────────────────────────────────────────────────────────
@@ -515,7 +596,7 @@ export async function fetchUsers(): Promise<UserOut[]> {
   return res.json() as Promise<UserOut[]>
 }
 
-export async function createUser(payload: { username: string; password: string; display_name?: string; image_url?: string; role?: string }): Promise<UserOut> {
+export async function createUser(payload: { username: string; password: string; display_name?: string; image_url?: string; role?: string; group?: string }): Promise<UserOut> {
   const res = await fetch(`${getApiBase()}/auth/users`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
@@ -528,7 +609,7 @@ export async function createUser(payload: { username: string; password: string; 
   return res.json() as Promise<UserOut>
 }
 
-export async function updateUser(id: string, payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string }): Promise<UserOut> {
+export async function updateUser(id: string, payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string; group?: string }): Promise<UserOut> {
   const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
@@ -895,6 +976,103 @@ export async function deleteGroupMapping(id: string): Promise<void> {
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
+// ── Project Group API ─────────────────────────────────────────────────────────
+
+export interface ProjectGroupOut {
+  id: string
+  project: string
+  group_name: string
+  created_at: string
+  created_by: string | null
+}
+
+export interface ProjectGroupCreate {
+  project: string
+  group_name: string
+}
+
+export interface GroupOut {
+  group_name: string
+  projects: string[]
+  user_count: number
+  created_at: string
+}
+
+export async function fetchAllGroups(): Promise<GroupOut[]> {
+  const res = await fetch(`${getApiBase()}/groups`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const data = await res.json()
+  console.log('Raw /groups API response:', data)
+  return data as Promise<GroupOut[]>
+}
+
+export async function fetchProjectGroups(project: string): Promise<ProjectGroupOut[]> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/groups`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<ProjectGroupOut[]>
+}
+
+export async function createProjectGroup(payload: ProjectGroupCreate): Promise<ProjectGroupOut> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(payload.project)}/groups`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ project: payload.project, group_name: payload.group_name }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  return res.json() as Promise<ProjectGroupOut>
+}
+
+export async function deleteProjectGroup(project: string, group_name: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/projects/${encodeURIComponent(project)}/groups/${encodeURIComponent(group_name)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+// ── User Group API ────────────────────────────────────────────────────────────
+
+export interface UserGroupOut {
+  id: string
+  user_id: string
+  group_name: string
+  provider: string
+  created_at: string
+}
+
+export interface UserGroupCreate {
+  group_name: string
+  provider?: string
+}
+
+export async function fetchUserGroups(userId: string): Promise<UserGroupOut[]> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(userId)}/groups`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<UserGroupOut[]>
+}
+
+export async function createUserGroup(userId: string, payload: UserGroupCreate): Promise<UserGroupOut> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(userId)}/groups`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  return res.json() as Promise<UserGroupOut>
+}
+
+export async function deleteUserGroup(userId: string, group_name: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/auth/users/${encodeURIComponent(userId)}/groups/${encodeURIComponent(group_name)}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
 // ── Compliance Audit Events API ───────────────────────────────────────────────
 
 export interface ServerAuditEvent {
@@ -937,13 +1115,17 @@ export async function fetchServerAuditEvents(params?: {
   limit?: number
   category?: string
 }): Promise<ServerAuditEvent[]> {
-  const url = new URL(`${getApiBase()}/audit/events`, window.location.origin)
-  if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
-  if (params?.category) url.searchParams.set('category', params.category)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json() as ApiEnvelope<ServerAuditEvent[]>
-  return json.data
+  try {
+    const url = new URL(`${getApiBase()}/audit/events`, window.location.origin)
+    if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
+    if (params?.category) url.searchParams.set('category', params.category)
+    const res = await fetch(url.toString(), { headers: _authHeaders() })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const json = await res.json() as ApiEnvelope<ServerAuditEvent[]>
+    return json.data
+  } catch {
+    return []  // silent fail - audit events are optional
+  }
 }
 
 // ── Control Packs ─────────────────────────────────────────────────────────────

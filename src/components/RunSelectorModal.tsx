@@ -6,20 +6,42 @@ interface Props {
   selectedId: string | null
   onSelect: (id: string) => void
   onClose: () => void
+  role: string
 }
 
 function scoreColor(s: number) {
   return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
 }
 
-export default function RunSelectorModal({ runs, selectedId, onSelect, onClose }: Props) {
+// Get accessible projects from runs (filtered by backend)
+function getAccessibleProjects(runs: RunSummary[], role: string): Set<string> {
+  if (role === 'admin') {
+    return new Set<string>()  // Admin has access to all, return empty as signal
+  }
+  return new Set(runs.map(r => r.project).filter(Boolean) as string[])
+}
+
+export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, role }: Props) {
   const [search, setSearch]     = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]     = useState('')
 
+  // Get projects the user has access to (runs are already filtered by backend)
+  const accessibleProjects = useMemo(() => {
+    return getAccessibleProjects(runs, role)
+  }, [runs, role])
+
+  // Filter runs by accessible projects (for non-admins)
+  const accessibleRuns = useMemo(() => {
+    if (role === 'admin') {
+      return runs  // Admin sees all runs
+    }
+    return runs.filter(r => accessibleProjects.has(r.project || ''))
+  }, [runs, role, accessibleProjects])
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    return runs.filter(r => {
+    return accessibleRuns.filter(r => {
       if (q && !r.project?.toLowerCase().includes(q) &&
                !r.branch?.toLowerCase().includes(q) &&
                !r.git_sha?.toLowerCase().includes(q)) return false
@@ -27,7 +49,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose }
       if (dateTo   && new Date(r.created_at) > new Date(dateTo + 'T23:59:59')) return false
       return true
     })
-  }, [runs, search, dateFrom, dateTo])
+  }, [accessibleRuns, search, dateFrom, dateTo])
 
   return (
     <>

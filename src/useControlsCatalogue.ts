@@ -91,7 +91,7 @@ let _inflight: Promise<Control[]> | null = null
 
 function ensureFetched(): Promise<Control[]> {
   if (_inflight) return _inflight
-  _inflight = fetchCatalogueControls({ per_page: 500 })
+  _inflight = fetchCatalogueControls({ per_page: 200 })
     .then(({ controls: sc }) => {
       const result = mergeWithServer(sc)
       writeCache(result)

@@ -38,41 +38,15 @@ function pct(pass: number, total: number) {
   return total > 0 ? Math.round((pass / total) * 100) : 0
 }
 
-// ── Helper functions ─────────────────────────────────────────────────────────
-
-function darkModeValue<T>(light: T, dark: T, isDark: boolean): T {
-  return isDark ? dark : light
-}
-
 function SectionTitle({ children, colors }: { children: React.ReactNode; colors: any }) {
   return (
     <div style={{
       fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase',
-      letterSpacing: '0.08em', color: colors.textMuted,
+      letterSpacing: '0.08em', color: colors.accent,
       borderBottom: `2px solid ${colors.accent}`, paddingBottom: '0.4rem',
       marginBottom: '0.9rem', marginTop: '1.25rem',
     }}>
       {children}
-    </div>
-  )
-}
-
-function ProgressBar({ label, pass, total, colors }: { label: string; pass: number; total: number; colors: any }) {
-  const p = pct(pass, total)
-  const color = p >= 80 ? '#16a34a' : p >= 60 ? '#d97706' : '#dc2626'
-  const barBg = darkModeValue('#e2e8f0', '#334155', colors.darkMode)
-  return (
-    <div style={{ marginBottom: '0.75rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontSize: '0.85rem' }}>
-        <span style={{ fontWeight: 500, color: colors.textMain }}>{label.replace(/_/g, ' ')}</span>
-        <span style={{ color, fontWeight: 700 }}>{p}%</span>
-      </div>
-      <div style={{ height: '8px', borderRadius: '999px', background: barBg, overflow: 'hidden' }}>
-        <div style={{ height: '100%', borderRadius: '999px', background: color, width: `${p}%` }} />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem', fontSize: '0.7rem' }}>
-        <span style={{ color: colors.textMuted }}>({pass}/{total})</span>
-      </div>
     </div>
   )
 }
@@ -223,7 +197,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
         {/* ── Cover ── */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: `3px solid ${colors.accent}`, paddingBottom: '1.75rem', marginBottom: '2rem' }}>
           <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: colors.textMuted, marginBottom: '0.5rem' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: colors.accent, marginBottom: '0.5rem' }}>
               WAF++ PASS · Compliance Report
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: colors.textMain, lineHeight: 1.15, marginBottom: '0.75rem' }}>
@@ -244,14 +218,15 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
           <div style={{ textAlign: 'center', flexShrink: 0 }}>
             <div style={{
               width: '100px', height: '100px', borderRadius: '50%',
-              border: `6px solid ${scoreColor(run.score, darkMode)}`,
+              border: `6px solid ${colors.accent}`,
+              boxShadow: `0 0 20px ${colors.accent}66, 0 0 40px ${colors.accent}33`,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               background: darkMode ? '#1e293b' : '#ffffff',
             }}>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(run.score, darkMode), lineHeight: 1 }}>{run.score}</div>
-              <div style={{ fontSize: '0.65rem', color: colors.textMuted }}>/100</div>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: colors.accent, lineHeight: 1 }}>{run.score}</div>
+              <div style={{ fontSize: '0.65rem', color: colors.accent }}>/100</div>
             </div>
-            <div style={{ marginTop: '0.6rem', fontSize: '0.7rem', fontWeight: 700, color: matMeta.color }}>
+            <div style={{ marginTop: '0.6rem', fontSize: '0.7rem', fontWeight: 700, color: colors.accent }}>
               {matMeta.label}
             </div>
           </div>
@@ -393,23 +368,31 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
 
         {/* ── Compliance Matrix ── */}
         {sec.complianceMatrix && (
-          <div style={{ pageBreakInside: 'avoid', marginBottom: '2rem' }}>
+          <div style={{ pageBreakInside: 'avoid', marginBottom: '1.25rem' }}>
             <SectionTitle colors={colors}>Compliance Matrix</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               {regulatoryReadiness.length > 0 && (
                 <div style={cardStyle}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Regulatory Frameworks</div>
-                  {regulatoryReadiness.map(({ framework, pass: p, total: t }) => (
-                    <ProgressBar key={framework} label={framework} pass={p} total={t} colors={colors} />
-                  ))}
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Frameworks</div>
+                  <div style={{ fontSize: '0.65rem', color: colors.textMuted, lineHeight: 1.4 }}>
+                    {regulatoryReadiness.map(({ framework, pass: p, total: t }) => (
+                      <div key={framework} style={{ marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 600, color: colors.textMain }}>{framework}:</span> {p}/{t} passed
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               {categoryBreakdown.length > 0 && (
                 <div style={cardStyle}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Pass Rate by Category</div>
-                  {categoryBreakdown.map(({ cat, pass: p, total: t }) => (
-                    <ProgressBar key={cat} label={cat} pass={p} total={t} colors={colors} />
-                  ))}
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Categories</div>
+                  <div style={{ fontSize: '0.65rem', color: colors.textMuted, lineHeight: 1.4 }}>
+                    {categoryBreakdown.map(({ cat, pass: p, total: t }) => (
+                      <div key={cat} style={{ marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 600, color: colors.textMain }}>{cat}:</span> {pct(p, t)}% pass rate
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -634,9 +617,14 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
         )}
 
         {/* ── Footer ── */}
-        <div style={{ marginTop: '2.5rem', paddingTop: '1.25rem', borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: colors.textMuted }}>
-          <span>WAF++ PASS v0.4.0 · waf2p.dev</span>
-          <span>Maturity: {matMeta.label} · Generated {new Date().toLocaleDateString()}</span>
+        <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.62rem', color: colors.accent }}>
+          <div style={{ textAlign: 'center', fontWeight: 600 }}>WAF++ PASS · Open Source Compliance Framework</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', opacity: 0.8 }}>
+            <span>Generated: {new Date().toLocaleString()}</span>
+            <span>Maturity: {matMeta.label}</span>
+            <span>Score: {run.score}/100</span>
+          </div>
+          <div style={{ textAlign: 'center', opacity: 0.6 }}>© 2026 WAF++ · waf2p.dev</div>
         </div>
 
       </div>

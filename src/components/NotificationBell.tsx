@@ -80,26 +80,26 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
           width: '32px',
           height: '32px',
           borderRadius: '50%',
-          background: showMenu ? 'rgba(0,148,255,0.15)' : 'var(--sidebar-surf)',
-          color: hasUnread ? '#dc2626' : 'var(--sidebar-muted)',
+          background: showMenu ? 'rgba(0,148,255,0.15)' : 'var(--nav-surf)',
+          color: hasUnread ? '#dc2626' : 'var(--nav-muted)',
           border: hasUnread
             ? '2px solid #dc2626'
             : showMenu
             ? '2px solid var(--waf-brand)'
-            : '1px solid var(--sidebar-border)',
+            : '1px solid var(--nav-border)',
           cursor: 'pointer',
           transition: 'all 0.15s',
           flexShrink: 0,
         }}
         onMouseEnter={(e) => {
           if (!hasUnread) {
-            e.currentTarget.style.background = 'var(--sidebar-bg)'
+            e.currentTarget.style.background = 'var(--nav-bg)'
             e.currentTarget.style.transform = 'scale(1.05)'
           }
         }}
         onMouseLeave={(e) => {
           if (!hasUnread) {
-            e.currentTarget.style.background = 'var(--sidebar-surf)'
+            e.currentTarget.style.background = 'var(--nav-surf)'
             e.currentTarget.style.transform = 'scale(1)'
           }
         }}
@@ -122,7 +122,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
               height: '14px',
               borderRadius: '50%',
               background: '#dc2626',
-              border: '2px solid var(--sidebar-bg)',
+              border: '2px solid var(--nav-bg)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -148,8 +148,8 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
             width: '360px',
             maxHeight: '500px',
             overflowY: 'auto',
-            background: 'var(--sidebar-bg)',
-            border: '1px solid var(--sidebar-border)',
+            background: 'var(--nav-bg)',
+            border: '1px solid var(--nav-border)',
             borderRadius: '12px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
             zIndex: 100,
@@ -159,14 +159,14 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
           <div
             style={{
               padding: '0.75rem 1rem',
-              borderBottom: '1px solid var(--sidebar-border)',
+              borderBottom: '1px solid var(--nav-border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '0.5rem',
             }}
           >
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--sidebar-text)' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nav-text)' }}>
               {t('pages.notifications.title')} <span style={{ color: 'var(--waf-brand)' }}>{unreadCountFiltered}</span> {t('pages.notifications.unread')}
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -218,7 +218,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'var(--sidebar-muted)',
+                  color: 'var(--nav-muted)',
                   fontSize: '0.75rem',
                   padding: '0.25rem',
                 }}
@@ -297,7 +297,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                         style={{
                           fontSize: '0.78rem',
                           fontWeight: note.is_read ? 400 : 600,
-                          color: 'var(--sidebar-text)',
+                          color: 'var(--nav-text)',
                           marginBottom: '0.2rem',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
@@ -306,7 +306,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                       >
                         {note.title}
                         {note.is_read && (
-                          <span style={{ marginLeft: '0.5rem', fontSize: '0.68rem', color: 'var(--sidebar-muted)' }}>
+                          <span style={{ marginLeft: '0.5rem', fontSize: '0.68rem', color: 'var(--nav-muted)' }}>
                             {t('pages.notifications.read')}
                           </span>
                         )}
@@ -314,7 +314,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                       <div
                         style={{
                           fontSize: '0.72rem',
-                          color: 'var(--sidebar-muted)',
+                          color: 'var(--nav-muted)',
                           lineHeight: 1.4,
                           wordBreak: 'break-word',
                         }}
@@ -324,14 +324,14 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                       <div
                         style={{
                           fontSize: '0.62rem',
-                          color: 'var(--sidebar-muted)',
+                          color: 'var(--nav-muted)',
                           marginTop: '0.35rem',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.4rem',
                         }}
                       >
-                        <span style={{ color: isUrgent ? style.color : 'var(--sidebar-muted)', fontWeight: 500 }}>
+                        <span style={{ color: isUrgent ? style.color : 'var(--nav-muted)', fontWeight: 500 }}>
                           {style.label}
                         </span>
                         <span>•</span>
@@ -356,7 +356,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
             <div
               style={{
                 padding: '0.75rem',
-                borderTop: '1px solid var(--sidebar-border)',
+                borderTop: '1px solid var(--nav-border)',
                 background: 'rgba(0,0,0,0.02)',
               }}
             >

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, fetchCatalogueControls, downloadControlsZip, fetchActivePackInfo, ActivePackInfo } from '../api'
+import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, fetchCatalogueControls, downloadControlsZip, fetchActivePackInfo, ActivePackInfo, deleteCatalogueControl } from '../api'
+import { useAuth, hasMinRole } from '../AuthContext'
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ const PILLAR_COLOR: Record<string, string> = {
   operational: '#8b5cf6', operations: '#8b5cf6',
   sovereign: '#06b6d4', sovereignty: '#06b6d4',
   sustainability: '#22c55e', performance: '#eab308', governance: '#94a3b8',
+  agentic: '#ec4899',
 }
 const ENGINE_COLOR: Record<string, string> = {
   terraform: '#7c3aed', checkov: '#0ea5e9', manual: '#94a3b8',
@@ -22,17 +24,19 @@ const PILLAR_DESC: Record<string, string> = {
   performance:    'Latency, throughput, auto-scaling, and resource right-sizing',
   reliability:    'Fault tolerance, backups, multi-region, and disaster recovery',
   operational:    'Observability, automation, deployment hygiene, and runbook coverage',
+  operations:     'Observability, automation, deployment hygiene, and runbook coverage',
   sustainability: 'Carbon footprint, energy efficiency, and sustainable architecture',
   sovereign:      'Data residency, jurisdictional controls, and regulatory locality',
+  agentic:        'AI-driven infrastructure, autonomous remediation, and self-healing systems',
 }
 
-const ALL_PILLARS   = ['security', 'cost', 'performance', 'reliability', 'operational', 'sustainability', 'sovereign']
+const ALL_PILLARS   = ['security', 'cost', 'performance', 'reliability', 'operations', 'sustainability', 'sovereign', 'agentic']
 const ALL_SEVERITIES = ['critical', 'high', 'medium', 'low']
 const ALL_TYPES     = ['governance', 'configuration', 'iac', 'network', 'identity', 'data', 'cost']
 const ALL_ENGINES   = ['terraform', 'checkov', 'manual']
 const PILLAR_PREFIX: Record<string, string> = {
   security: 'SEC', cost: 'COST', performance: 'PERF', reliability: 'REL',
-  operational: 'OPS', sustainability: 'SUS', sovereign: 'SOV',
+  operations: 'OPS', sustainability: 'SUS', sovereign: 'SOV', agentic: 'AGT',
 }
 const TYPE_COLOR: Record<string, string> = {
   governance: '#0094FF', configuration: '#f97316', iac: '#7c3aed',
@@ -1514,9 +1518,62 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
 
           {/* CLI usage */}
           <CliUsage controlId={ctrl.id} isCustom={ctrl.isCustom} />
+
+          {/* Delete button - admin only for custom controls */}
+          <DeleteControlButton ctrl={ctrl} />
         </div>
       </div>
     </>
+  )
+}
+
+// ── Delete button component for admin users ────────────────────────────────────
+
+function DeleteControlButton({ ctrl }: { ctrl: UnifiedControl }) {
+  const { role } = useAuth()
+  const [deleting, setDeleting] = useState(false)
+  const [deleted, setDeleted] = useState(false)
+
+  if (!ctrl.isCustom || !hasMinRole(role ?? '', 'admin')) {
+    return null
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`Permanently delete control ${ctrl.id}?`)) return
+    setDeleting(true)
+    try {
+      await deleteCatalogueControl(ctrl.id)
+      setDeleted(true)
+    } catch (e) {
+      alert(`Failed to delete: ${e instanceof Error ? e.message : 'Unknown error'}`)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  if (deleted) {
+    return (
+      <div style={{ fontSize: '0.68rem', color: '#059669', padding: '0.5rem', background: '#05966912', borderRadius: '8px', textAlign: 'center' }}>
+        ✓ Deleted
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Danger Zone</div>
+      <button
+        onClick={handleDelete}
+        disabled={deleting}
+        style={{
+          padding: '0.5rem 0.9rem', borderRadius: '8px', border: '1px solid #DA2C38',
+          background: '#DA2C3812', color: '#DA2C38', fontWeight: 700, fontSize: '0.78rem',
+          cursor: deleting ? 'default' : 'pointer', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.4rem'
+        }}
+      >
+        {deleting ? 'Deleting…' : 'Delete Custom Control'}
+      </button>
+    </div>
   )
 }
 
@@ -1800,7 +1857,9 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
               {tab === 'custom' && customCount === 0
                 ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>No custom controls yet</strong>Click <strong>New Control</strong> above to author one, or run <code>wafpass control generate</code> from the CLI.</>
-                : 'No controls match the current filters.'
+                : pillarFilter.length === 1 && pillarFilter.includes('agentic')
+                  ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: '#ec4899' }}>Agentic Pillar (Coming Soon)</strong>The agentic control checks are not yet available. Watch <a href="https://waf2p.dev" target="_blank" rel="noopener noreferrer" style={{ color: '#ec4899', fontWeight: 700 }}>waf2p.dev</a> for updates on this next-generation pillar.</>
+                  : 'No controls match the current filters.'
               }
             </div>
           ) : (

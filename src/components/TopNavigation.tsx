@@ -104,6 +104,7 @@ function buildNavSections(
           page: 'gapanalysis', label: t('nav.items.gapanalysis'),
           icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
         },
+        { page: 'pipelines', label: t('nav.items.pipelines'), icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
       ],
     },
     {
@@ -227,6 +228,7 @@ function buildNavSections(
         { page: 'sso', label: t('nav.items.sso'), icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
         { page: 'apikeys', label: t('nav.items.apikeys'), icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z' },
         { page: 'groupmappings', label: t('nav.items.groupmappings'), icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z' },
+        { page: 'projectgroups', label: t('nav.items.projectgroups'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
         { page: 'controlspacks', label: t('nav.items.controlspacks'), icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
       ],
     },
@@ -257,10 +259,10 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
         padding: '0.5rem 0.75rem',
         borderRadius: '6px',
         background: isActive ? 'rgba(0,148,255,0.15)' : 'transparent',
-        border: isActive ? '1px solid var(--sidebar-border)' : '1px solid transparent',
+        border: isActive ? '1px solid var(--nav-border)' : '1px solid transparent',
         cursor: 'pointer',
         fontSize: '0.8rem',
-        color: isActive ? 'var(--waf-brand)' : (item.danger ? 'var(--waf-danger)' : 'var(--sidebar-text)'),
+        color: isActive ? 'var(--waf-brand)' : (item.danger ? 'var(--waf-danger)' : 'var(--nav-text)'),
         fontWeight: isActive ? 600 : 400,
         transition: 'all 0.15s',
         width: '100%',
@@ -272,7 +274,7 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
       </svg>
       <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
       {item.count != null && item.count > 0 && (
-        <span style={{ fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'var(--sidebar-surf)', color: 'var(--sidebar-text)' }}>
+        <span style={{ fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'var(--nav-surf)', color: 'var(--nav-text)' }}>
           {item.count}
         </span>
       )}
@@ -296,8 +298,8 @@ function NavSectionDropdown({ section, page, navigate }: { section: NavSection; 
           display: 'flex', alignItems: 'center', gap: '0.5rem',
           padding: '0.75rem 1rem', borderRadius: '6px',
           background: expanded || hasActive ? 'rgba(0,148,255,0.15)' : 'transparent',
-          border: expanded ? '1px solid var(--sidebar-border)' : (hasActive ? '1px solid var(--waf-brand)' : '1px solid transparent'),
-          cursor: 'pointer', color: hasActive ? 'var(--waf-brand)' : 'var(--sidebar-text)',
+          border: expanded ? '1px solid var(--nav-border)' : (hasActive ? '1px solid var(--waf-brand)' : '1px solid transparent'),
+          cursor: 'pointer', color: hasActive ? 'var(--waf-brand)' : 'var(--nav-text)',
           fontSize: '0.85rem', fontWeight: hasActive ? 600 : 500,
           transition: 'all 0.15s',
         }}
@@ -318,8 +320,8 @@ function NavSectionDropdown({ section, page, navigate }: { section: NavSection; 
             top: '100%',
             left: 0,
             minWidth: '700px',
-            background: 'var(--sidebar-bg)',
-            border: '1px solid var(--sidebar-border)',
+            background: 'var(--nav-bg)',
+            border: '1px solid var(--nav-border)',
             borderRadius: '12px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
             padding: '1.5rem',
@@ -333,7 +335,7 @@ function NavSectionDropdown({ section, page, navigate }: { section: NavSection; 
             {/* User image icon alone */}
             <div style={{
               width: '56px', height: '56px', borderRadius: '50%',
-              background: 'var(--sidebar-surf)', border: '2px solid var(--sidebar-border)',
+              background: 'var(--nav-surf)', border: '2px solid var(--nav-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: section.color,
               flexShrink: 0,
@@ -345,10 +347,10 @@ function NavSectionDropdown({ section, page, navigate }: { section: NavSection; 
 
             {/* Description in block text (no ellipsis, full text) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: 'var(--nav-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                 {section.label}
               </p>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--sidebar-text)', lineHeight: 1.6 }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--nav-text)', lineHeight: 1.6 }}>
                 {section.description}
               </p>
             </div>
@@ -419,10 +421,10 @@ function LanguageSwitcher({ currentLang, onChange }: { currentLang: string; onCh
         }}
         title="Language"
         style={{
-          background: 'var(--sidebar-surf)',
-          border: '1px solid var(--sidebar-border)',
+          background: 'var(--nav-surf)',
+          border: '1px solid var(--nav-border)',
           cursor: 'pointer',
-          color: 'var(--sidebar-text)',
+          color: 'var(--nav-text)',
           padding: '0.5rem',
           borderRadius: '8px',
           flexShrink: 0,
@@ -516,20 +518,14 @@ export default function TopNavigation({
   }
 
   return (
-    <header className="app-top-nav" style={{
-      background: 'var(--sidebar-bg)',
-      borderBottom: '1px solid var(--sidebar-border)',
-      padding: '0.5rem 1.5rem',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      gap: '1rem',
-    }}>
+    <header className="app-top-nav">
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="app-top-nav-logo">
         <img src="/logo.png" alt="WAF++ PASS" style={{ height: '32px', width: 'auto', objectFit: 'contain', filter: 'brightness(1.05)' }} />
       </div>
 
       {/* Navigation - only on large screens */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1, justifyContent: 'center' }}>
+      <div className="app-top-nav-items">
         {visibleSections.map(section => (
           <NavSectionDropdown
             key={section.id}
@@ -541,7 +537,7 @@ export default function TopNavigation({
       </div>
 
       {/* Right side - User controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div className="app-top-nav-controls">
         {/* Run selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <button
@@ -549,10 +545,10 @@ export default function TopNavigation({
             style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
               padding: '0.5rem', borderRadius: '8px',
-              background: 'var(--sidebar-surf)',
-              border: '1px solid var(--sidebar-border)',
+              background: 'var(--nav-surf)',
+              border: '1px solid var(--nav-border)',
               cursor: 'pointer',
-              fontSize: '0.75rem', color: 'var(--sidebar-text)',
+              fontSize: '0.75rem', color: 'var(--nav-text)',
             }}
           >
             {run ? (
@@ -560,7 +556,7 @@ export default function TopNavigation({
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ opacity: 0.6 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                 </svg>
-                <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', minWidth: 0 }}>
                   {currentRunLabel}
                 </span>
               </>
@@ -591,8 +587,8 @@ export default function TopNavigation({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '0.5rem', borderRadius: '8px',
-              background: 'var(--sidebar-surf)', color: 'var(--sidebar-text)',
-              border: '1px solid var(--sidebar-border)',
+              background: 'var(--nav-surf)', color: 'var(--nav-text)',
+              border: '1px solid var(--nav-border)',
               cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
             }}
           >
@@ -610,9 +606,9 @@ export default function TopNavigation({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '0.5rem', borderRadius: '8px',
-            background: linkCopied ? 'rgba(34,197,94,.12)' : 'var(--sidebar-surf)',
-            color: linkCopied ? '#15803d' : 'var(--sidebar-muted)',
-            border: `1px solid ${linkCopied ? 'rgba(34,197,94,.4)' : 'var(--sidebar-border)'}`,
+            background: linkCopied ? 'rgba(34,197,94,.12)' : 'var(--nav-surf)',
+            color: linkCopied ? '#15803d' : 'var(--nav-muted)',
+            border: `1px solid ${linkCopied ? 'rgba(34,197,94,.4)' : 'var(--nav-border)'}`,
             cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
           }}
         >
@@ -631,9 +627,9 @@ export default function TopNavigation({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '0.5rem', borderRadius: '8px',
-            background: 'var(--sidebar-surf)',
-            color: 'var(--sidebar-muted)',
-            border: '1px solid var(--sidebar-border)',
+            background: 'var(--nav-surf)',
+            color: 'var(--nav-muted)',
+            border: '1px solid var(--nav-border)',
             cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
           }}
           onMouseEnter={(e) => {
@@ -642,7 +638,7 @@ export default function TopNavigation({
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(34,211,238,0.15)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--sidebar-muted)'
+            e.currentTarget.style.color = 'var(--nav-muted)'
             e.currentTarget.style.transform = 'translateY(0)'
             e.currentTarget.style.boxShadow = 'none'
           }}
@@ -683,20 +679,20 @@ export default function TopNavigation({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: '32px', height: '32px', borderRadius: '50%',
-              background: 'var(--sidebar-surf)',
-              border: '1px solid var(--sidebar-border)',
+              background: 'var(--nav-surf)',
+              border: '1px solid var(--nav-border)',
               cursor: 'pointer', transition: 'all 0.15s',
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--sidebar-bg)'
+              e.currentTarget.style.background = 'var(--nav-bg)'
               e.currentTarget.style.transform = 'scale(1.05)'
               e.currentTarget.style.borderColor = 'var(--waf-brand)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--sidebar-surf)'
+              e.currentTarget.style.background = 'var(--nav-surf)'
               e.currentTarget.style.transform = 'scale(1)'
-              e.currentTarget.style.borderColor = 'var(--sidebar-border)'
+              e.currentTarget.style.borderColor = 'var(--nav-border)'
             }}
           >
             {user.image_url && user.image_url !== '' ? (
@@ -715,8 +711,8 @@ export default function TopNavigation({
             right: 0,
             marginTop: '0.5rem',
             width: '200px',
-            background: 'var(--sidebar-bg)',
-            border: '1px solid var(--sidebar-border)',
+            background: 'var(--nav-bg)',
+            border: '1px solid var(--nav-border)',
             borderRadius: '8px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
             zIndex: 100,
@@ -725,12 +721,12 @@ export default function TopNavigation({
             {/* User info header */}
             <div style={{
               padding: '0.75rem 1rem',
-              borderBottom: '1px solid var(--sidebar-border)',
+              borderBottom: '1px solid var(--nav-border)',
             }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sidebar-text)' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nav-text)' }}>
                 {user.display_name || user.username}
               </div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>
+              <div style={{ fontSize: '0.65rem', color: 'var(--nav-muted)' }}>
                 {role.charAt(0).toUpperCase() + role.slice(1)}
               </div>
             </div>
@@ -743,7 +739,7 @@ export default function TopNavigation({
                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                 padding: '0.5rem 1rem',
                 background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '0.8rem', color: 'var(--sidebar-text)',
+                fontSize: '0.8rem', color: 'var(--nav-text)',
                 transition: 'all 0.15s',
               }}
               onMouseEnter={(e) => {
@@ -752,7 +748,7 @@ export default function TopNavigation({
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'none'
-                e.currentTarget.style.color = 'var(--sidebar-text)'
+                e.currentTarget.style.color = 'var(--nav-text)'
               }}
             >
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

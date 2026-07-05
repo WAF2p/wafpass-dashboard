@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { SERVER_URL_KEY } from '../api'
+import { SERVER_URL_KEY, getApiBase } from '../api'
 import { FRAMEWORKS } from '../controls-data'
 import { LOCALES, useI18n } from '../i18n'
 import {
@@ -49,7 +49,7 @@ function ProgressBar({ value, total, color }: { value: number; total: number; co
 
 const PILLAR_ICONS: Record<string, string> = {
   security: '🔒', cost: '💰', operations: '⚙️', reliability: '🔁',
-  performance: '⚡', sovereign: '🏛️', sustainability: '🌱',
+  performance: '⚡', sovereign: '🏛️', sustainability: '🌱', agentic: '🤖',
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -708,6 +708,17 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         </div>
       </div>
 
+      {/* ── Version Information ──────────────────────────────────────────────── */}
+      <div className="card">
+        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
+          {t('pages.settingsPage.sectionVersion') || 'Version Information'}
+        </h2>
+        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1rem', lineHeight: 1.55 }}>
+          {t('pages.settingsPage.debugInfo') || 'Server and engine versions for debugging'}
+        </div>
+        <VersionInfoBox t={t} />
+      </div>
+
       {/* ── Save ───────────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem' }}>
         <button
@@ -733,6 +744,151 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
 
       </div>
 
+    </div>
+  )
+}
+
+// ─── Version Info Component ───────────────────────────────────────────────────
+
+interface VersionInfo {
+  server_version: string
+  core_version: string
+  wafpass_server: string
+  wafpass_core: string
+}
+
+interface VersionInfoBoxProps {
+  t: (key: string) => string
+}
+
+function VersionInfoBox({ t }: VersionInfoBoxProps) {
+  const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchVersionInfo = async () => {
+      try {
+        const base = getApiBase() || window.location.origin
+        const res = await fetch(`${base}/version`)
+        if (res.ok) {
+          const data = await res.json() as VersionInfo
+          setVersionInfo(data)
+        } else {
+          setError(`Failed to fetch version info: ${res.status} ${res.statusText}`)
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to fetch version info')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchVersionInfo()
+  }, [])
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', color: 'var(--muted)' }}>
+        <div className="spinner" />
+        <span style={{ fontSize: '0.78rem' }}>Loading version info...</span>
+      </div>
+    )
+  }
+
+  if (error || !versionInfo) {
+    return (
+      <div style={{
+        padding: '1rem', borderRadius: '8px', fontSize: '0.78rem',
+        background: 'rgba(218,44,56,0.08)', border: '1px solid rgba(218,44,56,0.3)',
+        color: '#DA2C38',
+      }}>
+        <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: '0.35rem' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.008m-3 6h3a2 2 0 002-2v-6a2 2 0 00-2-2h-3a2 2 0 00-2 2v6a2 2 0 002 2z" />
+          </svg>
+          {t('pages.settingsPage.versionInfo') || 'Version Information'}
+        </div>
+        <p style={{ margin: 0 }}>{error || 'Unable to fetch version information'}</p>
+      </div>
+    )
+  }
+
+  const serverUrl = (getApiBase() || window.location.origin).replace(/\/$/, '')
+  const dashboardUrl = window.location.origin.replace(/\/$/, '')
+  const dashboardVersion = import.meta.env.VITE_APP_VERSION || '1.1.0'
+
+  return (
+    <div style={{
+      background: 'var(--bg)',
+      border: '1px solid var(--border)',
+      borderRadius: '12px',
+      padding: '1rem',
+      fontSize: '0.75rem',
+    }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+        {/* wafpass-server */}
+        <div style={{
+          padding: '0.75rem', borderRadius: '8px',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+        }}>
+          <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '0.25rem' }}>
+            wafpass-server
+          </div>
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', fontFamily: 'monospace' }}>
+            {versionInfo.wafpass_server}
+          </div>
+          <div style={{ marginTop: '0.4rem' }}>
+            <a href={`${serverUrl}/health`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--waf-brand)', textDecoration: 'none', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v12a2.25 2.25 0 002.25 2.25h10.5A2.25 2.25 0 0021 18.25v-10.5a2.25 2.25 0 00-2.25-2.25H15" /></svg>
+              Health Check
+            </a>
+          </div>
+        </div>
+
+        {/* wafpass-core - shows all versions from /version endpoint */}
+        <div style={{
+          padding: '0.75rem', borderRadius: '8px',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+        }}>
+          <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '0.25rem' }}>
+            wafpass-core
+          </div>
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>
+            {versionInfo.wafpass_core}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 0.75rem', fontSize: '0.72rem' }}>
+            <span style={{ color: 'var(--muted)' }}>server_version:</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{versionInfo.server_version}</span>
+            <span style={{ color: 'var(--muted)' }}>core_version:</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{versionInfo.core_version}</span>
+          </div>
+          <div style={{ marginTop: '0.4rem' }}>
+            <a href={`${serverUrl}/version`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--waf-brand)', textDecoration: 'none', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v12a2.25 2.25 0 002.25 2.25h10.5A2.25 2.25 0 0021 18.25v-10.5a2.25 2.25 0 00-2.25-2.25H15" /></svg>
+              API Version
+            </a>
+          </div>
+        </div>
+
+        {/* Dashboard UI */}
+        <div style={{
+          padding: '0.75rem', borderRadius: '8px',
+          background: 'var(--surface)', border: '1px solid var(--border)',
+        }}>
+          <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '0.25rem' }}>
+            Dashboard UI
+          </div>
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', fontFamily: 'monospace' }}>
+            {dashboardVersion}
+          </div>
+          <div style={{ marginTop: '0.4rem' }}>
+            <a href={`${dashboardUrl}/health`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--waf-brand)', textDecoration: 'none', fontSize: '0.7rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v12a2.25 2.25 0 002.25 2.25h10.5A2.25 2.25 0 0021 18.25v-10.5a2.25 2.25 0 00-2.25-2.25H15" /></svg>
+              Dashboard Health
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -133,9 +133,16 @@ const PILLAR_META = [
   { key: 'reliability',    label: 'Reliability',    color: '#22c55e' },
   { key: 'sovereign',      label: 'Sovereignty',    color: '#eab308' },
   { key: 'sustainability', label: 'Sustainability', color: '#14b8a6' },
+  { key: 'agentic',        label: 'Agentic',        color: '#ec4899' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Normalize pillar names: database uses "operational", dashboard uses "operations"
+function normalizePillarName(pillar: string): string {
+  if (pillar === 'operational') return 'operations'
+  return pillar
+}
 
 function scoreColor(s: number) { return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38' }
 function fmt(iso: string) { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) }
@@ -390,9 +397,18 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
 
   const pillarData = useMemo(() => {
     if (!latestRun) return []
-    return PILLAR_META
-      .map(p => ({ pillar: p.label, score: latestRun.pillar_scores?.[p.key] ?? 0, color: p.color }))
-      .filter(p => p.score > 0)
+    // Get all pillar scores from the run, normalizing key names
+    const normalizedScores: Record<string, number> = {}
+    if (latestRun.pillar_scores) {
+      for (const [key, value] of Object.entries(latestRun.pillar_scores)) {
+        normalizedScores[normalizePillarName(key)] = value
+      }
+    }
+    return PILLAR_META.map(p => ({
+      pillar: p.label,
+      score: normalizedScores[p.key] ?? 0,
+      color: p.color,
+    }))
   }, [latestRun])
 
   // Maturity badges: earned = bestScore >= that level's threshold

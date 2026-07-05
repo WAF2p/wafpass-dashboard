@@ -20,6 +20,7 @@ const ControlsCataloguePage  = lazy(() => import('./pages/ControlsCataloguePage'
 const DashboardPage          = lazy(() => import('./pages/DashboardPage'))
 const FindingsPage           = lazy(() => import('./pages/FindingsPage'))
 const CompliancePage         = lazy(() => import('./pages/CompliancePage'))
+const ComplianceReadinessPage = lazy(() => import('./pages/ComplianceReadinessPage'))
 const RegionsPage            = lazy(() => import('./pages/RegionsPage'))
 const ExploitPathsPage       = lazy(() => import('./pages/ExploitPathsPage'))
 const RunsListPage           = lazy(() => import('./pages/RunsListPage'))
@@ -56,6 +57,8 @@ const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
 const LegalPage              = lazy(() => import('./pages/LegalPage'))
+const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
+const PipelinesPage          = lazy(() => import('./PipelinesPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -201,6 +204,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           selectedId={selectedId}
           onSelect={setSelectedId}
           onClose={() => setShowRunModal(false)}
+          role={role}
         />
       )}
 
@@ -224,7 +228,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
         />
 
         {/* Page content */}
-        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', margin: '20px' }}>
+        <main>
         <Suspense fallback={
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
             <div className="spinner" />
@@ -335,6 +339,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
             <CompliancePage run={run} settings={settings} />
+          ) : page === 'compliance-readiness' ? (
+            <ComplianceReadinessPage run={run} />
           ) : page === 'gapanalysis' ? (
             <GapAnalysisPage run={run} />
           ) : page === 'changes' ? (
@@ -361,18 +367,24 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <AntiPatternMuseumPage />
           ) : page === 'legal' ? (
             <LegalPage />
+          ) : page === 'projectgroups' ? (
+            <ProjectGroupsPage />
+          ) : page === 'pipelines' ? (
+            <PipelinesPage />
           ) : null}
         </Suspense>
         </main>
-        {/* PDF report — hidden in normal view, printed only */}
-        {run && (
-          <div id="wafpass-pdf-root" style={{ display: 'none' }}>
-            <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
-          </div>
-        )}
-        {/* Footer - at bottom, full width, dark background */}
-        <Footer />
       </div>
+
+      {/* PDF report — hidden in normal view, printed only */}
+      {run && (
+        <div id="wafpass-pdf-root" style={{ display: 'none' }}>
+          <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
+        </div>
+      )}
+
+      {/* Footer - at bottom, full width, dark background */}
+      <Footer />
     </div>
 
     </I18nProvider>
