@@ -157,7 +157,7 @@ function ServerScanPanel() {
               value={scanPath}
               onChange={e => setScanPath(e.target.value)}
               style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }}
-              placeholder="/srv/terraform/my-infra"
+              placeholder="/srv/iac/my-infra"
               disabled={!ready}
             />
           </div>
@@ -240,7 +240,7 @@ export default function RunScanPage() {
   const { t } = useI18n()
   const serverUrl = getServerUrl()
 
-  const [path, setPath] = useState('/path/to/terraform')
+  const [path, setPath] = useState('/path/to/iac')
   const [iac, setIac] = useState('terraform')
   const [project, setProject] = useState('')
   const [planFile, setPlanFile] = useState('')
@@ -303,7 +303,7 @@ export default function RunScanPage() {
               <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
                 <div style={{ flex: 2, minWidth: '180px' }}>
                   <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.scan.iacSourceLabel')}</label>
-                  <input value={path} onChange={e => setPath(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="/path/to/terraform"/>
+                  <input value={path} onChange={e => setPath(e.target.value)} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} placeholder="/path/to/iac"/>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>Framework</label>
@@ -351,7 +351,7 @@ export default function RunScanPage() {
             <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '0.65rem' }}>
               POST JSON results directly — generated automatically with <code style={{ color: 'var(--text)' }}>--output json --push</code>:
             </div>
-            <CopyBlock lang="sh" code={`wafpass check --output json ./terraform > results.json
+            <CopyBlock lang="sh" code={`wafpass check --output json ./infra > results.json
 
 curl -X POST ${serverUrl}/runs \\
   -H "Content-Type: application/json" \\
@@ -395,7 +395,7 @@ curl -X POST ${serverUrl}/runs \\
               </Step>
 
               <Step n={2} title="Run a scan and push results">
-                <CopyBlock code={`wafpass check --output json --push ${serverUrl}/runs /path/to/terraform`} lang="sh"/>
+                <CopyBlock code={`wafpass check --output json --push ${serverUrl}/runs /path/to/iac`} lang="sh"/>
                 <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.4rem' }}>
                   Results appear in <strong style={{ color: 'var(--text)' }}>Run History</strong> within seconds.
                 </div>
@@ -407,7 +407,7 @@ curl -X POST ${serverUrl}/runs \\
   --push ${serverUrl}/runs \\
   --project "my-service" \\
   --branch main \\
-  /path/to/terraform`} lang="sh"/>
+  /path/to/iac`} lang="sh"/>
               </Step>
 
               <Step n={4} title="CI/CD — GitHub Actions">
@@ -419,7 +419,7 @@ curl -X POST ${serverUrl}/runs \\
       --push ${serverUrl}/runs \\
       --project "\${{ github.repository }}" \\
       --branch "\${{ github.ref_name }}" \\
-      ./terraform`}/>
+      ./infra`}/>
                 <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.4rem' }}>
                   Add <code style={{ color: 'var(--text)' }}>--fail-on fail</code> to break the pipeline on FAIL findings.
                 </div>
@@ -445,7 +445,7 @@ curl -X POST ${serverUrl}/runs \\
                 ['--severity LEVEL',    'Minimum: critical | high | medium | low'],
                 ['--fail-on fail',      'Exit non-zero on FAIL findings (default)'],
                 ['--fail-on skip',      'Exit non-zero on FAIL + SKIP findings'],
-                ['--plan-file PATH',    'Terraform plan JSON for Change Overview'],
+                ['--plan-file PATH',    'IaC plan JSON for Change Overview (Terraform plan JSON)'],
                 ['--waiver-file PATH',  'Skip controls listed in .wafpass-skip.yml'],
               ].map(([flag, desc]) => (
                 <>

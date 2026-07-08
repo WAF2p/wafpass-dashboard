@@ -184,6 +184,7 @@ export interface RunDetail extends RunSummary {
   controls_meta: ControlMeta[]
   secret_findings: SecretFinding[]
   plan_changes: PlanChanges | null
+  source_snapshot?: Record<string, string>  // relative path -> file content, used for Local preview diffs
 }
 
 export interface RunPage {
@@ -466,6 +467,104 @@ export async function sandboxStatus(): Promise<{ engine_available: boolean; cont
   const res = await fetch(`${getApiBase()}/sandbox/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }>
+}
+
+// ── Auto-fix ──────────────────────────────────────────────────────────────────
+
+export interface AutoFixPatch {
+  file: string
+  address: string
+  attribute: string
+  kind: string
+  new_value: string
+  description: string
+  check_id: string
+  control_id: string
+}
+
+export interface AutoFixSkipped {
+  check_id: string
+  control_id: string
+  address: string
+  attribute: string
+  op: string
+  reason: string
+}
+
+export interface AutoFixDelta {
+  resolved: Array<[string, string]>
+  still_failing: Array<[string, string]>
+  regressions: Array<[string, string]>
+}
+
+export interface AutoFixResponse {
+  patches_count: number
+  skipped_count: number
+  files_modified: string[]
+  applied: boolean
+  patches: AutoFixPatch[]
+  skipped: AutoFixSkipped[]
+  diff_preview: Record<string, string[]>
+  warnings: string[]
+  delta: AutoFixDelta | null
+}
+
+export interface AutoFixRequest {
+  path: string
+  iac: string
+  control_ids?: string[]
+  apply: boolean
+}
+
+export async function postAutoFix(payload: AutoFixRequest): Promise<AutoFixResponse> {
+  const res = await fetch(`${getApiBase()}/api/auto-fix`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<AutoFixResponse>
+}
+
+export interface AutoFixRollbackResponse {
+  restored: string[]
+  missing: string[]
+}
+
+export interface AutoFixClassifyRequest {
+  iac: string
+  findings: Pick<Finding, 'control_id' | 'check_id' | 'resource' | 'message'>[]
+  control_ids?: string[]
+  run_id?: string
+}
+
+export async function postAutoFixClassify(payload: AutoFixClassifyRequest): Promise<AutoFixResponse> {
+  const res = await fetch(`${getApiBase()}/api/auto-fix/classify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<AutoFixResponse>
+}
+
+export async function postAutoFixRollback(path: string): Promise<AutoFixRollbackResponse> {
+  const res = await fetch(`${getApiBase()}/api/auto-fix/rollback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ path }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<AutoFixRollbackResponse>
 }
 
 // ── Server-side scan ──────────────────────────────────────────────────────────

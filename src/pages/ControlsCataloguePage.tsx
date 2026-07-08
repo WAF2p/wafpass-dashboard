@@ -1857,9 +1857,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
               {tab === 'custom' && customCount === 0
                 ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>No custom controls yet</strong>Click <strong>New Control</strong> above to author one, or run <code>wafpass control generate</code> from the CLI.</>
-                : pillarFilter.length === 1 && pillarFilter.includes('agentic')
-                  ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: '#ec4899' }}>Agentic Pillar (Coming Soon)</strong>The agentic control checks are not yet available. Watch <a href="https://waf2p.dev" target="_blank" rel="noopener noreferrer" style={{ color: '#ec4899', fontWeight: 700 }}>waf2p.dev</a> for updates on this next-generation pillar.</>
-                  : 'No controls match the current filters.'
+                : 'No controls match the current filters.'
               }
             </div>
           ) : (

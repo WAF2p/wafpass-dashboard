@@ -432,7 +432,7 @@ export default function SandboxPage() {
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-              Terraform HCL Editor
+              HCL Editor
             </h2>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
               {Object.entries(TEMPLATES).map(([key, tpl]) => (
@@ -465,7 +465,7 @@ export default function SandboxPage() {
             value={code}
             onChange={e => setCode(e.target.value)}
             onKeyDown={handleTab}
-            placeholder={`# Paste your Terraform HCL here and click Analyse\n\nresource "aws_s3_bucket" "example" {\n  bucket = "my-bucket"\n}`}
+            placeholder={`# Paste your HCL here and click Analyse\n\nresource "aws_s3_bucket" "example" {\n  bucket = "my-bucket"\n}`}
             style={{
               width: '100%', minHeight: '380px', resize: 'vertical',
               background: '#0f172a', color: '#e2e8f0', border: '1px solid var(--border)',
@@ -507,7 +507,7 @@ export default function SandboxPage() {
               <div style={{ fontSize: '0.78rem', marginTop: '0.3rem' }}>
                 {engineMode === 'real'
                   ? 'Runs the full WAF++ engine server-side against your HCL'
-                  : 'Paste Terraform HCL and click Analyse for instant WAF++ feedback'
+                  : 'Paste HCL and click Analyse for instant WAF++ feedback'
                 }
               </div>
             </div>

@@ -711,10 +711,10 @@ export default function TopNavigation({
             right: 0,
             marginTop: '0.5rem',
             width: '200px',
-            background: 'var(--nav-bg)',
+            background: 'var(--card-bg)',
             border: '1px solid var(--nav-border)',
             borderRadius: '8px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
             zIndex: 100,
             display: 'none',
           }}>

@@ -3,7 +3,7 @@ import {
   Bar, BarChart, Cell, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
-import { Finding, RunDetail } from '../api'
+import { RunDetail } from '../api'
 import { useI18n } from '../i18n'
 
 interface Props {
@@ -150,116 +150,6 @@ function Tile({ icon, title, value, sub, accent = '#0094FF', alert, onClick }: T
   )
 }
 
-// ── Auto-fix modal ────────────────────────────────────────────────────────────
-
-type FixKind = 'auto' | 'manual'
-interface FixEntry { checkId: string; controlId: string; resource: string; reason?: string; kind: FixKind }
-
-const MANUAL_PATTERNS: { test: (id: string) => boolean; reason: string }[] = [
-  { test: id => /s3.encryption|rds.encryption/i.test(id),    reason: 'requires adding an encryption block (structural change)' },
-  { test: id => /no.open.sg|security.group/i.test(id),       reason: 'negation rule — safe replacement cannot be inferred automatically' },
-  { test: id => /scp|organizations/i.test(id),               reason: 'requires creating a separate resource block' },
-]
-
-function classifyFinding(f: Finding): FixKind {
-  return MANUAL_PATTERNS.some(p => p.test(f.check_id ?? '')) ? 'manual' : 'auto'
-}
-
-function manualReason(id: string): string {
-  return MANUAL_PATTERNS.find(p => p.test(id))?.reason ?? 'no auto-fix recipe available'
-}
-
-function CopyBlock({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false)
-  return (
-    <div style={{ position: 'relative', marginTop: '0.25rem' }}>
-      <pre style={{ background: '#0f172a', color: '#e2e8f0', borderRadius: '8px', padding: '0.75rem 3rem 0.75rem 0.875rem', fontSize: '0.78rem', overflowX: 'auto', lineHeight: 1.7, margin: 0 }}>{code}</pre>
-      <button onClick={() => navigator.clipboard.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })}
-        style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: '5px', color: copied ? '#22c55e' : '#94a3b8', fontSize: '0.65rem', padding: '0.15rem 0.45rem', cursor: 'pointer' }}>
-        {copied ? 'Copied!' : 'Copy'}
-      </button>
-    </div>
-  )
-}
-
-function AutoFixModal({ run, findings, scopeLabel, onClose }: { run: RunDetail; findings: Finding[]; scopeLabel: string; onClose: () => void }) {
-  const { t } = useI18n()
-  const iacPath = run.path || run.source_paths?.[0] || '/path/to/terraform'
-  const iac = run.iac_framework && run.iac_framework !== 'terraform' ? run.iac_framework : null
-  const entries: FixEntry[] = findings.map(f => ({ checkId: f.check_id, controlId: f.control_id, resource: f.resource, kind: classifyFinding(f), reason: classifyFinding(f) === 'manual' ? manualReason(f.check_id) : undefined }))
-  const autoE = entries.filter(e => e.kind === 'auto')
-  const manE  = entries.filter(e => e.kind === 'manual')
-  const ctrlIds = Array.from(new Set(autoE.map(e => e.controlId).filter(Boolean)))
-  const iacFlag = iac ? ` \\\n  --iac ${iac}` : ''
-  const ctrlsFlag = ctrlIds.length > 0 && ctrlIds.length < findings.length ? ` \\\n  --controls "${ctrlIds.join(',')}"` : ''
-  const dryRun = `wafpass fix${iacFlag} \\\n  ${iacPath}`
-  const apply  = `wafpass fix${iacFlag}${ctrlsFlag} \\\n  --apply \\\n  ${iacPath}`
-  const manByR = manE.reduce<Record<string, FixEntry[]>>((a, e) => { const k = e.reason ?? 'no recipe'; (a[k] ??= []).push(e); return a }, {})
-
-  return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 99 }} />
-      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '720px', maxWidth: '94vw', maxHeight: '88vh', background: '#fff', borderRadius: '14px', boxShadow: '0 24px 64px rgba(15,23,42,.2)', display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden' }}>
-        <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{t('pages.dashboard.autoFixTitle')}
-                <span style={{ marginLeft: '0.5rem', background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.55rem', fontWeight: 800, padding: '0.1rem 0.35rem', borderRadius: '3px' }}>α</span>
-              </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
-                {t('pages.dashboard.autoFixScope')} <strong style={{ color: 'var(--text)' }}>{scopeLabel}</strong>
-                {' · '}<span style={{ color: '#16a34a', fontWeight: 600 }}>{t('pages.dashboard.autoFixCount', { auto: autoE.length })}</span>
-                {manE.length > 0 && <span style={{ color: 'var(--muted)' }}> · {t('pages.dashboard.manualCount', { count: manE.length })}</span>}
-              </div>
-            </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.1rem', padding: '0.2rem' }}>✕</button>
-          </div>
-        </div>
-        <div style={{ overflowY: 'auto', flex: 1, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)', borderRadius: '10px', padding: '0.75rem 1rem', fontSize: '0.8rem', color: 'var(--text)', lineHeight: 1.6 }}>
-            Run the commands below where your IaC source lives. The dry-run shows a diff without touching files. Add <code style={{ color: 'var(--waf-brand)' }}>--apply</code> to write patches — a <code style={{ color: 'var(--waf-brand)' }}>.tf.bak</code> backup is created automatically.
-          </div>
-          <div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.dashboard.previewStep')}</div>
-            <CopyBlock code={dryRun} />
-          </div>
-          {autoE.length > 0 && (
-            <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.dashboard.applyStep')}</div>
-              <CopyBlock code={apply} />
-            </div>
-          )}
-          {autoE.length > 0 && (
-            <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.dashboard.autoFixable', { count: autoE.length })}</div>
-              {autoE.map((e, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.4rem 0.6rem', borderRadius: '7px', background: 'rgba(22,163,74,.05)', border: '1px solid rgba(22,163,74,.15)', marginBottom: '0.25rem' }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--muted)', flexShrink: 0 }}>{e.controlId}</span>
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.resource}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {manE.length > 0 && (
-            <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.dashboard.manualReview', { count: manE.length })}</div>
-              {Object.entries(manByR).map(([reason, items]) => (
-                <div key={reason} style={{ marginBottom: '0.75rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#b45309', marginBottom: '0.3rem' }}>{reason}</div>
-                  {items.map((e, i) => <div key={i} style={{ display: 'flex', gap: '0.6rem', fontSize: '0.72rem', paddingLeft: '1rem' }}><span style={{ fontFamily: 'monospace', color: 'var(--muted)', flexShrink: 0 }}>{e.controlId}</span><span style={{ fontFamily: 'monospace', color: 'var(--text)' }}>{e.resource}</span></div>)}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.45rem 1.1rem', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>{t('pages.dashboard.closeBtn')}</button>
-        </div>
-      </div>
-    </>
-  )
-}
-
 // ── SVG icons ─────────────────────────────────────────────────────────────────
 
 const I: Record<string, React.ReactNode> = {
@@ -295,7 +185,6 @@ const I: Record<string, React.ReactNode> = {
 export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount = 0, runCount = 0 }: Props) {
   const { t } = useI18n()
   const findings = run.findings
-  const [autoFix, setAutoFix] = useState<{ findings: Finding[]; scopeLabel: string } | null>(null)
 
   // ── Control-level aggregation ─────────────────────────────────────────────
   const controlIds = Array.from(new Set(findings.map(f => f.control_id).filter(Boolean)))
@@ -479,7 +368,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => setAutoFix({ findings: critHighFails, scopeLabel: 'critical & high failures' })}
+              <button onClick={() => onNav?.('autofix')}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid rgba(0,148,255,.3)', background: 'rgba(0,148,255,.07)', color: 'var(--waf-brand)', fontSize: '0.73rem', fontWeight: 700, cursor: 'pointer' }}>
                 {I.bolt} {t('pages.dashboard.autoFix')}
                 <span style={{ background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.48rem', fontWeight: 800, padding: '0.05rem 0.28rem', borderRadius: '3px' }}>α</span>
@@ -492,7 +381,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
               const sev = f.severity?.toUpperCase()
               return (
                 <div key={i}
-                  onClick={() => setAutoFix({ findings: findings.filter(x => x.control_id === f.control_id && x.status?.toUpperCase() === 'FAIL'), scopeLabel: f.control_id })}
+                  onClick={() => onNav?.('autofix')}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: '8px', background: 'var(--surface)', border: '1px solid rgba(218,44,56,.1)', cursor: 'pointer', transition: 'border-color 0.15s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(218,44,56,.3)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(218,44,56,.1)' }}
@@ -758,7 +647,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                 <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.dashboard.quickWinsDesc')}</div>
               </div>
             </div>
-            <button onClick={() => setAutoFix({ findings: allFails, scopeLabel: 'all failing controls' })}
+            <button onClick={() => onNav?.('autofix')}
               style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid rgba(0,148,255,.3)', background: 'rgba(0,148,255,.07)', color: 'var(--waf-brand)', fontSize: '0.73rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
               {I.bolt} {t('pages.dashboard.autoFix')}
               <span style={{ background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.48rem', fontWeight: 800, padding: '0.05rem 0.28rem', borderRadius: '3px' }}>α</span>
@@ -774,7 +663,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                   style={{ padding: '0.7rem', borderRadius: '9px', border: '1px solid var(--border)', cursor: 'pointer', transition: 'border-color 0.15s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--waf-brand)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
-                  onClick={() => setAutoFix({ findings: findings.filter(x => x.control_id === f.control_id && x.status?.toUpperCase() === 'FAIL'), scopeLabel: f.control_id })}
+                  onClick={() => onNav?.('autofix')}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
                     <span style={{ fontFamily: 'monospace', fontSize: '0.67rem', color: 'var(--muted)' }}>{f.control_id}</span>
@@ -818,10 +707,6 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             ))}
           </div>
         </div>
-      )}
-
-      {autoFix && (
-        <AutoFixModal run={run} findings={autoFix.findings} scopeLabel={autoFix.scopeLabel} onClose={() => setAutoFix(null)} />
       )}
 
     </div>

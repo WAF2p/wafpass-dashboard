@@ -86,7 +86,7 @@ In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:80
 | Scan Findings | `#/findings` | engineer | Filterable findings table with bulk actions |
 | Compliance Matrix | `#/compliance` | clevel | Pillar coverage, pass rates, regulatory mapping |
 | Gap Analysis | `#/gapanalysis` | clevel | Shortest path to framework compliance |
-| Changes & Drift | `#/changes` | engineer | Terraform plan changes and compliance drift |
+| Changes & Drift | `#/changes` | engineer | IaC plan changes and compliance drift |
 | Drift Detection | `#/drift` | engineer | Run-over-run control status drift |
 | Skipped Controls | `#/skipped` | ciso | Controls skipped due to no matching IaC resources |
 | Deployed Regions | `#/regions` | clevel | Cloud regions on an interactive map |
@@ -95,14 +95,14 @@ In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:80
 | Dependency Graph | `#/depgraph` | architect | Full resource dependency graph |
 | Remediation Sprint | `#/remediation` | engineer | Prioritised fix queue with score projections |
 | Secret Scanner | `#/secrets` | engineer | Hardcoded credential findings |
-| Module Scores | `#/modules` | engineer | Per-Terraform-module pass rate |
+| Module Scores | `#/modules` | engineer | Per-module pass rate |
 | Cost Impact | `#/cost` | clevel | $/month impact of failing WAF-COST controls |
 | Run History | `#/runs` | clevel | All scan runs with scores |
 | Run Comparison | `#/diff` | engineer | Finding-level diff between two runs |
 | Audit Log | `#/audit` | ciso | Waivers, risk, and scan event timeline |
 | Evidence Package | `#/evidence` | ciso | Lock and export cryptographically-signed audit packages with QR codes |
 | Run Scan | `#/runscan` | engineer | Trigger a scan or generate a CLI command |
-| Architect Sandbox | `#/sandbox` | architect | Test HCL snippets against controls in real time |
+| Architect Sandbox | `#/sandbox` | architect | Test IaC snippets against controls in real time |
 | Waivers | `#/waivers` | ciso | Manage and export control waivers |
 | Risk Acceptance | `#/risk` | ciso | Formally accept risks with approver sign-off |
 | Access Roles | `#/roles` | engineer | View role hierarchy and permissions |
@@ -179,7 +179,7 @@ A per-filtered-view CSV export button is always available in the filter bar.
 
 ### Architect Sandbox
 
-The Sandbox page lets you paste Terraform HCL and evaluate it against WAF++ controls instantly. Two modes:
+The Sandbox page lets you paste IaC snippets (currently Terraform HCL) and evaluate them against WAF++ controls instantly. Two modes:
 - **Mock engine** — browser-side regex evaluation, no server needed
 - **Real engine** — POSTs to `/sandbox`, runs the actual wafpass-core evaluation pipeline
 

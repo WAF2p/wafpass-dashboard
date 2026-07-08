@@ -5,8 +5,8 @@ export default function ReferenceArchitecturePage() {
   const { themeName } = useTheme()
   const { t } = useI18n()
 
-  // Terraform examples are rendered as plain text - no actual resource references here
-  // These are examples to be copied/pasted into actual Terraform .tf files
+  // Examples are rendered as plain text - no actual resource references here
+  // These are examples to be copied/pasted into actual Terraform .tf or Pulumi .py files
   return (
     <div style={{ maxWidth: 'none', width: '100%', margin: '0' }}>
       <div style={{ marginBottom: '2rem' }}>
@@ -14,7 +14,7 @@ export default function ReferenceArchitecturePage() {
           {t('pages.reference.title')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-          Complete Terraform implementation examples for all WAF++ controls
+          Complete Terraform and Pulumi implementation examples for all WAF++ controls
         </p>
       </div>
 

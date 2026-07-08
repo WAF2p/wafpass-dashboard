@@ -5,7 +5,7 @@ export const ALL_PAGES = [
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
   'reference', 'antipattern', 'notifications', 'legal', 'projectgroups', 'pipelines',
-  'compliance-readiness',
+  'compliance-readiness', 'autofix',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -58,6 +58,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   legal:           'Legal Notice',
   pipelines:       'Pipeline Performance',
   'compliance-readiness': 'Compliance Readiness',
+  autofix: 'Auto-Fix Wizard',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
@@ -67,14 +68,14 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   findings:        'Detailed results from the selected run',
   compliance:      'Pillar coverage, pass rates and regulatory framework mapping',
   gapanalysis:     'Shortest path to framework compliance — controls ranked by effort-per-requirement, with remediation steps and evidence export',
-  changes:         'Terraform plan changes (adds, updates, replacements, destroys) and compliance drift — controls that regressed or recovered since the previous run',
+  changes:         'IaC plan changes (adds, updates, replacements, destroys) and compliance drift — controls that regressed or recovered since the previous run',
   regions:         'Detected cloud deployment regions',
   exploitpath:     'Attack chain visualization · internet-facing surfaces are highest criticality',
   blastradius:     'Interactive dependency graph of all failing resources and their structural propagation paths',
   depgraph:        'Full resource dependency graph — all resources colored by compliance status, with connected-subgraph highlighting',
   remediation:     'Prioritised fix queue — select controls to form a sprint and see your projected score gain, resources fixed, and regulatory gaps closed',
   secrets:         'Hardcoded credential issues detected in IaC — passwords, API keys, tokens, and private keys that must be migrated to a secrets manager',
-  modules:         'Per-module pass rate and score drag — identify which Terraform module is pulling the overall score down',
+  modules:         'Per-module pass rate and score drag — identify which module is pulling the overall score down',
   cost:            'Estimated $/month impact for failing WAF-COST controls — waste, savings opportunities, and financial governance risk',
   runs:            'All recorded WAF++ scan runs',
   diff:            'Finding-level diff between two runs — newly broken controls, fixed controls, score delta per pillar',
@@ -82,7 +83,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   evidence:        'Generate a timestamped, auditor-ready evidence package — passing controls, waivers, risk acceptances, and audit trail',
   settings:        'Configure scan defaults, maturity level, and feature toggles',
   runscan:         'Trigger a WAF++ scan from the UI or generate a CLI command',
-  sandbox:         'Evaluate Terraform HCL snippets against WAF++ controls instantly',
+  sandbox:         'Evaluate HCL snippets against WAF++ controls instantly',
   waivers:         'Suppress controls from failing · export as .wafpass-skip.yml',
   risk:            'Formally accept or mitigate risks — with approver, expiry and traceability',
   feedback:        'Share your thoughts with the WAF++ team — we read every message',
@@ -106,6 +107,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   legal:           'Liability disclaimer, terms of use, and open source notice',
   pipelines:       'Track scan performance, pass rates, and duration across all CI/CD pipelines',
   'compliance-readiness': 'Evidence collection status and audit readiness scores — prepare for compliance audits with offline support',
+  autofix: 'Preview, review, and apply automated IaC remediations from a single page',
 }
 
 export interface FilterState {

@@ -242,6 +242,221 @@ export const CONTROLS: Control[] = [
       { framework: 'BSI C5:2020', controls: ['GOV-01'] },
     ],
   },
+  // ── Agentic pillar ──────────────────────────────────────────────────────────
+  {
+    id: 'WAF-AGN-010', title: 'Agent Identity, Authentication & Audit Logging',
+    pillar: 'agentic', severity: 'high', category: 'identity',
+    description: 'Every agent must be identifiable, authenticatable, and traceable. Agents MUST have unique, stable IDs, authenticate via IAM roles or certificates, and log all interactions to an audit trail.',
+    rationale: 'Agents are privileged principals. Without stable identity, strong authentication, and audit logging, agent actions cannot be traced to a responsible party and compliance requirements cannot be met.',
+    threat: [
+      'Unidentified agents making unauthenticated decisions in production',
+      'Agent credentials compromised and used to perform unauthorized actions',
+      'Agent audit trail gaps preventing forensic investigation of incidents',
+    ],
+    checks_count: 4,
+    automated_checks: [
+      { id: 'waf-agn-010.tf.aws.bedrock-agent-id-defined', title: 'AWS Bedrock agents must have a unique identifier and IAM role', severity: 'high', resource_types: ['aws_bedrockagent'], remediation: 'Define an aws_bedrockagent resource with a unique agent_name and agent_resource_role_arn.' },
+      { id: 'waf-agn-010.tf.aws.agent-audit-logging', title: 'AWS Bedrock agent interactions must be logged to CloudWatch', severity: 'high', resource_types: ['aws_cloudwatch_log_group'], remediation: 'Create an aws_cloudwatch_log_group for Bedrock agent audit logs (e.g., /aws/bedrock/agent-audit).' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.2', 'A.8.5', 'A.5.17'] },
+      { framework: 'SOC 2 Type II', controls: ['CC6.1', 'CC6.2'] },
+      { framework: 'NIST SP 800-53', controls: ['AC-2', 'IA-2', 'AU-2'] },
+      { framework: 'GDPR', controls: ['Art. 32', 'Art. 5(1)(f)'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-020', title: 'Agent Tool Use Governance',
+    pillar: 'agentic', severity: 'high', category: 'tools',
+    description: 'Not every agent should be able to use every tool. Tool use must be approved, logged, and limited. Agents MUST have explicit tool definitions with approved lists. Wildcard tools are prohibited.',
+    rationale: 'Unrestricted tool access is one of the fastest ways for an agent to exceed its authority. Explicit tool definitions, tool-call logging, and least-privilege IAM reduce blast radius.',
+    threat: [
+      'Agent invokes unapproved or wildcard tools leading to data exfiltration',
+      'Inability to reconstruct agent decisions because tool calls are not logged',
+      'Tool-call abuse due to missing rate limits or sandboxing',
+    ],
+    checks_count: 4,
+    automated_checks: [
+      { id: 'waf-agn-020.tf.aws.bedrock-agent-tools-approved', title: 'AWS Bedrock agents must have explicit, non-wildcard tool definitions', severity: 'high', resource_types: ['aws_bedrockagent'], remediation: 'Define explicit tools in the aws_bedrockagent tool_schema. Do not use wildcard tool names.' },
+      { id: 'waf-agn-020.tf.aws.tool-rate-limits-configured', title: 'Agent IAM policies should limit tool-call permissions', severity: 'medium', resource_types: ['aws_iam_role_policy'], remediation: 'Restrict the agent IAM policy to only the specific actions required by the approved tools.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.2', 'A.8.3', 'A.5.15'] },
+      { framework: 'SOC 2 Type II', controls: ['CC6.1', 'CC6.3'] },
+      { framework: 'NIST SP 800-53', controls: ['AC-2', 'AC-3', 'AC-6'] },
+      { framework: 'GDPR', controls: ['Art. 32', 'Art. 5(1)(f)'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-030', title: 'Agent Reasoning & Decision Traceability',
+    pillar: 'agentic', severity: 'medium', category: 'observability',
+    description: 'Agent decisions must be traceable, not a black box. Every decision step MUST be logged including chain of thought, reasoning, and decision outcome. Distributed tracing MUST link agent operations end-to-end.',
+    rationale: 'Without reasoning logs and distributed tracing, operators cannot debug failures and auditors cannot verify compliance of autonomous decisions.',
+    threat: [
+      'Agent makes harmful decisions with no auditable reasoning trail',
+      'Debugging and incident response blocked by opaque agent behavior',
+      'Performance or latency issues cannot be traced to specific agent steps',
+    ],
+    checks_count: 3,
+    automated_checks: [
+      { id: 'waf-agn-030.tf.aws.bedrock-agent-logging-enabled', title: 'AWS Bedrock agent reasoning must be logged to CloudWatch', severity: 'medium', resource_types: ['aws_cloudwatch_log_group'], remediation: 'Create an aws_cloudwatch_log_group for Bedrock agent inference/reasoning logs.' },
+      { id: 'waf-agn-030.tf.aws.tracing-enabled', title: 'Distributed tracing must be enabled for agent operations', severity: 'medium', resource_types: ['aws_lambda_function'], remediation: 'Set AWS_XRAY_TRACING_NAME in the Lambda environment variables.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.1', 'A.8.2'] },
+      { framework: 'SOC 2 Type II', controls: ['CC4.1', 'CC7.1'] },
+      { framework: 'NIST SP 800-53', controls: ['AU-2', 'AU-3', 'AU-12'] },
+      { framework: 'GDPR', controls: ['Art. 32', 'Art. 5(1)(f)'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-040', title: 'Agent Memory & State Management',
+    pillar: 'agentic', severity: 'high', category: 'data',
+    description: 'Agent memory MUST be versioned and versioned memory stores MUST be used. State persistence MUST be configured to prevent data loss. Memory and state changes MUST be audited.',
+    rationale: 'Agent memory and state may contain sensitive data. Versioning, persistence, and audit logging prevent data loss and create an immutable record of context changes.',
+    threat: [
+      'Agent memory corruption or deletion causing erratic or unsafe behavior',
+      'Sensitive agent context lost or exposed due to unversioned storage',
+      'Unauthorized memory/state modifications without audit trail',
+    ],
+    checks_count: 3,
+    automated_checks: [
+      { id: 'waf-agn-040.tf.aws.memory-versioning-enabled', title: 'Agent memory must be versioned or protected with point-in-time recovery', severity: 'high', resource_types: ['aws_dynamodb_table', 'aws_s3_bucket'], remediation: 'Enable point_in_time_recovery on DynamoDB tables or versioning on S3 buckets used for agent memory.' },
+      { id: 'waf-agn-040.tf.aws.memory-audit-logging', title: 'Memory and state changes must be audited', severity: 'medium', resource_types: ['aws_dynamodb_table'], remediation: 'Enable stream_enabled with NEW_AND_OLD_IMAGES on DynamoDB tables used for agent memory/state.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.1', 'A.8.2', 'A.8.23'] },
+      { framework: 'NIST SP 800-53', controls: ['SC-28', 'SC-39'] },
+      { framework: 'GDPR', controls: ['Art. 32', 'Art. 25'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-050', title: 'Agent Guardrails & Action Boundaries',
+    pillar: 'agentic', severity: 'high', category: 'guardrails',
+    description: 'Content filters MUST be configured. Action boundaries MUST prevent agents from performing unauthorized actions. Human-in-the-loop MUST be configured for sensitive decisions.',
+    rationale: 'Without guardrails, agents can generate harmful content, exceed their authority, or make sensitive decisions without human oversight.',
+    threat: [
+      'Agent generates harmful, biased, or inappropriate content',
+      'Agent performs destructive or unauthorized actions due to missing boundaries',
+      'High-risk decisions made without human approval',
+    ],
+    checks_count: 3,
+    automated_checks: [
+      { id: 'waf-agn-050.tf.aws.content-filters-enabled', title: 'AWS Bedrock agents must have a guardrail configured', severity: 'high', resource_types: ['aws_bedrockagent'], remediation: 'Add a guardrail_configuration block with a guardrail_arn to each aws_bedrockagent resource.' },
+      { id: 'waf-agn-050.tf.aws.action-boundaries-configured', title: 'Agent IAM policies must be least-privilege', severity: 'high', resource_types: ['aws_iam_role_policy'], remediation: 'Restrict agent IAM policies to the specific actions required by the approved tools.' },
+      { id: 'waf-agn-050.tf.aws.human-in-the-loop-configured', title: 'Human-in-the-loop must be configured for sensitive decisions', severity: 'high', resource_types: ['aws_bedrockagent'], remediation: 'Add a human_interaction_configuration block to aws_bedrockagent resources handling sensitive decisions.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.2', 'A.8.3', 'A.13.1.1'] },
+      { framework: 'CIS Controls v8', controls: ['CIS 13'] },
+      { framework: 'NIST SP 800-53', controls: ['SI-4', 'SI-5'] },
+      { framework: 'GDPR', controls: ['Art. 22', 'Art. 32'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-060', title: 'Agent Orchestration & Resilience',
+    pillar: 'agentic', severity: 'medium', category: 'orchestration',
+    description: 'Agent orchestration MUST use coordinator/manager patterns or mesh architectures. Event-based communication MUST be configured. Failure recovery and health monitoring MUST be in place.',
+    rationale: 'Multi-agent systems need decoupled, observable, and resilient communication. Event-based messaging, dead-letter queues, and health alarms provide production resilience.',
+    threat: [
+      'Tightly coupled agents fail together when one component goes down',
+      'Lost or unprocessed agent messages with no recovery mechanism',
+      'Silent agent failures due to missing health monitoring',
+    ],
+    checks_count: 3,
+    automated_checks: [
+      { id: 'waf-agn-060.tf.aws.event-based-communication', title: 'Agent communication must use event-based messaging', severity: 'medium', resource_types: ['aws_sqs_queue'], remediation: 'Configure an aws_sqs_queue with a redrive_policy for resilient agent event messaging.' },
+      { id: 'waf-agn-060.tf.aws.failure-recovery-configured', title: 'Multi-agent systems must have failure recovery configured', severity: 'medium', resource_types: ['aws_sqs_queue', 'aws_cloudwatch_metric_alarm'], remediation: 'Configure a dead-letter queue via redrive_policy on agent SQS queues and add CloudWatch metric alarms.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.1', 'A.8.2'] },
+      { framework: 'SOC 2 Type II', controls: ['CC4.1', 'CC7.1'] },
+      { framework: 'NIST SP 800-53', controls: ['AU-2', 'AU-6'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-070', title: 'Agent Telemetry & Observability',
+    pillar: 'agentic', severity: 'medium', category: 'observability',
+    description: 'Telemetry MUST be collected for all agents including tokens, latency, and decision metrics. Metrics MUST be ingested into a monitoring system. Distributed tracing MUST link agent operations end-to-end.',
+    rationale: 'Token usage, latency, error rates, and distributed traces are needed to detect anomalies, optimize cost, and troubleshoot agent failures.',
+    threat: [
+      'Runaway token usage or cost overruns go undetected',
+      'Agent failures cannot be traced across distributed components',
+      'Security incidents involving agents are not visible in monitoring',
+    ],
+    checks_count: 3,
+    automated_checks: [
+      { id: 'waf-agn-070.tf.aws.metrics-configured', title: 'Agent metrics must be configured in CloudWatch', severity: 'medium', resource_types: ['aws_cloudwatch_metric_alarm'], remediation: 'Create aws_cloudwatch_metric_alarm resources for Bedrock/Lambda agent metrics.' },
+      { id: 'waf-agn-070.tf.aws.log-integration-configured', title: 'Agent logs must be integrated with CloudWatch metric filters', severity: 'medium', resource_types: ['aws_cloudwatch_log_metric_filter'], remediation: 'Add aws_cloudwatch_log_metric_filter resources with metric_transformations for agent log groups.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.1', 'A.8.2'] },
+      { framework: 'SOC 2 Type II', controls: ['CC4.1', 'CC7.1'] },
+      { framework: 'NIST SP 800-53', controls: ['AU-2', 'AU-3', 'SI-4'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-080', title: 'Human-in-the-Loop & Emergency Override',
+    pillar: 'agentic', severity: 'high', category: 'governance',
+    description: 'Human approval MUST be required for sensitive decisions. Approval workflows must be auditable with timestamps and approver identity. Escape hatches must exist for emergency interventions.',
+    rationale: 'Autonomous systems must not make high-risk decisions without oversight. Human-in-the-loop controls, approval logs, and emergency overrides are essential safety guardrails.',
+    threat: [
+      'Agent makes irreversible high-risk decisions without human approval',
+      'Approval records are tampered with or missing',
+      'No way to stop an agent during an emergency or attack',
+    ],
+    checks_count: 3,
+    automated_checks: [
+      { id: 'waf-agn-080.tf.aws.human-in-the-loop-approved-decisions', title: 'Human-in-the-loop must be configured for sensitive decisions', severity: 'high', resource_types: ['aws_bedrockagent'], remediation: 'Add a human_interaction_configuration block to aws_bedrockagent resources handling sensitive decisions.' },
+      { id: 'waf-agn-080.tf.aws.approval-audit-logging', title: 'Human approvals must be audited with full context', severity: 'high', resource_types: ['aws_cloudwatch_log_group'], remediation: 'Create an aws_cloudwatch_log_group for human approval audit logs.' },
+      { id: 'waf-agn-080.tf.aws.emergency-escape-hatch', title: 'Emergency escape hatch must exist for agent intervention', severity: 'medium', resource_types: ['aws_sns_topic'], remediation: 'Create an aws_sns_topic for emergency agent alerts.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.2', 'A.8.3', 'A.13.1.1'] },
+      { framework: 'GDPR', controls: ['Art. 22', 'Art. 32'] },
+      { framework: 'NIST SP 800-53', controls: ['AC-2', 'AC-6', 'AU-2'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-090', title: 'Agent Cost Efficiency & Optimization',
+    pillar: 'agentic', severity: 'medium', category: 'cost',
+    description: 'Token usage and compute costs MUST be monitored. Budget alerts MUST prevent cost overruns. Model selection MUST be optimized for cost-performance tradeoffs. Caching MUST reduce redundant API calls.',
+    rationale: 'Agentic workloads can consume significant token and compute resources. Monitoring, budgets, and caching are core operational requirements.',
+    threat: [
+      'Runaway token usage leading to unexpected cloud costs',
+      'Over-provisioned or expensive models used for simple tasks',
+      'Repeated identical agent queries wasting API budget',
+    ],
+    checks_count: 4,
+    automated_checks: [
+      { id: 'waf-agn-090.tf.aws.token-monitoring-configured', title: 'Agent token usage must be monitored', severity: 'medium', resource_types: ['aws_cloudwatch_metric_alarm'], remediation: 'Create aws_cloudwatch_metric_alarm resources for Bedrock token metrics.' },
+      { id: 'waf-agn-090.tf.aws.budget-alerts-configured', title: 'Budget alerts must be configured for agent costs', severity: 'medium', resource_types: ['aws_budgets_budget'], remediation: 'Create an aws_budgets_budget with notifications for agent-related spending.' },
+      { id: 'waf-agn-090.tf.aws.caching-configured', title: 'Caching must be implemented to reduce redundant API calls', severity: 'low', resource_types: ['aws_dynamodb_table'], remediation: 'Configure ttl with enabled = true on DynamoDB tables used as agent response caches.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.2', 'A.12.1'] },
+      { framework: 'NIST SP 800-53', controls: ['SC-5', 'SC-39'] },
+    ],
+  },
+  {
+    id: 'WAF-AGN-100', title: 'Agent Debt Register',
+    pillar: 'agentic', severity: 'low', category: 'governance',
+    description: 'Known agent limitations must be documented in an Agent Debt Register: knowledge cutoff, tool availability, accuracy limitations, edge cases, and failure modes. The register must be reviewed quarterly with improvement plans.',
+    rationale: 'Without a documented, maintained register, teams forget edge cases, oversell capabilities, and fail to plan mitigations. A Debt Register turns limitations into tracked risk items.',
+    threat: [
+      'Users rely on agents for tasks beyond their known limitations',
+      'Known failure modes are rediscovered repeatedly because they are not documented',
+      'Improvement plans are not tracked or assigned to owners',
+    ],
+    checks_count: 1,
+    automated_checks: [
+      { id: 'waf-agn-100.tf.agent-debt-register-variable', title: 'Agent Debt Register must be declared as Terraform metadata', severity: 'low', resource_types: ['variable'], remediation: 'Declare a variable "agent_debt_register" with a description that references the maintained Debt Register.' },
+    ],
+    regulatory_mapping: [
+      { framework: 'ISO 27001:2022', controls: ['A.8.1', 'A.8.2'] },
+      { framework: 'NIST SP 800-53', controls: ['RA-5', 'SI-4'] },
+    ],
+  },
 ]
 
 export const FRAMEWORKS = [

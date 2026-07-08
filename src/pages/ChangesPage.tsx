@@ -368,11 +368,13 @@ function NoChanges({ plan }: { plan: PlanChanges }) {
 
 function NoPlanData({ run }: { run: RunDetail }) {
   const { t } = useI18n()
-  const iacPath = run.path || run.source_paths?.[0] || '/path/to/terraform'
-  const iac = run.iac_framework && run.iac_framework !== 'terraform' ? ` --iac ${run.iac_framework}` : ''
+  const iacPath = run.path || run.source_paths?.[0] || '/path/to/iac'
   const pushUrl = window.location.origin
   const [copied, setCopied] = useState(false)
-  const cmd = `terraform plan -out=tfplan\nterraform show -json tfplan > plan.json\nwafpass check${iac} --output json --push ${pushUrl}/runs --plan-file plan.json ${iacPath}`
+  const isTerraform = !run.iac_framework || run.iac_framework === 'terraform'
+  const cmd = isTerraform
+    ? `# Generate a Terraform plan JSON and push it with the scan\nterraform plan -out=tfplan\nterraform show -json tfplan > plan.json\nwafpass check --output json --push ${pushUrl}/runs --plan-file plan.json ${iacPath}`
+    : `# Plan-file change overview is currently supported for Terraform runs.\nwafpass check --iac ${run.iac_framework} --output json --push ${pushUrl}/runs ${iacPath}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '680px' }}>

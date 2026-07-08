@@ -564,7 +564,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             ['allFindings',      'All Findings',         'Complete findings table across all severities',          3],
             ['remediationPlan',  'Remediation Plan',     'Quick wins and auto-fix guidance',                       4],
             ['cloudFootprint',   'Cloud Footprint',      'Detected regions and cloud providers',                   4],
-            ['planChanges',      'Plan Changes',         'Terraform plan adds, updates, destroys, replacements',   5],
+            ['planChanges',      'Plan Changes',         'IaC plan adds, updates, destroys, replacements',   5],
           ] as [keyof ReportSections, string, string, number][]).map(([key, label, desc, minLevel]) => (
             <div key={key} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
