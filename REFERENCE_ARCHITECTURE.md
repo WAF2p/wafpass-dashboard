@@ -15,7 +15,7 @@ This document provides a comprehensive, end-to-end reference architecture for th
 │  │   wafpass-core  │         │  wafpass-server  │         │  wafpass-dashboard    │      │
 │  │  (CLI / Engine) │◄───────►│   (FastAPI/DB)   │◄───────►│   (React SPA)         │      │
 │  │                 │         │                  │         │                         │      │
-│  │ - HCL Parsing   │  API    │ - RESTful API    │  HTTP   │ - Browser UI            │      │
+│  │ - IaC Parsing   │  API    │ - RESTful API    │  HTTP   │ - Browser UI            │      │
 │  │ - Control Eval  │  Calls  │ - PostgreSQL     │  Calls  │ - Real-time Updates   │      │
 │  │ - Scan Results  │         │ - JWT Auth       │         │ - Deep Linking        │      │
 │  └─────────────────┘         └──────────────────┘         └─────────────────────────┘      │
@@ -44,7 +44,7 @@ This document provides a comprehensive, end-to-end reference architecture for th
 
 | Responsibility | Details |
 |----------------|---------|
-| **IaC Parsing** | Parses Terraform HCL, CloudFormation YAML, CDK constructs |
+| **IaC Parsing** | Parses Terraform HCL, CloudFormation YAML, CDK TypeScript, Pulumi Python |
 | **Control Evaluation** | Runs 73+ security controls against parsed infrastructure |
 | **Finding Detection** | Identifies misconfigurations, security gaps, compliance issues |
 | **Region Detection** | Discovers cloud regions from IaC resources |
@@ -95,7 +95,7 @@ Developer/CI System
        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │  wafpass check [flags]                                                      │
-│  - Parse IaC files (Terraform HCL / CloudFormation YAML)                   │
+│  - Parse IaC files (Terraform HCL / CloudFormation YAML / CDK TS / Pulumi Python) │
 │  - Load 73+ controls from controls/ directory                              │
 │  - Evaluate each control against parsed state                              │
 │  - Generate findings with severity, resource, remediation                  │

@@ -1735,7 +1735,16 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             </div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            <div><strong style={{ color: 'var(--text-primary)' }}>{packInfo.control_count}</strong> controls</div>
+            <div>
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {packInfo.catalogue_count ?? packInfo.control_count}
+              </strong> controls in catalogue
+              {packInfo.catalogue_count != null && packInfo.catalogue_count !== packInfo.control_count && (
+                <span style={{ fontSize: '0.7rem', marginLeft: 6, color: 'var(--text-secondary)' }}>
+                  (pack: {packInfo.control_count})
+                </span>
+              )}
+            </div>
             <div>activated {new Date(packInfo.activated_at || '').toLocaleDateString()}</div>
           </div>
         </div>
@@ -1857,9 +1866,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
               {tab === 'custom' && customCount === 0
                 ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>No custom controls yet</strong>Click <strong>New Control</strong> above to author one, or run <code>wafpass control generate</code> from the CLI.</>
-                : pillarFilter.length === 1 && pillarFilter.includes('agentic')
-                  ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: '#ec4899' }}>Agentic Pillar (Coming Soon)</strong>The agentic control checks are not yet available. Watch <a href="https://waf2p.dev" target="_blank" rel="noopener noreferrer" style={{ color: '#ec4899', fontWeight: 700 }}>waf2p.dev</a> for updates on this next-generation pillar.</>
-                  : 'No controls match the current filters.'
+                : 'No controls match the current filters.'
               }
             </div>
           ) : (

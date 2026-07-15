@@ -3,8 +3,8 @@
   --waf-brand-h:    #21A5FF;
   --waf-accent:     #FFCF63;
   --waf-danger:     #DA2C38;
-  --nav-bg:         #f7f8fb;
-  --nav-surf:       #ffffff;
+  --nav-bg:         rgba(247, 248, 251, 0.78);
+  --nav-surf:       rgba(255, 255, 255, 0.65);
   --nav-border:     rgba(15,23,42,.10);
   --nav-text:       #334155;
   --nav-muted:      #64748b;
@@ -37,8 +37,8 @@
 }
 
 [data-theme="dark"] {
-  --nav-bg:         #070a12;
-  --nav-surf:       #0f1630;
+  --nav-bg:         rgba(7, 10, 18, 0.78);
+  --nav-surf:       rgba(15, 22, 48, 0.65);
   --nav-border:     rgba(238,242,255,.10);
   --nav-text:       #b4c0d6;
   --nav-muted:      #64748b;
@@ -92,6 +92,7 @@ a { color: var(--waf-brand); text-decoration: none; }
   display: flex;
   flex-direction: column;
   flex: 1;
+  padding-top: 64px;
 }
 .app-main-content main {
   flex: 1;
@@ -104,21 +105,41 @@ a { color: var(--waf-brand); text-decoration: none; }
 
 /* ── Top Navigation (Desktop) ────────────────────────────────────── */
 .app-top-nav {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   background: var(--nav-bg);
   border-bottom: 1px solid var(--nav-border);
   padding: 0.6rem 2rem;
   display: flex; align-items: center; justify-content: space-between;
   gap: 1.5rem;
   min-width: 0;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow:
+    0 1px 1px rgba(255,255,255,0.25) inset,
+    0 4px 24px rgba(0,0,0,0.08);
 }
-.app-top-nav-logo { display: flex; align-items: center; gap: 1rem; min-width: 0; }
-.app-top-nav-logo img { height: 32px; width: auto; object-fit: contain; filter: brightness(1.05); }
+
+.app-top-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.18) 0%,
+    rgba(255,255,255,0.06) 40%,
+    rgba(255,255,255,0) 100%
+  );
+}
+.app-top-nav-logo { display: flex; align-items: center; gap: 1rem; min-width: 0; position: relative; z-index: 1; }
+.app-top-nav-logo img { height: 32px; width: auto; object-fit: contain; filter: brightness(1.05) drop-shadow(0 1px 1px rgba(0,0,0,0.08)); }
 .app-top-nav-logo-name { font-size: 0.65rem; color: var(--nav-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-.app-top-nav-items { display: flex; align-items: center; gap: 0.25rem; flex: 1; justify-content: center; min-width: 0; }
-.app-top-nav-controls { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; min-width: 0; }
+.app-top-nav-items { display: flex; align-items: center; gap: 0.25rem; flex: 1; justify-content: center; min-width: 0; position: relative; z-index: 1; }
+.app-top-nav-controls { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; min-width: 0; position: relative; z-index: 1; }
 .app-top-nav-controls .run-selector { flex-shrink: 0; max-width: 100%; }
 .app-top-nav-controls .run-selector button { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.875rem; border-radius: 8px; background: var(--nav-surf); border: 1px solid var(--nav-border); cursor: pointer; font-size: 0.75rem; color: var(--nav-text); flex-shrink: 0; min-width: 0; overflow: hidden; }
 .app-top-nav-controls .run-selector button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }

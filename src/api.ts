@@ -184,6 +184,7 @@ export interface RunDetail extends RunSummary {
   controls_meta: ControlMeta[]
   secret_findings: SecretFinding[]
   plan_changes: PlanChanges | null
+  source_snapshot?: Record<string, string>  // relative path -> file content, used for Local preview diffs
 }
 
 export interface RunPage {
@@ -466,6 +467,104 @@ export async function sandboxStatus(): Promise<{ engine_available: boolean; cont
   const res = await fetch(`${getApiBase()}/sandbox/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }>
+}
+
+// ── Auto-fix ──────────────────────────────────────────────────────────────────
+
+export interface AutoFixPatch {
+  file: string
+  address: string
+  attribute: string
+  kind: string
+  new_value: string
+  description: string
+  check_id: string
+  control_id: string
+}
+
+export interface AutoFixSkipped {
+  check_id: string
+  control_id: string
+  address: string
+  attribute: string
+  op: string
+  reason: string
+}
+
+export interface AutoFixDelta {
+  resolved: Array<[string, string]>
+  still_failing: Array<[string, string]>
+  regressions: Array<[string, string]>
+}
+
+export interface AutoFixResponse {
+  patches_count: number
+  skipped_count: number
+  files_modified: string[]
+  applied: boolean
+  patches: AutoFixPatch[]
+  skipped: AutoFixSkipped[]
+  diff_preview: Record<string, string[]>
+  warnings: string[]
+  delta: AutoFixDelta | null
+}
+
+export interface AutoFixRequest {
+  path: string
+  iac: string
+  control_ids?: string[]
+  apply: boolean
+}
+
+export async function postAutoFix(payload: AutoFixRequest): Promise<AutoFixResponse> {
+  const res = await fetch(`${getApiBase()}/api/auto-fix`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<AutoFixResponse>
+}
+
+export interface AutoFixRollbackResponse {
+  restored: string[]
+  missing: string[]
+}
+
+export interface AutoFixClassifyRequest {
+  iac: string
+  findings: Pick<Finding, 'control_id' | 'check_id' | 'resource' | 'message'>[]
+  control_ids?: string[]
+  run_id?: string
+}
+
+export async function postAutoFixClassify(payload: AutoFixClassifyRequest): Promise<AutoFixResponse> {
+  const res = await fetch(`${getApiBase()}/api/auto-fix/classify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<AutoFixResponse>
+}
+
+export async function postAutoFixRollback(path: string): Promise<AutoFixRollbackResponse> {
+  const res = await fetch(`${getApiBase()}/api/auto-fix/rollback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ path }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  return res.json() as Promise<AutoFixRollbackResponse>
 }
 
 // ── Server-side scan ──────────────────────────────────────────────────────────
@@ -1210,6 +1309,7 @@ export interface ActivePackInfo {
   version: string
   description: string
   control_count: number
+  catalogue_count?: number
   imported_at: string
   activated_at: string | null
 }
@@ -1365,23 +1465,8 @@ export interface UpdateInfo {
   version: string
   generated_at: string
   service: string
-  framework_de: {
-    repo_path: string
-    git_branch: string
-    last_commit: {
-      hash: string
-      author: string
-      date: string
-      message: string
-    }
-    version: {
-      current: string
-      display: string
-      prerelease: boolean
-    }
-  }
-  framework_en: {
-    repo_path: string
+  framework: {
+    repo_url: string
     git_branch: string
     last_commit: {
       hash: string
@@ -1427,7 +1512,7 @@ function parseUpdateInfoYaml(text: string): UpdateInfo {
       if (indent === 0) {
         if (key === 'version' || key === 'service') {
           result[key] = cleanValue
-        } else if (key === 'framework_de' || key === 'framework_en') {
+        } else if (key === 'framework') {
           currentKey = key
           result[key] = {}
         } else if (key === 'checks') {
@@ -1436,11 +1521,11 @@ function parseUpdateInfoYaml(text: string): UpdateInfo {
         } else if (key === 'generated_at') {
           result[key] = cleanValue
         }
-      } else if (indent === 2 && currentKey && currentKey.startsWith('framework')) {
+      } else if (indent === 2 && currentKey === 'framework') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const frameworkObj: any = result[currentKey]
-        if (key === 'repo_path' || key === 'git_branch') {
-          frameworkObj[key] = cleanValue
+        if (key === 'repo_url' || key === 'repo_path' || key === 'git_branch') {
+          frameworkObj[key === 'repo_path' ? 'repo_url' : key] = cleanValue
         } else if (key === 'last_commit') {
           currentSubKey = 'last_commit'
           frameworkObj['last_commit'] = {}
@@ -1475,14 +1560,8 @@ function parseUpdateInfoYaml(text: string): UpdateInfo {
     version: result.version || '1.0',
     generated_at: result.generated_at || '',
     service: result.service || 'wafpass-server',
-    framework_de: result.framework_de || {
-      repo_path: '',
-      git_branch: '',
-      last_commit: { hash: '', author: '', date: '', message: '' },
-      version: { current: '', display: '', prerelease: false },
-    },
-    framework_en: result.framework_en || {
-      repo_path: '',
+    framework: result.framework || {
+      repo_url: '',
       git_branch: '',
       last_commit: { hash: '', author: '', date: '', message: '' },
       version: { current: '', display: '', prerelease: false },

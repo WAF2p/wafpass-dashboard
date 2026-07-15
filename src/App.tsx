@@ -59,6 +59,7 @@ const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage')
 const LegalPage              = lazy(() => import('./pages/LegalPage'))
 const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
 const PipelinesPage          = lazy(() => import('./PipelinesPage'))
+const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -371,6 +372,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ProjectGroupsPage />
           ) : page === 'pipelines' ? (
             <PipelinesPage />
+          ) : page === 'autofix' ? (
+            <AutoFixPage run={run} onBack={() => navigate('dashboard')} />
           ) : null}
         </Suspense>
         </main>

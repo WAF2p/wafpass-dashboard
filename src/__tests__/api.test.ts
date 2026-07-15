@@ -90,15 +90,15 @@ describe('fetchServerAuditEvents', () => {
 
   it('returns parsed events on success', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(serverEvents), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      new Response(JSON.stringify({ data: serverEvents }), { status: 200, headers: { 'Content-Type': 'application/json' } })
     )
     const result = await fetchServerAuditEvents()
     expect(result).toEqual(serverEvents)
   })
 
-  it('throws on non-ok response', async () => {
+  it('returns empty array on non-ok response', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('Forbidden', { status: 403 }))
-    await expect(fetchServerAuditEvents()).rejects.toThrow('HTTP 403')
+    await expect(fetchServerAuditEvents()).resolves.toEqual([])
   })
 
   it('passes limit query param', async () => {

@@ -29,7 +29,7 @@ export default function AntiPatternMuseumPage() {
         }}>
           <p style={{ fontSize: '0.9rem', color: 'var(--text)', marginBottom: '1rem', lineHeight: 1.6 }}>
             Documentation usually shows how to do things right, but engineers learn faster by seeing what is wrong.
-            This museum showcases the most common infrastructure anti-patterns found in real-world Terraform code,
+            This museum showcases the most common infrastructure anti-patterns found in real-world IaC code,
             paired with WAF++-compliant alternatives.
           </p>
           <div style={{
@@ -1412,7 +1412,7 @@ resource "aws_db_instance" "main" {
           padding: '1.5rem'
         }}>
           <p style={{ fontSize: '0.9rem', color: 'var(--text)', marginBottom: '1rem' }}>
-            This museum showcases the most common infrastructure anti-patterns found in real-world Terraform code,
+            This museum showcases the most common infrastructure anti-patterns found in real-world IaC code,
             paired with WAF++-compliant alternatives. By learning from these mistakes, you can:
           </p>
           <ul style={{ fontSize: '0.8rem', color: 'var(--text)', marginLeft: '1.5rem', marginTop: '0.5rem', marginBottom: '1rem' }}>

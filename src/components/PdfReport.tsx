@@ -571,7 +571,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
         {/* ── Plan Changes ── */}
         {sec.planChanges && run.plan_changes && (
           <div style={{ pageBreakInside: 'avoid', marginBottom: '2rem' }}>
-            <SectionTitle colors={colors}>Terraform Plan Changes</SectionTitle>
+            <SectionTitle colors={colors}>Plan Changes</SectionTitle>
             <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {Object.entries(run.plan_changes.summary).map(([op, cnt]) => {
                 const opColor: Record<string, string> = { add: '#22c55e', change: '#eab308', destroy: '#ef4444', replace: '#f97316', no_op: '#94a3b8' }
