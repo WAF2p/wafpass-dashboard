@@ -1735,7 +1735,16 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             </div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            <div><strong style={{ color: 'var(--text-primary)' }}>{packInfo.control_count}</strong> controls</div>
+            <div>
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {packInfo.catalogue_count ?? packInfo.control_count}
+              </strong> controls in catalogue
+              {packInfo.catalogue_count != null && packInfo.catalogue_count !== packInfo.control_count && (
+                <span style={{ fontSize: '0.7rem', marginLeft: 6, color: 'var(--text-secondary)' }}>
+                  (pack: {packInfo.control_count})
+                </span>
+              )}
+            </div>
             <div>activated {new Date(packInfo.activated_at || '').toLocaleDateString()}</div>
           </div>
         </div>

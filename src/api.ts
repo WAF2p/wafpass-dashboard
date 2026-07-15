@@ -1309,6 +1309,7 @@ export interface ActivePackInfo {
   version: string
   description: string
   control_count: number
+  catalogue_count?: number
   imported_at: string
   activated_at: string | null
 }
@@ -1464,23 +1465,8 @@ export interface UpdateInfo {
   version: string
   generated_at: string
   service: string
-  framework_de: {
-    repo_path: string
-    git_branch: string
-    last_commit: {
-      hash: string
-      author: string
-      date: string
-      message: string
-    }
-    version: {
-      current: string
-      display: string
-      prerelease: boolean
-    }
-  }
-  framework_en: {
-    repo_path: string
+  framework: {
+    repo_url: string
     git_branch: string
     last_commit: {
       hash: string
@@ -1526,7 +1512,7 @@ function parseUpdateInfoYaml(text: string): UpdateInfo {
       if (indent === 0) {
         if (key === 'version' || key === 'service') {
           result[key] = cleanValue
-        } else if (key === 'framework_de' || key === 'framework_en') {
+        } else if (key === 'framework') {
           currentKey = key
           result[key] = {}
         } else if (key === 'checks') {
@@ -1535,11 +1521,11 @@ function parseUpdateInfoYaml(text: string): UpdateInfo {
         } else if (key === 'generated_at') {
           result[key] = cleanValue
         }
-      } else if (indent === 2 && currentKey && currentKey.startsWith('framework')) {
+      } else if (indent === 2 && currentKey === 'framework') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const frameworkObj: any = result[currentKey]
-        if (key === 'repo_path' || key === 'git_branch') {
-          frameworkObj[key] = cleanValue
+        if (key === 'repo_url' || key === 'repo_path' || key === 'git_branch') {
+          frameworkObj[key === 'repo_path' ? 'repo_url' : key] = cleanValue
         } else if (key === 'last_commit') {
           currentSubKey = 'last_commit'
           frameworkObj['last_commit'] = {}
@@ -1574,14 +1560,8 @@ function parseUpdateInfoYaml(text: string): UpdateInfo {
     version: result.version || '1.0',
     generated_at: result.generated_at || '',
     service: result.service || 'wafpass-server',
-    framework_de: result.framework_de || {
-      repo_path: '',
-      git_branch: '',
-      last_commit: { hash: '', author: '', date: '', message: '' },
-      version: { current: '', display: '', prerelease: false },
-    },
-    framework_en: result.framework_en || {
-      repo_path: '',
+    framework: result.framework || {
+      repo_url: '',
       git_branch: '',
       last_commit: { hash: '', author: '', date: '', message: '' },
       version: { current: '', display: '', prerelease: false },

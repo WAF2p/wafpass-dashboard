@@ -1456,7 +1456,7 @@ const en: Translations = {
       activateBtn: 'Activate',
       activating: 'Activating…',
       noPacks: 'No control packs imported yet.',
-      pack: '{{count}} pack{{s}}',
+      pack: '{{count}} pack{{suffix}}',
       howItWorks: 'How It Works',
       uploadZipStep: 'Upload ZIP: package your *.yml control files into a .zip and upload directly from your browser.',
       syncStep: 'Sync from Directory: place updated YAML files in WAFPASS_CONTROLS_DIR on the server and trigger a sync.',
@@ -1465,6 +1465,7 @@ const en: Translations = {
       manageControls: 'Manage Individual Controls',
       catalogueLink: 'Controls Catalogue',
       singlePointTruth: 'Single Point of Truth',
+      versionLoadError: 'Could not reach the WAF++ framework repository. The version reference is temporarily unavailable.',
     },
 
     antipattern: {

@@ -1363,6 +1363,7 @@ const de: PartialTranslations = {
       manageControls: 'Individuelle Kontrollen verwalten',
       catalogueLink: 'Kontrollen-Katalog',
       singlePointTruth: 'Einzelne Quelle der Wahrheit',
+      versionLoadError: 'Das WAF++-Framework-Repository ist derzeit nicht erreichbar. Die Versionsreferenz ist vorübergehend nicht verfügbar.',
     },
 
     antipattern: {

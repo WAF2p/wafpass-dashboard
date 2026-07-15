@@ -48,6 +48,7 @@ export default function ControlsPacksPage() {
   const [error, setError]           = useState<string | null>(null)
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [updateLoading, setUpdateLoading] = useState(true)
+  const [updateError, setUpdateError] = useState<string | null>(null)
   const [activeTab, setActiveTab]         = useState<'sync' | 'upload'>('upload')
   const [syncVersion, setSyncVersion]     = useState('')
   const [syncDesc, setSyncDesc]           = useState('')
@@ -77,14 +78,16 @@ export default function ControlsPacksPage() {
 
   useEffect(() => {
     setUpdateLoading(true)
+    setUpdateError(null)
     fetchUpdateInfo()
       .then(setUpdateInfo)
       .catch((e: Error) => {
         console.error('Failed to fetch framework update info:', e)
         setUpdateInfo(null)
+        setUpdateError(t('pages.controlspacks.versionLoadError') ?? 'Could not reach the WAF++ framework repository.')
       })
       .finally(() => setUpdateLoading(false))
-  }, [])
+  }, [t])
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault()
@@ -207,13 +210,26 @@ export default function ControlsPacksPage() {
           </div>
           {updateLoading ? (
             <div style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
-              Loading latest version information...
+              Loading latest version information…
+            </div>
+          ) : updateError ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.5rem 0.75rem', borderRadius: 8,
+              background: 'rgba(249, 115, 22, 0.08)', border: '1px solid rgba(249, 115, 22, 0.18)',
+              color: '#c2410c', fontSize: '0.82rem',
+            }}>
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {updateError}
             </div>
           ) : updateInfo ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text)', fontFamily: 'monospace' }}>
-                  {updateInfo.version}
+                  {updateInfo.framework.version.display || updateInfo.version}
                 </span>
                 <span style={{ padding: '0.1rem 0.5rem', borderRadius: '999px', background: 'rgba(0,148,255,.12)', color: '#0094FF', fontSize: '0.68rem', fontWeight: 600 }}>
                   {updateInfo.generated_at ? `Updated: ${new Date(updateInfo.generated_at).toLocaleDateString()}` : ''}
@@ -221,16 +237,16 @@ export default function ControlsPacksPage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>DE:</strong> {updateInfo.framework_de.version.display} (commit {updateInfo.framework_de.last_commit.hash?.substring(0, 8) || '—'})
+                  Branch: <strong style={{ color: 'var(--text-primary)' }}>{updateInfo.framework.git_branch}</strong>
                 </span>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>EN:</strong> {updateInfo.framework_en.version.display} (commit {updateInfo.framework_en.last_commit.hash?.substring(0, 8) || '—'})
+                  Commit: <strong style={{ color: 'var(--text-primary)' }}>{updateInfo.framework.last_commit.hash?.substring(0, 8) || '—'}</strong>
                 </span>
               </div>
             </>
           ) : (
-            <div style={{ fontSize: '0.82rem', color: '#f97316' }}>
-              Failed to load version information
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              No framework version information available.
             </div>
           )}
         </div>
@@ -474,7 +490,9 @@ export default function ControlsPacksPage() {
           <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
             {t('pages.controlspacks.packHistory')}
           </h2>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('pages.controlspacks.pack', { count: packs.length })}</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {t('pages.controlspacks.pack', { count: packs.length, suffix: packs.length === 1 ? '' : 's' })}
+          </span>
         </div>
 
         {loading && (

@@ -1602,6 +1602,7 @@ export interface Translations {
       manageControls: string
       catalogueLink: string
       singlePointTruth: string
+      versionLoadError: string
     }
 
     notifications: {
