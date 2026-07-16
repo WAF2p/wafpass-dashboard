@@ -168,6 +168,20 @@ export default function UserPreferencesModal({ prefs, onChange, onClose }: Props
             <Toggle checked={p.pdfAutoOpen} onChange={v => update({ pdfAutoOpen: v })} />
           </PrefRow>
 
+          <SectionHead label="Help Tour" />
+          <PrefRow label="Show onboarding tour again" desc="Reset the guided tour so it appears automatically on next login">
+            <button
+              onClick={() => update({ hasSeenOnboarding: false })}
+              style={{
+                background: 'var(--bg)', color: 'var(--muted)',
+                border: '1px solid var(--border)', borderRadius: 8,
+                padding: '0.35rem 0.65rem', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Reset tour
+            </button>
+          </PrefRow>
+
           <div style={{ height: '0.75rem' }} />
         </div>
 

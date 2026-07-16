@@ -1,8 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { ControlMeta, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, pushUserPrefsToServer } from './api'
+import { ControlMeta, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, pushUserPrefsToServer, type UserOut } from './api'
 import { useAuth } from './AuthContext'
 import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
+import OnboardingTour from './components/OnboardingTour'
 import RunSelectorModal from './components/RunSelectorModal'
 const UserPreferencesPage    = lazy(() => import('./pages/UserPreferencesPage'))
 const NotificationsPage      = lazy(() => import('./pages/NotificationsPage'))
@@ -51,7 +52,7 @@ const ProjectOverviewPage    = lazy(() => import('./pages/ProjectOverviewPage'))
 const PassportDashboardPage  = lazy(() => import('./pages/PassportDashboardPage'))
 const BadgePage              = lazy(() => import('./pages/BadgePage'))
 const LeaderboardPage        = lazy(() => import('./pages/LeaderboardPage'))
-const MaturityJourneyPage    = lazy(() => import('./pages/MaturityJourneyPage'))
+const JourneyPage            = lazy(() => import('./pages/journey/JourneyPage'))
 const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
 const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
@@ -83,7 +84,7 @@ export default function App() {
 
 
 function AuthenticatedApp({ user, role, onLogout }: {
-  user: { username: string; display_name: string; image_url: string; role: string }
+  user: UserOut
   role: string
   onLogout(): Promise<void>
 }) {
@@ -97,6 +98,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [waiverCount, setWaiverCount] = useState(0)
   const [riskCount, setRiskCount] = useState(0)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const onboardingAutoLaunched = useRef(false)
   const mounted = useRef(false)
 
   const { runs, selectedId, setSelectedId, run, loadingRun, refetchRuns } = useRunLoader(initialRunId)
@@ -171,6 +174,20 @@ function AuthenticatedApp({ user, role, onLogout }: {
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-launch onboarding on first login after installation unless already seen
+  useEffect(() => {
+    if (onboardingAutoLaunched.current) return
+    if (!user?.created_at || !user?.last_login_at) return
+    if (userPrefs.hasSeenOnboarding) return
+    const created = new Date(user.created_at).getTime()
+    const lastLogin = new Date(user.last_login_at).getTime()
+    const isFirstLogin = Math.abs(created - lastLogin) <= 5 * 60 * 1000
+    if (isFirstLogin) {
+      onboardingAutoLaunched.current = true
+      setShowOnboarding(true)
+    }
+  }, [user, userPrefs.hasSeenOnboarding])
+
   const debouncedServerPush = useCallback((p: UserPreferences) => {
     if (prefsSyncTimer.current) clearTimeout(prefsSyncTimer.current)
     setPrefsSyncStatus('syncing')
@@ -209,6 +226,18 @@ function AuthenticatedApp({ user, role, onLogout }: {
         />
       )}
 
+      <OnboardingTour
+        open={showOnboarding}
+        onClose={() => {
+          handleUserPrefsChange({ ...userPrefs, hasSeenOnboarding: true })
+          setShowOnboarding(false)
+        }}
+        onComplete={() => {
+          handleUserPrefsChange({ ...userPrefs, hasSeenOnboarding: true })
+          setShowOnboarding(false)
+        }}
+      />
+
       <div className="app-main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* Desktop navigation: Top navigation for desktop, Sidebar hidden on mobile */}
         <TopNavigation
@@ -226,6 +255,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           onOpenUserPrefs={() => navigate('userprefs')}
           onLogout={onLogout}
           onShowRunModal={() => setShowRunModal(true)}
+          onOpenOnboarding={() => setShowOnboarding(true)}
         />
 
         {/* Page content */}
@@ -238,7 +268,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           {page === 'userprefs' ? (
             <UserPreferencesPage prefs={userPrefs} user={user} syncStatus={prefsSyncStatus} onChange={handleUserPrefsChange} />
           ) : page === 'journey' ? (
-            <MaturityJourneyPage run={run} runs={runs} maturityLevel={maturityLevel} settings={settings} waiverCount={waiverCount} riskCount={riskCount} navigate={navigate} />
+            <JourneyPage run={run} runs={runs} navigate={navigate} />
           ) : page === 'globaldashboard' ? (
             <GlobalDashboardPage runs={runs} navigate={navigate} />
           ) : page === 'leaderboard' ? (
@@ -261,7 +291,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
               onBack={() => navigate('passports')}
             />
           ) : page === 'controlspacks' ? (
-            <ControlsPacksPage />
+            <ControlsPacksPage navigate={p => navigate(p as Page)} />
           ) : page === 'users' ? (
             <UserManagementPage />
           ) : page === 'groupmappings' ? (

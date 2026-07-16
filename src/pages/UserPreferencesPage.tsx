@@ -233,6 +233,22 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
               {t('prefs.resetBtn')}
             </button>
           </div>
+
+          <div className="card" style={{ padding: '0.9rem 1rem' }}>
+            <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('onboarding.openHelp')}</div>
+            <Row label={t('prefs.showOnboardingAgain')} desc={t('prefs.showOnboardingAgainDesc')}>
+              <button
+                onClick={() => update({ hasSeenOnboarding: false })}
+                style={{
+                  background: 'var(--bg)', color: 'var(--muted)',
+                  border: '1px solid var(--border)', borderRadius: 8,
+                  padding: '0.45rem 0.75rem', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                {t('onboarding.restart')}
+              </button>
+            </Row>
+          </div>
         </div>
 
       </div>

@@ -49,6 +49,7 @@ export interface TopNavigationProps {
   onOpenUserPrefs: () => void
   onLogout: () => Promise<void>
   onShowRunModal: () => void
+  onOpenOnboarding?: () => void
 }
 
 // Role icons from AccessRolesPage (ROLES array)
@@ -320,7 +321,7 @@ function NavSectionDropdown({ section, page, navigate }: { section: NavSection; 
             top: '100%',
             left: 0,
             minWidth: '700px',
-            background: 'var(--nav-bg)',
+            background: 'var(--nav-bg-opaque)',
             border: '1px solid var(--nav-border)',
             borderRadius: '12px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
@@ -494,6 +495,7 @@ export default function TopNavigation({
   run, runs, page, role, user, maturityLevel,
   settings, waiverCount, riskCount, failCount,
   navigate, onOpenUserPrefs, onLogout, onShowRunModal,
+  onOpenOnboarding,
 }: TopNavigationProps) {
   const { t, lang } = useI18n()
   const [linkCopied, setLinkCopied] = useState(false)
@@ -647,6 +649,23 @@ export default function TopNavigation({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
         </button>
+
+        {/* Help / onboarding tour */}
+        {onOpenOnboarding && (
+          <button
+            onClick={onOpenOnboarding}
+            title={t('onboarding.openHelp')}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '32px', height: '32px', borderRadius: '8px',
+              background: 'var(--nav-surf)', color: 'var(--nav-muted)',
+              border: '1px solid var(--nav-border)', cursor: 'pointer',
+              fontSize: '0.85rem', fontWeight: 700, flexShrink: 0,
+            }}
+          >
+            ?
+          </button>
+        )}
 
         {/* Maturity level */}
         {(() => {

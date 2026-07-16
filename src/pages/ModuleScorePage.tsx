@@ -29,7 +29,6 @@ function extractModulePath(resource: string): string {
 
 function moduleDisplayName(path: string): string {
   if (path === '(root)') return 'Root'
-  // "module.rds.module.db" → "rds / db"
   return path.replace(/module\./g, '').replace(/\./g, ' / ')
 }
 
@@ -73,13 +72,17 @@ function scoreColor(s: number) {
   return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
 }
 
+function scoreBg(s: number) {
+  return s >= 80 ? 'rgba(5,150,105,.12)' : s >= 60 ? 'rgba(217,119,6,.12)' : 'rgba(218,44,56,.12)'
+}
+
 // ── Data model ────────────────────────────────────────────────────────────────
 
 interface ControlSummary {
   id: string
   title: string
   severity: string
-  failCount: number   // unique resources failing this control in the module
+  failCount: number
 }
 
 interface ModuleData {
@@ -90,23 +93,22 @@ interface ModuleData {
   pass: number
   fail: number
   skip: number
-  score: number       // (pass / (pass + fail)) * 100, or 100 if no fails
+  score: number
   critFail: number
   highFail: number
   medFail: number
   lowFail: number
   uniqueResources: number
   failingResources: number
-  topControls: ControlSummary[]   // top 5 by failCount, worst severity first
+  topControls: ControlSummary[]
   pillarScores: { key: string; label: string; color: string; pass: number; fail: number; score: number }[]
-  worstSeverity: string           // severity of the worst FAIL finding
-  scoreDrag: number               // estimated pts dragged from overall score
+  worstSeverity: string
+  scoreDrag: number
 }
 
 function buildModules(findings: Finding[], overallScore: number): ModuleData[] {
   const totalFails = findings.filter(f => f.status?.toUpperCase() === 'FAIL').length
 
-  // Group findings by module path
   const grouped = new Map<string, Finding[]>()
   for (const f of findings) {
     const p = extractModulePath(f.resource)
@@ -129,7 +131,6 @@ function buildModules(findings: Finding[], overallScore: number): ModuleData[] {
     const uniqueResources = new Set(mFindings.map(f => f.resource).filter(Boolean)).size
     const failingResources = new Set(failFindings.map(f => f.resource).filter(Boolean)).size
 
-    // Top controls by fail count
     const ctrlMap = new Map<string, ControlSummary>()
     for (const f of failFindings) {
       if (!f.control_id) continue
@@ -145,13 +146,11 @@ function buildModules(findings: Finding[], overallScore: number): ModuleData[] {
       )
       .slice(0, 5)
 
-    // Normalize findings' pillar names for matching with PILLAR_META keys
     const normalizedFindings = mFindings.map(f => ({
       ...f,
       pillar: f.pillar ? normalizePillarName(f.pillar) : undefined
     }))
 
-    // Pillar scores
     const pillarScores = PILLAR_META.map(p => {
       const pf = normalizedFindings.filter(f => f.pillar?.toLowerCase() === p.key)
       const pPass = pf.filter(f => f.status?.toUpperCase() === 'PASS').length
@@ -160,10 +159,8 @@ function buildModules(findings: Finding[], overallScore: number): ModuleData[] {
       return { ...p, pass: pPass, fail: pFail, score: pScore }
     })
 
-    // Worst severity in this module's failures
     const worstSeverity = critFail > 0 ? 'CRITICAL' : highFail > 0 ? 'HIGH' : medFail > 0 ? 'MEDIUM' : lowFail > 0 ? 'LOW' : 'PASS'
 
-    // Score drag: proportion of overall failures × remaining score gap
     const scoreDrag = totalFails > 0
       ? Math.round((fail / totalFails) * (100 - overallScore))
       : 0
@@ -186,23 +183,73 @@ function buildModules(findings: Finding[], overallScore: number): ModuleData[] {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SevBadge({ sev, count }: { sev: string; count: number }) {
+function SevBadge({ sev, count, showLabel = true }: { sev: string; count: number; showLabel?: boolean }) {
   if (count === 0) return null
   const s = sev.toUpperCase()
   return (
     <span style={{
-      fontSize: '0.62rem', fontWeight: 800, borderRadius: '4px', padding: '0.1rem 0.4rem',
+      display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+      fontSize: '0.62rem', fontWeight: 800, borderRadius: '6px', padding: '0.15rem 0.45rem',
       background: SEV_BG[s] ?? SEV_BG.INFO, color: SEV_COLOR[s] ?? '#94a3b8',
-      letterSpacing: '0.04em', flexShrink: 0,
-    }}>{count} {s}</span>
+      letterSpacing: '0.03em', flexShrink: 0,
+    }}>
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: SEV_COLOR[s] ?? '#94a3b8' }} />
+      {showLabel && <span>{s}</span>}
+      <span>{count}</span>
+    </span>
   )
 }
 
-function ScoreBar({ score, width = '100%' }: { score: number; width?: string }) {
+function ScoreRing({ score, size = 72, thickness = 7 }: { score: number; size?: number; thickness?: number }) {
   const color = scoreColor(score)
+  const radius = (size - thickness) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (score / 100) * circumference
   return (
-    <div style={{ width, height: '6px', borderRadius: '3px', background: 'var(--bg)', overflow: 'hidden', flexShrink: 0 }}>
-      <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width .3s' }} />
+    <div style={{ width: size, height: size, position: 'relative', flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke="var(--border)" strokeWidth={thickness}
+        />
+        <circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke={color} strokeWidth={thickness}
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+        />
+      </svg>
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'column',
+      }}>
+        <span style={{ fontSize: size > 60 ? '1rem' : '0.75rem', fontWeight: 900, color, lineHeight: 1 }}>{score}%</span>
+      </div>
+    </div>
+  )
+}
+
+function MiniBar({ value, total, color, height = 6 }: { value: number; total: number; color: string; height?: number }) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0
+  return (
+    <div style={{ height, borderRadius: height / 2, background: 'var(--bg)', overflow: 'hidden', width: '100%' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: height / 2, transition: 'width .3s' }} />
+    </div>
+  )
+}
+
+function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div style={{ marginBottom: '0.75rem' }}>
+      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        {title}
+      </div>
+      {subtitle && (
+        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.25rem', lineHeight: 1.5 }}>
+          {subtitle}
+        </div>
+      )}
     </div>
   )
 }
@@ -215,53 +262,63 @@ function ModuleRow({
   mod: ModuleData; selected: boolean; onClick: () => void
 }) {
   const accentColor = mod.fail === 0 ? '#059669' : SEV_COLOR[mod.worstSeverity] ?? '#94a3b8'
+  const leftPad = 1 + mod.depth * 0.55
 
   return (
     <button
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%',
-        padding: '0.65rem 1rem', background: selected ? 'rgba(0,148,255,.06)' : 'transparent',
+        display: 'flex', alignItems: 'center', gap: '0.7rem', width: '100%',
+        padding: `0.7rem 1rem 0.7rem ${leftPad}rem`,
+        background: selected ? 'rgba(0,148,255,.07)' : 'transparent',
         border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer',
-        textAlign: 'left', transition: 'background .1s',
+        textAlign: 'left', transition: 'background .12s',
         borderLeft: selected ? '3px solid var(--waf-brand)' : '3px solid transparent',
       }}
       onMouseEnter={e => { if (!selected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg)' }}
       onMouseLeave={e => { if (!selected) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
     >
-      {/* Severity dot */}
-      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: accentColor, flexShrink: 0 }} />
-
-      {/* Name + path */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          {mod.depth > 0 && (
-            <span style={{ fontSize: '0.6rem', color: 'var(--muted)', fontFamily: 'monospace', opacity: 0.6 }}>
-              {'└ '.repeat(Math.min(mod.depth, 2))}
-            </span>
-          )}
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {mod.displayName}
+      {/* Depth connector + severity dot */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+        {mod.depth > 0 && (
+          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontFamily: 'monospace', opacity: 0.5 }}>
+            {'└'}
           </span>
+        )}
+        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: accentColor }} />
+      </div>
+
+      {/* Name + meta */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {mod.displayName}
         </div>
-        <div style={{ marginTop: '0.2rem' }}>
-          <ScoreBar score={mod.score} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem' }}>
+          <div style={{ flex: 1, minWidth: '40px' }}>
+            <MiniBar value={mod.pass} total={mod.pass + mod.fail} color={mod.fail === 0 ? '#059669' : '#DA2C38'} />
+          </div>
+          <span style={{ fontSize: '0.62rem', color: 'var(--muted)', flexShrink: 0 }}>
+            {mod.pass + mod.fail} checks
+          </span>
         </div>
       </div>
 
-      {/* Score */}
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{ fontSize: '0.88rem', fontWeight: 800, color: scoreColor(mod.score) }}>{mod.score}%</div>
-        {mod.scoreDrag > 0 && (
-          <div style={{ fontSize: '0.6rem', color: '#DA2C38', fontWeight: 600, whiteSpace: 'nowrap' }}>
-            ▼{mod.scoreDrag} pts
-          </div>
-        )}
+      {/* Score badge */}
+      <div style={{
+        flexShrink: 0, textAlign: 'center', minWidth: '2.6rem',
+        padding: '0.25rem 0.45rem', borderRadius: '6px',
+        background: scoreBg(mod.score), color: scoreColor(mod.score),
+        fontSize: '0.78rem', fontWeight: 800,
+      }}>
+        {mod.score}%
       </div>
 
       {/* Fail count */}
       {mod.fail > 0 && (
-        <div style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: '#DA2C38', minWidth: '2rem', textAlign: 'center' }}>
+        <div style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: '#DA2C38', minWidth: '2.2rem', textAlign: 'right' }}>
           {mod.fail}✗
         </div>
       )}
@@ -269,48 +326,54 @@ function ModuleRow({
   )
 }
 
-// ── Detail panel ──────────────────────────────────────────────────────────────
+// ── Detail panel ───────────────────────────────────────────────────────────────
 
-function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
+function DetailPanel({ mod }: { mod: ModuleData }) {
   const { t } = useI18n()
   const [showAll, setShowAll] = useState(false)
   const [statusFilter, setStatusFilter] = useState('FAIL')
 
   const selectStyle: React.CSSProperties = {
     background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-    borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.75rem', outline: 'none',
+    borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.78rem', outline: 'none',
   }
 
-  const filtered = mod.findings.filter(f =>
-    !statusFilter || f.status?.toUpperCase() === statusFilter
-  )
-  const shown = showAll ? filtered : filtered.slice(0, 12)
+  const filtered = mod.findings.filter(f => !statusFilter || f.status?.toUpperCase() === statusFilter)
+  const shown = showAll ? filtered : filtered.slice(0, 14)
+
+  const totalChecks = mod.pass + mod.fail + mod.skip
+  const severityRows = [
+    { key: 'CRITICAL', count: mod.critFail, color: SEV_COLOR.CRITICAL },
+    { key: 'HIGH',     count: mod.highFail, color: SEV_COLOR.HIGH },
+    { key: 'MEDIUM',   count: mod.medFail,  color: SEV_COLOR.MEDIUM },
+    { key: 'LOW',      count: mod.lowFail,  color: SEV_COLOR.LOW },
+  ]
+  const statusRows = [
+    { key: 'PASS', count: mod.pass, color: STATUS_COLOR.PASS, label: t('pages.moduleScore.passes') },
+    { key: 'FAIL', count: mod.fail, color: STATUS_COLOR.FAIL, label: t('pages.moduleScore.failures') },
+    { key: 'SKIP', count: mod.skip, color: STATUS_COLOR.SKIP, label: t('pages.moduleScore.skipped') },
+  ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem 1.5rem' }}>
 
-      {/* Score header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-        {/* Score circle */}
-        <div style={{
-          width: '72px', height: '72px', borderRadius: '50%', flexShrink: 0,
-          background: `conic-gradient(${scoreColor(mod.score)} ${mod.score * 3.6}deg, var(--bg) 0deg)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 0 0 4px var(--surface), 0 0 0 6px ${scoreColor(mod.score)}30`,
-        }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-            <span style={{ fontSize: '1rem', fontWeight: 900, color: scoreColor(mod.score), lineHeight: 1 }}>{mod.score}%</span>
-            <span style={{ fontSize: '0.55rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.moduleScore.score')}</span>
-          </div>
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.25rem' }}>
+      {/* Header with score ring */}
+      <div style={{
+        display: 'flex', gap: '1.25rem', alignItems: 'center',
+        padding: '1rem 1.25rem', borderRadius: '12px', background: 'var(--bg)', border: '1px solid var(--border)',
+      }}>
+        <ScoreRing score={mod.score} size={84} thickness={8} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.2rem' }}>
             {mod.displayName}
           </div>
-          <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontFamily: 'monospace', marginBottom: '0.4rem', wordBreak: 'break-all' }}>
+          <div style={{
+            fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace',
+            wordBreak: 'break-all', marginBottom: '0.5rem',
+          }}>
             {mod.path}
           </div>
-          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
             <SevBadge sev="CRITICAL" count={mod.critFail} />
             <SevBadge sev="HIGH"     count={mod.highFail} />
             <SevBadge sev="MEDIUM"   count={mod.medFail} />
@@ -319,54 +382,85 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
         </div>
       </div>
 
-      {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-        {[
-          { label: t('pages.moduleScore.resources'), value: mod.uniqueResources },
-          { label: t('pages.moduleScore.failingRes'), value: mod.failingResources, color: mod.failingResources > 0 ? '#DA2C38' : undefined },
-          { label: t('pages.moduleScore.scoreDrag'), value: mod.scoreDrag > 0 ? `▼${mod.scoreDrag}pt` : '—', color: mod.scoreDrag > 0 ? '#DA2C38' : undefined },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ borderRadius: '8px', padding: '0.5rem 0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)' }}>{label}</div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: color ?? 'var(--text)', marginTop: '0.1rem' }}>{value}</div>
-          </div>
-        ))}
-      </div>
+      {/* Stats + distribution row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '1rem' }}>
 
-      {/* Pillar breakdown */}
-      {mod.pillarScores.length > 0 && (
-        <div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.5rem' }}>{t('pages.moduleScore.pillarScores')}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            {mod.pillarScores.map(p => (
-              <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '72px', fontSize: '0.68rem', fontWeight: 600, color: p.color, flexShrink: 0, textAlign: 'right' }}>{p.label}</div>
-                <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--bg)', overflow: 'hidden' }}>
-                  <div style={{ width: `${p.score}%`, height: '100%', background: p.score < 60 ? '#DA2C38' : p.score < 80 ? '#d97706' : p.color, borderRadius: '3px', transition: 'width .3s' }} />
-                </div>
-                <div style={{ width: '32px', fontSize: '0.68rem', fontWeight: 700, color: scoreColor(p.score), textAlign: 'right', flexShrink: 0 }}>{p.score}%</div>
-                {p.fail > 0 && <div style={{ fontSize: '0.62rem', color: '#DA2C38', flexShrink: 0 }}>{p.fail}✗</div>}
+        {/* Stats */}
+        <div className="card" style={{ padding: '1rem' }}>
+          <SectionTitle title={t('pages.moduleScore.moduleDetails')} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {[
+              { label: t('pages.moduleScore.resources'), value: mod.uniqueResources },
+              { label: t('pages.moduleScore.failingRes'), value: mod.failingResources, color: mod.failingResources > 0 ? '#DA2C38' : undefined },
+              { label: t('pages.moduleScore.scoreDrag'), value: mod.scoreDrag > 0 ? `▼${mod.scoreDrag}pt` : '—', color: mod.scoreDrag > 0 ? '#DA2C38' : undefined },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{label}</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: color ?? 'var(--text)' }}>{value}</span>
               </div>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Top failing controls */}
-      {mod.topControls.length > 0 && (
-        <div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.4rem' }}>
-            {t('pages.moduleScore.topFailingControls')}
+        {/* Status breakdown */}
+        <div className="card" style={{ padding: '1rem' }}>
+          <SectionTitle title={t('pages.moduleScore.statusBreakdown')} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+            {statusRows.map(({ key, count, color, label }) => (
+              <div key={key} style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr 2rem', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {label}
+                </span>
+                <MiniBar value={count} total={totalChecks} color={color} />
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color, textAlign: 'right' }}>
+                  {count}
+                </span>
+              </div>
+            ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-            {mod.topControls.map(c => {
-              const s = (c.severity ?? 'INFO').toUpperCase()
+        </div>
+
+        {/* Severity distribution */}
+        <div className="card" style={{ padding: '1rem' }}>
+          <SectionTitle title={t('pages.moduleScore.severityDistribution')} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+            {severityRows.map(({ key, count, color }) => (
+              <div key={key} style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr 2rem', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {key[0] + key.slice(1).toLowerCase()}
+                </span>
+                <MiniBar value={count} total={mod.fail || 1} color={color} />
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color, textAlign: 'right' }}>
+                  {count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Pillar scores */}
+      {mod.pillarScores.length > 0 && (
+        <div>
+          <SectionTitle title={t('pages.moduleScore.pillarScores')} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.75rem' }}>
+            {mod.pillarScores.map(p => {
+              const hasData = p.score >= 0
               return (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.5rem', borderRadius: '6px', background: SEV_BG[s] ?? 'var(--bg)', border: `1px solid ${SEV_COLOR[s] ?? '#94a3b8'}25` }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: SEV_COLOR[s] ?? '#94a3b8', flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontSize: '0.72rem', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title || c.id}</span>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--muted)', flexShrink: 0 }}>{c.id}</span>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#DA2C38', flexShrink: 0 }}>{c.failCount}✗</span>
+                <div key={p.key} style={{
+                  padding: '0.85rem 1rem', borderRadius: '10px', background: 'var(--bg)', border: '1px solid var(--border)',
+                  display: 'flex', flexDirection: 'column', gap: '0.4rem',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 700, color: p.color }}>{p.label}</span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: hasData ? scoreColor(p.score) : 'var(--muted)' }}>
+                      {hasData ? `${p.score}%` : '—'}
+                    </span>
+                  </div>
+                  {hasData && <MiniBar value={p.pass} total={p.pass + p.fail} color={p.score >= 80 ? p.color : '#DA2C38'} height={5} />}
+                  <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>
+                    {p.pass} {t('pages.moduleScore.passes')} · {p.fail} {t('pages.moduleScore.failures')}
+                  </div>
                 </div>
               )
             })}
@@ -374,55 +468,109 @@ function DetailPanel({ mod }: { mod: ModuleData; run: RunDetail }) {
         </div>
       )}
 
-      {/* Findings list */}
+      {/* Top failing controls */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)' }}>
-            {t('pages.moduleScore.findings', { count: String(filtered.length) })}
+        <SectionTitle title={t('pages.moduleScore.topIssues')} />
+        {mod.topControls.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.6rem' }}>
+            {mod.topControls.map(c => {
+              const s = (c.severity ?? 'INFO').toUpperCase()
+              return (
+                <div key={c.id} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.6rem',
+                  padding: '0.55rem 0.75rem', borderRadius: '8px',
+                  background: SEV_BG[s] ?? 'var(--bg)', border: `1px solid ${SEV_COLOR[s] ?? '#94a3b8'}30`,
+                }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: SEV_COLOR[s] ?? '#94a3b8', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {c.title || c.id}
+                    </div>
+                    <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>{c.id}</div>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#DA2C38', flexShrink: 0 }}>{c.failCount}✗</span>
+                </div>
+              )
+            })}
           </div>
+        ) : (
+          <div style={{
+            padding: '1rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)',
+            color: 'var(--muted)', fontSize: '0.78rem', textAlign: 'center',
+          }}>
+            {t('pages.moduleScore.noTopIssues')}
+          </div>
+        )}
+      </div>
+
+      {/* Findings list */}
+      <div className="card" style={{ padding: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.6rem', flexWrap: 'wrap' }}>
+          <SectionTitle title={t('pages.moduleScore.findings', { count: String(filtered.length) })} />
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
-            <option value="">All</option>
-            <option value="FAIL">FAIL</option>
-            <option value="PASS">PASS</option>
-            <option value="SKIP">SKIP</option>
+            <option value="">{t('common.all')}</option>
+            <option value="FAIL">{t('status.fail')}</option>
+            <option value="PASS">{t('status.pass')}</option>
+            <option value="SKIP">{t('status.skip')}</option>
           </select>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           {shown.map((f, i) => {
             const st = (f.status ?? '').toUpperCase()
             const sv = (f.severity ?? 'INFO').toUpperCase()
             return (
               <div key={i} style={{
-                display: 'flex', alignItems: 'flex-start', gap: '0.4rem', padding: '0.3rem 0.4rem',
-                borderRadius: '6px', background: st === 'FAIL' ? 'rgba(218,44,56,.04)' : 'var(--bg)',
-                border: st === 'FAIL' ? '1px solid rgba(218,44,56,.15)' : '1px solid transparent',
+                display: 'flex', alignItems: 'center', gap: '0.6rem',
+                padding: '0.45rem 0.6rem', borderRadius: '8px',
+                background: st === 'FAIL' ? 'rgba(218,44,56,.04)' : 'var(--bg)',
+                border: `1px solid ${st === 'FAIL' ? 'rgba(218,44,56,.15)' : 'var(--border)'}`,
               }}>
-                <div style={{ width: '3px', height: '100%', minHeight: '16px', borderRadius: '2px', background: STATUS_COLOR[st] ?? '#94a3b8', flexShrink: 0, alignSelf: 'stretch' }} />
+                <div style={{
+                  width: '3px', alignSelf: 'stretch', minHeight: '18px', borderRadius: '2px',
+                  background: STATUS_COLOR[st] ?? '#94a3b8', flexShrink: 0,
+                }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{
+                    fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
                     {f.check_title || f.check_id}
                   </div>
                   {f.resource && (
-                    <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.resource}</div>
+                    <div style={{
+                      fontSize: '0.64rem', color: 'var(--muted)', fontFamily: 'monospace',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {f.resource}
+                    </div>
                   )}
                 </div>
-                <span style={{ fontSize: '0.6rem', fontWeight: 700, borderRadius: '3px', padding: '0.05rem 0.3rem', background: SEV_BG[sv] ?? SEV_BG.INFO, color: SEV_COLOR[sv] ?? '#94a3b8', flexShrink: 0 }}>{sv[0]}</span>
+                <span style={{
+                  fontSize: '0.6rem', fontWeight: 700, borderRadius: '4px', padding: '0.1rem 0.35rem',
+                  background: SEV_BG[sv] ?? SEV_BG.INFO, color: SEV_COLOR[sv] ?? '#94a3b8', flexShrink: 0,
+                }}>
+                  {sv}
+                </span>
               </div>
             )
           })}
         </div>
 
-        {filtered.length > 12 && !showAll && (
+        {filtered.length > 14 && !showAll && (
           <button
             onClick={() => setShowAll(true)}
-            style={{ marginTop: '0.5rem', width: '100%', padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.72rem', cursor: 'pointer' }}
+            style={{
+              marginTop: '0.6rem', width: '100%', padding: '0.45rem', borderRadius: '8px',
+              border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)',
+              fontSize: '0.74rem', cursor: 'pointer', fontWeight: 600,
+            }}
           >
             {t('pages.moduleScore.showAll', { count: String(filtered.length) })}
           </button>
         )}
         {filtered.length === 0 && (
-          <div style={{ padding: '0.75rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.78rem' }}>
+          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.78rem' }}>
             {t('pages.moduleScore.noMatchFilter')}
           </div>
         )}
@@ -482,57 +630,103 @@ export default function ModuleScorePage({ run }: Props) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-      {/* ── Summary strip ── */}
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+      {/* ── Page header ── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.35rem' }}>
+            {t('pages.moduleScore.pageTitle')}
+          </h1>
+          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
+            {t('pages.moduleScore.pageSubtitle')}
+          </div>
+        </div>
+        {run.source_paths && run.source_paths.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.moduleScore.scannedPaths')}</span>
+            {run.source_paths.map(p => (
+              <code key={p} style={{
+                fontSize: '0.7rem', background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: '4px', padding: '0.15em 0.45em', color: 'var(--text)',
+              }}>{p}</code>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Summary cards ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.875rem' }}>
         {[
-          { label: t('pages.moduleScore.modulesLabel'), value: modules.length, sub: `${run.source_paths?.length ?? 0} scanned path${run.source_paths?.length !== 1 ? 's' : ''}` },
-          { label: t('pages.moduleScore.modulesWithFailures'), value: modulesWithFail, color: modulesWithFail > 0 ? '#DA2C38' : undefined },
-          { label: t('pages.moduleScore.totalFailures'), value: totalFails, color: totalFails > 0 ? '#DA2C38' : undefined },
-          { label: t('pages.moduleScore.criticalFails'), value: totalCrit, color: totalCrit > 0 ? '#DA2C38' : undefined },
-          { label: t('pages.moduleScore.worstModule'), value: worstModule?.displayName ?? '—', sub: worstModule ? `${worstModule.score}%` : undefined, color: worstModule?.fail ? '#DA2C38' : undefined },
+          {
+            label: t('pages.moduleScore.modulesLabel'),
+            value: modules.length,
+            sub: `${run.source_paths?.length ?? 0} scanned path${run.source_paths?.length !== 1 ? 's' : ''}`,
+            color: 'var(--waf-brand)',
+          },
+          {
+            label: t('pages.moduleScore.modulesWithFailures'),
+            value: modulesWithFail,
+            color: modulesWithFail > 0 ? '#DA2C38' : '#059669',
+          },
+          {
+            label: t('pages.moduleScore.totalFailures'),
+            value: totalFails,
+            color: totalFails > 0 ? '#DA2C38' : '#059669',
+          },
+          {
+            label: t('pages.moduleScore.criticalFails'),
+            value: totalCrit,
+            color: totalCrit > 0 ? '#DA2C38' : '#059669',
+          },
+          {
+            label: t('pages.moduleScore.worstModule'),
+            value: worstModule?.displayName ?? '—',
+            sub: worstModule ? `${worstModule.score}% · ${worstModule.fail} failures` : undefined,
+            color: worstModule?.fail ? '#DA2C38' : '#059669',
+          },
         ].map(({ label, value, color, sub }) => (
           <div key={label} style={{
-            flex: 1, minWidth: '110px', borderRadius: '10px', padding: '0.75rem 1rem',
+            borderRadius: '12px', padding: '1rem 1.1rem',
             background: color ? `${color}0d` : 'var(--bg)',
             border: `1px solid ${color ? `${color}30` : 'var(--border)'}`,
+            display: 'flex', flexDirection: 'column', gap: '0.2rem',
           }}>
-            <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: color ?? 'var(--muted)', marginBottom: '0.2rem' }}>{label}</div>
-            <div style={{ fontSize: typeof value === 'number' ? '1.5rem' : '0.88rem', fontWeight: 800, color: color ?? 'var(--text)', lineHeight: 1, wordBreak: 'break-word' }}>{value}</div>
-            {sub && <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{sub}</div>}
+            <div style={{
+              fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em',
+              color: color ?? 'var(--muted)',
+            }}>
+              {label}
+            </div>
+            <div style={{
+              fontSize: typeof value === 'number' ? '1.6rem' : '0.88rem',
+              fontWeight: 800, color: color ?? 'var(--text)', lineHeight: 1.15,
+              wordBreak: 'break-word',
+            }}>
+              {value}
+            </div>
+            {sub && <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{sub}</div>}
           </div>
         ))}
       </div>
 
-      {/* ── Source paths note ── */}
-      {run.source_paths?.length > 0 && (
-        <div style={{ padding: '0.5rem 0.875rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <svg width="13" height="13" fill="none" stroke="var(--muted)" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-          </svg>
-          <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.moduleScore.scannedPaths')}</span>
-          {run.source_paths.map(p => (
-            <code key={p} style={{ fontSize: '0.7rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.1em 0.4em', color: 'var(--text)' }}>{p}</code>
-          ))}
-        </div>
-      )}
-
       {/* ── Master-detail ── */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', minHeight: '480px' }}>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', minHeight: '560px' }}>
 
-        {/* Left: module list */}
-        <div style={{ width: '300px', flexShrink: 0, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+        {/* Left: module directory */}
+        <div style={{ width: '380px', flexShrink: 0, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--surface)' }}>
           {/* Toolbar */}
-          <div style={{ padding: '0.625rem 0.75rem', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.4rem', background: 'var(--bg)' }}>
+          <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.55rem', background: 'var(--bg)' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {t('pages.moduleScore.moduleDirectory')}
+            </div>
             <input
               placeholder={t('pages.moduleScore.filterPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ ...selectStyle, fontSize: '0.78rem', padding: '0.35rem 0.5rem' }}
+              style={{ ...selectStyle, fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontSize: '0.62rem', color: 'var(--muted)', fontWeight: 600, flexShrink: 0 }}>{t('pages.moduleScore.sortLabel')}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
               {([
                 ['score', t('pages.moduleScore.sortScoreAsc')],
                 ['fail',  t('pages.moduleScore.sortFailDesc')],
@@ -543,11 +737,12 @@ export default function ModuleScorePage({ run }: Props) {
                   key={k}
                   onClick={() => setSortKey(k)}
                   style={{
-                    fontSize: '0.62rem', fontWeight: 600, padding: '0.15rem 0.4rem',
-                    borderRadius: '4px', border: '1px solid var(--border)',
+                    fontSize: '0.62rem', fontWeight: 700, padding: '0.2rem 0.45rem',
+                    borderRadius: '6px', border: '1px solid var(--border)',
                     background: sortKey === k ? 'var(--waf-brand)' : 'var(--surface)',
                     color: sortKey === k ? '#fff' : 'var(--muted)',
                     cursor: 'pointer', flexShrink: 0,
+                    transition: 'all .12s',
                   }}
                 >{label}</button>
               ))}
@@ -572,18 +767,18 @@ export default function ModuleScorePage({ run }: Props) {
           </div>
 
           {/* Footer count */}
-          <div style={{ padding: '0.4rem 0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg)' }}>
+          <div style={{ padding: '0.5rem 1rem', borderTop: '1px solid var(--border)', fontSize: '0.68rem', color: 'var(--muted)', background: 'var(--bg)' }}>
             {t('pages.moduleScore.modulesOf', { count: String(sorted.length), total: String(modules.length) })}
           </div>
         </div>
 
         {/* Right: detail panel */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
           {selected
-            ? <DetailPanel key={selected.path} mod={selected} run={run} />
+            ? <DetailPanel key={selected.path} mod={selected} />
             : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--muted)', fontSize: '0.85rem' }}>
-                {t('pages.moduleScore.selectModule')}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--muted)', fontSize: '0.85rem', padding: '2rem', textAlign: 'center' }}>
+                {t('pages.moduleScore.selectFromList')}
               </div>
             )}
         </div>

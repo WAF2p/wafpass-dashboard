@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Bar, BarChart, Cell, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -14,46 +14,45 @@ interface Props {
   runCount?: number
 }
 
-// ── Colour helpers ────────────────────────────────────────────────────────────
+// ── Palette ────────────────────────────────────────────────────────────────────
 
 const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: '#DA2C38',
-  HIGH:     '#f97316',
-  MEDIUM:   '#eab308',
-  LOW:      '#22c55e',
+  CRITICAL: '#DC2626',
+  HIGH: '#F97316',
+  MEDIUM: '#F59E0B',
+  LOW: '#10B981',
 }
 
-// ── Pillar metadata for consistent display of all 8 pillars ──────────────────
-const PILLAR_META: { key: string; label: string; color: string }[] = [
-  { key: 'security',    label: 'Security',    color: '#DA2C38' },
-  { key: 'cost',        label: 'Cost',        color: '#0094FF' },
-  { key: 'operations',  label: 'Operations',  color: '#8b5cf6' },
-  { key: 'performance', label: 'Performance', color: '#f97316' },
-  { key: 'reliability', label: 'Reliability', color: '#22c55e' },
-  { key: 'sovereign',   label: 'Sovereignty', color: '#eab308' },
-  { key: 'sustainability', label: 'Sustainability', color: '#14b8a6' },
-  { key: 'agentic',     label: 'Agentic',     color: '#ec4899' },
+const PILLAR_META: { key: string; label: string; color: string; slug: string }[] = [
+  { key: 'security', label: 'Security', color: '#DC2626', slug: 'SEC' },
+  { key: 'cost', label: 'Cost', color: '#0094FF', slug: 'CST' },
+  { key: 'operations', label: 'Operations', color: '#8B5CF6', slug: 'OPS' },
+  { key: 'performance', label: 'Performance', color: '#F97316', slug: 'PRF' },
+  { key: 'reliability', label: 'Reliability', color: '#10B981', slug: 'REL' },
+  { key: 'sovereign', label: 'Sovereignty', color: '#F59E0B', slug: 'SOV' },
+  { key: 'sustainability', label: 'Sustainability', color: '#14B8A6', slug: 'SUS' },
+  { key: 'agentic', label: 'Agentic', color: '#EC4899', slug: 'AGT' },
 ]
 
-// Legacy PILLAR_COLOR map for backwards compatibility
 const PILLAR_COLOR: Record<string, string> = Object.fromEntries(
   PILLAR_META.map(p => [p.key, p.color])
 )
+
+const PROVIDER_COLOR: Record<string, string> = {
+  aws: '#FF9900', azure: '#0078D4', gcp: '#34A853',
+  oci: '#F80000', alicloud: '#FF6A00', yandex: '#FCDB03',
+}
+
+const SEVERITIES = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
+const HEAT_STEPS = ['#fff1f2', '#fecdd3', '#f43f5e', '#be123c']
 
 function normalizePillarName(p: string): string {
   if (p === 'operational') return 'operations'
   return p
 }
 
-const PROVIDER_COLOR: Record<string, string> = {
-  aws: '#f97316', azure: '#2b7fff', gcp: '#22c55e',
-  oci: '#c74634', alicloud: '#ff6a00', yandex: '#fcdb03',
-}
-
-const SEVERITIES = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-
 function scoreColor(s: number) {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
+  return s >= 80 ? '#059669' : s >= 60 ? '#D97706' : '#DC2626'
 }
 
 function scoreLabel(s: number, t: (key: string) => string) {
@@ -72,169 +71,244 @@ function dateFmt(iso: string) {
   catch { return iso }
 }
 
-// ── Shared sub-components ─────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 800) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration)
+      setValue(Math.round(target * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration])
+  return value
+}
 
-function ScoreGauge({ score }: { score: number }) {
-  const R = 54, C = 2 * Math.PI * R
-  const arc = (score / 100) * C
-  const color = scoreColor(score)
+// ── Icons ──────────────────────────────────────────────────────────────────────
+
+function IconWrapper({ children, size = 18 }: { children: React.ReactNode; size?: number }) {
   return (
-    <svg width="130" height="130" viewBox="0 0 130 130">
-      <circle cx="65" cy="65" r={R} fill="none" stroke="var(--border)" strokeWidth="12" />
-      <circle cx="65" cy="65" r={R} fill="none" stroke={color} strokeWidth="12"
-        strokeDasharray={`${arc} ${C}`} strokeLinecap="round"
-        transform="rotate(-90 65 65)"
-        style={{ transition: 'stroke-dasharray 0.7s ease' }} />
-      <text x="65" y="61" textAnchor="middle" fill={color} fontSize="30" fontWeight="800">{score}</text>
-      <text x="65" y="78" textAnchor="middle" fill="#94a3b8" fontSize="12">/100</text>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      {children}
     </svg>
   )
 }
 
-function SevBadge({ sev }: { sev: string }) {
-  const sevUpper = sev.toUpperCase()
-  const c = SEVERITY_COLOR[sevUpper] ?? '#94a3b8'
-  return <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: hex(c, 0.14), color: c, fontSize: '0.62rem', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>{sevUpper}</span>
+const I = {
+  shield:  <IconWrapper><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></IconWrapper>,
+  list:    <IconWrapper><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></IconWrapper>,
+  bolt:    <IconWrapper><path d="M13 10V3L4 14h7v7l9-11h-7z" /></IconWrapper>,
+  check:   <IconWrapper><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></IconWrapper>,
+  globe:   <IconWrapper><path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" /></IconWrapper>,
+  warning: <IconWrapper><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></IconWrapper>,
+  fire:    <IconWrapper><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></IconWrapper>,
+  key:     <IconWrapper><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></IconWrapper>,
+  dollar:  <IconWrapper><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></IconWrapper>,
+  history: <IconWrapper><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></IconWrapper>,
+  diff:    <IconWrapper><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></IconWrapper>,
+  log:     <IconWrapper><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></IconWrapper>,
+  play:    <IconWrapper><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></IconWrapper>,
+  code:    <IconWrapper><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></IconWrapper>,
+  waiver:  <IconWrapper><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></IconWrapper>,
+  risk:    <IconWrapper><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></IconWrapper>,
+  drift:   <IconWrapper><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></IconWrapper>,
+  sprint:  <IconWrapper><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></IconWrapper>,
+  module:  <IconWrapper><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></IconWrapper>,
+  blast:   <IconWrapper><circle cx="12" cy="12" r="3" strokeWidth={2} /><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" /></IconWrapper>,
+  dep:     <IconWrapper><path d="M4 6h16M4 12h16M4 18h7" /></IconWrapper>,
+  exploit: <IconWrapper><path d="M13 10V3L4 14h7v7l9-11h-7z" /></IconWrapper>,
+  gap:     <IconWrapper><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></IconWrapper>,
+  evidence:<IconWrapper><path d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8.586a1 1 0 00-.293-.707l-4.586-4.586A1 1 0 0014.414 3H8zm6 0v4h4M10 12h4m-4 4h2" /></IconWrapper>,
+  skip:    <IconWrapper><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></IconWrapper>,
+  branch:  <IconWrapper size={12}><path d="M6 3v12M18 9a3 3 0 100-6 3 3 0 000 6zm-12 0a3 3 0 100 6 3 3 0 000-6zm0 0h12" /></IconWrapper>,
+  arrow:   <IconWrapper size={14}><path d="M5 12h14M12 5l7 7-7 7" /></IconWrapper>,
+  x:       <IconWrapper size={16}><path d="M18 6L6 18M6 6l12 12" /></IconWrapper>,
 }
 
-function CardLabel({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>{children}</div>
-}
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
-// ── Nav tile ──────────────────────────────────────────────────────────────────
+function ScoreGauge({ score, label, size = 160 }: { score: number; label: string; size?: number }) {
+  const color = scoreColor(score)
+  const radius = (size - 28) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (score / 100) * circumference
+  const animValue = useCountUp(score, 900)
 
-interface TileProps {
-  icon: React.ReactNode
-  title: string
-  value?: string | number
-  sub?: string
-  accent?: string
-  alert?: boolean
-  onClick?: () => void
-}
-
-function Tile({ icon, title, value, sub, accent = '#0094FF', alert, onClick }: TileProps) {
-  const [hov, setHov] = useState(false)
   return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        background: 'var(--surface)',
-        border: `1px solid ${hov ? hex(accent, 0.4) : 'var(--border)'}`,
-        borderRadius: '10px',
-        padding: '0.875rem 1rem',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'border-color 0.15s, box-shadow 0.15s',
-        boxShadow: hov ? `0 4px 12px ${hex(accent, 0.12)}` : '0 1px 3px rgba(15,23,42,.04)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.75rem',
-      }}
-    >
-      <div style={{ width: '1.875rem', height: '1.875rem', borderRadius: '7px', background: hex(accent, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: accent }}>
-        {icon}
-      </div>
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.83rem', fontWeight: 700, color: 'var(--text)' }}>{title}</span>
-          {alert && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#DA2C38', display: 'inline-block', flexShrink: 0 }} />}
-          {value !== undefined && value !== 0 && value !== '0' && (
-            <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: 800, color: accent, whiteSpace: 'nowrap' }}>{value}</span>
-          )}
-        </div>
-        {sub && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.35, marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
+    <div className="x-gauge" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="x-gauge-svg">
+        <defs>
+          <linearGradient id={`gaugeGrad-${score}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={color} />
+            <stop offset="100%" stopColor={hex(color, 0.55)} />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--track)" strokeWidth="14" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={`url(#gaugeGrad-${score})`}
+          strokeWidth="14"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1)' }}
+        />
+      </svg>
+      <div className="x-gauge-inner">
+        <span className="x-gauge-score" style={{ color }}>{animValue}</span>
+        <span className="x-gauge-over">/100</span>
+        <span className="x-gauge-label" style={{ color }}>{label}</span>
       </div>
     </div>
   )
 }
 
-// ── SVG icons ─────────────────────────────────────────────────────────────────
-
-const I: Record<string, React.ReactNode> = {
-  shield:  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
-  list:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
-  bolt:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
-  check:   <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  globe:   <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" /></svg>,
-  warning: <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
-  fire:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>,
-  key:     <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>,
-  dollar:  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  history: <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  diff:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>,
-  log:     <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
-  play:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  code:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>,
-  waiver:  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
-  risk:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
-  drift:   <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
-  sprint:  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
-  module:  <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
-  blast:   <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" strokeWidth={2} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" /></svg>,
-  dep:     <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>,
-  exploit: <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
-  gap:     <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
-  evidence:<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8.586a1 1 0 00-.293-.707l-4.586-4.586A1 1 0 0014.414 3H8zm6 0v4h4M10 12h4m-4 4h2" /></svg>,
-  skip:    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>,
+function SectionTitle({ children, icon, action }: { children: React.ReactNode; icon?: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="x-section-head">
+      <div className="x-section-title">
+        {icon && <span className="x-section-icon">{icon}</span>}
+        {children}
+      </div>
+      {action && <div className="x-section-action">{action}</div>}
+    </div>
+  )
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
+function SeverityBadge({ sev }: { sev: string }) {
+  const u = sev.toUpperCase()
+  const c = SEVERITY_COLOR[u] ?? '#94a3b8'
+  return <span className="x-sev" style={{ background: hex(c, 0.12), color: c }}>{u}</span>
+}
+
+function ActionButton({ children, variant = 'primary', onClick, icon }: {
+  children: React.ReactNode
+  variant?: 'primary' | 'secondary' | 'ghost'
+  onClick?: () => void
+  icon?: React.ReactNode
+}) {
+  return (
+    <button type="button" className={`x-btn x-btn--${variant}`} onClick={onClick}>
+      {icon && <span className="x-btn-icon">{icon}</span>}
+      {children}
+    </button>
+  )
+}
+
+function NavTile({ icon, title, desc, value, accent, alert, onClick }: {
+  icon: React.ReactNode
+  title: string
+  desc?: string
+  value?: string | number
+  accent?: string
+  alert?: boolean
+  onClick?: () => void
+}) {
+  const showVal = value !== undefined && value !== 0 && value !== '0'
+  return (
+    <button type="button" className={`x-navtile ${onClick ? 'x-navtile--click' : ''}`} onClick={onClick}>
+      <div className="x-navtile-icon" style={{ background: accent ? hex(accent, 0.1) : 'var(--bg)', color: accent || 'var(--waf-brand)' }}>
+        {icon}
+      </div>
+      <div className="x-navtile-body">
+        <div className="x-navtile-top">
+          <span className="x-navtile-title">{title}</span>
+          {alert && <span className="x-navtile-alert" />}
+          {showVal && <span className="x-navtile-value" style={{ color: accent }}>{value}</span>}
+        </div>
+        {desc && <div className="x-navtile-desc">{desc}</div>}
+      </div>
+      {onClick && <span className="x-navtile-arrow">{I.arrow}</span>}
+    </button>
+  )
+}
+
+function StatPill({ label, value, sub, color }: {
+  label: string
+  value: string | number
+  sub: string
+  color?: string
+}) {
+  const c = color || 'var(--text)'
+  return (
+    <div className="x-statpill" style={{ borderColor: hex(c, 0.15), background: hex(c, 0.04) }}>
+      <div className="x-statpill-value" style={{ color: c }}>{value}</div>
+      <div className="x-statpill-label">{label}</div>
+      <div className="x-statpill-sub">{sub}</div>
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount = 0, runCount = 0 }: Props) {
   const { t } = useI18n()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
   const findings = run.findings
 
-  // ── Control-level aggregation ─────────────────────────────────────────────
-  const controlIds = Array.from(new Set(findings.map(f => f.control_id).filter(Boolean)))
-  let ctrlPass = 0, ctrlFail = 0, ctrlSkip = 0, ctrlWaived = 0
-  for (const cid of controlIds) {
-    const statuses = findings.filter(f => f.control_id === cid).map(f => f.status?.toUpperCase())
-    if (statuses.some(s => s === 'WAIVED')) { ctrlWaived++; continue }
-    if (statuses.some(s => s === 'FAIL'))   { ctrlFail++;   continue }
-    if (statuses.every(s => s === 'PASS'))  { ctrlPass++;   continue }
-    ctrlSkip++
-  }
+  const controlIds = useMemo(() => Array.from(new Set(findings.map(f => f.control_id).filter(Boolean))), [findings])
+  const controlStats = useMemo(() => {
+    let pass = 0, fail = 0, skip = 0, waived = 0
+    for (const cid of controlIds) {
+      const statuses = findings.filter(f => f.control_id === cid).map(f => f.status?.toUpperCase())
+      if (statuses.some(s => s === 'WAIVED')) { waived++; continue }
+      if (statuses.some(s => s === 'FAIL')) { fail++; continue }
+      if (statuses.every(s => s === 'PASS')) { pass++; continue }
+      skip++
+    }
+    return { pass, fail, skip, waived }
+  }, [findings, controlIds])
 
-  const totalChecks   = findings.length
-  const passChecks    = findings.filter(f => f.status?.toUpperCase() === 'PASS').length
-  const passRate      = totalChecks > 0 ? Math.round((passChecks / totalChecks) * 100) : 0
-  const resources     = new Set(findings.map(f => f.resource).filter(Boolean)).size
+  const totalChecks = findings.length
+  const passChecks = findings.filter(f => f.status?.toUpperCase() === 'PASS').length
+  const passRate = totalChecks > 0 ? Math.round((passChecks / totalChecks) * 100) : 0
+  const resources = new Set(findings.map(f => f.resource).filter(Boolean)).size
   const failResources = new Set(findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.resource).filter(Boolean)).size
 
-  const allFails      = findings.filter(f => f.status?.toUpperCase() === 'FAIL')
-  const critFails     = allFails.filter(f => f.severity?.toUpperCase() === 'CRITICAL')
-  const highFails     = allFails.filter(f => f.severity?.toUpperCase() === 'HIGH')
+  const allFails = findings.filter(f => f.status?.toUpperCase() === 'FAIL')
+  const critFails = allFails.filter(f => f.severity?.toUpperCase() === 'CRITICAL')
+  const highFails = allFails.filter(f => f.severity?.toUpperCase() === 'HIGH')
   const critHighFails = allFails.filter(f => ['CRITICAL', 'HIGH'].includes(f.severity?.toUpperCase())).slice(0, 5)
 
   const severityCounts = SEVERITIES
     .map(s => ({ name: s, value: allFails.filter(f => f.severity?.toUpperCase() === s).length }))
     .filter(d => d.value > 0)
 
-  // Build pillar data for all 8 pillars, using run.pillar_scores or defaulting to 0
   const pillarData = PILLAR_META.map(({ key, label }) => ({
-    key: key,                    // for matching with findings
-    pillar: label,               // for display
+    key,
+    pillar: label,
     score: (run.pillar_scores?.[key] ?? 0) as number,
   }))
 
   const detectedRegions = run.detected_regions ?? []
-  const providerCounts  = detectedRegions.reduce<Record<string, number>>((acc, [, prov]) => {
-    if (prov) acc[prov] = (acc[prov] ?? 0) + 1; return acc
+  const providerCounts = detectedRegions.reduce<Record<string, number>>((acc, [, prov]) => {
+    if (prov) acc[prov] = (acc[prov] ?? 0) + 1
+    return acc
   }, {})
   const providerNames = Object.keys(providerCounts)
 
-  const secretFindings     = run.secret_findings ?? []
+  const secretFindings = run.secret_findings ?? []
   const secretUnsuppressed = secretFindings.filter(s => !s.suppressed).length
-  const secretCritical     = secretFindings.filter(s => s.severity === 'critical').length
+  const secretCritical = secretFindings.filter(s => s.severity === 'critical').length
 
   const planChanges = run.plan_changes
   const changeDelta = planChanges
     ? planChanges.summary.add + planChanges.summary.change + planChanges.summary.destroy + planChanges.summary.replace
     : 0
 
-  // ── Regulatory readiness ─────────────────────────────────────────────────
   const fwMap = new Map<string, { pass: number; total: number }>()
   for (const ctrl of run.controls_meta) {
     const ctrlFindings = findings.filter(f => f.control_id === ctrl.id)
@@ -251,464 +325,1187 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
     .map(([fw, { pass, total }]) => ({ fw, pass, total, pct: total > 0 ? Math.round((pass / total) * 100) : 0 }))
     .sort((a, b) => b.pct - a.pct)
   const regulatoryTop = regulatoryAll.slice(0, 6)
-  const avgCompliance  = regulatoryAll.length > 0
+  const avgCompliance = regulatoryAll.length > 0
     ? Math.round(regulatoryAll.reduce((s, r) => s + r.pct, 0) / regulatoryAll.length)
     : 0
 
-  // ── Pillar health ────────────────────────────────────────────────────────
   const pillarHealth = pillarData.map(({ key, pillar, score }) => {
-    const normalizedPillar = normalizePillarName(key)
-    const pf    = findings.filter(f => normalizePillarName(f.pillar ?? '') === normalizedPillar)
+    const np = normalizePillarName(key)
+    const pf = findings.filter(f => normalizePillarName(f.pillar ?? '') === np)
     const fails = pf.filter(f => f.status?.toUpperCase() === 'FAIL').length
     return { key, pillar, score, fails, total: pf.length }
   }).sort((a, b) => a.score - b.score)
 
-  // ── Heatmap ─────────────────────────────────────────────────────────────
-  // Build heatmap entries for all 8 pillars (including those with score 0)
   const heatmapAll = PILLAR_META.flatMap(({ key: pillar }) => {
-    const normalizedPillar = normalizePillarName(pillar)
+    const np = normalizePillarName(pillar)
     return SEVERITIES.map(s => ({
-      pillar: normalizedPillar,
+      pillar: np,
       severity: s,
-      count: allFails.filter(f => normalizePillarName(f.pillar ?? '') === normalizedPillar && f.severity?.toUpperCase() === s).length,
+      count: allFails.filter(f => normalizePillarName(f.pillar ?? '') === np && f.severity?.toUpperCase() === s).length,
     }))
   })
   const heatMax = heatmapAll.reduce((m, c) => Math.max(m, c.count), 1)
 
-  // ── Quick wins ───────────────────────────────────────────────────────────
   const SWEIGHT: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
   const quickWins = [...allFails]
     .sort((a, b) => (SWEIGHT[b.severity?.toUpperCase() ?? ''] ?? 0) - (SWEIGHT[a.severity?.toUpperCase() ?? ''] ?? 0))
     .slice(0, 6)
 
-  // ── Navigation group helper ──────────────────────────────────────────────
-  function NavGroup({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-      <div>
-        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '0.5rem', paddingLeft: '0.1rem' }}>{label}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>{children}</div>
-      </div>
-    )
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className={`x-root ${mounted ? 'x-root--mounted' : ''}`}>
+      <style>{dashboardCss}</style>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          1. HERO — score + metadata + 5 KPIs
-      ══════════════════════════════════════════════════════════════════ */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1rem', alignItems: 'stretch' }}>
-
-        {/* Score card */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', minWidth: '160px', background: hex(scoreColor(run.score), 0.03), borderColor: hex(scoreColor(run.score), 0.2) }}>
-          <ScoreGauge score={run.score} />
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: scoreColor(run.score) }}>{scoreLabel(run.score, t)}</div>
-        </div>
-
-        {/* Metadata + KPIs */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {/* Run metadata row */}
-          <div className="card" style={{ padding: '0.875rem 1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.3rem' }}>
-                  {run.project || t('pages.dashboard.infrastructureScan')}
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', alignItems: 'center' }}>
-                  {run.branch && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.28rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(0,148,255,.1)', color: 'var(--waf-brand)', fontSize: '0.7rem', fontWeight: 600 }}>
-                      <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 3v12M18 9a3 3 0 100-6 3 3 0 000 6zm-12 0a3 3 0 100 6 3 3 0 000-6zm0 0h12" /></svg>
-                      {run.branch}
-                    </span>
-                  )}
-                  {run.iac_framework && <span style={{ padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#f1f5f9', color: 'var(--muted)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'capitalize' }}>{run.iac_framework}</span>}
-                  {run.created_at && <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{dateFmt(run.created_at)}</span>}
-                  {run.controls_loaded > 0 && <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.dashboard.controlsLoaded', { count: run.controls_loaded })}</span>}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {onNav && <>
-                  <button onClick={() => onNav('findings')} style={{ padding: '0.38rem 0.875rem', borderRadius: '7px', border: '1px solid rgba(218,44,56,.35)', background: 'rgba(218,44,56,.07)', color: '#DA2C38', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer' }}>{t('pages.dashboard.viewFindings')}</button>
-                  <button onClick={() => onNav('runscan')} style={{ padding: '0.38rem 0.875rem', borderRadius: '7px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer' }}>{t('pages.dashboard.newScan')}</button>
-                </>}
-              </div>
+      {/* ── Masthead / hero ─────────────────────────────────────────────── */}
+      <header className="x-masthead">
+        <div className="x-masthead-glow" />
+        <div className="x-masthead-inner">
+          <div className="x-masthead-left">
+            <div className="x-badge">{I.shield} {t('pages.dashboard.infrastructureScan')}</div>
+            <h1 className="x-title">{run.project || t('pages.dashboard.infrastructureScan')}</h1>
+            <div className="x-meta">
+              {run.branch && <span className="x-chip x-chip--brand">{I.branch} {run.branch}</span>}
+              {run.iac_framework && <span className="x-chip">{run.iac_framework}</span>}
+              {run.created_at && <span className="x-chip x-chip--muted">{dateFmt(run.created_at)}</span>}
+              {run.controls_loaded > 0 && <span className="x-chip x-chip--muted">{t('pages.dashboard.controlsLoaded', { count: run.controls_loaded })}</span>}
+            </div>
+            <div className="x-actions">
+              {onNav && <ActionButton variant="primary" icon={I.list} onClick={() => onNav('findings')}>{t('pages.dashboard.viewFindings')}</ActionButton>}
+              {onNav && <ActionButton variant="secondary" icon={I.play} onClick={() => onNav('runscan')}>{t('pages.dashboard.newScan')}</ActionButton>}
             </div>
           </div>
 
-          {/* 5 KPI chips */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
-            {([
-              { n: ctrlFail,                  label: t('pages.dashboard.failedControls'),  c: '#DA2C38' },
-              { n: critFails.length + highFails.length, label: t('pages.dashboard.critHigh'), c: '#f97316' },
-              { n: failResources,             label: t('pages.dashboard.resourcesAtRisk'), c: '#d97706' },
-              { n: waiverCount,               label: t('pages.dashboard.activeWaivers'),   c: '#7c3aed' },
-              { n: `${avgCompliance}%`,       label: t('pages.dashboard.avgCompliance'),   c: '#059669' },
-            ] as { n: string | number; label: string; c: string }[]).map(({ n, label, c }) => (
-              <div key={label} className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem 0.5rem', background: hex(c, 0.05), borderColor: hex(c, 0.2) }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: c, lineHeight: 1 }}>{n}</div>
-                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', marginTop: '0.25rem', lineHeight: 1.3 }}>{label}</div>
-              </div>
+          <div className="x-masthead-right">
+            <ScoreGauge score={run.score} label={scoreLabel(run.score, t)} />
+          </div>
+        </div>
+
+        <div className="x-statbar">
+          <StatPill label={t('pages.dashboard.failedControls')} value={controlStats.fail} sub={`${controlIds.length} controls`} color="#DC2626" />
+          <StatPill label={t('pages.dashboard.critHigh')} value={critFails.length + highFails.length} sub={`${critFails.length} critical · ${highFails.length} high`} color="#F97316" />
+          <StatPill label={t('pages.dashboard.resourcesAtRisk')} value={failResources} sub={`${resources} scanned`} color="#D97706" />
+          <StatPill label={t('pages.dashboard.activeWaivers')} value={waiverCount} sub={`${riskCount} risks`} color="#8B5CF6" />
+          <StatPill label={t('pages.dashboard.avgCompliance')} value={`${avgCompliance}%`} sub={`${regulatoryAll.length} frameworks`} color="#10B981" />
+        </div>
+      </header>
+
+      {/* ── Critical attention strip ─────────────────────────────────────── */}
+      {critHighFails.length > 0 && (
+        <section className="x-attention">
+          <div className="x-attention-left">
+            <div className="x-attention-icon">{I.warning}</div>
+            <div>
+              <div className="x-attention-title">{t('pages.dashboard.requiresAttention')}</div>
+              <div className="x-attention-sub">{t('pages.dashboard.critHighDesc')}</div>
+            </div>
+          </div>
+          <div className="x-attention-right">
+            {onNav && <ActionButton variant="primary" icon={I.bolt} onClick={() => onNav('autofix')}>{t('pages.dashboard.autoFix')}<span className="x-alpha">α</span></ActionButton>}
+            {onNav && <ActionButton variant="secondary" onClick={() => onNav('findings')}>{t('pages.dashboard.allFindings')}</ActionButton>}
+          </div>
+          <div className="x-attention-list">
+            {critHighFails.map((f, i) => (
+              <button type="button" key={i} className="x-attention-row" onClick={() => onNav?.('autofix')}>
+                <SeverityBadge sev={f.severity?.toUpperCase() ?? ''} />
+                <span className="x-attention-code">{f.control_id}</span>
+                <span className="x-attention-text">{f.check_title}</span>
+                {f.pillar && (
+                  <span className="x-pill" style={{ background: hex(PILLAR_COLOR[f.pillar] ?? '#888', 0.12), color: PILLAR_COLOR[f.pillar] ?? '#888' }}>
+                    {f.pillar}
+                  </span>
+                )}
+                <span className="x-attention-link">Fix →</span>
+              </button>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          2. IMMEDIATE ATTENTION — critical / high failures only
-      ══════════════════════════════════════════════════════════════════ */}
-      {critHighFails.length > 0 && (
-        <div className="card" style={{ borderColor: 'rgba(218,44,56,.2)', background: 'rgba(218,44,56,.02)', padding: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '7px', background: 'rgba(218,44,56,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DA2C38', flexShrink: 0 }}>{I.warning}</div>
-              <div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.requiresAttention')}</div>
-                <div style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>{t('pages.dashboard.critHighDesc')}</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => onNav?.('autofix')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid rgba(0,148,255,.3)', background: 'rgba(0,148,255,.07)', color: 'var(--waf-brand)', fontSize: '0.73rem', fontWeight: 700, cursor: 'pointer' }}>
-                {I.bolt} {t('pages.dashboard.autoFix')}
-                <span style={{ background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.48rem', fontWeight: 800, padding: '0.05rem 0.28rem', borderRadius: '3px' }}>α</span>
-              </button>
-              {onNav && <button onClick={() => onNav('findings')} style={{ padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '0.73rem', fontWeight: 600, cursor: 'pointer' }}>{t('pages.dashboard.allFindings')}</button>}
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            {critHighFails.map((f, i) => {
-              const sev = f.severity?.toUpperCase()
-              return (
-                <div key={i}
-                  onClick={() => onNav?.('autofix')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 0.75rem', borderRadius: '8px', background: 'var(--surface)', border: '1px solid rgba(218,44,56,.1)', cursor: 'pointer', transition: 'border-color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(218,44,56,.3)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(218,44,56,.1)' }}
-                >
-                  <SevBadge sev={sev} />
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--muted)', flexShrink: 0 }}>{f.control_id}</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.check_title}</span>
-                  {f.pillar && <span style={{ padding: '0.1rem 0.4rem', borderRadius: '999px', background: hex(PILLAR_COLOR[f.pillar] ?? '#888', 0.12), color: PILLAR_COLOR[f.pillar] ?? '#888', fontSize: '0.62rem', fontWeight: 600, textTransform: 'capitalize', flexShrink: 0 }}>{f.pillar}</span>}
-                  <span style={{ fontSize: '0.68rem', color: 'var(--waf-brand)', fontWeight: 600, flexShrink: 0 }}>Fix →</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        </section>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════
-          3. NAVIGATION OVERVIEW — entry to every section
-      ══════════════════════════════════════════════════════════════════ */}
-      <div className="card" style={{ padding: '1.25rem' }}>
-        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '1.1rem' }}>{t('pages.dashboard.navigateDashboard')}</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* ── Navigation command center ────────────────────────────────────── */}
+      <section className="x-card x-card--nav">
+        <SectionTitle icon={I.globe}>{t('pages.dashboard.navigateDashboard')}</SectionTitle>
+        <div className="x-nav-grid">
+          <div className="x-nav-col">
+            <div className="x-nav-label">{t('pages.dashboard.navAnalysis')}</div>
+            <NavTile icon={I.list} title="Findings" value={allFails.length > 0 ? allFails.length : undefined} desc={`${passRate}% pass · ${totalChecks} checks`} accent="#DC2626" alert={allFails.length > 0} onClick={() => onNav?.('findings')} />
+            <NavTile icon={I.check} title="Compliance" value={`${avgCompliance}%`} desc={`${regulatoryAll.length} frameworks`} accent="#0094FF" onClick={() => onNav?.('compliance')} />
+            <NavTile icon={I.gap} title="Gap Analysis" value={allFails.length > 0 ? t('pages.dashboard.gapsLabel', { count: new Set(allFails.map(f => f.control_id)).size }) : undefined} desc="Effort ranked" accent="#8B5CF6" onClick={() => onNav?.('gapanalysis')} />
+            <NavTile icon={I.exploit} title="Exploit Paths" desc="Attack chains" accent="#DC2626" onClick={() => onNav?.('exploitpath')} />
+            <NavTile icon={I.blast} title="Blast Radius" value={failResources > 0 ? failResources : undefined} desc="Impact map" accent="#F97316" onClick={() => onNav?.('blastradius')} />
+            <NavTile icon={I.dep} title="Dep. Graph" desc="Topology" accent="#0D9488" onClick={() => onNav?.('depgraph')} />
+          </div>
 
-          <NavGroup label={t('pages.dashboard.navAnalysis')}>
-            <Tile icon={I.list}    title="Findings"         value={allFails.length > 0 ? allFails.length : undefined}  sub={`${passRate}% pass rate · ${totalChecks} checks`}                  accent="#DA2C38" alert={allFails.length > 0}                       onClick={() => onNav?.('findings')} />
-            <Tile icon={I.check}   title="Compliance"       value={`${avgCompliance}%`}                                 sub={`${regulatoryAll.length} frameworks mapped`}                        accent="#0094FF"                                                   onClick={() => onNav?.('compliance')} />
-            <Tile icon={I.gap}     title="Gap Analysis"     value={allFails.length > 0 ? t('pages.dashboard.gapsLabel', { count: new Set(allFails.map(f => f.control_id)).size }) : undefined} sub="Controls ranked by effort-per-requirement"           accent="#7c3aed"                                                   onClick={() => onNav?.('gapanalysis')} />
-            <Tile icon={I.exploit} title="Exploit Paths"    sub="Attack chain visualization"                            accent="#DA2C38"                                                                                                                           onClick={() => onNav?.('exploitpath')} />
-            <Tile icon={I.blast}   title="Blast Radius"     value={failResources > 0 ? failResources : undefined}       sub="Structural impact of failing resources"                             accent="#f97316"                                                   onClick={() => onNav?.('blastradius')} />
-            <Tile icon={I.dep}     title="Dep. Graph"        sub="Full resource dependency topology"                    accent="#0d9488"                                                                                                                           onClick={() => onNav?.('depgraph')} />
-          </NavGroup>
+          <div className="x-nav-col">
+            <div className="x-nav-label">{t('pages.dashboard.navInfrastructure')}</div>
+            <NavTile icon={I.shield} title="Controls Catalogue" value={run.controls_loaded || run.controls_meta?.length || 0} desc={`${pillarHealth.length} pillars`} accent="#0094FF" onClick={() => onNav?.('catalogue')} />
+            <NavTile icon={I.globe} title="Deployed Regions" value={detectedRegions.length > 0 ? `${detectedRegions.length}` : undefined} desc={detectedRegions.length > 0 ? providerNames.map(p => p.toUpperCase()).join(', ') : 'Cloud footprint'} accent="#0EA5E9" onClick={() => onNav?.('regions')} />
+            <NavTile icon={I.key} title="Secret Scanner" value={secretUnsuppressed > 0 ? secretUnsuppressed : undefined} desc={`${secretCritical} critical secrets`} accent="#DC2626" alert={secretCritical > 0} onClick={() => onNav?.('secrets')} />
+            <NavTile icon={I.module} title="Module Scores" desc="Per-module breakdown" accent="#8B5CF6" onClick={() => onNav?.('modules')} />
+            <NavTile icon={I.dollar} title="Cost Impact" desc="Cost control estimates" accent="#10B981" onClick={() => onNav?.('cost')} />
+            <NavTile icon={I.drift} title="Changes & Drift" value={changeDelta > 0 ? changeDelta : undefined} desc="Plan deltas" accent="#F97316" onClick={() => onNav?.('changes')} />
+          </div>
 
-          <NavGroup label={t('pages.dashboard.navInfrastructure')}>
-            <Tile icon={I.shield}  title="Controls Catalogue" value={run.controls_loaded || run.controls_meta?.length || 0} sub={`${pillarHealth.length} pillars covered`}                      accent="#0094FF"                                                   onClick={() => onNav?.('catalogue')} />
-            <Tile icon={I.globe}   title="Deployed Regions"  value={detectedRegions.length > 0 ? `${detectedRegions.length} regions` : undefined} sub={detectedRegions.length > 0 ? providerNames.map(p => p.toUpperCase()).join(', ') : 'Cloud footprint map'}  accent="#0ea5e9"  onClick={() => onNav?.('regions')} />
-            <Tile icon={I.key}     title="Secret Scanner"    value={secretUnsuppressed > 0 ? secretUnsuppressed : undefined} sub={secretFindings.length > 0 ? `${secretCritical} critical detected` : 'Detect hardcoded credentials'}  accent="#DA2C38" alert={secretCritical > 0}  onClick={() => onNav?.('secrets')} />
-            <Tile icon={I.module}  title="Module Scores"     sub="Per-module compliance breakdown"                       accent="#7c3aed"                                                                                                                           onClick={() => onNav?.('modules')} />
-            <Tile icon={I.dollar}  title="Cost Impact"       sub="Failing WAF-COST control estimates"                    accent="#22c55e"                                                                                                                           onClick={() => onNav?.('cost')} />
-            <Tile icon={I.drift}   title="Changes & Drift"   value={changeDelta > 0 ? changeDelta : undefined}           sub="Plan changes and regression detection"                              accent="#f97316"                                                   onClick={() => onNav?.('changes')} />
-          </NavGroup>
+          <div className="x-nav-col">
+            <div className="x-nav-label">{t('pages.dashboard.navRiskGovernance')}</div>
+            <NavTile icon={I.waiver} title="Waivers" value={waiverCount > 0 ? waiverCount : undefined} desc="Active waivers" accent="#8B5CF6" onClick={() => onNav?.('waivers')} />
+            <NavTile icon={I.risk} title="Risk Acceptance" value={riskCount > 0 ? riskCount : undefined} desc="Approver trail" accent="#F97316" onClick={() => onNav?.('risk')} />
+            <NavTile icon={I.sprint} title="Remediation Sprint" desc="Fix queue" accent="#10B981" onClick={() => onNav?.('remediation')} />
+            <NavTile icon={I.skip} title="Skipped Controls" value={controlStats.skip > 0 ? controlStats.skip : undefined} desc="Coverage gaps" accent="#64748B" onClick={() => onNav?.('skipped')} />
+          </div>
 
-          <NavGroup label={t('pages.dashboard.navRiskGovernance')}>
-            <Tile icon={I.waiver}  title="Waivers"           value={waiverCount > 0 ? waiverCount : undefined}           sub="Active control waivers · export to YAML"                            accent="#7c3aed"                                                   onClick={() => onNav?.('waivers')} />
-            <Tile icon={I.risk}    title="Risk Acceptance"   value={riskCount > 0 ? riskCount : undefined}               sub="Formal acceptances with approver trail"                             accent="#f97316"                                                   onClick={() => onNav?.('risk')} />
-            <Tile icon={I.sprint}  title="Remediation Sprint" sub="Prioritized fix queue with effort estimate"            accent="#22c55e"                                                                                                                           onClick={() => onNav?.('remediation')} />
-            <Tile icon={I.skip}    title="Skipped Controls"  value={ctrlSkip > 0 ? ctrlSkip : undefined}                 sub="Coverage gaps and exclusions"                                       accent="#64748b"                                                   onClick={() => onNav?.('skipped')} />
-          </NavGroup>
-
-          <NavGroup label={t('pages.dashboard.navHistoryAudit')}>
-            <Tile icon={I.history} title="Run History"       value={runCount > 0 ? `${runCount} runs` : undefined}       sub="Score trends over time"                                             accent="#0094FF"                                                   onClick={() => onNav?.('runs')} />
-            <Tile icon={I.diff}    title="Run Comparison"    sub="Side-by-side diff of two scans"                        accent="#7c3aed"                                                                                                                           onClick={() => onNav?.('diff')} />
-            <Tile icon={I.log}     title="Audit Log"         sub="Tamper-evident action record"                          accent="#64748b"                                                                                                                           onClick={() => onNav?.('audit')} />
-            <Tile icon={I.evidence}title="Evidence Package"  sub="Auditor-ready export bundle"                           accent="#0094FF"                                                                                                                           onClick={() => onNav?.('evidence')} />
-            <Tile icon={I.play}    title="Run Scan"          sub="Trigger a scan from the browser"                       accent="#22c55e"                                                                                                                           onClick={() => onNav?.('runscan')} />
-            <Tile icon={I.code}    title="Sandbox"           sub="Evaluate Terraform snippets live"                      accent="#0094FF"                                                                                                                           onClick={() => onNav?.('sandbox')} />
-          </NavGroup>
-
+          <div className="x-nav-col">
+            <div className="x-nav-label">{t('pages.dashboard.navHistoryAudit')}</div>
+            <NavTile icon={I.history} title="Run History" value={runCount > 0 ? `${runCount}` : undefined} desc="Score trends" accent="#0094FF" onClick={() => onNav?.('runs')} />
+            <NavTile icon={I.diff} title="Run Comparison" desc="Side-by-side diff" accent="#8B5CF6" onClick={() => onNav?.('diff')} />
+            <NavTile icon={I.log} title="Audit Log" desc="Action record" accent="#64748B" onClick={() => onNav?.('audit')} />
+            <NavTile icon={I.evidence} title="Evidence Package" desc="Export bundle" accent="#0094FF" onClick={() => onNav?.('evidence')} />
+            <NavTile icon={I.play} title="Run Scan" desc="Browser scan" accent="#10B981" onClick={() => onNav?.('runscan')} />
+            <NavTile icon={I.code} title="Sandbox" desc="Terraform live" accent="#0094FF" onClick={() => onNav?.('sandbox')} />
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          4. PILLAR HEALTH — compact scoreboard
-      ══════════════════════════════════════════════════════════════════ */}
-      {pillarHealth.length > 0 && (
-        <div className="card">
-          <CardLabel>{t('pages.dashboard.pillarHealth')}</CardLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '0.6rem' }}>
+      {/* ── Bento body ───────────────────────────────────────────────────── */}
+      <div className="x-bento">
+        {/* Pillar health */}
+        <section className="x-card x-card--pillars">
+          <SectionTitle icon={I.shield}>{t('pages.dashboard.pillarHealth')}</SectionTitle>
+          <div className="x-pillar-list">
             {pillarHealth.map(({ key, pillar, score, fails, total }) => {
-              const pColor = PILLAR_COLOR[key] ?? '#888'
-              const sColor = scoreColor(score)
-              const pct    = total > 0 ? Math.round(((total - fails) / total) * 100) : 100
+              const c = PILLAR_COLOR[key] ?? '#888'
+              const sc = scoreColor(score)
+              const pct = total > 0 ? Math.round(((total - fails) / total) * 100) : 100
               return (
-                <div key={pillar}
-                  onClick={() => onNav?.('findings')}
-                  style={{ padding: '0.75rem', borderRadius: '9px', border: `1px solid ${hex(pColor, 0.2)}`, background: hex(pColor, 0.03), cursor: onNav ? 'pointer' : 'default', transition: 'border-color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = hex(pColor, 0.4) }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = hex(pColor, 0.2) }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ padding: '0.12rem 0.45rem', borderRadius: '999px', background: hex(pColor, 0.14), color: pColor, fontSize: '0.65rem', fontWeight: 700, textTransform: 'capitalize' }}>{pillar}</span>
-                    <span style={{ fontSize: '1.125rem', fontWeight: 800, color: sColor }}>{score}</span>
-                  </div>
-                  <div style={{ height: '5px', borderRadius: '999px', background: '#f1f5f9', overflow: 'hidden', marginBottom: '0.4rem' }}>
-                    <div style={{ height: '100%', borderRadius: '999px', background: sColor, width: `${pct}%`, transition: 'width 0.5s ease' }} />
-                  </div>
-                  <div style={{ fontSize: '0.68rem', color: fails > 0 ? '#DA2C38' : '#059669', fontWeight: 600 }}>
-                    {fails > 0 ? t('pages.dashboard.failing', { count: fails }) : t('pages.dashboard.allPassing')}
-                    <span style={{ color: 'var(--muted)', fontWeight: 400 }}>{total > 0 ? ` ${t('pages.dashboard.ofChecks', { total })}` : ''}</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════
-          5. CHARTS — severity + pillar scores
-      ══════════════════════════════════════════════════════════════════ */}
-      {(severityCounts.length > 0 || pillarData.length > 0) && (
-        <div style={{ display: 'grid', gridTemplateColumns: severityCounts.length > 0 && pillarData.length > 0 ? '1fr 2fr' : '1fr', gap: '1rem' }}>
-
-          {/* Severity pie */}
-          {severityCounts.length > 0 && (
-            <div className="card">
-              <CardLabel>{t('pages.dashboard.failuresBySeverity')}</CardLabel>
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie data={severityCounts} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} innerRadius={36}>
-                    {severityCounts.map(d => <Cell key={d.name} fill={SEVERITY_COLOR[d.name] ?? '#94a3b8'} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.78rem' }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.5rem' }}>
-                {severityCounts.map(d => (
-                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: SEVERITY_COLOR[d.name], flexShrink: 0 }} />
-                    <span style={{ color: 'var(--muted)' }}>{d.name}</span>
-                    <span style={{ fontWeight: 700, color: SEVERITY_COLOR[d.name] }}>{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Pillar bar chart */}
-          {pillarData.length > 0 && (
-            <div className="card">
-              <CardLabel>{t('pages.dashboard.scoreByPillar')}</CardLabel>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={pillarData} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: 'var(--muted)' }} />
-                  <YAxis type="category" dataKey="pillar" width={80} tick={{ fontSize: 10, fill: 'var(--text)' }} />
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.78rem' }} />
-                  <Bar dataKey="score" radius={[0, 4, 4, 0]}>
-                    {pillarData.map(d => <Cell key={d.pillar} fill={scoreColor(d.score)} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════
-          6. REGULATORY READINESS — top 6, link to full matrix
-      ══════════════════════════════════════════════════════════════════ */}
-      {regulatoryTop.length > 0 && (
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <CardLabel>{t('pages.dashboard.regulatoryReadiness')}{regulatoryAll.length > 6 ? ` (top 6 of ${regulatoryAll.length})` : ''}</CardLabel>
-            {onNav && <button onClick={() => onNav('compliance')} style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--waf-brand)', background: 'none', border: 'none', cursor: 'pointer', marginTop: '-0.5rem' }}>{t('pages.dashboard.fullMatrix')}</button>}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem 2rem' }}>
-            {regulatoryTop.map(({ fw, pass, total, pct }) => {
-              const color     = pct >= 80 ? '#22c55e' : pct >= 60 ? '#facc15' : '#ef4444'
-              const textColor = pct >= 80 ? '#16a34a' : pct >= 60 ? '#d97706' : '#dc2626'
-              return (
-                <div key={fw}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }} title={fw}>{fw}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{pass}/{total}</span>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, width: '2.4rem', textAlign: 'right', color: textColor }}>{pct}%</span>
+                <button type="button" key={pillar} className="x-pillar-row" onClick={() => onNav?.('findings')}>
+                  <div className="x-pillar-slug" style={{ background: hex(c, 0.12), color: c }}>{PILLAR_META.find(p => p.key === key)?.slug}</div>
+                  <div className="x-pillar-info">
+                    <div className="x-pillar-name">{pillar}</div>
+                    <div className="x-pillar-bar">
+                      <div className="x-pillar-fill" style={{ width: `${pct}%`, background: sc }} />
                     </div>
                   </div>
-                  <div style={{ height: '6px', borderRadius: '999px', background: '#f1f5f9', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', borderRadius: '999px', background: color, width: `${pct}%`, transition: 'width 0.5s ease' }} />
+                  <div className="x-pillar-score" style={{ color: sc }}>{score}</div>
+                  <div className="x-pillar-status" style={{ color: fails > 0 ? '#DC2626' : '#059669' }}>
+                    {fails > 0 ? t('pages.dashboard.failing', { count: fails }) : t('pages.dashboard.allPassing')}
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
-        </div>
-      )}
+        </section>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          7. ARCHITECTURAL DEBT HEATMAP
-      ══════════════════════════════════════════════════════════════════ */}
-      {allFails.length > 0 && (
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '7px', background: 'rgba(220,38,38,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>{I.fire}</div>
-              <div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.debtHeatmap')}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.dashboard.debtHeatmapDesc')}</div>
+        {/* Severity donut + pillar chart */}
+        {(severityCounts.length > 0 || pillarData.length > 0) && (
+          <section className="x-card x-card--charts">
+            <SectionTitle icon={I.warning}>Findings &amp; Pillar Scores</SectionTitle>
+            <div className="x-chart-grid">
+              {severityCounts.length > 0 && (
+                <div className="x-donut">
+                  <div className="x-donut-chart">
+                    <div className="x-donut-inner">
+                      <span className="x-donut-total">{allFails.length}</span>
+                      <span className="x-donut-label">Failures</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={severityCounts} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={54} paddingAngle={3}>
+                          {severityCounts.map(d => <Cell key={d.name} fill={SEVERITY_COLOR[d.name]} />)}
+                        </Pie>
+                        <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '0.78rem' }} itemStyle={{ color: 'var(--text)' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="x-donut-legend">
+                    {severityCounts.map(d => (
+                      <div key={d.name} className="x-legend-item">
+                        <span className="x-legend-dot" style={{ background: SEVERITY_COLOR[d.name] }} />
+                        <span className="x-legend-name">{d.name}</span>
+                        <span className="x-legend-val" style={{ color: SEVERITY_COLOR[d.name] }}>{d.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {pillarData.length > 0 && (
+                <div className="x-barchart">
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={pillarData} layout="vertical" margin={{ left: 0, right: 24, top: 8, bottom: 8 }} barCategoryGap="20%">
+                      <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="pillar" width={80} tick={{ fontSize: 11, fill: 'var(--text)', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                      <Tooltip cursor={{ fill: 'var(--row-hover)' }} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '0.78rem' }} itemStyle={{ color: 'var(--text)' }} />
+                      <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={18} minPointSize={4}>
+                        {pillarData.map(d => <Cell key={d.pillar} fill={scoreColor(d.score)} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Regulatory readiness */}
+        {regulatoryTop.length > 0 && (
+          <section className="x-card x-card--compliance">
+            <SectionTitle
+              icon={I.check}
+              action={onNav && <ActionButton variant="ghost" onClick={() => onNav('compliance')}>{t('pages.dashboard.fullMatrix')} →</ActionButton>}
+            >
+              {t('pages.dashboard.regulatoryReadiness')}
+              {regulatoryAll.length > 6 && <span className="x-section-count">top 6 of {regulatoryAll.length}</span>}
+            </SectionTitle>
+            <div className="x-compliance-list">
+              {regulatoryTop.map(({ fw, pass, total, pct }) => {
+                const color = pct >= 80 ? '#10B981' : pct >= 60 ? '#F59E0B' : '#DC2626'
+                const textColor = pct >= 80 ? '#059669' : pct >= 60 ? '#D97706' : '#DC2626'
+                return (
+                  <div key={fw} className="x-compliance-row">
+                    <span className="x-compliance-name" title={fw}>{fw}</span>
+                    <div className="x-compliance-track">
+                      <div className="x-compliance-fill" style={{ width: `${pct}%`, background: color }} />
+                    </div>
+                    <span className="x-compliance-pct" style={{ color: textColor }}>{pct}%</span>
+                    <span className="x-compliance-pass">{pass}/{total}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Debt heatmap */}
+        {allFails.length > 0 && (
+          <section className="x-card x-card--heatmap">
+            <SectionTitle
+              icon={<span style={{ color: '#DC2626' }}>{I.fire}</span>}
+              action={
+                <div className="x-heat-legend">
+                  <span>Low</span>
+                  {HEAT_STEPS.map(c => <div key={c} className="x-heat-swatch" style={{ background: c }} />)}
+                  <span>High</span>
+                </div>
+              }
+            >
+              {t('pages.dashboard.debtHeatmap')}
+            </SectionTitle>
+            <div className="x-heat-scroll">
+              <table className="x-heat-table">
+                <thead>
+                  <tr>
+                    <th>{t('pages.dashboard.pillarHeader')}</th>
+                    {SEVERITIES.map(s => <th key={s} style={{ color: SEVERITY_COLOR[s] }}>{s}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {PILLAR_META.map(({ key: pillar, label }) => (
+                    <tr key={pillar}>
+                      <td className="x-heat-pillar">{label}</td>
+                      {SEVERITIES.map(s => {
+                        const count = heatmapAll.find(c => c.pillar === pillar && c.severity === s)?.count ?? 0
+                        const step = count === 0 ? -1 : Math.min(3, Math.floor((count / heatMax) * 4))
+                        return (
+                          <td key={s}>
+                            <div className={`x-heat-cell ${count > 0 ? 'x-heat-cell--active' : ''}`} style={count > 0 ? { background: HEAT_STEPS[step], color: step >= 2 ? '#fff' : '#991b1b' } : undefined}>
+                              {count === 0 ? '—' : count}
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* Quick wins */}
+        {quickWins.length > 0 && (
+          <section className="x-card x-card--wins">
+            <SectionTitle
+              icon={<span style={{ color: '#10B981' }}>{I.bolt}</span>}
+              action={onNav && <ActionButton variant="primary" icon={I.bolt} onClick={() => onNav('autofix')}>{t('pages.dashboard.autoFix')}<span className="x-alpha">α</span></ActionButton>}
+            >
+              {t('pages.dashboard.quickWins')}
+            </SectionTitle>
+            <div className="x-win-list">
+              {quickWins.map((f, i) => {
+                const sev = f.severity?.toUpperCase() ?? ''
+                const sevColor = SEVERITY_COLOR[sev] ?? '#94a3b8'
+                const pColor = PILLAR_COLOR[f.pillar ?? ''] ?? '#888'
+                return (
+                  <button type="button" key={i} className="x-win-row" onClick={() => onNav?.('autofix')}>
+                    <span className="x-win-idx">{i + 1}</span>
+                    <SeverityBadge sev={sev} />
+                    <span className="x-win-code">{f.control_id}</span>
+                    <span className="x-win-title">{f.check_title || f.check_id}</span>
+                    {f.pillar && <span className="x-pill" style={{ background: hex(pColor, 0.12), color: pColor }}>{f.pillar}</span>}
+                    <span className="x-win-link" style={{ color: sevColor }}>Fix →</span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Cloud footprint */}
+        {detectedRegions.length > 0 && (
+          <section className="x-card x-card--cloud">
+            <SectionTitle
+              icon={<span style={{ color: 'var(--waf-brand)' }}>{I.globe}</span>}
+              action={onNav && <ActionButton variant="ghost" onClick={() => onNav('regions')}>{t('pages.dashboard.fullMap')} →</ActionButton>}
+            >
+              {t('pages.dashboard.cloudFootprint')}
+            </SectionTitle>
+            <div className="x-cloud">
+              <div className="x-cloud-metric">
+                <span className="x-cloud-number">{detectedRegions.length}</span>
+                <span className="x-cloud-unit">{t('pages.dashboard.regionsSuffix')}</span>
+              </div>
+              <div className="x-cloud-providers">
+                {Object.entries(providerCounts).map(([prov, cnt]) => (
+                  <div key={prov} className="x-cloud-provider">
+                    <span className="x-cloud-dot" style={{ background: PROVIDER_COLOR[prov] ?? '#888' }} />
+                    <span className="x-cloud-name">{prov}</span>
+                    <span className="x-cloud-cnt">{cnt} region{cnt > 1 ? 's' : ''}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.63rem', color: '#94a3b8' }}>
-              <span>{t('pages.dashboard.legendLow')}</span>
-              {['#fee2e2', '#fca5a5', '#f87171', '#dc2626'].map(c => <div key={c} style={{ width: '0.7rem', height: '0.7rem', borderRadius: '2px', background: c }} />)}
-              <span>{t('pages.dashboard.legendHigh')}</span>
-            </div>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ borderCollapse: 'collapse', fontSize: '0.8rem', width: '100%' }}>
-              <thead>
-                <tr>
-                  <th style={{ padding: '0.35rem 0.75rem', textAlign: 'left', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.dashboard.pillarHeader')}</th>
-                  {SEVERITIES.map(s => <th key={s} style={{ padding: '0.35rem 0.75rem', textAlign: 'center', color: SEVERITY_COLOR[s], fontWeight: 700, fontSize: '0.68rem' }}>{s}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {PILLAR_META.map(({ key: pillar, label }) => (
-                  <tr key={pillar} style={{ borderTop: '1px solid var(--border)' }}>
-                    <td style={{ padding: '0.45rem 0.75rem', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{label}</td>
-                    {SEVERITIES.map(s => {
-                      const count = heatmapAll.find(c => c.pillar === pillar && c.severity === s)?.count ?? 0
-                      const intensity = count === 0 ? 0 : 0.15 + (count / heatMax) * 0.75
-                      const col = SEVERITY_COLOR[s] ?? '#94a3b8'
-                      return (
-                        <td key={s} style={{ padding: '0.3rem 0.75rem', textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '2.1rem', height: '1.875rem', borderRadius: '5px', background: count === 0 ? 'transparent' : hex(col, intensity), color: count === 0 ? '#cbd5e1' : col, fontWeight: count > 0 ? 700 : 400, transition: 'transform 0.1s', cursor: count > 0 ? 'default' : undefined }}
-                            onMouseEnter={e => { if (count > 0) (e.currentTarget as HTMLElement).style.transform = 'scale(1.12)' }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = '' }}
-                            title={count > 0 ? `${label} / ${s}: ${count} failing` : undefined}
-                          >
-                            {count === 0 ? '—' : count}
-                          </div>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+          </section>
+        )}
+      </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          8. CHECK-LEVEL KPIs — compact strip
-      ══════════════════════════════════════════════════════════════════ */}
+      {/* ── Bottom check KPIs ───────────────────────────────────────────── */}
       {totalChecks > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-          {([
-            { label: t('pages.dashboard.checksRun'),        value: totalChecks,       sub: 'individual checks',       color: 'var(--text)' },
-            { label: t('pages.dashboard.checkPassRate'),    value: `${passRate}%`,    sub: `${passChecks}/${totalChecks} passed`, color: passRate >= 80 ? '#16a34a' : passRate >= 60 ? '#d97706' : '#dc2626' },
-            { label: t('pages.dashboard.resourcesScanned'), value: resources,          sub: 'unique resources',         color: 'var(--waf-brand)' },
-            { label: t('pages.dashboard.resourcesFailing'), value: failResources,      sub: 'with ≥1 failure',          color: failResources > 0 ? '#dc2626' : '#16a34a' },
-          ] as { label: string; value: string | number; sub: string; color: string }[]).map(({ label, value, sub, color }) => (
-            <div key={label} className="card" style={{ padding: '0.875rem 1rem' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', marginTop: '0.2rem' }}>{label}</div>
-              <div style={{ fontSize: '0.66rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{sub}</div>
+        <section className="x-checkbar">
+          {[
+            { label: t('pages.dashboard.checksRun'), value: totalChecks, sub: 'individual checks', color: 'var(--text)' },
+            { label: t('pages.dashboard.checkPassRate'), value: `${passRate}%`, sub: `${passChecks}/${totalChecks} passed`, color: passRate >= 80 ? '#10B981' : passRate >= 60 ? '#D97706' : '#DC2626' },
+            { label: t('pages.dashboard.resourcesScanned'), value: resources, sub: 'unique resources', color: 'var(--waf-brand)' },
+            { label: t('pages.dashboard.resourcesFailing'), value: failResources, sub: 'with ≥1 failure', color: failResources > 0 ? '#DC2626' : '#10B981' },
+          ].map(({ label, value, sub, color }) => (
+            <div key={label} className="x-checkcard" style={{ borderColor: hex(color, 0.18) }}>
+              <div className="x-checkcard-value" style={{ color }}>{value}</div>
+              <div className="x-checkcard-label">{label}</div>
+              <div className="x-checkcard-sub">{sub}</div>
             </div>
           ))}
-        </div>
+        </section>
       )}
-
-      {/* ══════════════════════════════════════════════════════════════════
-          9. QUICK WINS
-      ══════════════════════════════════════════════════════════════════ */}
-      {quickWins.length > 0 && (
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.875rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '7px', background: 'rgba(22,163,74,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>{I.bolt}</div>
-              <div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.quickWins')}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.dashboard.quickWinsDesc')}</div>
-              </div>
-            </div>
-            <button onClick={() => onNav?.('autofix')}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.32rem 0.7rem', borderRadius: '6px', border: '1px solid rgba(0,148,255,.3)', background: 'rgba(0,148,255,.07)', color: 'var(--waf-brand)', fontSize: '0.73rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
-              {I.bolt} {t('pages.dashboard.autoFix')}
-              <span style={{ background: 'rgba(234,88,12,.12)', color: '#c2410c', fontSize: '0.48rem', fontWeight: 800, padding: '0.05rem 0.28rem', borderRadius: '3px' }}>α</span>
-            </button>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '0.55rem' }}>
-            {quickWins.map((f, i) => {
-              const sev = f.severity?.toUpperCase() ?? ''
-              const sevColor = SEVERITY_COLOR[sev] ?? '#94a3b8'
-              const pColor   = PILLAR_COLOR[f.pillar ?? ''] ?? '#888'
-              return (
-                <div key={i}
-                  style={{ padding: '0.7rem', borderRadius: '9px', border: '1px solid var(--border)', cursor: 'pointer', transition: 'border-color 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--waf-brand)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
-                  onClick={() => onNav?.('autofix')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.67rem', color: 'var(--muted)' }}>{f.control_id}</span>
-                    <SevBadge sev={sev.toUpperCase()} />
-                  </div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.35, marginBottom: '0.3rem' }}>
-                    {f.check_title || f.check_id}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    {f.pillar && <span style={{ padding: '0.08rem 0.38rem', borderRadius: '999px', background: hex(pColor, 0.12), color: pColor, fontSize: '0.6rem', fontWeight: 600, textTransform: 'capitalize' }}>{f.pillar}</span>}
-                    <span style={{ marginLeft: 'auto', fontSize: '0.63rem', color: sevColor, fontWeight: 600 }}>Fix →</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Cloud footprint — only if present */}
-      {detectedRegions.length > 0 && (
-        <div className="card" style={{ padding: '0.875rem 1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ color: 'var(--waf-brand)' }}>{I.globe}</div>
-              <span style={{ fontSize: '0.83rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.dashboard.cloudFootprint')}</span>
-            </div>
-            {onNav && <button onClick={() => onNav('regions')} style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--waf-brand)', background: 'none', border: 'none', cursor: 'pointer' }}>{t('pages.dashboard.fullMap')}</button>}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center' }}>
-            <div style={{ padding: '0.35rem 0.875rem', borderRadius: '8px', background: 'rgba(0,148,255,.07)', border: '1px solid rgba(0,148,255,.18)' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--waf-brand)' }}>{detectedRegions.length}</span>
-              <span style={{ fontSize: '0.68rem', color: 'var(--muted)', marginLeft: '0.3rem' }}>{t('pages.dashboard.regionsSuffix')}</span>
-            </div>
-            {Object.entries(providerCounts).map(([prov, cnt]) => (
-              <div key={prov} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', padding: '0.35rem 0.75rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: PROVIDER_COLOR[prov] ?? '#888', flexShrink: 0 }} />
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase' }}>{prov}</span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{cnt} region{cnt > 1 ? 's' : ''}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
     </div>
   )
 }
+
+// ── Styles ─────────────────────────────────────────────────────────────────────
+
+const dashboardCss = `
+.x-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 2.5rem;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.x-root--mounted {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Buttons */
+.x-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  border: none;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.x-btn:active { transform: scale(0.97); }
+.x-btn-icon { display: flex; flex-shrink: 0; }
+
+.x-btn--primary {
+  background: var(--waf-brand);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(0,148,255,0.35);
+}
+.x-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0,148,255,0.45);
+}
+
+.x-btn--secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.x-btn--secondary:hover { background: var(--bg); transform: translateY(-2px); }
+
+.x-btn--ghost {
+  background: transparent;
+  color: var(--waf-brand);
+  padding: 0.35rem 0.65rem;
+}
+.x-btn--ghost:hover { background: rgba(0,148,255,0.08); }
+
+.x-alpha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(249,115,22,0.15);
+  color: #C2410C;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 0.08rem 0.32rem;
+  border-radius: 4px;
+  margin-left: 0.2rem;
+}
+
+/* Cards */
+.x-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.x-card:hover { box-shadow: var(--shadow-md); }
+
+.x-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.x-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+.x-section-icon { color: var(--waf-brand); display: flex; flex-shrink: 0; }
+.x-section-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+.x-section-action { flex-shrink: 0; }
+
+/* Masthead */
+.x-masthead {
+  position: relative;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(0,148,255,0.04) 100%);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 2rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.x-masthead-glow {
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 55%;
+  height: 180%;
+  background: radial-gradient(circle at 70% 30%, rgba(0,148,255,0.12), transparent 60%);
+  pointer-events: none;
+}
+.x-masthead-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  min-width: 0;
+}
+.x-masthead-left { min-width: 0; }
+.x-masthead-right {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.x-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(0,148,255,0.10);
+  color: var(--waf-brand);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.9rem;
+  width: max-content;
+  max-width: 100%;
+}
+.x-title {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+  word-break: break-word;
+}
+.x-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.x-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+.x-chip--brand {
+  background: rgba(0,148,255,0.10);
+  color: var(--waf-brand);
+  border-color: rgba(0,148,255,0.15);
+}
+.x-chip--muted {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--border);
+}
+.x-actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+/* Gauge */
+.x-gauge {
+  position: relative;
+  flex-shrink: 0;
+  filter: drop-shadow(0 12px 30px rgba(0,148,255,0.12));
+}
+.x-gauge-svg { position: absolute; inset: 0; }
+.x-gauge-inner {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 12px rgba(15,23,42,0.06);
+}
+.x-gauge-score { font-size: 2.1rem; font-weight: 800; line-height: 1; }
+.x-gauge-over { font-size: 0.65rem; color: var(--muted); font-weight: 700; }
+.x-gauge-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.25rem;
+  max-width: 70%;
+  text-align: center;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Statbar */
+.x-statbar {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.x-statpill {
+  border-radius: 18px;
+  border: 1px solid;
+  padding: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
+}
+.x-statpill:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.x-statpill-value { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.x-statpill-label {
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.4rem;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.x-statpill-sub {
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Attention strip */
+.x-attention {
+  background: linear-gradient(180deg, rgba(220,38,38,0.06) 0%, var(--surface) 60%);
+  border: 1px solid rgba(220,38,38,0.18);
+  border-radius: 24px;
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.x-attention-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+.x-attention-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 14px;
+  background: rgba(220,38,38,0.12);
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.x-attention-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+.x-attention-sub { font-size: 0.75rem; color: var(--muted); }
+.x-attention-right {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.x-attention-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.x-attention-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid rgba(220,38,38,0.10);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+}
+.x-attention-row:hover { border-color: rgba(220,38,38,0.30); background: rgba(220,38,38,0.02); }
+.x-attention-code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.x-attention-text {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.x-attention-link {
+  font-size: 0.72rem;
+  color: var(--waf-brand);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Shared badge styles */
+.x-sev {
+  padding: 0.14rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.x-pill {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Navigation */
+.x-card--nav { padding: 1.5rem; }
+.x-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+.x-nav-col { display: flex; flex-direction: column; gap: 0.55rem; min-width: 0; }
+.x-nav-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.35rem;
+  padding-left: 0.2rem;
+}
+.x-navtile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  min-width: 0;
+}
+.x-navtile--click { cursor: pointer; }
+.x-navtile--click:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: var(--surface);
+  border-color: var(--waf-brand);
+}
+.x-navtile--click:active { transform: scale(0.99); }
+.x-navtile-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.x-navtile-body { min-width: 0; flex: 1; overflow: hidden; }
+.x-navtile-top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+  min-width: 0;
+}
+.x-navtile-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.x-navtile-alert {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #DC2626;
+  flex-shrink: 0;
+}
+.x-navtile-value {
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.x-navtile-desc {
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.x-navtile-arrow {
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+.x-navtile--click:hover .x-navtile-arrow { opacity: 1; transform: translateX(2px); }
+
+/* Bento layout */
+.x-bento {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(160px, auto);
+  gap: 1.25rem;
+  align-items: start;
+}
+.x-bento > * { min-width: 0; min-height: 0; }
+.x-card--pillars { grid-column: span 1; }
+.x-card--charts { grid-column: span 2; }
+.x-card--compliance { grid-column: span 2; }
+.x-card--heatmap { grid-column: span 1; }
+.x-card--wins { grid-column: span 2; }
+.x-card--cloud { grid-column: span 1; }
+
+/* Pillar list */
+.x-pillar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.x-pillar-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  border-radius: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+}
+.x-pillar-row:hover { transform: translateX(4px); box-shadow: var(--shadow-sm); }
+.x-pillar-slug {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.x-pillar-info { min-width: 0; overflow: hidden; }
+.x-pillar-name { font-size: 0.84rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+.x-pillar-bar { height: 5px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.x-pillar-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+.x-pillar-score { font-size: 1.25rem; font-weight: 800; line-height: 1; padding: 0 0.25rem; }
+.x-pillar-status { font-size: 0.68rem; font-weight: 600; text-align: right; }
+
+/* Charts */
+.x-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.35fr) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  min-height: 320px;
+  min-width: 0;
+}
+.x-donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-top: 0.5rem;
+}
+.x-donut-chart {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+}
+.x-donut-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.x-donut-total { font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1; }
+.x-donut-label { font-size: 0.65rem; color: var(--muted); font-weight: 700; }
+.x-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 160px;
+}
+.x-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; min-width: 0; }
+.x-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.x-legend-name { color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.x-legend-val { font-weight: 800; flex-shrink: 0; }
+
+.x-barchart { min-width: 0; height: 320px; }
+
+/* Compliance */
+.x-compliance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.x-compliance-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  min-width: 0;
+}
+.x-compliance-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.x-compliance-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+  grid-column: 1 / -1;
+}
+.x-compliance-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+.x-compliance-pct { font-size: 0.78rem; font-weight: 800; width: 2.4rem; text-align: right; }
+.x-compliance-pass { font-size: 0.68rem; color: var(--muted); width: 3rem; text-align: right; }
+
+/* Heatmap */
+.x-heat-scroll { overflow-x: auto; }
+.x-heat-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.35rem;
+  font-size: 0.85rem;
+}
+.x-heat-table th {
+  padding: 0.25rem 0.75rem;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.x-heat-table th:first-child { text-align: left; }
+.x-heat-table td { padding: 0.25rem 0.75rem; text-align: center; }
+.x-heat-pillar {
+  font-weight: 700;
+  color: var(--text);
+  text-align: left;
+  text-transform: capitalize;
+}
+.x-heat-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  height: 2rem;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  transition: transform 0.12s ease;
+}
+.x-heat-cell--active:hover { transform: scale(1.12); }
+.x-heat-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+.x-heat-swatch { width: 0.85rem; height: 0.85rem; border-radius: 3px; }
+
+/* Quick wins */
+.x-win-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.x-win-row {
+  display: grid;
+  grid-template-columns: 1.6rem auto auto 1fr auto auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  min-width: 0;
+}
+.x-win-row:hover { border-color: var(--waf-brand); transform: translateX(4px); }
+.x-win-idx {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.x-win-code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.x-win-title {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.x-win-link { font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
+
+/* Cloud */
+.x-cloud {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.x-cloud-metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 18px;
+  background: rgba(0,148,255,0.08);
+  border: 1px solid rgba(0,148,255,0.15);
+  width: max-content;
+  max-width: 100%;
+}
+.x-cloud-number { font-size: 2.2rem; font-weight: 800; color: var(--waf-brand); line-height: 1; }
+.x-cloud-unit { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.x-cloud-providers { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+.x-cloud-provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.x-cloud-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.x-cloud-name { font-weight: 800; color: var(--text); text-transform: uppercase; }
+.x-cloud-cnt { color: var(--muted); }
+
+/* Bottom check cards */
+.x-checkbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+.x-checkcard {
+  background: var(--surface);
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.x-checkcard:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.x-checkcard-value { font-size: 1.85rem; font-weight: 800; line-height: 1; }
+.x-checkcard-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-top: 0.3rem; }
+.x-checkcard-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.15rem; }
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .x-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .x-card--pillars { grid-column: span 1; grid-row: span 1; }
+  .x-card--charts { grid-column: span 1; }
+  .x-card--compliance { grid-column: span 1; }
+  .x-card--heatmap { grid-column: span 1; grid-row: span 1; }
+  .x-card--wins { grid-column: span 1; }
+  .x-card--cloud { grid-column: span 1; }
+  .x-chart-grid { grid-template-columns: 1fr; }
+  .x-donut-legend { position: static; transform: none; flex-direction: row; flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; }
+}
+@media (max-width: 960px) {
+  .x-masthead-inner { grid-template-columns: 1fr; text-align: center; }
+  .x-masthead-right { justify-content: center; }
+  .x-badge { margin-left: auto; margin-right: auto; }
+  .x-meta { justify-content: center; }
+  .x-actions { justify-content: center; }
+  .x-statbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .x-nav-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .x-attention { grid-template-columns: 1fr; }
+  .x-attention-right { justify-content: flex-start; }
+}
+@media (max-width: 680px) {
+  .x-masthead { padding: 1.25rem; }
+  .x-title { font-size: 1.6rem; }
+  .x-statbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .x-nav-grid { grid-template-columns: 1fr; }
+  .x-bento { grid-template-columns: 1fr; }
+  .x-pillar-row { grid-template-columns: 2.2rem 1fr auto; }
+  .x-pillar-status { display: none; }
+  .x-compliance-row { grid-template-columns: 1fr auto; gap: 0.5rem 0.75rem; }
+  .x-compliance-track { grid-column: 1 / -1; }
+  .x-win-row { grid-template-columns: 1.5rem 1fr auto; gap: 0.45rem; }
+  .x-win-code { display: none; }
+  .x-win-title { grid-column: span 1; }
+  .x-checkbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .x-attention-right { flex-direction: column; width: 100%; }
+  .x-attention-right .x-btn { width: 100%; }
+}
+@media (max-width: 420px) {
+  .x-statbar { grid-template-columns: 1fr; }
+  .x-checkbar { grid-template-columns: 1fr; }
+}
+`

@@ -197,6 +197,50 @@ export interface Translations {
     resetSection: string
     resetDesc: string
     resetBtn: string
+    showOnboardingAgain: string
+    showOnboardingAgainDesc: string
+  }
+
+  onboarding: {
+    stepNOfM: string
+    skip: string
+    next: string
+    back: string
+    done: string
+    restart: string
+    openHelp: string
+    copied: string
+    copyCommand: string
+    tryIt: string
+    sectionOverview: string
+    sectionCiso: string
+    sectionArchitect: string
+    sectionEngineer: string
+    sectionRuns: string
+    sectionAdmin: string
+    clickToCopy: string
+    steps: {
+      welcome: { title: string; body: string; cta: string }
+      navigation: { title: string; body: string }
+      scan: {
+        title: string
+        body: string
+        installLabel: string
+        installCommand: string
+        checkLabel: string
+        checkCommand: string
+        pushLabel: string
+        pushCommand: string
+        tip: string
+      }
+      runs: { title: string; body: string }
+      dashboard: { title: string; body: string; cards: string[] }
+      findings: { title: string; body: string; severities: string[] }
+      passports: { title: string; body: string; fields: string[] }
+      journey: { title: string; body: string; stages: string[] }
+      remediation: { title: string; body: string; actions: string[] }
+      done: { title: string; body: string; cta: string }
+    }
   }
 
   settings: {
@@ -432,6 +476,17 @@ export interface Translations {
     }
 
     scan: {
+      title: string               // "Run a scan"
+      subtitle: string            // "Push or trigger a scan to see results in the dashboard."
+      serverUrlLabel: string      // "Dashboard server"
+      serverUrlHint: string       // "Change it in Settings → Connection & Real Engine."
+      cliPathTitle: string        // "CLI Push"
+      cliPathDesc: string         // "Run wafpass locally and push results."
+      serverPathTitle: string      // "Server-side"
+      serverPathDesc: string      // "Trigger a scan on the dashboard server."
+      apiPathTitle: string        // "Direct API"
+      apiPathDesc: string         // "POST JSON results with curl."
+      recommendedBadge: string    // "Recommended"
       serverPanel: string         // "Run Scan from Server"
       checking: string            // "Checking…"
       ready: string               // "Ready"
@@ -919,6 +974,23 @@ export interface Translations {
       minSeverityLabel: string
       debugInfo: string
       versionInfo: string
+      pageTitle: string
+      pageSubtitle: string
+      defaultIacDesc: string
+      failOnDesc: string
+      minSeverityDesc: string
+      pillarCoverageDesc: string
+      intelligenceDesc: string
+      regulatoryScopeDesc: string
+      pdfSectionsDesc: string
+      connectionDesc: string
+      backendServerUrl: string
+      architectSandbox: string
+      realEngineDesc: string
+      requirements: string
+      dockerCompose: string
+      customControls: string
+      statusProbe: string
     }
 
     badgePage: {
@@ -1359,6 +1431,64 @@ export interface Translations {
       bpRisk: string
     }
 
+    journey: {
+      threadLabel: string
+      frontpageTitle: string
+      frontpageSubtitle: string
+      companyTitle: string
+      companySubtitle: string
+      projectTitle: string
+      projectSubtitle: string
+      currentScore: string
+      tabFrontpage: string
+      tabCompany: string
+      selectProject: string
+      hallOfFame: string
+      heroEyebrow: string
+      heroTitle: string
+      heroBody: string
+      companyCardLabel: string
+      projectsCardLabel: string
+      projectsTracked: string
+      projectsCardBody: string
+      selectedRunLabel: string
+      projectRunway: string
+      viewPassports: string
+      noProjects: string
+      pointsToNext: string
+      atFinalApproach: string
+      companyAverage: string
+      companyStage: string
+      totalRuns: string
+      companyTrend: string
+      stageDistribution: string
+      companyNextMilestone: string
+      needMoreRuns: string
+      latestScore: string
+      bestScore: string
+      totalScans: string
+      branches: string
+      badgesEarned: string
+      backToJourney: string
+      projectViewLabel: string
+      scoreTrend: string
+      pillarScores: string
+      noPillarData: string
+      maturityBadges: string
+      achievements: string
+      nextControls: string
+      nextControlsSub: string
+      pointsNeeded: string
+      recentScans: string
+      earned: string
+      requires: string
+      estimatedControls: string
+      colScore: string
+      colBranch: string
+      colStage: string
+      colDate: string
+    }
+
     globaldashboard: {
       operationalCenter: string
       featuredProject: string
@@ -1388,6 +1518,8 @@ export interface Translations {
     }
 
     moduleScore: {
+      pageTitle: string
+      pageSubtitle: string
       noFindings: string
       filterPlaceholder: string
       sortScoreAsc: string
@@ -1413,6 +1545,19 @@ export interface Translations {
       pillarScores: string
       topFailingControls: string
       findings: string             // "Findings ({{count}})"
+      moduleDirectory: string
+      moduleDetails: string
+      severityDistribution: string
+      statusBreakdown: string
+      overallHealth: string
+      selectFromList: string
+      modulePath: string
+      allModules: string
+      passes: string
+      failures: string
+      skipped: string
+      topIssues: string
+      noTopIssues: string
     }
 
     passportDashboard: {
@@ -1493,11 +1638,22 @@ export interface Translations {
 
     regions: {
       noRegions: string
+      pageTitle: string
+      pageSubtitle: string
       totalRegions: string
-      totalAZs: string             // "{{count}} AZs"
+      totalAZs: string
       deploymentMap: string
       regionsCount: string         // "{{count}} regions"
       scannedPaths: string
+      providers: string
+      providersDetected: string
+      totalResources: string
+      regionsLabel: string
+      azsLabel: string
+      azsCount: string             // "{{count}} AZ(s)"
+      hoverHint: string
+      providerBreakdown: string
+      mapAttribution: string
     }
 
     sandbox: {
@@ -1565,10 +1721,16 @@ export interface Translations {
     }
 
     controlspacks: {
+      title: string
+      subtitle: string
+      frameworkReference: string
       activePack: string
       noPack: string
       controlsCount: string
       activated: string
+      addNewPack: string
+      cancelNewPack: string
+      currentActive: string
       uploadZip: string
       syncDirectory: string
       uploadZipDesc: string

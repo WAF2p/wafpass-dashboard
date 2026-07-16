@@ -4,6 +4,7 @@
   --waf-accent:     #FFCF63;
   --waf-danger:     #DA2C38;
   --nav-bg:         rgba(247, 248, 251, 0.78);
+  --nav-bg-opaque:  rgba(247, 248, 251, 0.89);
   --nav-surf:       rgba(255, 255, 255, 0.65);
   --nav-border:     rgba(15,23,42,.10);
   --nav-text:       #334155;
@@ -38,6 +39,7 @@
 
 [data-theme="dark"] {
   --nav-bg:         rgba(7, 10, 18, 0.78);
+  --nav-bg-opaque:  rgba(7, 10, 18, 0.89);
   --nav-surf:       rgba(15, 22, 48, 0.65);
   --nav-border:     rgba(238,242,255,.10);
   --nav-text:       #b4c0d6;

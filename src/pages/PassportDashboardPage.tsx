@@ -86,15 +86,7 @@ function LinkIconButton({ href, title, children }: { href: string; title: string
       rel="noopener noreferrer"
       title={title}
       onClick={e => e.stopPropagation()}
-      style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: '22px', height: '22px', borderRadius: '4px',
-        background: 'rgba(0,50,80,0.07)', border: '1px solid rgba(0,50,80,0.15)',
-        color: 'rgba(0,50,80,0.6)', textDecoration: 'none', flexShrink: 0,
-        transition: 'background 0.15s',
-      }}
-      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,50,80,0.14)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,50,80,0.07)' }}
+      className="pp-link-btn"
     >
       {children}
     </a>
@@ -105,28 +97,28 @@ function RepoIcon({ url }: { url: string }) {
   const type = detectRepoType(url)
   if (type === 'github') return (
     <LinkIconButton href={url} title="GitHub Repository">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'gitlab') return (
     <LinkIconButton href={url} title="GitLab Repository">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51 1.22 3.78a.84.84 0 0 1-.3.92z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'bitbucket') return (
     <LinkIconButton href={url} title="Bitbucket Repository">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M.778 1.213a.768.768 0 0 0-.768.892l3.263 19.81c.084.5.515.868 1.022.868h15.387c.38 0 .71-.258.79-.63l3.263-19.845a.768.768 0 0 0-.768-.895zM14.78 15.959H9.234L7.616 8.04h8.777z" />
       </svg>
     </LinkIconButton>
   )
   return (
     <LinkIconButton href={url} title="Repository">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
       </svg>
     </LinkIconButton>
@@ -137,28 +129,28 @@ function DocsIcon({ url }: { url: string }) {
   const type = detectDocsType(url)
   if (type === 'confluence') return (
     <LinkIconButton href={url} title="Confluence Documentation">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M.887 18.168c-.28.459-.523.852-.71 1.161-.41.687-.117 1.567.635 1.877l3.783 1.552c.737.302 1.579-.055 1.896-.786.177-.409.413-.905.686-1.44C9.26 17.252 11.374 16.05 14.745 16c3.473-.052 6.072 1.267 7.944 3.638.463.589 1.293.738 1.938.34l3.33-2.059a1.377 1.377 0 0 0 .39-1.924C25.494 12.44 21.417 9 14.793 9 8.248 9 3.535 12.63.887 18.168zm22.226-12.336c.28-.459.523-.852.71-1.161.41-.687.117-1.567-.635-1.877L19.405 1.242c-.737-.302-1.579.055-1.896.786-.177.409-.413.905-.686 1.44C14.74 6.748 12.626 7.95 9.255 8c-3.473.052-6.072-1.267-7.944-3.638A1.378 1.378 0 0 0-.627 4.022L-3.957 6.08a1.377 1.377 0 0 0-.39 1.924C-.494 11.56 3.583 15 10.207 15c6.545 0 11.258-3.63 13.906-9.168z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'notion') return (
     <LinkIconButton href={url} title="Notion Documentation">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.447-.093-1.961-.747l-3.13-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'gitbook') return (
     <LinkIconButton href={url} title="GitBook Documentation">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M10.802 17.77a.703.703 0 1 1-.002 1.406.703.703 0 0 1 .002-1.406m11.024-4.347a.703.703 0 1 1 .001-1.406.703.703 0 0 1-.001 1.406M3.136 14.12a.703.703 0 1 1 .001-1.407.703.703 0 0 1-.001 1.407m17.323-9.91a2.11 2.11 0 1 0 .001 4.22 2.11 2.11 0 0 0 0-4.22m0 3.164a1.054 1.054 0 1 1 0-2.11 1.054 1.054 0 0 1 0 2.11m-14.86-3.164a2.11 2.11 0 1 0 0 4.22 2.11 2.11 0 0 0 0-4.22m0 3.164a1.054 1.054 0 1 1 0-2.11 1.054 1.054 0 0 1 0 2.11" />
       </svg>
     </LinkIconButton>
   )
   return (
     <LinkIconButton href={url} title="Documentation">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <polyline points="14 2 14 8 20 8" />
         <line x1="16" y1="13" x2="8" y2="13" />
@@ -169,7 +161,7 @@ function DocsIcon({ url }: { url: string }) {
   )
 }
 
-// ── Passport data field ───────────────────────────────────────────────────────
+// ── Passport data field ─────────────────────────────────────────────────────────
 
 function PassportDataField({
   label, value, bold = false, valueColor, small = false,
@@ -177,17 +169,16 @@ function PassportDataField({
   label: string; value: string; bold?: boolean; valueColor?: string; small?: boolean
 }) {
   return (
-    <div style={{ minWidth: 0, overflow: 'hidden' }}>
-      <div style={{ fontSize: '0.42rem', color: 'rgba(0,40,70,0.45)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {label}
-      </div>
-      <div style={{
-        fontSize: small ? '0.6rem' : '0.72rem',
-        fontWeight: bold ? 800 : 600,
-        color: valueColor ?? 'rgba(0,20,50,0.85)',
-        lineHeight: 1.25,
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>
+    <div className="pp-field">
+      <div className="pp-field-label">{label}</div>
+      <div
+        className="pp-field-value"
+        style={{
+          fontSize: small ? '0.72rem' : '0.82rem',
+          fontWeight: bold ? 800 : 700,
+          color: valueColor ?? 'var(--text)',
+        }}
+      >
         {value}
       </div>
     </div>
@@ -204,15 +195,15 @@ function MaturitySeal({ level, color, textColor, size = 54 }: { level: number; c
     return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`
   }).join(' ')
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.18))' }}>
-      <polygon points={rays} fill={color} opacity="0.85" />
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} className="pp-seal">
+      <polygon points={rays} fill={color} opacity="0.9" />
       <circle cx={cx} cy={cy} r={size * 0.31} fill={color} />
-      <circle cx={cx} cy={cy} r={size * 0.27} fill="rgba(255,255,255,0.22)" />
+      <circle cx={cx} cy={cy} r={size * 0.27} fill="rgba(255,255,255,0.25)" />
       <text x={cx} y={cy - 3} textAnchor="middle" dominantBaseline="central"
         fill={textColor} fontSize={size * 0.2} fontWeight="900"
         fontFamily="system-ui,-apple-system,sans-serif">L{level}</text>
       <text x={cx} y={cy + size * 0.12} textAnchor="middle" dominantBaseline="central"
-        fill={textColor} fontSize={size * 0.1} fontWeight="700" opacity="0.8"
+        fill={textColor} fontSize={size * 0.1} fontWeight="700" opacity="0.9"
         fontFamily="system-ui,-apple-system,sans-serif">WAF++</text>
     </svg>
   )
@@ -253,43 +244,34 @@ function PassportStamp({ color, icon, title, subtitle, earned, rotation, size = 
 }) {
   const r = size / 2
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem',
-      transform: `rotate(${rotation}deg)`,
-      opacity: earned ? 1 : 0.13,
-      filter: earned ? 'none' : 'grayscale(1)',
-      transition: 'opacity 0.3s',
-      userSelect: 'none',
-    }}>
-      <div style={{ position: 'relative', width: size, height: size }}>
-        {/* Outer ring */}
+    <div
+      className="pp-stamp"
+      style={{
+        transform: `rotate(${rotation}deg)`,
+        opacity: earned ? 1 : 0.14,
+      }}
+    >
+      <div className="pp-stamp-ring" style={{ width: size, height: size }}>
         <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ position: 'absolute', inset: 0 }}>
           <circle cx={r} cy={r} r={r - 3} fill={`${color}12`} stroke={color} strokeWidth="2.5" />
           <circle cx={r} cy={r} r={r - 10} fill="none" stroke={color} strokeWidth="1" strokeDasharray="3 2" opacity="0.6" />
         </svg>
-        {/* Icon */}
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="pp-stamp-icon">
           <svg width={size * 0.32} height={size * 0.32} fill="none" stroke={color} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={icon} />
           </svg>
         </div>
-        {/* Earned checkmark */}
         {earned && (
-          <div style={{
-            position: 'absolute', bottom: 2, right: 2,
-            width: 16, height: 16, borderRadius: '50%',
-            background: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-          }}>
+          <div className="pp-stamp-check" style={{ background: color }}>
             <svg width="8" height="8" fill="none" stroke="#fff" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
         )}
       </div>
-      <div style={{ textAlign: 'center', maxWidth: size + 12 }}>
-        <div style={{ fontSize: '0.62rem', fontWeight: 700, color: earned ? 'rgba(0,20,50,0.85)' : 'rgba(0,20,50,0.4)', lineHeight: 1.2, fontFamily: 'Arial, sans-serif' }}>{title}</div>
-        {subtitle && <div style={{ fontSize: '0.48rem', color: 'rgba(0,40,70,0.45)', marginTop: '0.1rem', lineHeight: 1.2 }}>{subtitle}</div>}
+      <div className="pp-stamp-text" style={{ maxWidth: size + 12 }}>
+        <div className="pp-stamp-title" style={{ color: earned ? 'var(--text)' : 'var(--muted)' }}>{title}</div>
+        {subtitle && <div className="pp-stamp-sub">{subtitle}</div>}
       </div>
     </div>
   )
@@ -304,64 +286,35 @@ function AccessDeniedOverlay({
   project: string
 }) {
   return (
-    <>
-      {/* Full-screen backdrop — click away closes; paddingLeft shifts centering into main content area past the 16rem sidebar */}
-      <div
-        style={{ position: 'fixed', inset: 0, zIndex: 1499, background: 'rgba(0,20,40,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '16rem' }}
-        onClick={onClose}
-      >
-      <div
-        style={{
-          width: 'min(500px, calc(100vw - 18rem))',
-          background: '#f9f7f1', borderRadius: '10px', boxShadow: '0 20px 60px rgba(0,0,0,0.38)',
-          overflow: 'hidden', display: 'flex', flexDirection: 'column',
-          fontFamily: 'Arial, Helvetica, sans-serif',
-          border: '1.5px solid rgba(0,50,80,0.18)',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div style={{ position: 'relative', height: '56px', overflow: 'hidden', flexShrink: 0, background: 'linear-gradient(135deg, #b4dfe8, #8fc8d8)' }}>
-          <svg viewBox="0 0 500 56" width="100%" height="56" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0 }}>
-            <path d="M0,56 L60,26 L120,34 L180,18 L240,28 L300,16 L360,30 L420,22 L500,26 L500,56 Z" fill="rgba(255,255,255,0.1)" />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 1rem', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'rgba(0,40,70,0.7)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                WAF++ · PROJECT PASSPORT
-              </div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(0,30,60,0.85)', marginTop: '0.08rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }}>
-                {project}
-              </div>
-            </div>
-            <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', cursor: 'pointer', padding: '0.25rem', color: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <div className="pp-overlay-backdrop" onClick={onClose}>
+      <div className="pp-modal pp-modal--access" onClick={e => e.stopPropagation()}>
+        <div className="pp-modal-header pp-modal-header--danger">
+          <div>
+            <div className="pp-modal-kicker">WAF++ · PROJECT PASSPORT</div>
+            <div className="pp-modal-title" style={{ maxWidth: 280 }}>{project}</div>
           </div>
+          <button className="pp-modal-close" onClick={onClose}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-
-        {/* Content */}
-        <div style={{ padding: '1.5rem 1.25rem', textAlign: 'center' }}>
-          <div style={{ width: '64px', height: '64px', margin: '0 auto 1rem', borderRadius: '50%', background: 'rgba(218,44,56,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="32" height="32" fill="none" stroke="#DA2C38" viewBox="0 0 24 24">
+        <div className="pp-modal-body pp-modal-body--center">
+          <div className="pp-access-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(0,20,50,0.85)', marginBottom: '0.5rem' }}>Access Denied</div>
-          <div style={{ fontSize: '0.7rem', color: 'rgba(0,40,70,0.65)', lineHeight: 1.5 }}>
+          <div className="pp-access-title">Access Denied</div>
+          <div className="pp-access-text">
             You do not have access to this project. Contact your administrator to request access.
           </div>
         </div>
-
-        {/* MRZ footer */}
-        <div style={{ borderTop: '1px solid rgba(0,50,80,0.1)', padding: '0.3rem 0.75rem', background: 'rgba(255,235,220,0.2)', fontFamily: '"Courier New", monospace', fontSize: '0.4rem', color: 'rgba(0,20,50,0.3)', letterSpacing: '0.04em', userSelect: 'none', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'clip' }}>
+        <div className="pp-modal-mrz">
           {`PP<NO ACCESS FOR<PROJECT`.padEnd(44, '<')}
         </div>
       </div>
-      </div>
-    </>
+    </div>
   )
 }
 
@@ -388,49 +341,21 @@ function AchievementsOverlay({
   const earnedAchievements = achievementBadges.filter(b => b.earned).length
 
   return (
-    <>
-      {/* Full-screen backdrop — click away closes; paddingLeft shifts centering into main content area past the 16rem sidebar */}
-      <div
-        style={{ position: 'fixed', inset: 0, zIndex: 1999, background: 'rgba(0,20,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '16rem' }}
-        onClick={onClose}
-      >
-      <div
-        style={{
-          width: 'min(580px, calc(100vw - 18rem))',
-          maxHeight: '82vh',
-          background: '#f9f7f1', borderRadius: '10px', boxShadow: '0 20px 60px rgba(0,0,0,0.38)',
-          overflow: 'hidden', display: 'flex', flexDirection: 'column',
-          fontFamily: 'Arial, Helvetica, sans-serif',
-          border: '1.5px solid rgba(0,50,80,0.18)',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Passport-style header */}
-        <div style={{ position: 'relative', height: '64px', overflow: 'hidden', flexShrink: 0, background: 'linear-gradient(135deg, #b4dfe8, #8fc8d8)' }}>
-          <svg viewBox="0 0 560 64" width="100%" height="64" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0 }}>
-            {[16, 32, 48].map(y => <line key={y} x1="0" y1={y} x2="560" y2={y} stroke="rgba(255,255,255,0.22)" strokeWidth="0.6" />)}
-            {[70, 140, 210, 280, 350, 420, 490].map(x => <line key={x} x1={x} y1="0" x2={x} y2="64" stroke="rgba(255,255,255,0.22)" strokeWidth="0.6" />)}
-            <path d="M0,64 L80,30 L140,42 L220,18 L290,34 L360,22 L430,38 L500,26 L560,32 L560,64 Z" fill="rgba(255,255,255,0.1)" />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 1rem', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'rgba(0,40,70,0.7)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                WAF++ · PROJECT PASSPORT · STAMP COLLECTION
-              </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(0,30,60,0.85)', marginTop: '0.1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>
-                {displayName}
-              </div>
-            </div>
-            <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', cursor: 'pointer', padding: '0.3rem', color: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <div className="pp-overlay-backdrop" onClick={onClose}>
+      <div className="pp-modal pp-modal--stamps" onClick={e => e.stopPropagation()}>
+        <div className="pp-modal-header pp-modal-header--brand">
+          <div>
+            <div className="pp-modal-kicker">WAF++ · STAMP COLLECTION</div>
+            <div className="pp-modal-title" style={{ maxWidth: 340 }}>{displayName}</div>
           </div>
+          <button className="pp-modal-close" onClick={onClose}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        {/* Page tabs — styled like passport page dividers */}
-        <div style={{ display: 'flex', borderBottom: '1.5px solid rgba(0,50,80,0.12)', background: 'rgba(0,40,70,0.03)', flexShrink: 0 }}>
+        <div className="pp-modal-tabs">
           {[
             { label: `Maturity Levels`, sub: `${earnedMaturity} / ${MATURITY_META.length} earned`, index: 0 },
             { label: `Achievements`,    sub: `${earnedAchievements} / ${STAMP_ACHIEVEMENTS.length} earned`, index: 1 },
@@ -438,26 +363,17 @@ function AchievementsOverlay({
             <button
               key={tab.index}
               onClick={() => setStampPage(tab.index as 0 | 1)}
-              style={{
-                flex: 1, padding: '0.5rem 0.75rem', border: 'none', cursor: 'pointer',
-                background: stampPage === tab.index ? '#f9f7f1' : 'transparent',
-                borderBottom: stampPage === tab.index ? '2px solid rgba(0,80,140,0.6)' : '2px solid transparent',
-                transition: 'background 0.15s',
-              }}
+              className={`pp-modal-tab ${stampPage === tab.index ? 'active' : ''}`}
             >
-              <div style={{ fontSize: '0.6rem', fontWeight: 800, color: stampPage === tab.index ? 'rgba(0,40,80,0.85)' : 'rgba(0,40,70,0.4)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                {tab.label}
-              </div>
-              <div style={{ fontSize: '0.5rem', color: 'rgba(0,40,70,0.45)', marginTop: '0.1rem' }}>{tab.sub}</div>
+              <div className="pp-modal-tab-label">{tab.label}</div>
+              <div className="pp-modal-tab-sub">{tab.sub}</div>
             </button>
           ))}
         </div>
 
-        {/* Stamp grid */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.25rem 1.75rem' }}>
+        <div className="pp-modal-body">
           {stampPage === 0 ? (
-            /* ── Maturity stamps ── */
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', justifyContent: 'center' }}>
+            <div className="pp-stamp-grid">
               {maturityBadges.map((m, i) => (
                 <PassportStamp
                   key={m.level}
@@ -476,8 +392,7 @@ function AchievementsOverlay({
               ))}
             </div>
           ) : (
-            /* ── Achievement stamps ── */
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', justifyItems: 'center' }}>
+            <div className="pp-stamp-grid pp-stamp-grid--achievements">
               {achievementBadges.map((a, i) => (
                 <PassportStamp
                   key={a.id}
@@ -494,13 +409,11 @@ function AchievementsOverlay({
           )}
         </div>
 
-        {/* Passport-style MRZ footer */}
-        <div style={{ borderTop: '1.5px solid rgba(0,50,80,0.1)', padding: '0.3rem 0.75rem', background: 'rgba(255,235,220,0.2)', fontFamily: '"Courier New", monospace', fontSize: '0.46rem', color: 'rgba(0,20,50,0.3)', letterSpacing: '0.05em', userSelect: 'none', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'clip' }}>
+        <div className="pp-modal-mrz">
           {`PP<WAF${mrzPad(displayName, 18)}<<STAMP<COLLECTION<<<<<<<<<<<<<<<<<`.slice(0, 44).padEnd(44, '<')}
         </div>
       </div>
-      </div>
-    </>
+    </div>
   )
 }
 
@@ -559,186 +472,91 @@ function PassportRow({
   const { projectRuns, latestRun, bestScore, maturity, criticality, env, cloud, displayName, achievementCount, mrz1 } =
     usePassportCardData(project, passport, runs)
 
-  const gradId = `pgr-${project.replace(/[^a-z0-9]/gi, '-')}`
-
   return (
-    <button
-      onClick={onClick}
-      style={{
-        width: '100%', display: 'flex', flexDirection: 'column',
-        background: '#f9f7f1', border: `1.5px solid rgba(0,50,80,0.15)`,
-        borderRadius: '7px', overflow: 'hidden', cursor: 'pointer', textAlign: 'left',
-        transition: 'box-shadow 0.15s, transform 0.15s',
-        boxShadow: '0 1px 6px rgba(0,0,0,0.07)', fontFamily: 'Arial, Helvetica, sans-serif',
-      }}
-      onMouseEnter={e => {
-        ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 18px rgba(0,0,0,0.13)'
-        ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
-      }}
-      onMouseLeave={e => {
-        ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 6px rgba(0,0,0,0.07)'
-        ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
-      }}
-    >
-      {/* ── Main row ── */}
-      <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '72px' }}>
-
-        {/* Left accent + seal */}
-        <div style={{ position: 'relative', width: '72px', flexShrink: 0, overflow: 'hidden' }}>
-          <svg viewBox="0 0 72 72" width="72" height="72" preserveAspectRatio="xMidYMid slice"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-            <defs>
-              <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#b4dfe8" />
-                <stop offset="100%" stopColor="#8fc8d8" />
-              </linearGradient>
-            </defs>
-            <rect width="72" height="72" fill={`url(#${gradId})`} />
-            {[18, 36, 54].map(y => <line key={y} x1="0" y1={y} x2="72" y2={y} stroke="rgba(255,255,255,0.22)" strokeWidth="0.5" />)}
-            {[24, 48].map(x => <line key={x} x1={x} y1="0" x2={x} y2="72" stroke="rgba(255,255,255,0.22)" strokeWidth="0.5" />)}
-            <path d="M0,72 L15,42 L30,52 L45,30 L60,44 L72,36 L72,72 Z" fill="rgba(255,255,255,0.1)" />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {passport?.image_url ? (
-              <div style={{ width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.8)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
-                <img src={passport.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            ) : (
-              <MaturitySeal level={maturity.level} color={maturity.color} textColor={maturity.textColor} size={38} />
-            )}
-          </div>
+    <button onClick={onClick} className="pp-row">
+      <div className="pp-row-main">
+        <div className="pp-row-accent" style={{ background: maturity.color }} />
+        <div className="pp-row-seal">
+          {passport?.image_url ? (
+            <img src={passport.image_url} alt="" />
+          ) : (
+            <MaturitySeal level={maturity.level} color={maturity.color} textColor={maturity.textColor} size={40} />
+          )}
         </div>
 
-        {/* Doc header line */}
-        <div style={{ width: '1px', background: 'rgba(0,50,80,0.1)', flexShrink: 0 }} />
-
-        {/* Name + description */}
-        <div style={{ flex: '1.8', minWidth: 0, padding: '0.55rem 0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.18rem', borderRight: '1px solid rgba(0,50,80,0.07)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'rgba(0,20,50,0.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {displayName}
-          </div>
+        <div className="pp-row-info">
+          <div className="pp-row-name">{displayName}</div>
           {passport?.display_name && passport.display_name !== project && (
-            <div style={{ fontSize: '0.6rem', color: 'rgba(0,40,70,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>{project}</div>
+            <div className="pp-row-id">{project}</div>
           )}
           {passport?.description ? (
-            <div style={{ fontSize: '0.65rem', color: 'rgba(0,40,70,0.55)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.35 }}>
-              {passport.description}
+            <div className="pp-row-desc">{passport.description}</div>
+          ) : (
+            <div className="pp-row-desc pp-row-desc--empty">No description</div>
+          )}
+        </div>
+
+        <div className="pp-row-owner">
+          {passport?.owner ? (
+            <div className="pp-field">
+              <div className="pp-field-label">Owner</div>
+              <div className="pp-field-value">{passport.owner}</div>
             </div>
           ) : (
-            <div style={{ fontSize: '0.6rem', color: 'rgba(0,40,70,0.25)', fontStyle: 'italic' }}>No description</div>
-          )}
-        </div>
-
-        {/* Owner + team */}
-        <div style={{ flex: '1.2', minWidth: 0, padding: '0.55rem 0.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.2rem', borderRight: '1px solid rgba(0,50,80,0.07)' }}>
-          {passport?.owner && (
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <div style={{ fontSize: '0.38rem', color: 'rgba(0,40,70,0.38)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Owner</div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(0,20,50,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{passport.owner}</div>
-            </div>
+            <div className="pp-row-desc--empty">No owner</div>
           )}
           {passport?.owner_team && (
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <div style={{ fontSize: '0.38rem', color: 'rgba(0,40,70,0.38)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team</div>
-              <div style={{ fontSize: '0.65rem', color: 'rgba(0,40,70,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{passport.owner_team}</div>
+            <div className="pp-field">
+              <div className="pp-field-label">Team</div>
+              <div className="pp-field-value" style={{ fontWeight: 600, color: 'var(--muted)' }}>{passport.owner_team}</div>
             </div>
           )}
-          {!passport?.owner && !passport?.owner_team && (
-            <div style={{ fontSize: '0.62rem', color: 'rgba(0,40,70,0.25)', fontStyle: 'italic' }}>No owner</div>
-          )}
         </div>
 
-        {/* Criticality + env + cloud */}
-        <div style={{ flex: '0 0 140px', padding: '0.55rem 0.6rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.22rem', borderRight: '1px solid rgba(0,50,80,0.07)' }}>
-          {criticality && (
-            <span style={{ fontSize: '0.58rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '3px', background: criticality.bg, color: criticality.color, border: `1px solid ${criticality.color}33`, alignSelf: 'flex-start' }}>
-              {criticality.label}
-            </span>
-          )}
-          {env && (
-            <span style={{ fontSize: '0.58rem', fontWeight: 600, padding: '0.1rem 0.45rem', borderRadius: '3px', background: `${env.color}10`, color: env.color, border: `1px solid ${env.color}30`, alignSelf: 'flex-start' }}>
-              {env.label}
-            </span>
-          )}
-          {cloud && (
-            <span style={{ fontSize: '0.58rem', fontWeight: 600, padding: '0.1rem 0.45rem', borderRadius: '3px', background: `${cloud.color}10`, color: cloud.color, border: `1px solid ${cloud.color}30`, alignSelf: 'flex-start' }}>
-              {cloud.label}
-            </span>
-          )}
-          {!criticality && !env && !cloud && (
-            <span style={{ fontSize: '0.6rem', color: 'rgba(0,40,70,0.25)', fontStyle: 'italic' }}>—</span>
-          )}
+        <div className="pp-row-badges">
+          {criticality && <span className="pp-pill" style={{ background: criticality.bg, color: criticality.color, borderColor: `${criticality.color}33` }}>{criticality.label}</span>}
+          {env && <span className="pp-pill" style={{ background: `${env.color}10`, color: env.color, borderColor: `${env.color}30` }}>{env.label}</span>}
+          {cloud && <span className="pp-pill" style={{ background: `${cloud.color}10`, color: cloud.color, borderColor: `${cloud.color}30` }}>{cloud.label}</span>}
+          {!criticality && !env && !cloud && <span className="pp-row-desc--empty">—</span>}
         </div>
 
-        {/* Score + stats */}
-        <div style={{ flex: '0 0 90px', padding: '0.55rem 0.6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.1rem', borderRight: '1px solid rgba(0,50,80,0.07)' }}>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: scoreColor(bestScore), lineHeight: 1 }}>
-            {bestScore > 0 ? bestScore : '—'}
-          </div>
-          <div style={{ fontSize: '0.42rem', color: 'rgba(0,40,70,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>/ 100</div>
-          <div style={{ fontSize: '0.52rem', color: 'rgba(0,40,70,0.45)', marginTop: '0.15rem' }}>
-            {projectRuns.length} scan{projectRuns.length !== 1 ? 's' : ''}
-          </div>
+        <div className="pp-row-score">
+          <div className="pp-score-big" style={{ color: scoreColor(bestScore) }}>{bestScore > 0 ? bestScore : '—'}</div>
+          <div className="pp-score-label">/ 100</div>
+          <div className="pp-row-meta">{projectRuns.length} scan{projectRuns.length !== 1 ? 's' : ''}</div>
           {achievementCount > 0 && (
-            <div style={{ fontSize: '0.5rem', color: 'rgba(0,40,70,0.38)', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="rgba(0,40,70,0.4)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            <div className="pp-row-achievements">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
               {achievementCount}
             </div>
           )}
         </div>
 
-        {/* Links + badge + last scan */}
-        <div style={{ flex: '0 0 88px', padding: '0.55rem 0.6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+        <div className="pp-row-actions">
           {(passport?.repository_url || passport?.documentation_url) && (
-            <div style={{ display: 'flex', gap: '0.3rem' }}>
+            <div className="pp-row-links">
               {passport?.repository_url && <RepoIcon url={passport.repository_url} />}
               {passport?.documentation_url && <DocsIcon url={passport.documentation_url} />}
             </div>
           )}
           {latestRun && (
-            <div style={{ fontSize: '0.48rem', color: 'rgba(0,40,70,0.4)', textAlign: 'center', lineHeight: 1.3 }}>
-              {new Date(latestRun.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
-            </div>
+            <div className="pp-row-meta">{new Date(latestRun.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}</div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <a
-              href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
-              download={`wafpass-badge-${project}.svg`}
-              onClick={e => e.stopPropagation()}
-              title="Download SVG badge"
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.15rem',
-                padding: '0.12rem 0.3rem', borderRadius: '3px',
-                background: 'rgba(0,50,100,0.08)', border: '1px solid rgba(0,50,100,0.15)',
-                textDecoration: 'none', cursor: 'pointer',
-              }}
-            >
-              <svg width="8" height="8" fill="none" stroke="rgba(0,40,80,0.5)" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              <span style={{ fontSize: '0.38rem', fontWeight: 700, color: 'rgba(0,40,80,0.55)', letterSpacing: '0.04em' }}>BADGE</span>
-            </a>
-            <svg width="14" height="14" fill="none" stroke="rgba(0,40,70,0.3)" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <a
+            href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
+            download={`wafpass-badge-${project}.svg`}
+            onClick={e => e.stopPropagation()}
+            title="Download SVG badge"
+            className="pp-row-badge"
+          >
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-          </div>
+            <span>Badge</span>
+          </a>
         </div>
       </div>
-
-      {/* ── MRZ strip ── */}
-      <div style={{
-        borderTop: '1px solid rgba(0,50,80,0.08)',
-        padding: '0.18rem 0.75rem',
-        background: 'rgba(255,235,220,0.15)',
-        fontFamily: '"Courier New", monospace',
-        fontSize: '0.44rem',
-        color: 'rgba(0,20,50,0.38)',
-        letterSpacing: '0.05em',
-        overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap',
-        userSelect: 'none',
-      }}>
-        {mrz1}
-      </div>
+      <div className="pp-row-mrz">{mrz1}</div>
     </button>
   )
 }
@@ -757,260 +575,90 @@ function PassportCard({
   const { projectRuns, latestRun, bestScore, latestScore, scoreDelta, avgScore, sparkRuns, latestControls, maturity, criticality, env, cloud, displayName, achievementCount, mrz1, mrz2 } =
     usePassportCardData(project, passport, runs)
 
-  const gradId = `pg-${project.replace(/[^a-z0-9]/gi, '-')}`
-
   return (
-    <button
-      onClick={onClick}
-      style={{
-        width: '100%', minHeight: '370px',
-        display: 'flex', flexDirection: 'column',
-        background: '#f9f7f1',
-        border: `1.5px solid rgba(0,50,80,0.18)`,
-        borderRadius: '7px',
-        overflow: 'hidden',
-        cursor: 'pointer',
-        textAlign: 'left',
-        transition: 'box-shadow 0.18s, transform 0.18s',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        fontFamily: 'Arial, Helvetica, sans-serif',
-        position: 'relative',
-      }}
-      onMouseEnter={e => {
-        ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 28px rgba(0,0,0,0.18)'
-        ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'
-      }}
-      onMouseLeave={e => {
-        ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)'
-        ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
-      }}
-    >
-      {/* ── Decorative watermark / landscape zone ── */}
-      <div style={{ position: 'relative', height: '110px', flexShrink: 0, overflow: 'hidden' }}>
-        <svg viewBox="0 0 320 110" width="100%" height="110" preserveAspectRatio="xMidYMid slice"
-          style={{ position: 'absolute', inset: 0 }}>
-          <defs>
-            <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%"   stopColor="#b4dfe8" />
-              <stop offset="45%"  stopColor="#9dd2e0" />
-              <stop offset="100%" stopColor="#8fc8d8" />
-            </linearGradient>
-            <linearGradient id={`${gradId}-overlay`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="60%" stopColor="transparent" />
-              <stop offset="100%" stopColor="rgba(249,247,241,0.5)" />
-            </linearGradient>
-          </defs>
-          <rect width="320" height="110" fill={`url(#${gradId})`} />
-          {/* Subtle grid */}
-          {[22, 44, 66, 88].map(y => (
-            <line key={y} x1="0" y1={y} x2="320" y2={y} stroke="rgba(255,255,255,0.25)" strokeWidth="0.6" />
-          ))}
-          {[40, 80, 120, 160, 200, 240, 280].map(x => (
-            <line key={x} x1={x} y1="0" x2={x} y2="110" stroke="rgba(255,255,255,0.25)" strokeWidth="0.6" />
-          ))}
-          {/* Mountain silhouette back */}
-          <path d="M0,110 L25,65 L50,78 L80,45 L110,62 L145,30 L175,52 L205,38 L235,58 L265,42 L295,60 L320,50 L320,110 Z"
-            fill="rgba(255,255,255,0.13)" />
-          {/* Mountain silhouette front */}
-          <path d="M0,110 L40,78 L70,88 L100,62 L130,74 L165,55 L195,68 L225,57 L260,72 L290,62 L320,70 L320,110 Z"
-            fill="rgba(255,255,255,0.09)" />
-          {/* Fine diagonal lines for depth */}
-          {Array.from({ length: 8 }, (_, i) => (
-            <line key={i} x1={i * 44 - 10} y1="0" x2={i * 44 + 80} y2="110"
-              stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
-          ))}
-          {/* Gradient fade at bottom */}
-          <rect width="320" height="110" fill={`url(#${gradId}-overlay)`} />
-        </svg>
-
-        {/* Score badge — top right */}
-        <div style={{ position: 'absolute', top: '0.5rem', right: '0.6rem', textAlign: 'right' }}>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: scoreColor(bestScore), lineHeight: 1, textShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
-            {bestScore > 0 ? bestScore : '—'}
-          </div>
-          <div style={{ fontSize: '0.42rem', color: 'rgba(0,40,70,0.6)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>/ 100</div>
+    <button onClick={onClick} className="pp-card">
+      <div className="pp-card-banner" style={{ background: `linear-gradient(135deg, ${maturity.color}22 0%, ${maturity.color}08 100%)` }}>
+        <div className="pp-card-score">
+          <div className="pp-score-big" style={{ color: scoreColor(bestScore) }}>{bestScore > 0 ? bestScore : '—'}</div>
+          <div className="pp-score-label">/ 100</div>
         </div>
-
-        {/* Center seal */}
-        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -54%)' }}>
+        <div className="pp-card-seal">
           {passport?.image_url ? (
-            <div style={{
-              width: '58px', height: '58px', borderRadius: '50%',
-              overflow: 'hidden', border: '2.5px solid rgba(255,255,255,0.85)',
-              background: 'rgba(255,255,255,0.9)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
-            }}>
-              <img src={passport.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
+            <img src={passport.image_url} alt="" />
           ) : (
             <MaturitySeal level={maturity.level} color={maturity.color} textColor={maturity.textColor} size={58} />
           )}
         </div>
-
-        {/* Maturity pill — bottom left, static */}
-        <div style={{ position: 'absolute', bottom: '0.4rem', left: '0.5rem' }}>
-          <span style={{
-            fontSize: '0.45rem', fontWeight: 800, letterSpacing: '0.1em',
-            padding: '0.12rem 0.45rem', borderRadius: '3px',
-            background: maturity.color, color: '#fff',
-          }}>
-            {maturity.short?.toUpperCase() ?? `L${maturity.level}`}
-          </span>
+        <div className="pp-card-maturity" style={{ background: maturity.color, color: '#fff' }}>
+          {maturity.short?.toUpperCase() ?? `L${maturity.level}`}
         </div>
-        {/* Achievement count — bottom right, static */}
         {achievementCount > 0 && (
-          <div style={{ position: 'absolute', bottom: '0.4rem', right: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(0,40,70,0.5)">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            <span style={{ fontSize: '0.45rem', color: 'rgba(0,40,70,0.6)', fontWeight: 700 }}>{achievementCount}</span>
+          <div className="pp-card-achievements">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            {achievementCount}
           </div>
         )}
       </div>
 
-      {/* ── Document type header strip ── */}
-      <div style={{
-        background: 'rgba(0,40,70,0.05)',
-        borderTop: '1px solid rgba(0,40,70,0.1)',
-        borderBottom: '1px solid rgba(0,40,70,0.1)',
-        padding: '0.22rem 0.75rem',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
+      <div className="pp-card-doc-header">
         <div>
-          <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'rgba(0,40,70,0.65)', letterSpacing: '0.1em' }}>
-            PROJECT PASSPORT · PASSEPORT PROJET
-          </div>
-          <div style={{ fontSize: '0.4rem', color: 'rgba(0,40,70,0.4)', letterSpacing: '0.06em' }}>
-            WAF++ SECURITY PLATFORM · SICHERHEITSPLATTFORM
-          </div>
+          <div className="pp-card-doc-title">PROJECT PASSPORT</div>
+          <div className="pp-card-doc-sub">WAF++ SECURITY PLATFORM</div>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', textAlign: 'center', flexShrink: 0 }}>
-          {[
-            { label: 'Type', value: 'PP' },
-            { label: 'Code', value: 'WAF' },
-            { label: 'No.', value: project.replace(/[^A-Z0-9]/gi, '').slice(0, 7).toUpperCase() || '—' },
-          ].map(f => (
+        <div className="pp-card-doc-fields">
+          {[{ label: 'Type', value: 'PP' }, { label: 'Code', value: 'WAF' }, { label: 'No.', value: project.replace(/[^A-Z0-9]/gi, '').slice(0, 7).toUpperCase() || '—' }].map(f => (
             <div key={f.label}>
-              <div style={{ fontSize: '0.38rem', color: 'rgba(0,40,70,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{f.label}</div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'rgba(0,30,60,0.8)', fontFamily: 'monospace', letterSpacing: '0.02em' }}>{f.value}</div>
+              <div className="pp-card-doc-label">{f.label}</div>
+              <div className="pp-card-doc-value">{f.value}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Data zone ── */}
-      <div style={{ flex: 1, padding: '0.55rem 0.75rem', display: 'flex', gap: '0.6rem' }}>
-
-        {/* Photo box */}
-        <div style={{ flexShrink: 0 }}>
-          <div style={{
-            width: '54px', height: '68px', borderRadius: '3px',
-            border: '1px solid rgba(0,40,70,0.18)',
-            background: 'rgba(0,40,70,0.04)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            overflow: 'hidden', position: 'relative',
-          }}>
-            {passport?.image_url ? (
-              <img src={passport.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <svg viewBox="0 0 54 68" width="54" height="68">
-                <rect width="54" height="68" fill="rgba(0,40,70,0.03)" />
-                <text x="27" y="30" textAnchor="middle" dominantBaseline="central"
-                  fontSize="22" fill="rgba(0,40,70,0.22)" fontFamily="Arial, sans-serif" fontWeight="700">
-                  {displayName[0]?.toUpperCase() ?? '?'}
-                </text>
-                <text x="27" y="52" textAnchor="middle" dominantBaseline="central"
-                  fontSize="8" fill="rgba(0,40,70,0.3)" fontFamily="monospace" fontWeight="700">
-                  L{maturity.level}
-                </text>
-              </svg>
-            )}
-          </div>
-        </div>
-
-        {/* Fields */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.28rem', minWidth: 0 }}>
-          <PassportDataField
-            label="Name · Nom · Cognome · Surname"
-            value={displayName} bold
-          />
-          {passport?.owner ? (
-            <PassportDataField
-              label="Owner · Propriétaire · Eigentümer"
-              value={passport.owner}
-            />
+      <div className="pp-card-body">
+        <div className="pp-card-photo">
+          {passport?.image_url ? (
+            <img src={passport.image_url} alt="" />
           ) : (
-            <PassportDataField label="Owner · Propriétaire" value="—" />
-          )}
-          {passport?.owner_team && (
-            <PassportDataField
-              label="Team · Équipe · Organisation · Nationalité"
-              value={passport.owner_team}
-            />
-          )}
-          {passport?.contact_email && (
-            <PassportDataField
-              label="Contact · E-Mail · Kontakt"
-              value={passport.contact_email} small
-            />
-          )}
-
-          {/* Two-column row: criticality + environment */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <div style={{ flex: '0 0 48%', minWidth: 0 }}>
-              <PassportDataField
-                label="Criticality · Criticité · Kritikalität"
-                value={criticality?.label ?? '—'}
-                valueColor={criticality?.color}
-              />
+            <div className="pp-card-photo-placeholder">
+              <span>{displayName[0]?.toUpperCase() ?? '?'}</span>
+              <small>L{maturity.level}</small>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <PassportDataField
-                label="Environment · Env. · Umgebung"
-                value={env?.label ?? '—'}
-                valueColor={env?.color}
-              />
-            </div>
+          )}
+        </div>
+        <div className="pp-card-fields">
+          <PassportDataField label="Project / Name" value={displayName} bold />
+          <PassportDataField label="Owner" value={passport?.owner ?? '—'} />
+          {passport?.owner_team && <PassportDataField label="Team" value={passport.owner_team} />}
+          {passport?.contact_email && <PassportDataField label="Contact" value={passport.contact_email} small />}
+          <div className="pp-card-field-row">
+            <PassportDataField label="Criticality" value={criticality?.label ?? '—'} valueColor={criticality?.color} />
+            <PassportDataField label="Environment" value={env?.label ?? '—'} valueColor={env?.color} />
           </div>
-
-          {/* Two-column row: cloud + issue date */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <div style={{ flex: '0 0 48%', minWidth: 0 }}>
-              <PassportDataField
-                label="Cloud · Nuage · Wolke"
-                value={cloud?.label ?? '—'}
-                valueColor={cloud?.color}
-              />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <PassportDataField
-                label="Date of issue · Date d'émission"
-                value={passport?.created_at
-                  ? new Date(passport.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
-                  : latestRun
-                    ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
-                    : '—'
-                }
-                small
-              />
-            </div>
-          </div>
-
-          {/* Two-column row: last scan + authority */}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-            <div style={{ flex: '0 0 48%', minWidth: 0 }}>
-              <PassportDataField
-                label="Last scan · Dernier scan · Letzter Scan"
-                value={latestRun
-                  ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })
+          <div className="pp-card-field-row">
+            <PassportDataField label="Cloud" value={cloud?.label ?? '—'} valueColor={cloud?.color} />
+            <PassportDataField
+              label="Issued"
+              value={passport?.created_at
+                ? new Date(passport.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
+                : latestRun
+                  ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
                   : '—'
-                }
-                small
-              />
-            </div>
-            {/* Links as icons */}
+              }
+              small
+            />
+          </div>
+          <div className="pp-card-field-row pp-card-field-row--end">
+            <PassportDataField
+              label="Last scan"
+              value={latestRun
+                ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })
+                : '—'
+              }
+              small
+            />
             {(passport?.repository_url || passport?.documentation_url) && (
-              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', paddingBottom: '1px' }}>
+              <div className="pp-card-links">
                 {passport.repository_url && <RepoIcon url={passport.repository_url} />}
                 {passport.documentation_url && <DocsIcon url={passport.documentation_url} />}
               </div>
@@ -1019,129 +667,78 @@ function PassportCard({
         </div>
       </div>
 
-      {/* ── Performance strip ── */}
       {projectRuns.length > 0 && (
-        <div style={{
-          borderTop: '1px solid rgba(0,40,70,0.08)',
-          padding: '0.35rem 0.75rem',
-          background: 'rgba(0,40,70,0.02)',
-          display: 'flex', alignItems: 'center', gap: '0.7rem',
-        }}>
-          {/* Sparkline */}
+        <div className="pp-card-performance">
           {sparkRuns.length > 1 && (
-            <svg width={sparkRuns.length * 7} height="22" style={{ flexShrink: 0 }}>
+            <svg width={sparkRuns.length * 8} height="24" className="pp-sparkline">
               {sparkRuns.map((r, i) => {
                 const h = Math.max(3, Math.round((r.score / 100) * 18))
-                return (
-                  <rect key={r.id} x={i * 7} y={22 - h} width="5" height={h}
-                    rx="1" fill={scoreColor(r.score)} opacity="0.75" />
-                )
+                return <rect key={r.id} x={i * 8} y={24 - h} width="6" height={h} rx="2" fill={scoreColor(r.score)} />
               })}
             </svg>
           )}
-          {/* Latest + trend */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.22rem', flexShrink: 0 }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: scoreColor(latestScore), lineHeight: 1 }}>
-              {latestScore > 0 ? latestScore : '—'}
-            </span>
-            <span style={{ fontSize: '0.42rem', color: 'rgba(0,40,70,0.4)' }}>latest</span>
+          <div className="pp-card-latest">
+            <span className="pp-score-mid" style={{ color: scoreColor(latestScore) }}>{latestScore > 0 ? latestScore : '—'}</span>
+            <span className="pp-score-label">latest</span>
             {scoreDelta !== null && scoreDelta !== 0 && (
-              <span style={{ fontSize: '0.52rem', fontWeight: 700, color: scoreDelta > 0 ? '#16a34a' : '#dc2626', marginLeft: '0.1rem' }}>
+              <span className="pp-card-delta" style={{ color: scoreDelta > 0 ? '#16a34a' : '#dc2626' }}>
                 {scoreDelta > 0 ? `↑${scoreDelta}` : `↓${Math.abs(scoreDelta)}`}
               </span>
             )}
           </div>
-          {/* Divider */}
-          <div style={{ width: '1px', height: '14px', background: 'rgba(0,40,70,0.1)', flexShrink: 0 }} />
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+          <div className="pp-card-divider" />
+          <div className="pp-card-stats">
             {[
               { label: 'avg', value: avgScore > 0 ? String(avgScore) : '—' },
               { label: 'scans', value: String(projectRuns.length) },
               ...(latestControls && latestControls.loaded > 0 ? [{ label: 'coverage', value: `${Math.round((latestControls.run / latestControls.loaded) * 100)}%` }] : []),
             ].map(s => (
-              <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'rgba(0,20,50,0.7)', lineHeight: 1 }}>{s.value}</span>
-                <span style={{ fontSize: '0.38rem', color: 'rgba(0,40,70,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</span>
+              <div key={s.label} className="pp-mini-stat">
+                <span className="pp-mini-stat-value">{s.value}</span>
+                <span className="pp-mini-stat-label">{s.label}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Tags strip ── */}
       {passport?.tags && passport.tags.length > 0 && (
-        <div style={{
-          padding: '0.22rem 0.75rem',
-          borderTop: '1px dashed rgba(0,40,70,0.1)',
-          display: 'flex', gap: '0.2rem', flexWrap: 'wrap', alignItems: 'center',
-        }}>
-          <span style={{ fontSize: '0.4rem', color: 'rgba(0,40,70,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: '0.15rem' }}>Tags</span>
+        <div className="pp-card-tags">
+          <span className="pp-card-tags-label">Tags</span>
           {passport.tags.slice(0, 4).map(tag => (
-            <span key={tag} style={{
-              fontSize: '0.5rem', padding: '0.08rem 0.3rem', borderRadius: '3px',
-              background: 'rgba(0,80,160,0.07)', color: 'rgba(0,80,160,0.75)',
-              border: '1px solid rgba(0,80,160,0.18)',
-            }}>
-              {tag}
-            </span>
+            <span key={tag} className="pp-tag">{tag}</span>
           ))}
-          {passport.tags.length > 4 && (
-            <span style={{ fontSize: '0.5rem', color: 'rgba(0,40,70,0.4)' }}>+{passport.tags.length - 4}</span>
-          )}
+          {passport.tags.length > 4 && <span className="pp-card-tags-more">+{passport.tags.length - 4}</span>}
         </div>
       )}
 
-      {/* ── MRZ zone ── */}
-      <div style={{
-        background: 'rgba(255,235,220,0.25)',
-        borderTop: '1.5px solid rgba(0,40,70,0.12)',
-        padding: '0.28rem 0.6rem 0.3rem',
-        display: 'flex', alignItems: 'center', gap: '0.4rem',
-        userSelect: 'none',
-      }}>
-        <div style={{ flex: 1, minWidth: 0, fontFamily: '"Courier New", "OCR-B", "Lucida Console", monospace', fontSize: '0.5rem', color: 'rgba(0,20,50,0.6)', letterSpacing: '0.06em', lineHeight: 1.7, overflow: 'hidden' }}>
-          <div style={{ overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>{mrz1}</div>
-          <div style={{ overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>{mrz2}</div>
+      <div className="pp-card-footer">
+        <div className="pp-card-mrz">
+          <div>{mrz1}</div>
+          <div>{mrz2}</div>
         </div>
-        <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
-          {/* Badge download */}
+        <div className="pp-card-footer-actions">
           <a
             href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
             download={`wafpass-badge-${project}.svg`}
             onClick={e => e.stopPropagation()}
             title="Download SVG badge"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.25rem',
-              background: 'rgba(0,50,100,0.12)', border: '1px solid rgba(0,50,100,0.2)',
-              borderRadius: '4px', padding: '0.22rem 0.45rem',
-              cursor: 'pointer', textDecoration: 'none', transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,50,100,0.22)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,50,100,0.12)' }}
+            className="pp-btn-ghost pp-btn-ghost--sm"
           >
-            <svg width="9" height="9" fill="none" stroke="rgba(0,40,80,0.55)" viewBox="0 0 24 24">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span style={{ fontSize: '0.42rem', fontWeight: 700, color: 'rgba(0,40,80,0.65)', letterSpacing: '0.05em' }}>BADGE</span>
+            <span>Badge</span>
           </a>
-          {/* Stamps */}
           <button
             onClick={e => { e.stopPropagation(); onOpenStamps() }}
             title="View stamps & achievements"
-            style={{
-              flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.25rem',
-              background: 'rgba(0,50,100,0.12)', border: '1px solid rgba(0,50,100,0.2)',
-              borderRadius: '4px', padding: '0.22rem 0.45rem',
-              cursor: 'pointer', transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,50,100,0.22)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,50,100,0.12)' }}
+            className="pp-btn-ghost pp-btn-ghost--sm"
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(0,40,80,0.55)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
-            <span style={{ fontSize: '0.42rem', fontWeight: 700, color: 'rgba(0,40,80,0.65)', letterSpacing: '0.05em' }}>STAMPS</span>
+            <span>Stamps</span>
           </button>
         </div>
       </div>
@@ -1183,29 +780,22 @@ function PassportEditModal({
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{
-        background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)',
-        width: '100%', maxWidth: '640px', maxHeight: '90vh', overflow: 'hidden',
-        display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-      }}>
-        {/* Header */}
-        <div style={{ padding: '1.1rem 1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="pp-modal-backdrop">
+      <div className="pp-modal pp-modal--edit">
+        <div className="pp-modal-header">
           <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>Edit Passport</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{project}</div>
+            <div className="pp-modal-title">Edit Passport</div>
+            <div className="pp-modal-subtitle">{project}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem' }}>
+          <button className="pp-modal-close" onClick={onClose}>
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Form body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem' }}>
+        <div className="pp-modal-body pp-modal-body--form">
+          <div className="pp-form-grid pp-form-grid--2">
             <FormField label="Display Name" value={form.display_name} onChange={v => set('display_name', v)} placeholder={project} />
             <FormField label="Owner" value={form.owner} onChange={v => set('owner', v)} placeholder="Jane Smith" />
             <FormField label="Owner Team" value={form.owner_team} onChange={v => set('owner_team', v)} placeholder="Platform Engineering" />
@@ -1214,7 +804,7 @@ function PassportEditModal({
             <FormField label="Documentation URL" value={form.documentation_url} onChange={v => set('documentation_url', v)} placeholder="https://confluence.example.com/…" />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.875rem' }}>
+          <div className="pp-form-grid pp-form-grid--3">
             <FormSelect label="Criticality" value={form.criticality} onChange={v => set('criticality', v)} options={[
               { value: '', label: '— Select —' },
               { value: 'critical', label: 'Critical' },
@@ -1245,7 +835,6 @@ function PassportEditModal({
             ]} />
           </div>
 
-          {/* Description */}
           <div>
             <label style={labelStyle}>Description</label>
             <textarea
@@ -1257,24 +846,16 @@ function PassportEditModal({
             />
           </div>
 
-          {/* Project Image */}
           <div>
             <label style={labelStyle}>Project Image</label>
             <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.5rem' }}>
               {(['url', 'upload'] as const).map(m => (
-                <button key={m} onClick={() => setImageMode(m)} style={{
-                  padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer',
-                  border: `1px solid ${imageMode === m ? 'var(--waf-brand)' : 'var(--border)'}`,
-                  background: imageMode === m ? 'rgba(0,148,255,0.1)' : 'var(--bg)',
-                  color: imageMode === m ? 'var(--waf-brand)' : 'var(--muted)',
-                }}>
+                <button key={m} onClick={() => setImageMode(m)} className={`pp-image-toggle ${imageMode === m ? 'active' : ''}`}>
                   {m === 'url' ? 'URL' : 'Upload'}
                 </button>
               ))}
               {form.image_url && (
-                <button onClick={() => set('image_url', '')} style={{ marginLeft: 'auto', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', border: '1px solid rgba(218,44,56,0.35)', background: 'rgba(218,44,56,0.07)', color: '#f87171' }}>
-                  Clear
-                </button>
+                <button onClick={() => set('image_url', '')} className="pp-image-clear">Clear</button>
               )}
             </div>
             {imageMode === 'url' ? (
@@ -1286,13 +867,9 @@ function PassportEditModal({
                 style={inputStyle}
               />
             ) : (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}>
-                <div style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.78rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  Choose file…
-                </div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-                  {form.image_url && form.image_url.startsWith('data:') ? 'Image loaded' : 'PNG, JPG, SVG — max ~200 KB'}
-                </span>
+              <label className="pp-file-upload">
+                <div className="pp-file-btn">Choose file…</div>
+                <span>{form.image_url && form.image_url.startsWith('data:') ? 'Image loaded' : 'PNG, JPG, SVG — max ~200 KB'}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -1308,17 +885,16 @@ function PassportEditModal({
               </label>
             )}
             {form.image_url && (
-              <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <img src={form.image_url} alt="preview" style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)' }} />
-                <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>Preview</span>
+              <div className="pp-image-preview">
+                <img src={form.image_url} alt="preview" />
+                <span>Preview</span>
               </div>
             )}
           </div>
 
-          {/* Tags */}
           <div>
             <label style={labelStyle}>Tags</label>
-            <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
+            <div className="pp-tag-input">
               <input
                 value={tagInput}
                 onChange={e => setTagInput(e.target.value)}
@@ -1326,21 +902,20 @@ function PassportEditModal({
                 placeholder="Add tag and press Enter"
                 style={{ ...inputStyle, flex: 1 }}
               />
-              <button onClick={addTag} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.78rem' }}>Add</button>
+              <button onClick={addTag} className="pp-btn-secondary">Add</button>
             </div>
             {form.tags.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+              <div className="pp-tag-list">
                 {form.tags.map(tag => (
-                  <span key={tag} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(0,148,255,0.08)', color: '#60a5fa', border: '1px solid rgba(0,148,255,0.2)' }}>
+                  <span key={tag} className="pp-tag-chip">
                     {tag}
-                    <button onClick={() => set('tags', form.tags.filter(t => t !== tag))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', color: '#60a5fa', lineHeight: 1, fontSize: '0.8rem' }}>×</button>
+                    <button onClick={() => set('tags', form.tags.filter(t => t !== tag))}>×</button>
                   </span>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Notes */}
           <div>
             <label style={labelStyle}>Notes</label>
             <textarea
@@ -1353,14 +928,13 @@ function PassportEditModal({
           </div>
 
           {error && (
-            <div style={{ fontSize: '0.78rem', color: '#f87171', padding: '0.5rem 0.75rem', background: 'rgba(218,44,56,0.08)', borderRadius: '8px', border: '1px solid rgba(218,44,56,0.25)' }}>{error}</div>
+            <div className="pp-form-error">{error}</div>
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>Cancel</button>
-          <button onClick={handleSave} disabled={saving} style={{ padding: '0.5rem 1.4rem', borderRadius: '8px', border: 'none', background: saving ? 'var(--border)' : 'var(--waf-brand)', color: '#fff', cursor: saving ? 'default' : 'pointer', fontSize: '0.82rem', fontWeight: 700 }}>
+        <div className="pp-modal-footer">
+          <button onClick={onClose} className="pp-btn-secondary">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="pp-btn-primary">
             {saving ? 'Saving…' : 'Save Passport'}
           </button>
         </div>
@@ -1377,7 +951,7 @@ const labelStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: '100%', background: 'var(--bg)', color: 'var(--text)',
   border: '1px solid var(--border)', borderRadius: '8px',
-  padding: '0.4rem 0.6rem', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box',
+  padding: '0.45rem 0.65rem', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box',
 }
 
 function FormField({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
@@ -1411,14 +985,10 @@ const VIEW_MODES: { id: ViewMode; label: string; icon: string }[] = [
     icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
 ]
 
-// ── Helper to get projects user has access to based on runs (filtered by backend) ─
-
 function getAccessibleProjectsFromRuns(runs: RunSummary[], role: string): Set<string> {
   if (role === 'admin') {
-    return new Set<string>()  // Admin has access to all, return empty set as signal
+    return new Set<string>()
   }
-  // Non-admin users only see runs for projects they have access to
-  // (runs are already filtered by the backend based on group access)
   return new Set(runs.map(r => r.project || '(unnamed)').filter(Boolean))
 }
 
@@ -1446,7 +1016,6 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
     [passports],
   )
 
-  // Get projects the user has access to (from runs) and all projects from passports
   const allProjects = useMemo(() => {
     const s = new Set<string>([
       ...runs.map(r => r.project || '(unnamed)'),
@@ -1455,12 +1024,10 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
     return Array.from(s).sort()
   }, [runs, passports])
 
-  // Filter projects based on access control
   const accessibleProjects = useMemo(() => {
     return getAccessibleProjectsFromRuns(runs, role)
   }, [runs, role])
 
-  // Projects the user can see (filtered + search)
   const filtered = useMemo(() => {
     if (!search.trim()) return allProjects
     const q = search.toLowerCase()
@@ -1474,15 +1041,13 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
     })
   }, [allProjects, passportMap, search])
 
-  // Projects the user has access to and that match search
   const accessibleFilteredProjects = useMemo(() => {
-    if (role === 'admin') return filtered  // Admin sees all
+    if (role === 'admin') return filtered
     return filtered.filter(p => accessibleProjects.has(p))
   }, [filtered, accessibleProjects, role])
 
-  // Projects the user doesn't have access to (but exist in passports or runs)
   const inaccessibleProjects = useMemo(() => {
-    if (role === 'admin') return []  // Admin has access to everything
+    if (role === 'admin') return []
     return allProjects.filter(p => !accessibleProjects.has(p))
   }, [allProjects, accessibleProjects, role])
 
@@ -1499,9 +1064,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
     if (!confirm(`Delete project "${project}" and all ${projectRuns.length} run(s)? This action cannot be undone.`)) return
     try {
       await deleteProject(project)
-      // Refresh the passports list to update UI
       await fetchProjectPassports().then(setPassports).catch(() => {})
-      // Also refresh runs so deleted project is removed from allProjects
       onRefetchRuns?.()
     } catch (err) {
       console.error('Failed to delete project:', err)
@@ -1520,44 +1083,35 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
   const editingPassport = editingProject ? passportMap[editingProject] : null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* ── Toolbar ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: '1 1 220px' }}>
-          <svg width="14" height="14" fill="none" stroke="var(--muted)" viewBox="0 0 24 24" style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+    <div className="pp-root">
+      <style>{passportCss}</style>
+
+      <div className="pp-toolbar">
+        <div className="pp-search">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search projects, owners, tags…"
-            style={{ width: '100%', paddingLeft: '2rem', padding: '0.4rem 0.75rem 0.4rem 2rem', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+        <div className="pp-count">
           {accessibleFilteredProjects.length} project{accessibleFilteredProjects.length !== 1 ? 's' : ''} visible
           {inaccessibleProjects.length > 0 && role !== 'admin' && (
-            <span style={{ marginLeft: '0.5rem', color: 'var(--waf-brand)' }}>
-              {inaccessibleProjects.length} hidden
-            </span>
+            <span className="pp-count-hidden">{inaccessibleProjects.length} hidden</span>
           )}
         </div>
-        {/* View toggle */}
-        <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+        <div className="pp-segment">
           {VIEW_MODES.map(vm => (
             <button
               key={vm.id}
               title={vm.label}
               onClick={() => { setViewMode(vm.id); localStorage.setItem('wafpass_passport_view', vm.id) }}
-              style={{
-                padding: '0.35rem 0.55rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: viewMode === vm.id ? 'rgba(0,148,255,0.12)' : 'transparent',
-                color: viewMode === vm.id ? 'var(--waf-brand)' : 'var(--muted)',
-                borderRight: vm.id !== 'list' ? '1px solid var(--border)' : 'none',
-                transition: 'background 0.12s, color 0.12s',
-              }}
+              className={viewMode === vm.id ? 'active' : ''}
             >
-              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={vm.icon} />
               </svg>
             </button>
@@ -1565,22 +1119,33 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
         </div>
       </div>
 
-      {/* ── Content ── */}
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <div className="spinner" />
+        <div className="pp-skeleton-grid">
+          <div className="pp-skeleton" />
+          <div className="pp-skeleton" />
+          <div className="pp-skeleton" />
+          <div className="pp-skeleton" />
+          <div className="pp-skeleton wide" />
+          <div className="pp-skeleton wide" />
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '4rem', fontSize: '0.85rem' }}>
-          {search ? 'No projects match your search.' : 'No projects found. Push a scan to create the first project.'}
+        <div className="pp-empty">
+          <div className="pp-empty-icon">
+            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4h16v16H4z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 9h6v6H9z" />
+            </svg>
+          </div>
+          <div className="pp-empty-title">{search ? 'No projects match your search.' : 'No projects found'}</div>
+          <div className="pp-empty-text">
+            {search ? 'Try a different keyword or clear the filter.' : 'Push a scan to create the first project passport.'}
+          </div>
         </div>
       ) : viewMode === 'list' ? (
-        /* ── Row list ── */
         <>
-          {/* Show accessible projects */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div className="pp-list">
             {accessibleFilteredProjects.map(project => (
-              <div key={project} style={{ position: 'relative' }}>
+              <div key={project} className="pp-list-item">
                 <PassportRow
                   project={project}
                   passport={passportMap[project] ?? null}
@@ -1588,65 +1153,38 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                   onClick={() => onOpenProject(project)}
                 />
                 {canEdit(role) && (
-                  <>
-                    <button
-                      onClick={e => { e.stopPropagation(); openEdit(project) }}
-                      title="Edit passport"
-                      style={{
-                        position: 'absolute', top: '0.4rem', right: '3.2rem',
-                        width: '24px', height: '24px', borderRadius: '5px',
-                        background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)',
-                        color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="pp-item-actions">
+                    <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" className="pp-action-edit">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDelete(project) }}
-                      title="Delete project"
-                      style={{
-                        position: 'absolute', top: '0.4rem', right: '0.4rem',
-                        width: '24px', height: '24px', borderRadius: '5px',
-                        background: 'rgba(218,44,56,0.3)', border: '1px solid rgba(218,44,56,0.4)',
-                        color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button onClick={e => { e.stopPropagation(); handleDelete(project) }} title="Delete project" className="pp-action-delete">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             ))}
           </div>
-
-          {/* Show inaccessible projects message for non-admin users */}
           {!canEdit(role) && inaccessibleProjects.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <div className="pp-list">
               {inaccessibleProjects.map(project => (
-                <div key={project} style={{ position: 'relative' }}>
+                <div key={project} className="pp-list-item pp-list-item--locked">
                   <PassportRow
                     project={project}
                     passport={passportMap[project] ?? null}
                     runs={runs}
                     onClick={() => setAccessDeniedProject(project)}
                   />
-                  {/* Lock icon overlay */}
                   <div
-                    style={{
-                      position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                      padding: '0.6rem', borderRadius: '999px',
-                      background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.2)',
-                      color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', zIndex: 10,
-                    }}
+                    className="pp-lock-overlay"
                     onClick={e => { e.stopPropagation(); setAccessDeniedProject(project) }}
                     title="You don't have access to this project"
                   >
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V9a3 3 0 00-6 0v4h6z" />
                     </svg>
                   </div>
@@ -1656,17 +1194,15 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
           )}
         </>
       ) : (
-        /* ── Card grid (compact or wide) ── */
         <>
-          {/* Show accessible projects */}
-          <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'wide' ? 'repeat(auto-fill, minmax(400px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+          <div className={viewMode === 'wide' ? 'pp-grid pp-grid--wide' : 'pp-grid'}>
             {accessibleFilteredProjects.map(project => {
               const pp = passportMap[project] ?? null
               const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
               const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
               const displayName = pp?.display_name || project
               return (
-                <div key={project} style={{ position: 'relative' }}>
+                <div key={project} className="pp-grid-item">
                   <PassportCard
                     project={project}
                     passport={pp}
@@ -1675,36 +1211,18 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                     onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
                   />
                   {canEdit(role) && (
-                    <>
-                      <button
-                        onClick={e => { e.stopPropagation(); openEdit(project) }}
-                        title="Edit passport"
-                        style={{
-                          position: 'absolute', top: '0.5rem', right: '3.4rem',
-                          width: '26px', height: '26px', borderRadius: '6px',
-                          background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.15)',
-                          color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="pp-item-actions pp-item-actions--card">
+                      <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" className="pp-action-edit">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </button>
-                      <button
-                        onClick={e => { e.stopPropagation(); handleDelete(project) }}
-                        title="Delete project"
-                        style={{
-                          position: 'absolute', top: '0.5rem', right: '0.5rem',
-                          width: '26px', height: '26px', borderRadius: '6px',
-                          background: 'rgba(218,44,56,0.35)', border: '1px solid rgba(218,44,56,0.45)',
-                          color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <button onClick={e => { e.stopPropagation(); handleDelete(project) }} title="Delete project" className="pp-action-delete">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
-                    </>
+                    </div>
                   )}
                   {stampsProject === project && (
                     <AchievementsOverlay
@@ -1718,17 +1236,15 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
               )
             })}
           </div>
-
-          {/* Show inaccessible projects for non-admin users */}
           {!canEdit(role) && inaccessibleProjects.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'wide' ? 'repeat(auto-fill, minmax(400px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+            <div className={viewMode === 'wide' ? 'pp-grid pp-grid--wide' : 'pp-grid'}>
               {inaccessibleProjects.map(project => {
                 const pp = passportMap[project] ?? null
                 const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
                 const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
                 const displayName = pp?.display_name || project
                 return (
-                  <div key={project} style={{ position: 'relative' }}>
+                  <div key={project} className="pp-grid-item pp-grid-item--locked">
                     <PassportCard
                       project={project}
                       passport={pp}
@@ -1736,19 +1252,12 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                       onClick={() => { setStampsProject(null); setAccessDeniedProject(project) }}
                       onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
                     />
-                    {/* Lock icon overlay */}
                     <div
-                      style={{
-                        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                        padding: '0.6rem', borderRadius: '999px',
-                        background: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.2)',
-                        color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', zIndex: 10,
-                      }}
+                      className="pp-lock-overlay"
                       onClick={e => { e.stopPropagation(); setAccessDeniedProject(project) }}
                       title="You don't have access to this project"
                     >
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V9a3 3 0 00-6 0v4h6z" />
                       </svg>
                     </div>
@@ -1768,7 +1277,6 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
         </>
       )}
 
-      {/* ── Access denied overlay ── */}
       {accessDeniedProject && (
         <AccessDeniedOverlay
           onClose={() => setAccessDeniedProject(null)}
@@ -1776,7 +1284,6 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
         />
       )}
 
-      {/* ── Edit modal ── */}
       {editingProject && (
         <PassportEditModal
           project={editingProject}
@@ -1788,7 +1295,1201 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
           onClose={() => setEditingProject(null)}
         />
       )}
-
     </div>
   )
 }
+
+const passportCss = `
+.pp-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: ppFadeIn 0.4s ease forwards;
+}
+@keyframes ppFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toolbar */
+.pp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.pp-search {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 180px;
+}
+.pp-search svg {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.pp-search input {
+  width: 100%;
+  padding: 0.55rem 0.85rem 0.55rem 2.4rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pp-search input:focus {
+  border-color: var(--waf-brand);
+  box-shadow: 0 0 0 3px rgba(0,148,255,0.12);
+}
+.pp-count {
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pp-count-hidden {
+  margin-left: 0.5rem;
+  color: var(--waf-brand);
+  font-weight: 700;
+}
+.pp-segment {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+.pp-segment button {
+  padding: 0.45rem 0.65rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+  transition: background 0.12s, color 0.12s;
+}
+.pp-segment button:last-child { border-right: none; }
+.pp-segment button.active {
+  background: rgba(0,148,255,0.12);
+  color: var(--waf-brand);
+}
+.pp-segment button:hover:not(.active) {
+  background: var(--bg);
+}
+
+/* Link button */
+.pp-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.pp-link-btn:hover {
+  background: rgba(0,148,255,0.08);
+  border-color: rgba(0,148,255,0.25);
+  color: var(--waf-brand);
+}
+
+/* Field */
+.pp-field { min-width: 0; overflow: hidden; }
+.pp-field-label {
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.12rem;
+}
+.pp-field-value {
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Score tokens */
+.pp-score-big {
+  font-size: 1.85rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.pp-score-mid {
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.pp-score-label {
+  font-size: 0.55rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Pills */
+.pp-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid;
+  align-self: flex-start;
+  white-space: nowrap;
+}
+
+/* Grid */
+.pp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 1.25rem;
+}
+.pp-grid--wide {
+  grid-template-columns: repeat(auto-fill, minmax(540px, 1fr));
+}
+.pp-grid-item {
+  position: relative;
+}
+.pp-grid-item--locked .pp-card {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+.pp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.pp-list-item {
+  position: relative;
+}
+.pp-list-item--locked .pp-row {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+
+/* Item actions */
+.pp-item-actions {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  display: flex;
+  gap: 0.35rem;
+  z-index: 5;
+}
+.pp-item-actions--card {
+  top: 0.55rem;
+  right: 0.55rem;
+}
+.pp-action-edit,
+.pp-action-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  backdrop-filter: blur(4px);
+  transition: transform 0.12s, background 0.12s;
+}
+.pp-action-edit {
+  background: rgba(15,23,42,0.45);
+}
+.pp-action-delete {
+  background: rgba(218,44,56,0.5);
+}
+.pp-action-edit:hover,
+.pp-action-delete:hover {
+  transform: scale(1.05);
+}
+
+/* Lock overlay */
+.pp-lock-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.75rem;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.75);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.15s, background 0.15s;
+}
+.pp-lock-overlay:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  background: rgba(15,23,42,0.9);
+}
+
+/* Card */
+.pp-card {
+  width: 100%;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+.pp-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.pp-card-banner {
+  position: relative;
+  height: 110px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.pp-card-score {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  text-align: right;
+}
+.pp-card-seal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -55%);
+}
+.pp-card-seal img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--surface);
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+.pp-card-maturity {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.7rem;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+}
+.pp-card-achievements {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(4px);
+}
+.pp-card-doc-header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0.45rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.pp-card-doc-title {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.pp-card-doc-sub {
+  font-size: 0.48rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-top: 0.08rem;
+}
+.pp-card-doc-fields {
+  display: flex;
+  gap: 0.85rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+.pp-card-doc-label {
+  font-size: 0.45rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pp-card-doc-value {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+}
+.pp-card-body {
+  flex: 1;
+  padding: 0.85rem;
+  display: flex;
+  gap: 0.85rem;
+}
+.pp-card-photo {
+  flex-shrink: 0;
+  width: 64px;
+  height: 80px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.pp-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pp-card-photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+.pp-card-photo-placeholder span {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.pp-card-photo-placeholder small {
+  font-size: 0.55rem;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+.pp-card-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.pp-card-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+.pp-card-field-row--end {
+  align-items: end;
+}
+.pp-card-links {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+/* Performance strip */
+.pp-card-performance {
+  border-top: 1px solid var(--border);
+  padding: 0.45rem 0.85rem;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.pp-sparkline {
+  flex-shrink: 0;
+}
+.pp-card-latest {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+.pp-card-delta {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.pp-card-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.pp-card-stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.pp-mini-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.pp-mini-stat-value {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.pp-mini-stat-label {
+  font-size: 0.48rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Tags */
+.pp-card-tags {
+  padding: 0.35rem 0.85rem;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pp-card-tags-label {
+  font-size: 0.55rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 0.15rem;
+}
+.pp-tag {
+  font-size: 0.65rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(0,148,255,0.08);
+  color: var(--waf-brand);
+  border: 1px solid rgba(0,148,255,0.18);
+  font-weight: 600;
+}
+.pp-card-tags-more {
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+/* Card footer / MRZ */
+.pp-card-footer {
+  background: #0b1220;
+  border-top: 1px solid var(--border);
+  padding: 0.35rem 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.pp-card-mrz {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 0.54rem;
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.06em;
+  line-height: 1.7;
+  overflow: hidden;
+}
+.pp-card-mrz > div {
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.pp-card-footer-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+/* Ghost button */
+.pp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  text-decoration: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+}
+.pp-btn-ghost:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+/* Row */
+.pp-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+.pp-row:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.pp-row-main {
+  display: flex;
+  align-items: stretch;
+  min-height: 80px;
+  padding: 0.6rem 0.85rem;
+  gap: 0.85rem;
+}
+.pp-row-accent {
+  width: 5px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  align-self: stretch;
+}
+.pp-row-seal {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pp-row-seal img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+  background: var(--surface);
+}
+.pp-row-info {
+  flex: 1.6;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+}
+.pp-row-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-row-id {
+  font-size: 0.62rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+}
+.pp-row-desc {
+  font-size: 0.72rem;
+  color: var(--muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+.pp-row-desc--empty {
+  font-style: italic;
+  opacity: 0.7;
+}
+.pp-row-owner {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+}
+.pp-row-badges {
+  flex: 0 0 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+}
+.pp-row-score {
+  flex: 0 0 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08rem;
+  border-left: 1px solid var(--border);
+  padding-left: 0.75rem;
+}
+.pp-row-meta {
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+.pp-row-achievements {
+  font-size: 0.6rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.pp-row-actions {
+  flex: 0 0 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.35rem;
+  border-left: 1px solid var(--border);
+  padding-left: 0.75rem;
+}
+.pp-row-links {
+  display: flex;
+  gap: 0.3rem;
+}
+.pp-row-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+}
+.pp-row-badge:hover {
+  background: var(--row-hover);
+  color: var(--text);
+}
+.pp-row-mrz {
+  border-top: 1px solid var(--border);
+  padding: 0.22rem 0.85rem;
+  background: #0b1220;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 0.54rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Seal */
+.pp-seal { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15)); }
+
+/* Stamp */
+.pp-stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  transition: opacity 0.3s;
+  user-select: none;
+}
+.pp-stamp-ring {
+  position: relative;
+}
+.pp-stamp-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pp-stamp-check {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.pp-stamp-text { text-align: center; }
+.pp-stamp-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pp-stamp-sub {
+  font-size: 0.55rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+  line-height: 1.2;
+}
+
+/* Modal */
+.pp-overlay-backdrop,
+.pp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1499;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 16rem;
+}
+.pp-modal-backdrop {
+  z-index: 1000;
+  padding: 1rem;
+}
+.pp-modal {
+  width: min(560px, calc(100vw - 18rem));
+  max-height: 86vh;
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: ppModalIn 0.25s ease;
+}
+.pp-modal--edit {
+  width: 100%;
+  max-width: 640px;
+}
+.pp-modal--access {
+  width: min(480px, calc(100vw - 18rem));
+}
+.pp-modal--stamps {
+  width: min(620px, calc(100vw - 18rem));
+}
+@keyframes ppModalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.pp-modal-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+.pp-modal-header--brand {
+  background: linear-gradient(135deg, rgba(0,148,255,0.12) 0%, rgba(0,148,255,0.04) 100%);
+}
+.pp-modal-header--danger {
+  background: linear-gradient(135deg, rgba(218,44,56,0.12) 0%, rgba(218,44,56,0.04) 100%);
+}
+.pp-modal-kicker {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pp-modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-modal-subtitle {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+.pp-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.pp-modal-close:hover {
+  background: var(--row-hover);
+  color: var(--text);
+}
+.pp-modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.pp-modal-tab {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  transition: background 0.12s;
+}
+.pp-modal-tab.active {
+  background: var(--surface);
+  border-bottom-color: var(--waf-brand);
+}
+.pp-modal-tab-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pp-modal-tab.active .pp-modal-tab-label {
+  color: var(--text);
+}
+.pp-modal-tab-sub {
+  font-size: 0.58rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+.pp-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+.pp-modal-body--center {
+  text-align: center;
+}
+.pp-modal-body--form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.pp-modal-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+.pp-modal-mrz {
+  border-top: 1px solid var(--border);
+  padding: 0.3rem 0.85rem;
+  background: #0b1220;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 0.52rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+  user-select: none;
+}
+
+/* Access denied */
+.pp-access-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: rgba(218,44,56,0.1);
+  color: var(--waf-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pp-access-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+.pp-access-text {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* Stamp grid inside modal */
+.pp-stamp-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: center;
+}
+.pp-stamp-grid--achievements {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  justify-items: center;
+}
+
+/* Form */
+.pp-form-grid { display: grid; gap: 0.875rem; }
+.pp-form-grid--2 { grid-template-columns: 1fr 1fr; }
+.pp-form-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
+.pp-image-toggle,
+.pp-image-clear,
+.pp-btn-secondary,
+.pp-btn-primary {
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.1s;
+}
+.pp-image-toggle {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+}
+.pp-image-toggle.active {
+  border-color: var(--waf-brand);
+  background: rgba(0,148,255,0.1);
+  color: var(--waf-brand);
+}
+.pp-image-clear {
+  margin-left: auto;
+  border: 1px solid rgba(218,44,56,0.35);
+  background: rgba(218,44,56,0.07);
+  color: #f87171;
+}
+.pp-file-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+.pp-file-btn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pp-file-upload span {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.pp-image-preview {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pp-image-preview img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.pp-image-preview span {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.pp-tag-input {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+.pp-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.pp-tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.74rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0,148,255,0.08);
+  color: var(--waf-brand);
+  border: 1px solid rgba(0,148,255,0.2);
+  font-weight: 600;
+}
+.pp-tag-chip button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--waf-brand);
+  line-height: 1;
+  font-size: 0.9rem;
+}
+.pp-form-error {
+  font-size: 0.78rem;
+  color: #f87171;
+  padding: 0.5rem 0.75rem;
+  background: rgba(218,44,56,0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(218,44,56,0.25);
+}
+.pp-btn-secondary {
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+}
+.pp-btn-secondary:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+.pp-btn-primary {
+  border: none;
+  background: var(--waf-brand);
+  color: #fff;
+}
+.pp-btn-primary:hover:not(:disabled) {
+  background: var(--waf-brand-h);
+  transform: translateY(-1px);
+}
+.pp-btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.pp-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Empty state */
+.pp-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.pp-empty-icon {
+  color: var(--waf-brand);
+  opacity: 0.35;
+  margin-bottom: 1rem;
+}
+.pp-empty-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+.pp-empty-text {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* Skeleton */
+.pp-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 1.25rem;
+  animation: ppFadeIn 0.3s ease;
+}
+.pp-skeleton {
+  height: 380px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--bg) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: ppShimmer 1.4s infinite;
+  border: 1px solid var(--border);
+}
+.pp-skeleton.wide {
+  grid-column: span 2;
+}
+@keyframes ppShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .pp-grid,
+  .pp-grid--wide { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+}
+@media (max-width: 900px) {
+  .pp-row-main { flex-wrap: wrap; }
+  .pp-row-owner,
+  .pp-row-badges,
+  .pp-row-score,
+  .pp-row-actions {
+    flex: 1 1 auto;
+    border-left: none;
+    padding-left: 0;
+    align-items: flex-start;
+  }
+  .pp-row-score { flex-direction: row; gap: 0.4rem; align-items: center; }
+  .pp-row-actions { align-items: flex-start; }
+}
+@media (max-width: 640px) {
+  .pp-grid,
+  .pp-grid--wide,
+  .pp-skeleton-grid { grid-template-columns: 1fr; }
+  .pp-skeleton.wide { grid-column: span 1; }
+  .pp-form-grid--2,
+  .pp-form-grid--3 { grid-template-columns: 1fr; }
+  .pp-stamp-grid--achievements { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-overlay-backdrop,
+  .pp-modal-backdrop { padding-left: 0; }
+  .pp-modal { width: calc(100vw - 2rem); }
+}
+`
