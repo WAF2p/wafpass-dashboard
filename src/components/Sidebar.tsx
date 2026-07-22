@@ -33,6 +33,7 @@ type NavEntry = {
   danger?: boolean
   badge?: { label: string; variant: 'fail' | 'neutral' } | null
   count?: number
+  minRole?: string
 }
 
 type NavSection = {
@@ -58,7 +59,6 @@ function buildNavSections(
       id: 'overview', label: t('nav.sections.overview'), color: '#f59e0b',
       items: [
         { page: 'globaldashboard', label: t('nav.items.globaldashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-        { page: 'dashboard',   label: t('nav.items.dashboard'),  icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
         { page: 'compliance',  label: t('nav.items.compliance'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
         {
           page: 'cost', label: t('nav.items.cost'),
@@ -67,15 +67,6 @@ function buildNavSections(
           badge: (() => {
             if (!run) return null
             const n = run.findings.filter(f => f.pillar?.toLowerCase() === 'cost' && f.status?.toUpperCase() === 'FAIL').length
-            return n > 0 ? { label: String(n), variant: 'fail' as const } : null
-          })(),
-        },
-        {
-          page: 'gapanalysis', label: t('nav.items.gapanalysis'),
-          icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-          badge: (() => {
-            if (!run) return null
-            const n = new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.control_id)).size
             return n > 0 ? { label: String(n), variant: 'fail' as const } : null
           })(),
         },
@@ -170,6 +161,16 @@ function buildNavSections(
           })(),
         },
         { page: 'sandbox', label: t('nav.items.sandbox'), icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+        {
+          page: 'gapanalysis', label: t('nav.items.gapanalysis'),
+          minRole: 'architect',
+          icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+          badge: (() => {
+            if (!run) return null
+            const n = new Set(run.findings.filter(f => f.status?.toUpperCase() === 'FAIL').map(f => f.control_id)).size
+            return n > 0 ? { label: String(n), variant: 'fail' as const } : null
+          })(),
+        },
       ],
     },
     {
@@ -497,7 +498,8 @@ export default function Sidebar({
       {/* Navigation */}
       <nav style={{ flex: 1, padding: '0.5rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '1px' }}>
         {visibleSections.map((section, si) => {
-          const items = hide ? section.items.filter(i => i.gate === undefined || i.gate) : section.items
+          const items = (hide ? section.items.filter(i => i.gate === undefined || i.gate) : section.items)
+            .filter(i => !i.minRole || hasMinRole(role, i.minRole))
           if (items.length === 0) return null
 
           const threshold = items.length - 2 >= 2 ? 2 : items.length
