@@ -90,6 +90,9 @@ export interface Translations {
       secrets: string
       modules: string
       cost: string
+      engineering: string
+      architecture: string
+      maturity: string
       runs: string
       diff: string
       audit: string
@@ -1201,6 +1204,58 @@ export interface Translations {
       govRiskOnly: string
       methodology: string
       methodologyText: string
+      stubsInProgress: string
+      stubsVoteRfc: string
+      stubBadge: string
+    }
+
+    engineeringOps: {
+      title: string
+      subtitle: string
+      openFindings: string
+      secretHits: string
+      planChanges: string
+      sprintGain: string
+      mttr: string
+      mttrDemoValue: string
+      stubsInProgress: string
+      stubsVoteRfc: string
+      stubBadge: string
+    }
+
+    architectureOps: {
+      title: string
+      subtitle: string
+      controlsLoaded: string
+      failingModules: string
+      attackPaths: string
+      sandboxDrafts: string
+      criticalFindings: string
+      stubsInProgress: string
+      stubsVoteRfc: string
+      stubBadge: string
+    }
+
+    maturityOps: {
+      title: string
+      subtitle: string
+      selectedProject: string
+      stubsInProgress: string
+      stubsVoteRfc: string
+      stubBadge: string
+    }
+
+    pipelineOps: {
+      title: string
+      subtitle: string
+      recentRuns: string
+      last7Days: string
+      durationRange: string
+      scanDuration: string
+      showManualRuns: string
+      stubsInProgress: string
+      stubsVoteRfc: string
+      stubBadge: string
     }
 
     dependencyGraph: {

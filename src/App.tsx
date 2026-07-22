@@ -55,11 +55,14 @@ const LeaderboardPage        = lazy(() => import('./pages/LeaderboardPage'))
 const JourneyPage            = lazy(() => import('./pages/journey/JourneyPage'))
 const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
 const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
+const EngineeringOperationsCenter = lazy(() => import('./pages/EngineeringOperationsCenter'))
+const ArchitectureOperationsCenter = lazy(() => import('./pages/ArchitectureOperationsCenter'))
+const MaturityOperationsCenter = lazy(() => import('./pages/MaturityOperationsCenter'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
 const LegalPage              = lazy(() => import('./pages/LegalPage'))
 const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
-const PipelinesPage          = lazy(() => import('./PipelinesPage'))
+const PipelineOperationsCenter = lazy(() => import('./pages/PipelineOperationsCenter'))
 const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
 
 export default function App() {
@@ -270,7 +273,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'journey' ? (
             <JourneyPage run={run} runs={runs} navigate={navigate} />
           ) : page === 'globaldashboard' ? (
-            <GlobalDashboardPage runs={runs} navigate={navigate} />
+            <GlobalDashboardPage run={run} runs={runs} navigate={navigate} />
           ) : page === 'leaderboard' ? (
             <LeaderboardPage />
           ) : page === 'badge' ? (
@@ -392,6 +395,12 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ModuleScorePage run={run} />
           ) : page === 'cost' ? (
             <CostImpactPage run={run} />
+          ) : page === 'engineering' ? (
+            <EngineeringOperationsCenter run={run} runs={runs} navigate={navigate} />
+          ) : page === 'architecture' ? (
+            <ArchitectureOperationsCenter run={run} navigate={navigate} />
+          ) : page === 'maturity' ? (
+            <MaturityOperationsCenter run={run} runs={runs} navigate={navigate} />
           ) : page === 'reference' ? (
             <ReferenceArchitecturePage />
           ) : page === 'antipattern' ? (
@@ -401,7 +410,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'projectgroups' ? (
             <ProjectGroupsPage />
           ) : page === 'pipelines' ? (
-            <PipelinesPage />
+            <PipelineOperationsCenter navigate={navigate} />
           ) : page === 'autofix' ? (
             <AutoFixPage run={run} onBack={() => navigate('dashboard')} />
           ) : null}

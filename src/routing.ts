@@ -5,7 +5,7 @@ export const ALL_PAGES = [
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
   'reference', 'antipattern', 'notifications', 'legal', 'projectgroups', 'pipelines',
-  'compliance-readiness', 'autofix',
+  'compliance-readiness', 'autofix', 'engineering', 'architecture', 'maturity',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -14,10 +14,10 @@ export const PAGE_SET = new Set<string>(ALL_PAGES)
 
 export const PAGE_TITLE: Record<Page, string> = {
   dashboard:       'Executive Dashboard',
-  globaldashboard: 'Global Overview',
+  globaldashboard: 'Flight Operations Center',
   catalogue:       'Controls Catalogue',
   findings:        'Scan Findings',
-  compliance:      'Compliance Matrix',
+  compliance:      'Security Operations Center',
   gapanalysis:     'Regulatory Gap Analysis',
   regions:         'Deployed Regions',
   exploitpath:     'Exploit Path Analysis',
@@ -26,7 +26,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   remediation:     'Remediation Sprint',
   secrets:         'Secret Scanner',
   modules:         'Module Score Breakdown',
-  cost:            'Cost Impact Estimation',
+  cost:            'Cost Operations Center',
   runs:            'Run History',
   diff:            'Run Comparison',
   audit:           'Audit Log',
@@ -56,17 +56,20 @@ export const PAGE_TITLE: Record<Page, string> = {
   antipattern:     'Anti-Pattern Museum',
   notifications:   'Notifications',
   legal:           'Legal Notice',
-  pipelines:       'Pipeline Performance',
+  pipelines:       'Pipeline Operations Center',
   'compliance-readiness': 'Compliance Readiness',
   autofix: 'Auto-Fix Wizard',
+  engineering: 'Engineering Operations Center',
+  architecture: 'Architecture Operations Center',
+  maturity: 'Maturity Operations Center',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
   dashboard:       'Risk posture overview across all WAF++ pillars',
-  globaldashboard: 'Global view: project portfolio, maturity journey, and control matrix',
+  globaldashboard: 'Global flight operations view: project portfolio, maturity journey, and control matrix',
   catalogue:       'All WAF++ framework controls and your custom controls — browse, filter, author, and export',
   findings:        'Detailed results from the selected run',
-  compliance:      'Pillar coverage, pass rates and regulatory framework mapping',
+  compliance:      'Security command center: pillar coverage, pass rates and regulatory framework mapping',
   gapanalysis:     'Shortest path to framework compliance — controls ranked by effort-per-requirement, with remediation steps and evidence export',
   changes:         'IaC plan changes (adds, updates, replacements, destroys) and compliance drift — controls that regressed or recovered since the previous run',
   regions:         'Detected cloud deployment regions',
@@ -76,7 +79,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   remediation:     'Prioritised fix queue — select controls to form a sprint and see your projected score gain, resources fixed, and regulatory gaps closed',
   secrets:         'Hardcoded credential issues detected in IaC — passwords, API keys, tokens, and private keys that must be migrated to a secrets manager',
   modules:         'Per-module pass rate and score drag — identify which module is pulling the overall score down',
-  cost:            'Estimated $/month impact for failing WAF-COST controls — waste, savings opportunities, and financial governance risk',
+  cost:            'Live cost operations center: financial exposure, burn-down projection, savings opportunities, and governance risk for failing WAF-COST controls',
   runs:            'All recorded WAF++ scan runs',
   diff:            'Finding-level diff between two runs — newly broken controls, fixed controls, score delta per pillar',
   audit:           'Tamper-evident record of every waiver, risk acceptance, and scan event — export for SOC2/ISO27001 evidence collection',
@@ -105,9 +108,12 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   antipattern:     "Side-by-side 'Bad vs. Good' code comparisons for each WAF++ pillar",
   notifications:   'System notifications — updates, urgent alerts, and important announcements',
   legal:           'Liability disclaimer, terms of use, and open source notice',
-  pipelines:       'Track scan performance, pass rates, and duration across all CI/CD pipelines',
+  pipelines:       'CI/CD dashboard: scan volume, pass rate, average score, active projects, and recent pipeline activity.',
   'compliance-readiness': 'Evidence collection status and audit readiness scores — prepare for compliance audits with offline support',
   autofix: 'Preview, review, and apply automated IaC remediations from a single page',
+  engineering: 'Single pane for findings, remediation sprints, secrets, and infrastructure change drift',
+  architecture: 'Design intelligence: controls, attack paths, blast radius, dependencies, modules, sandbox, and reference architecture',
+  maturity: 'Company and project maturity journey, stage progression, and next milestones',
 }
 
 export interface FilterState {

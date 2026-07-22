@@ -73,12 +73,33 @@ export function runsForProject(runs: import('../api').RunSummary[], project: str
 
 export function companyTrend(runs: import('../api').RunSummary[]): { date: string; score: number }[] {
   if (!runs.length) return []
-  const byDay: Record<string, number[]> = {}
-  for (const r of runs) {
+
+  // Track the company average over time: for each date with activity, use the
+  // latest run per project up to that date. This reflects real portfolio maturity
+  // progression instead of noisy daily run averages.
+  const sorted = [...runs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  const latestByProject: Record<string, import('../api').RunSummary> = {}
+  const points: { date: string; score: number }[] = []
+  let lastDate: string | null = null
+
+  for (const r of sorted) {
     const day = r.created_at.slice(0, 10)
-    ;(byDay[day] ??= []).push(r.score)
+    const p = r.project || '(unnamed)'
+    const current = latestByProject[p]
+    if (!current || new Date(r.created_at) > new Date(current.created_at)) {
+      latestByProject[p] = r
+    }
+    if (day !== lastDate) {
+      const values = Object.values(latestByProject).map(run => run.score)
+      const score = values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0
+      points.push({ date: day, score })
+      lastDate = day
+    } else {
+      // Same day: update the last point in case this later run on the same day improves the average
+      const values = Object.values(latestByProject).map(run => run.score)
+      points[points.length - 1].score = values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0
+    }
   }
-  return Object.entries(byDay)
-    .map(([date, scores]) => ({ date, score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) }))
-    .sort((a, b) => a.date.localeCompare(b.date))
+
+  return points
 }

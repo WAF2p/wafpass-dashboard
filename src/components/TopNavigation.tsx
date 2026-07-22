@@ -23,6 +23,7 @@ export interface NavEntry {
   danger?: boolean
   count?: number
   badge?: { label: string; variant: 'fail' | 'neutral' } | null
+  minRole?: string
 }
 
 export interface NavSection {
@@ -93,17 +94,24 @@ function buildNavSections(
       color: '#f59e0b',
       description: categoryDescriptions['overview'] || 'Executive summary and risk posture overview',
       items: [
-        { page: 'globaldashboard', label: t('nav.items.globaldashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-        { page: 'dashboard', label: t('nav.items.dashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+        { page: 'globaldashboard', label: t('nav.items.globaldashboard'), icon: 'M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 16.5V13.5l8 2.5z' },
         { page: 'compliance', label: t('nav.items.compliance'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
         {
           page: 'cost', label: t('nav.items.cost'),
           gate: (settings.activePillars ?? []).includes('cost'),
-          icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+          icon: 'M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.5-2c-3.6 0-6.5 2.5-7.4 6M21 20a7.7 7.7 0 0 0-5.5 2c-3.6 0-6.5-2.5-7.4-6',
         },
         {
-          page: 'gapanalysis', label: t('nav.items.gapanalysis'),
-          icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+          page: 'engineering', label: t('nav.items.engineering'),
+          icon: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+        },
+        {
+          page: 'architecture', label: t('nav.items.architecture'),
+          icon: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
+        },
+        {
+          page: 'maturity', label: t('nav.items.maturity'),
+          icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8',
         },
         { page: 'pipelines', label: t('nav.items.pipelines'), icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
       ],
@@ -184,6 +192,11 @@ function buildNavSections(
           icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
         },
         { page: 'sandbox', label: t('nav.items.sandbox'), icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+        {
+          page: 'gapanalysis', label: t('nav.items.gapanalysis'),
+          minRole: 'architect',
+          icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+        },
       ],
     },
     {
@@ -256,37 +269,53 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
       key={item.page}
       onClick={() => navigate(item.page)}
       style={{
-        display: 'flex', alignItems: 'center', gap: '0.6rem',
-        padding: '0.5rem 0.75rem',
-        borderRadius: '6px',
+        display: 'flex', alignItems: 'center', gap: '0.75rem',
+        padding: '0.65rem 0.9rem',
+        borderRadius: '8px',
         background: isActive ? 'rgba(0,148,255,0.15)' : 'transparent',
         border: isActive ? '1px solid var(--nav-border)' : '1px solid transparent',
         cursor: 'pointer',
-        fontSize: '0.8rem',
+        fontSize: '0.85rem',
         color: isActive ? 'var(--waf-brand)' : (item.danger ? 'var(--waf-danger)' : 'var(--nav-text)'),
         fontWeight: isActive ? 600 : 400,
         transition: 'all 0.15s',
         width: '100%',
         textAlign: 'left',
+        lineHeight: 1.4,
+        minHeight: '40px',
       }}
     >
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-      </svg>
-      <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
-      {item.count != null && item.count > 0 && (
-        <span style={{ fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'var(--nav-surf)', color: 'var(--nav-text)' }}>
-          {item.count}
-        </span>
-      )}
+      <span
+        style={{
+          width: '22px',
+          height: '22px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+        </svg>
+      </span>
+      <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap' }}>
+        {item.label}
+        {item.count != null && item.count > 0 && (
+          <span style={{ fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', marginLeft: '0.4rem', background: 'var(--nav-surf)', color: 'var(--nav-text)' }}>
+            {item.count}
+          </span>
+        )}
+      </span>
     </button>
   )
 }
 
 
-function NavSectionDropdown({ section, page, navigate }: { section: NavSection; page: Page; navigate: (p: Page) => void }) {
+function NavSectionDropdown({ section, page, navigate, role }: { section: NavSection; page: Page; navigate: (p: Page) => void; role: string }) {
   const [expanded, setExpanded] = useState(false)
-  const hasActive = section.items.some(item => item.page === page)
+  const visibleItems = section.items.filter(item => !item.minRole || hasMinRole(role, item.minRole))
+  const hasActive = visibleItems.some(item => item.page === page)
 
   return (
     <div
@@ -317,22 +346,23 @@ function NavSectionDropdown({ section, page, navigate }: { section: NavSection; 
           onMouseEnter={() => setExpanded(true)}
           onMouseLeave={() => setExpanded(false)}
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            minWidth: '700px',
+            position: 'fixed',
+            top: 'calc(var(--top-nav-height, 64px) + 6px)',
+            left: '1rem',
+            right: '1rem',
+            maxWidth: '1400px',
             background: 'var(--nav-bg-opaque)',
             border: '1px solid var(--nav-border)',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-            padding: '1.5rem',
+            borderRadius: '14px',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.28)',
+            padding: '1.5rem 1.75rem',
             zIndex: 100,
             display: 'flex',
-            gap: '1.5rem',
+            gap: '2rem',
           }}
         >
           {/* Left: User image + description (block text) */}
-          <div style={{ flex: '0 0 280px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ flex: '0 0 260px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* User image icon alone */}
             <div style={{
               width: '56px', height: '56px', borderRadius: '50%',
@@ -357,10 +387,10 @@ function NavSectionDropdown({ section, page, navigate }: { section: NavSection; 
             </div>
           </div>
 
-          {/* Right: Navigation items - 4 per column, next columns for more items */}
+          {/* Right: Navigation items - 3 per column, next columns for more items */}
           <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: '2rem' }}>
-            {chunkArray(section.items, 4).map((chunk, chunkIdx) => (
-              <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {chunkArray(visibleItems, 3).map((chunk, chunkIdx) => (
+              <div key={chunkIdx} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: '1 1 0', minWidth: '200px' }}>
                 {chunk.map((item) => (
                   <NavItem
                     key={item.page}
@@ -534,6 +564,7 @@ export default function TopNavigation({
             section={section}
             page={page}
             navigate={navigate}
+            role={role}
           />
         ))}
       </div>

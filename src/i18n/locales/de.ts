@@ -44,7 +44,7 @@ const de: PartialTranslations = {
       antipattern: 'Anti-Muster Museum',
       bestpractices: 'Best-Practice-Bereich',
       projectgroups: 'Projektgruppen',
-      pipelines: 'Pipeline-Performance',
+      pipelines: 'Pipeline Operations Center',
     },
   },
 
