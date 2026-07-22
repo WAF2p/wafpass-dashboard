@@ -314,8 +314,23 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
 
 function NavSectionDropdown({ section, page, navigate, role }: { section: NavSection; page: Page; navigate: (p: Page) => void; role: string }) {
   const [expanded, setExpanded] = useState(false)
+  const [dropdownLeft, setDropdownLeft] = useState('1rem')
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const visibleItems = section.items.filter(item => !item.minRole || hasMinRole(role, item.minRole))
   const hasActive = visibleItems.some(item => item.page === page)
+
+  useEffect(() => {
+    if (!expanded || !triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    const vw = window.innerWidth
+    const maxWidth = Math.min(1200, vw - 32)
+    let left = rect.left
+    if (left + maxWidth > vw - 16) {
+      left = Math.max(16, vw - 16 - maxWidth)
+    }
+    setDropdownLeft(`${left}px`)
+  }, [expanded])
 
   return (
     <div
@@ -324,6 +339,7 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
       style={{ position: 'relative' }}
     >
       <button
+        ref={triggerRef}
         style={{
           display: 'flex', alignItems: 'center', gap: '0.5rem',
           padding: '0.75rem 1rem', borderRadius: '6px',
@@ -345,12 +361,13 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
         <div
           onMouseEnter={() => setExpanded(true)}
           onMouseLeave={() => setExpanded(false)}
+          ref={dropdownRef}
           style={{
             position: 'fixed',
             top: 'calc(var(--top-nav-height, 64px) + 6px)',
-            left: '1rem',
-            right: '1rem',
-            maxWidth: '1400px',
+            left: dropdownLeft,
+            minWidth: '560px',
+            maxWidth: 'min(1200px, calc(100vw - 2rem))',
             background: 'var(--nav-bg-opaque)',
             border: '1px solid var(--nav-border)',
             borderRadius: '14px',
