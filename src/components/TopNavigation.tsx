@@ -317,6 +317,7 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
   const [dropdownLeft, setDropdownLeft] = useState('1rem')
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const closeTimerRef = useRef<number | null>(null)
   const visibleItems = section.items.filter(item => !item.minRole || hasMinRole(role, item.minRole))
   const hasActive = visibleItems.some(item => item.page === page)
 
@@ -332,10 +333,36 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
     setDropdownLeft(`${left}px`)
   }, [expanded])
 
+  const openMenu = () => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+    setExpanded(true)
+  }
+
+  const closeMenu = () => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current)
+    }
+    closeTimerRef.current = window.setTimeout(() => {
+      setExpanded(false)
+      closeTimerRef.current = null
+    }, 250)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current)
+      }
+    }
+  }, [])
+
   return (
     <div
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
+      onMouseEnter={openMenu}
+      onMouseLeave={closeMenu}
       style={{ position: 'relative' }}
     >
       <button
@@ -359,8 +386,8 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
 
       {expanded && (
         <div
-          onMouseEnter={() => setExpanded(true)}
-          onMouseLeave={() => setExpanded(false)}
+          onMouseEnter={openMenu}
+          onMouseLeave={closeMenu}
           ref={dropdownRef}
           style={{
             position: 'fixed',
