@@ -449,7 +449,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   if (runs.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        {t('pages.runs.noRuns')} <code>wafpass check --push http://localhost:8000/runs</code>
+        {t('pages.runs.noRuns')} <code>wafpass check --push http://localhost:8000/api/v1/runs</code>
       </div>
     )
   }

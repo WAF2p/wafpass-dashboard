@@ -2,6 +2,8 @@
 
 This document covers internal architecture, design decisions, technical debt, and contribution guidance for the React dashboard. For user-facing documentation see `README.md`.
 
+> **BREAKING CHANGE:** The dashboard now calls `wafpass-server` endpoints under `/api/v1`. `api.ts` prepends `/api/v1` to every API path; `/health`, `/version`, and `/framework-update-info.yml` remain at the root.
+
 ---
 
 ## Stack
@@ -130,7 +132,7 @@ On mount, `parseHash().runId` is captured in `initialHashRunId` (a `useRef`). Af
 LoginPage
     │  login(username, password)
     ▼
-api.ts: POST /auth/login
+api.ts: POST /api/v1/auth/login
     │
     │  {access_token, refresh_token, user}
     ▼
@@ -150,7 +152,7 @@ App.tsx checks: if (!user) → <LoginPage />
 LoginPage
     │  user clicks "Sign in with OIDC / SAML2"
     ▼
-window.location = /auth/oidc/authorize  (or /auth/saml/login)
+window.location = /api/v1/auth/oidc/authorize  (or /api/v1/auth/saml/login)
     │
     ▼
 Server performs IdP redirect → callback → JWKS signature verification
@@ -176,7 +178,7 @@ The tokens arrive via URL query parameters, which is a standard OAuth 2.0 patter
 1. Read `wafpass_access_token` from localStorage
 2. Decode the JWT payload (`atob(token.split('.')[1])`) — check `exp`
 3. If valid → restore session immediately (no network round-trip)
-4. If expired but `wafpass_refresh_token` exists → `POST /auth/refresh` → store new access token
+4. If expired but `wafpass_refresh_token` exists → `POST /api/v1/auth/refresh` → store new access token
 5. If refresh fails → clear all tokens → show LoginPage
 
 ### `useAuth()` hook
@@ -302,7 +304,7 @@ try {
 
 ### Findings comments API
 
-The findings comments endpoints (`/findings-comments`, `/secret-findings-comments`) support:
+The findings comments endpoints (`/api/v1/findings-comments`, `/api/v1/secret-findings-comments`) support:
 - `fetchFindingComments(findingId)` — list comments for a finding
 - `createFindingComment(findingId, message)` — add a comment
 - `deleteFindingComment(commentId)` — remove a comment
@@ -427,7 +429,7 @@ No server round-trip; no additional library. The entire HTML is built by string 
 | Mode | Implementation |
 |------|---------------|
 | Mock | Browser-side regex matching against control check descriptions |
-| Real | `POST /sandbox` → server runs wafpass-core, returns actual findings |
+| Real | `POST /api/v1/sandbox` → server runs wafpass-core, returns actual findings |
 
 `sandboxStatus()` is called on mount to check if the real engine is available. If unavailable, the Real button is disabled with an explanatory tooltip.
 
@@ -443,7 +445,7 @@ The `fromRealEngine()` function in `SandboxPage.tsx` adapts the `SandboxResponse
 npm run dev   # Vite dev server on :5173
 ```
 
-Vite's dev proxy (`vite.config.ts`) forwards `/runs`, `/controls`, `/waivers`, `/risks`, `/sandbox`, `/health` to `http://localhost:8000`.
+Vite's dev proxy (`vite.config.ts`) forwards `/api` (all versioned endpoints under `/api/v1`) and `/health` to `http://localhost:8000`.
 
 ### Production
 
@@ -471,25 +473,25 @@ The nginx config (`nginx.conf`) proxies API paths to `wafpass-server:8000` (Dock
 
 **Local (browser-only):** Generates a self-contained HTML string via `generateHtml()` and triggers a browser download. All data comes from `run`, `waivers`, `risks`, and `auditLog` already in React state — no server round-trip.
 
-**Server-locked:** Calls `createEvidence()` in `api.ts` which POSTs to `/evidence`. The server:
+**Server-locked:** Calls `createEvidence()` in `api.ts` which POSTs to `/api/v1/evidence`. The server:
 1. Computes `SHA-256(canonical_json(snapshot))` and stores it in `hash_digest`.
 2. Generates a `public_token` (32-char URL-safe random) for the unauthenticated auditor URL.
 3. Returns `EvidenceOut` including `id`, `hash_digest`, `public_token`.
 
 The dashboard then renders:
-- The SHA-256 hash digest (copyable, for independent verification against `/evidence/{id}/snapshot`).
-- The public auditor URL (`/evidence/p/{token}`) as a copyable link.
-- A QR code image fetched from `/evidence/{id}/qr.svg` (SVG generated server-side by the `segno` library; falls back to a placeholder if not installed).
+- The SHA-256 hash digest (copyable, for independent verification against `/api/v1/evidence/{id}/snapshot`).
+- The public auditor URL (`/api/v1/evidence/p/{token}`) as a copyable link.
+- A QR code image fetched from `/api/v1/evidence/{id}/qr.svg` (SVG generated server-side by the `segno` library; falls back to a placeholder if not installed).
 
 The QR code encodes the public URL so auditors can scan it with a phone to access the frozen HTML report without logging in.
 
 ## Achievement and Badge architecture
 
-`BadgePage.tsx` calls `fetchBadgeStatus(project)` which reads `/public/badge/{project}/json` — a public, no-auth endpoint that returns the latest run's tier level, label, color, and score. The page generates ready-to-paste badge snippets for Markdown, HTML, AsciiDoc, reStructuredText, Org-mode, and JSON.
+`BadgePage.tsx` calls `fetchBadgeStatus(project)` which reads `/api/v1/public/badge/{project}/json` — a public, no-auth endpoint that returns the latest run's tier level, label, color, and score. The page generates ready-to-paste badge snippets for Markdown, HTML, AsciiDoc, reStructuredText, Org-mode, and JSON.
 
-`LeaderboardPage.tsx` calls `GET /leaderboard` and renders two ranked tables. Both use `ProjectPassport` display names and owner metadata when available.
+`LeaderboardPage.tsx` calls `GET /api/v1/leaderboard` and renders two ranked tables. Both use `ProjectPassport` display names and owner metadata when available.
 
-Achievement verification tokens are surfaced as `GET /public/achievements/{token}` — a fully rendered HTML page served directly by the server with no React dependency. The page shows the tier badge, score, pillar scores at achievement time, and the verification token in a monospace box.
+Achievement verification tokens are surfaced as `GET /api/v1/public/achievements/{token}` — a fully rendered HTML page served directly by the server with no React dependency. The page shows the tier badge, score, pillar scores at achievement time, and the verification token in a monospace box.
 
 ---
 

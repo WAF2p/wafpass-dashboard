@@ -692,7 +692,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 </button>
               </div>
               <div style={{ marginTop: '0.35rem', fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                Enter the base URL only — no <code style={{ fontSize: '0.68rem' }}>/runs</code> suffix (e.g. <code style={{ fontSize: '0.68rem' }}>http://localhost:8000</code> when running locally). Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
+                Enter the base URL only — no <code style={{ fontSize: '0.68rem' }}>/api/v1/runs</code> suffix (e.g. <code style={{ fontSize: '0.68rem' }}>http://localhost:8000</code> when running locally). Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
               </div>
             </div>
 
@@ -765,7 +765,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             </pre>
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>
-              {t('pages.settingsPage.statusProbe')}: <code style={{ color: 'var(--text)', fontSize: '0.71rem' }}>{(serverUrl.trim() || '') + '/sandbox/status'}</code>
+              {t('pages.settingsPage.statusProbe')}: <code style={{ color: 'var(--text)', fontSize: '0.71rem' }}>{(serverUrl.trim() || '') + '/api/v1/sandbox/status'}</code>
             </div>
           </div>
         </div>

@@ -40,6 +40,7 @@ const br: PartialTranslations = {
       leaderboard: 'Hall da Fama', journey: 'Jornada de Maturidade',
       userprefs: 'Minhas Preferências', reference: 'Arquitetura de Referência',
       antipattern: 'Museu de Anti-Padrões', bestpractices: 'Área de Melhores Práticas',
+      rfc: 'RFC Tracker',
     },
   },
 

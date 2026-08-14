@@ -128,6 +128,7 @@ const xx: PartialTranslations = {
       leaderboard: 'Hall of Fame',
       journey: 'Maturity Journey',
       userprefs: 'My Preferences',
+      rfc: 'RFC Tracker',
     },
   },
 
@@ -1663,6 +1664,17 @@ const xx: PartialTranslations = {
       colOwner: 'Owner',
       colExpiry: 'Expiry',
       noSkipped: 'No skipped controls for this run.',
+    },
+
+    rfc: {
+      title: 'RFC Tracker',
+      subtitle: 'Cross-repository Requests for Comments — latest status, authors, and discussion participants',
+      generated: 'Generated',
+      open: 'Open',
+      closed: 'Closed',
+      allRepos: 'All repositories',
+      allStatuses: 'All statuses',
+      searchPlaceholder: 'Search RFC title, body, author, or repository…',
     },
 
   },

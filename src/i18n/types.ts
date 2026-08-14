@@ -123,6 +123,7 @@ export interface Translations {
       notifications: string
       pipelines: string
       'compliance-readiness': string
+      rfc: string
     }
   }
 
@@ -1894,6 +1895,17 @@ export interface Translations {
       passLabel: string
       needsAttentionLabel: string
       highRiskLabel: string
+    }
+
+    rfc: {
+      title: string
+      subtitle: string
+      generated: string
+      open: string
+      closed: string
+      allRepos: string
+      allStatuses: string
+      searchPlaceholder: string
     }
   }
 }

@@ -47,6 +47,7 @@ const en: Translations = {
       bestpractices: 'Best Practice Area',
       notifications: 'Notifications',
       pipelines: 'Pipeline Operations Center',
+      rfc: 'RFC Tracker',
     },
   },
 
@@ -1796,6 +1797,17 @@ const en: Translations = {
         testBtn: 'Send Test',
         testSent: 'Test notification sent successfully!',
       },
+    },
+
+    rfc: {
+      title: 'RFC Tracker',
+      subtitle: 'Cross-repository Requests for Comments — latest status, authors, and discussion participants',
+      generated: 'Generated',
+      open: 'Open',
+      closed: 'Closed',
+      allRepos: 'All repositories',
+      allStatuses: 'All statuses',
+      searchPlaceholder: 'Search RFC title, body, author, or repository…',
     },
   },
 }

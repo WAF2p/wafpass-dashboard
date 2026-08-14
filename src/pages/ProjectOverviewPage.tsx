@@ -450,7 +450,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
 
   function copyVerifyUrl(token: string) {
     const base = getApiBase() || window.location.origin
-    navigator.clipboard.writeText(`${base}/public/achievements/${token}`).then(() => {
+    navigator.clipboard.writeText(`${base}/api/v1/public/achievements/${token}`).then(() => {
       setCopiedToken(token)
       setTimeout(() => setCopiedToken(null), 2000)
     }).catch(() => {})
@@ -782,7 +782,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                   const tierColors: Record<number, string> = { 1: '#d97706', 2: '#0094FF', 3: '#0891b2', 4: '#7c3aed', 5: '#059669' }
                   const color = tierColors[a.tier_level] ?? '#0094FF'
                   const isCopied = copiedToken === a.verification_token
-                  const verifyUrl = `${getApiBase() || window.location.origin}/public/achievements/${a.verification_token}`
+                  const verifyUrl = `${getApiBase() || window.location.origin}/api/v1/public/achievements/${a.verification_token}`
                   return (
                     <div key={a.id} style={{
                       display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem 1.25rem',

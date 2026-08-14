@@ -818,7 +818,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                       <strong>No diff preview available for this patch.</strong>
                       <div style={{ marginTop: '0.5rem' }}>
                         {viewMode === 'local'
-                          ? 'No unified diff is available for this patch. The source files are not stored for this run because it was pushed from a CI/CD pipeline (POST /runs). Only runs created via a server-side scan (POST /scan) keep a source snapshot. Switch to Server preview or run the CLI locally to see file-level changes.'
+                          ? 'No unified diff is available for this patch. The source files are not stored for this run because it was pushed from a CI/CD pipeline (POST /api/v1/runs). Only runs created via a server-side scan (POST /api/v1/scan) keep a source snapshot. Switch to Server preview or run the CLI locally to see file-level changes.'
                           : 'The server did not return a diff for this file. This can happen when the patch target file is outside the scanned path or no textual change could be derived.'}
                       </div>
                     </div>
