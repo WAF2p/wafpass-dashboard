@@ -39,6 +39,7 @@ const fr: PartialTranslations = {
       controlspacks: 'Mise à niveau des contrôles', passports: 'Passeports projet', badge: 'Intégration badge',
       leaderboard: 'Tableau d\'honneur', journey: 'Parcours de maturité',
       userprefs: 'Mes préférences',
+      rfc: 'RFC Tracker',
     },
   },
 

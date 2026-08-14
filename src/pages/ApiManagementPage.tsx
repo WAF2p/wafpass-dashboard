@@ -320,7 +320,7 @@ export default function ApiManagementPage() {
           <div style={{ marginTop: '0.65rem', padding: '0.5rem 0.75rem', borderRadius: '7px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
             <div style={{ fontSize: '0.69rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.apikeys.quickStart')}</div>
             <code style={{ fontSize: '0.74rem', color: 'var(--text)' }}>
-              WAFPASS_API_KEY={newKey.raw_key.slice(0, 20)}… wafpass check ./iac --push https://your-server/runs
+              WAFPASS_API_KEY={newKey.raw_key.slice(0, 20)}… wafpass check ./iac --push https://your-server/api/v1/runs
             </code>
           </div>
         </div>
@@ -532,8 +532,8 @@ export default function ApiManagementPage() {
         </div>
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {[
-            { label: 'CLI flag',       body: 'wafpass check ./iac --push https://your-server/runs --api-key <key>' },
-            { label: 'Env var',        body: 'WAFPASS_API_KEY=<key>  wafpass check ./iac --push https://your-server/runs' },
+            { label: 'CLI flag',       body: 'wafpass check ./iac --push https://your-server/api/v1/runs --api-key <key>' },
+            { label: 'Env var',        body: 'WAFPASS_API_KEY=<key>  wafpass check ./iac --push https://your-server/api/v1/runs' },
             { label: 'GitHub Actions', body: 'Set WAFPASS_API_KEY as a repository secret → ${{ secrets.WAFPASS_API_KEY }}' },
             { label: 'HTTP header',    body: 'X-Api-Key: <key>' },
           ].map((row, i, arr) => (

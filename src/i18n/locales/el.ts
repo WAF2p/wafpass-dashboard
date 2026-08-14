@@ -40,6 +40,7 @@ const el: PartialTranslations = {
       leaderboard: 'Hall of Fame', journey: 'Πορεία Ωριμότητας',
       userprefs: 'Οι Προτιμήσεις Μου', reference: 'Αρχιτεκτονική Αναφορά',
       antipattern: 'Μουσείο Αντι-Προτύπων', bestpractices: 'Περιοχή Βέλτιστων Πρακτικών',
+      rfc: 'RFC Tracker',
     },
   },
 

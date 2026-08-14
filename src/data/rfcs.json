@@ -1,0 +1,214 @@
+{
+  "generatedAt": "2026-08-04T14:08:37.266Z",
+  "source": "https://api.github.com",
+  "repos": [
+    "WAF2p/pass",
+    "WAF2p/wafpass-server",
+    "WAF2p/wafpass-dashboard"
+  ],
+  "total": 7,
+  "open": 7,
+  "closed": 0,
+  "rfcs": [
+    {
+      "id": "pass#43",
+      "repo": "pass",
+      "repoFullName": "WAF2p/pass",
+      "number": 43,
+      "title": "Feature Request: Source Snapshots — Ingestion Contract and Reliable Upload Path (RFC)",
+      "state": "open",
+      "isPullRequest": false,
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "a2eeef"
+        }
+      ],
+      "author": {
+        "login": "lewandos",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+        "url": "https://github.com/lewandos"
+      },
+      "createdAt": "2026-07-18T19:37:22Z",
+      "updatedAt": "2026-07-18T19:37:22Z",
+      "url": "https://github.com/WAF2p/pass/issues/43",
+      "body": "## Context\nDashboard local preview and auto-fix features rely on `Run.source_snapshot`, a JSONB map of relative IaC file paths to raw file contents. Today, this snapshot is only captured when the CLI is explicitly invoked with both `--output json`, `--upload-source`, and `--push` (`pass/wafpass/cli.py:320`). \n\nBecause CI/CD pipelines commonly `POST` directly to `/runs` without these flags, the vast majority of runs lack a snapshot, causing the UI to trigger fallback warnings in `AutoFixPage.tsx`. Conversely, the server-side `/scan` endpoint always captures snapshots because it forces `run_scan(..., upload_source=True)`.\n\n## Approach\nTransform source snapshots into a first-class, standardized part of the ingestion contract instead of an opt-in CLI flag. \n\nWe will provide a unified ingestion baseline: a server-side path that always aggregates source files (`/scan`) and a CLI execution path that safely uploads files by default for all pushed runs. To safeguard server infrastructure, we will introduce explicit file size constraints, wire compression handlers, and completeness tracking parameters.\n\n## Server Changes\n\n### 1. Normalize and Compress Snapshots\n* **Endpoints (`wafpass-server/wafpass_server/routers/runs.py`, `schemas.py`):** Accept `source_snapshot` as either the existing `dict[str, str]` string map or a new compressed `dict[str, str]` payload where values are **base64-encoded gzip** blocks.\n* **Helper Implementation:** Introduce `_normalise_snapshot(snapshot)` to:\n  * Detect compressed values on the fly by inspecting the base64-decoded header structure for gzip magic bytes.\n  * Decompress and persist the values as standard raw JSON text arrays in the `Run.source_snapshot` column.\n  * Validate structural size constraints before commit.\n* **Schema Extension:** Add an optional `source_snapshot_encoding` field (`\"raw\"` or `\"gzip+base64\"`) to the `RunCreate` Pydantic payload.\n\n### 2. Configurable Infrastructure Constraints (`wafpass-server/wafpass_server/config.py`)\nDeclare explicit safety boundaries within system configurations to prevent database exploitation:\n\n```python\n# System-wide safety ceilings\nWAFPASS_SNAPSHOT_MAX_TOTAL_BYTES: int = 5 * 1024 * 1024   # 5 MiB total per run\nWAFPASS_SNAPSHOT_MAX_FILE_BYTES: int = 256 * 1024        # 256 KiB max per individual file\nWAFPASS_SNAPSHOT_MAX_FILES: int = 500                    # File count ceiling per snapshot",
+      "comments": [],
+      "commenters": []
+    },
+    {
+      "id": "pass#42",
+      "repo": "pass",
+      "repoFullName": "WAF2p/pass",
+      "number": 42,
+      "title": "Feature Request: API Versioning and Backwards-Compatibility Strategy for WAF++ PASS (RFC)",
+      "state": "open",
+      "isPullRequest": false,
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "a2eeef"
+        }
+      ],
+      "author": {
+        "login": "lewandos",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+        "url": "https://github.com/lewandos"
+      },
+      "createdAt": "2026-07-18T09:30:23Z",
+      "updatedAt": "2026-07-18T19:37:40Z",
+      "url": "https://github.com/WAF2p/pass/issues/42",
+      "body": "## Context and Goals\nThe WAF++ PASS product is moving through an API maturity push. Several parallel efforts already exist or are planned:\n* **Maturity enforcement:** Achievements, leaderboard, project passports, and tier rules.\n* **Action-oriented notifications:** Server-side notification router and role targeting.\n* **Marketplace RFCs:** Control packs, control catalogue, and export plugins.\n\nToday, the server exposes routers at root paths (`/runs`, `/auth`, `/controls`, …) with the exception of `/api/auto-fix`. The dashboard hand-writes fetch URLs and TypeScript interfaces in `src/api.ts`, and the CLI pushes results to a server URL + `/runs`. There is currently no OpenAPI client generation, no deprecation signaling, and no global API prefix.\n\nThis RFC defines a concrete, phased plan to:\n1. Introduce URL versioning under `/api/v1/...` without breaking the existing CLI, dashboard, GitHub Action, or third-party integrators.\n2. Publish a machine-readable OpenAPI spec and generate a type-safe TypeScript client for the dashboard.\n3. Establish a backwards-compatibility policy and a deprecation framework (headers, Sunset, changelog).\n4. Migrate the dashboard and CLI incrementally.\n5. Add CI quality gates so that API drift and breaking changes are caught before release.\n\n## 1. URL Versioning Scheme: `/api/v1/...`\n\n### Decision\nUse **path-based versioning**: all REST resources live under `/api/v1/{resource}`. Health, version, and framework-update-info endpoints may remain unversioned because they are deployment/metadata concerns, but they will also be exposed under `/api/v1/` for consistency.\n\n### Why Path-Based?\n* FastAPI natively supports `APIRouter(prefix=...)` and the generated OpenAPI spec is clean.\n* Path versioning is the easiest scheme to proxy, cache, and document.\n* Header/content-negotiation versioning is harder for integrators and caching layers.\n\n### Migration Strategy for Existing Root-Level Routers\nThe server currently has the following router prefixes at the root level:\n* `/auth`, `/runs`, `/controls`, `/control-packs`, `/waivers`, `/risks`, `/evidence`, `/projects`, `/sso`, `/sandbox`, `/scan`, `/achievements`, `/badges`, `/leaderboard`, `/audit/events`, `/findings/...`, `/secret-findings/...`, `/widgets`, `/notifications`, `/update-checker`.\n* Plus `/api/auto-fix` which is already nested under `/api`.\n* Plus unversioned metadata endpoints: `/health`, `/version`, `/framework-update-info.yml`.\n\n#### Phase 1: Create a v1 Router Tree\nCreate a new module `wafpass_server/api_versions.py` that builds the versioned router tree.\n\n```python\n# wafpass_server/api_versions.py\nfrom fastapi import APIRouter\nfrom wafpass_server.routers import auth, controls, control_packs, runs, ...\n\nv1_router = APIRouter(prefix=\"/api/v1\")\n\nv1_router.include_router(auth.router,         prefix=\"/auth\")\nv1_router.include_router(runs.router,         prefix=\"/runs\")\nv1_router.include_router(controls.router,     prefix=\"/controls\")\nv1_router.include_router(control_packs.router, prefix=\"/control-packs\")\n# ... all other routers\nv1_router.include_router(auto_fix.router,     prefix=\"/auto-fix\")",
+      "comments": [],
+      "commenters": []
+    },
+    {
+      "id": "pass#41",
+      "repo": "pass",
+      "repoFullName": "WAF2p/pass",
+      "number": 41,
+      "title": "Feature Request: Comprehensive Test/Quality Coverage Implementation Plan (RFC)",
+      "state": "open",
+      "isPullRequest": false,
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "a2eeef"
+        }
+      ],
+      "author": {
+        "login": "lewandos",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+        "url": "https://github.com/lewandos"
+      },
+      "createdAt": "2026-07-18T08:50:37Z",
+      "updatedAt": "2026-07-18T08:50:37Z",
+      "url": "https://github.com/WAF2p/pass/issues/41",
+      "body": "## 📋 Context & Problem Statement\nThe WAF++ PASS platform code and test coverage are highly fragmented across three distinct repositories:\n* **`pass` (Python CLI / pytest):** Contains ~150 unit tests, localized auto-fix tests, and a single golden-file E2E fixture, but lacks cross-repo test configurations and snapshot testing automation.\n* **`wafpass-server` (FastAPI + SQLAlchemy async + asyncpg + Alembic):** Contains only 5 tests total (4 for Alembic migrations and 1 placeholder router test). It has zero test coverage for ~25 primary routers, `pytest-asyncio` is unconfigured, and there is no isolated test database harness.\n* **`wafpass-dashboard` (React + TypeScript + Vite + Vitest):** Features 43 basic tests spread across 3 files, but lacks UI component-level testing, Playwright E2E automation, and uniform linting/formatting rules.\n\nAuditors flagged uneven coverage across the stack as a significant quality gap. Critical user journeys—specifically the **CLI ↔ server ↔ dashboard** loop executing auto-fix tasks and data snapshotting—are not verified end-to-end.\n\nThis plan details a layered quality engineering strategy to establish robust testing patterns, isolate database interactions, and introduce unified automated quality gates.\n\n## 🛠️ Possible Implementation Plan\n\n### 1. Server Infrastructure & Router Testing (`wafpass-server`)\n\n#### Async Environment Setup\n* [ ] Update `pyproject.toml` to explicitly declare and pin development dependencies:\n  ```toml\n  dev = [\n    \"pytest>=7.0\",\n    \"pytest-asyncio>=0.23,<0.24\",\n    \"httpx>=0.27\",\n    \"pytest-cov>=4.0\",\n  ]",
+      "comments": [],
+      "commenters": []
+    },
+    {
+      "id": "pass#40",
+      "repo": "pass",
+      "repoFullName": "WAF2p/pass",
+      "number": 40,
+      "title": "Feature Request: Dashboard UX Overhaul — Guided Onboarding, Role-Based Landing, and Progressive Disclosure (RFC)",
+      "state": "open",
+      "isPullRequest": false,
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "a2eeef"
+        }
+      ],
+      "author": {
+        "login": "lewandos",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+        "url": "https://github.com/lewandos"
+      },
+      "createdAt": "2026-07-18T08:15:13Z",
+      "updatedAt": "2026-07-18T08:15:13Z",
+      "url": "https://github.com/WAF2p/pass/issues/40",
+      "body": "## 📋 Context & Problem Statement\nThe dashboard currently exposes 46 pages through a bloated, 700px-wide mega-menu in `TopNavigation.tsx`. The navigation model is highly fragmented; `buildNavSections()` is duplicated across `Sidebar.tsx` and `MobileMenu.tsx`, leading to drifting layouts. Furthermore, key deep-intelligence screens (cost tracking, blast radius, dependency graphs, drift detection, secrets, and evidence) are silently hidden behind settings toggles with zero context. \n\nAuditors have flagged this lack of discoverability as a critical gap. Users struggle to find core capabilities, do not understand why advanced modules are missing, and lack a structured onboarding path into the product.\n\nThis issue tracks a comprehensive **dashboard-only UX overhaul** designed to enforce progressive disclosure, introduce role-aware layouts, and reveal hidden capabilities via inline feature-discovery cards.\n\n## 🛠️ Possible Implementation Plan\n\n### 1. Unified Navigation Foundation (`wafpass-dashboard`)\n\n#### Single Source of Truth\n- [ ] Create `src/navigation/navModel.ts` to centralize all page arrays and clear out the duplicated nav configurations.\n- [ ] Extend `NavEntry` with `description?: string`, `keywords?: string[]`, and `settingKey?: keyof Settings` fields.\n- [ ] Implement utility functions:\n  * `buildNavSections(...)` — The master generation hook for all surface viewports.\n  * `getSectionForPage(page, sections)` — Evaluates active routes for breadcrumbs.\n  * `isNavEntryEnabled(...)` & `isNavEntryVisible(...)` — Evaluates active feature gates.\n- [ ] Normalize missing/inconsistent routes into concrete sections (`pipelines` ➡️ overview, `compliance-readiness` ➡️ ciso, `autofix` ➡️ engineer, system-level configurations ➡️ system).\n- [ ] Hardcode standard role-landing fallbacks:\n  * `clevel` ➡️ `globaldashboard`\n  * `ciso` ➡️ `dashboard`\n  * `architect` ➡️ `catalogue`\n  * `engineer` ➡️ `findings`[cite: 1]\n  * `admin` ➡️ `users`[cite: 1]\n- [ ] Replace implicit unknown role checks with explicit evaluations: `hasMinRole(role, s.minRole ?? 'clevel')`[cite: 1].\n\n#### Global Layout Shell\n- [ ] Refactor `App.tsx` to stop rendering `TopNavigation` directly, wrapping routing targets inside a new unified `AppLayout.tsx` shell[cite: 1].\n- [ ] Structure `AppLayout` to compose: `TopBar` (run context selectors, user profiles, and palette hooks), `PrimarySidebar`, `<main>` viewports, `Breadcrumbs`, and the global `Footer`[cite: 1].\n- [ ] On first authenticated mount with an empty hash, evaluate `resolveLandingPage(role, userPrefs)` and trigger a routing `replaceState`[cite: 1].\n\n### 2. Component Enhancements\n\n#### Collapsible Primary Sidebar (`src/components/PrimarySidebar.tsx`)\n- [ ] Delete dead code files `Sidebar.tsx` and `MobileMenu.tsx`[cite: 1].\n- [ ] Implement a three-state sidebar: **Expanded** (~16rem), **Collapsed** (~3.5rem with icon tooltips), and a **Mobile Drawer** overlay[cite: 1].\n- [ ] Persist structural states inside `userPrefs.sidebarPinned` and `userPrefs.sidebarCollapsed`[cite: 1].\n- [ ] Render dedicated **Starred** and **Recent** categories at the top of the pane[cite: 1].\n- [ ] Implement progressive disclosure: show up to 2 items per block by default with an inline \"N more...\" expander[cite: 1].\n- [ ] If `hideDisabledMenuItems` is false, render disabled gated items in a dimmed state with a lock icon that launches an inline feature discovery upsell modal on click[cite: 1].\n\n#### Keyboard-Driven Command Palette (`src/components/CommandPalette.tsx`)\n- [ ] Build a global search portal bound to `Cmd/Ctrl+K`[cite: 1].\n- [ ] Flatten centralized nav items into fuzzy-searchable rows indexed by `label`, `description`, and `keywords`[cite: 1].\n- [ ] Group layout results by Recent, Starred, and Section blocks, with keyboard-navigation focus control (`arrows`, `Enter`, `Escape`)[cite: 1].\n- [ ] Embed toggle buttons to directly favorite/unfavorite paths inline[cite: 1].\n\n#### Feature Discovery & Deep-Linked Upsell Cards\n- [ ] Build a reusable `FeatureDiscoveryCard.tsx` component mapping disabled paths to explicit configuration options[cite: 1]:\n  * `cost` ➡️ `activePillars` contains `'cost'`[cite: 1]\n  * `blastradius` ➡️ `blastRadius` | `depgraph` ➡️ `dependencyGraph`[cite: 1]\n  * `changes` ➡️ `driftDetection` | `secrets` ➡️ `secretScanner`[cite: 1]\n  * `evidence` ➡️ `evidenceCollection` | `autofix` ➡️ `autoFix`[cite: 1]\n  * `compliance-readiness` ➡️ `multiCloudNormalization`[cite: 1]\n- [ ] Render discovery cards on the new landing page, in the sidebar under available listings, and within empty states of disabled pages[cite: 1].\n- [ ] Update `SettingsPage.tsx` to read incoming focus filters (`parseHash().filters.focus`), automatically scrolling to and highlighting the target configuration toggle[cite: 1].\n\n### 3. Personalization & Interactive Onboarding\n\n#### Role-Based Home Page (`src/pages/HomePage.tsx`)\n- [ ] Register `'home'` as a top-level route with associated titles[cite: 1].\n- [ ] Construct custom greeting widgets embedded with role clearance badges[cite: 1].\n- [ ] Render live KPI snapshot counters (scores, failing controls, waivers, active risks) sourced from the currently selected run[cite: 1].\n- [ ] Surface dedicated Quick Links, Favorites, Recents, and an interactive Discover feature feed[cite: 1].\n\n#### Preferences & State Synchronization\n- [ ] Extend `UserPreferences` in database storage and schemas[cite: 1]:\n  * `sidebarPinned` (bool, default true)[cite: 1]\n  * `sidebarCollapsed` (bool, default false)[cite: 1]\n  * `starredPages` (Page array, default empty)[cite: 1]\n  * `recentPages` (Page array, default empty)[cite: 1]\n  * `roleDefaultPages` (Record mapping roles to entry pages)[cite: 1]\n- [ ] Inject a history tracing `useEffect` within `App.tsx` to capture and push navigation context updates down to the profile storage layer[cite: 1]:\n  ```typescript\n  useEffect(() => {\n    const next = {\n      ...userPrefs,\n      recentPages: [page, ...userPrefs.recentPages.filter(p => p !== page)].slice(0, 5),\n    }\n    handleUserPrefsChange(next)\n  }, [page])",
+      "comments": [],
+      "commenters": []
+    },
+    {
+      "id": "pass#39",
+      "repo": "pass",
+      "repoFullName": "WAF2p/pass",
+      "number": 39,
+      "title": "Feature Request: Implement Action-Oriented Notifications (RFC)",
+      "state": "open",
+      "isPullRequest": false,
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "a2eeef"
+        }
+      ],
+      "author": {
+        "login": "lewandos",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+        "url": "https://github.com/lewandos"
+      },
+      "createdAt": "2026-07-17T19:44:16Z",
+      "updatedAt": "2026-07-18T07:42:33Z",
+      "url": "https://github.com/WAF2p/pass/issues/39",
+      "body": "## 📋 Context & Problem Statement\nThe dashboard currently features a `NotificationBell` and a dedicated `NotificationsPage`, but notifications are entirely passive—they only display text titles, messages, and categories with no trailing interactive capabilities[cite: 1]. Auditors flagged a missing gap: **there are no in-product workflows triggered by notifications** (e.g., clicking a \"new failing check\" notification should seamlessly pivot the user to the underlying finding) and no external Slack, email, or digest routing settings[cite: 1].\n\nThis issue tracks the implementation of an actionable notification framework part of the triage RFC[cite: 1]:\n* **Action Payloads:** Enrich entries with metadata to let the UI deep-link directly into relevant resolution workflows[cite: 1].\n* **Org-Level Routing:** Empower administrators to set global Slack and email dispatch defaults[cite: 1].\n* **User Preferences:** Allow individual users to customize digest frequencies or opt out of specific categories entirely[cite: 1].\n\nTo ensure an explicit audit trail, the core `Notification` record remains the single source of truth, extended with lifecycle delivery state tracking[cite: 1].\n\n\n## 🛠️ Possible Implementation Plan\n\n### 1. Server Changes (`wafpass-server`)\n\n#### Data Model & Migrations\n- [ ] Extend the `Notification` model in `wafpass_server/models.py` with the following attributes[cite: 1]:\n  * `action_type` (text, e.g., `open_run`, `open_findings`, `open_secret`, `open_passport`, `open_waiver`, `open_pack`, `external_link`)[cite: 1].\n  * `action_payload` (JSONB nullable dict capturing target contexts like `run_id`, `finding_id`, `project`, or `filters`)[cite: 1].\n  * `delivery` (JSONB nullable tracking `slack_sent`, `email_sent`, `slack_error`, `email_error`)[cite: 1].\n  * `is_dismissed` (bool, default `False` to distinguish dismissed from read items)[cite: 1].\n  * `read_at` (DateTime, nullable)[cite: 1].\n  * `digest_batch_id` (text, nullable for future batching aggregates)[cite: 1].\n- [ ] Create the `notification_preferences` table to record user-scoped configurations (`user_id` PK/FK, `digest_frequency`, `opt_out_categories`, `slack_enabled`, `email_enabled`)[cite: 1].\n- [ ] Create the single-row `organization_notification_settings` table to capture global corporate routing defaults (`slack_webhook_url`, `smtp_config` JSONB, `digest_frequency`, `default_delivery_enabled` JSONB)[cite: 1].\n- [ ] Generate Alembic migration script `0040_action_oriented_notifications.py` to extend fields, construct tables, and seed the default disabled organization settings row[cite: 1].\n\n#### Generation Engine & Business Hookpoints\n- [ ] Implement `wafpass_server/notification_builder.py` with a unified `build_notification(kind, entity, ...)` builder pattern mapping domain events directly to text structures and discrete `action_payload` blocks[cite: 1].\n- [ ] Inject notification trigger dispatches inside standard business operations[cite: 1]:\n  * `routers/runs.py` & `scan.py`: Emit `new_failing_findings` or `new_secret_findings` upon ingest parsing[cite: 1].\n  * `routers/achievements.py`: Disseminate `maturity_tier_achieved` milestones and `maturity_gate_failed` blocks[cite: 1].\n  * `routers/waivers.py` & `routers/risks.py`: Notify on authorization creation or impending expiration[cite: 1].\n  * `routers/control_packs.py`: Dispatch on pack activation or upstream marketplace engine updates[cite: 1].\n  * `update_checker.py`: Append `external_link` capabilities to core framework notices[cite: 1].\n\n#### Delivery & API Contracts\n- [ ] Build `wafpass_server/notification_delivery.py` exposing `deliver_notification()`. When triggered, evaluating organization settings and personal overrides to dynamically POST blocks to Slack webhooks or route via SMTP before logging results to `notification.delivery`[cite: 1].\n- [ ] Update response Pydantic models (`NotificationOut`, `NotificationCreate`) and expose user preference lifecycle paths (`GET|PUT /notifications/preferences`) along with administrative settings targets (`GET|PUT /organization/notification-settings`)[cite: 1].\n- [ ] Modify `GET /notifications` list queries to screen messages by target user roles, filtering out dismissed entries by default[cite: 1].\n\n\n### 2. Dashboard Changes (`wafpass-dashboard`)\n\n- [ ] **API Contracts (`src/api.ts` & `src/notifications/types.ts`):** Model extended payload interfaces and declare invocation methods for user preferences and org-wide settings updates[cite: 1].\n- [ ] **Action Resolution Logic:** Build `src/notifications/actionHandler.ts` to parse `NotificationAction` definitions and translate them cleanly to internal routing structures using `navigate()` hooks[cite: 1].\n- [ ] **Interaction Layer Enhancements:**\n  * Update `NotificationBell.tsx` and `NotificationsPage.tsx` to automatically call `markAsRead(id)` upon interaction before execution jumps to the context path. Render explicit visual call-to-action strings (e.g., “View findings →”) next to entries[cite: 1].\n  * Render delivery channel icons (Slack/Email) adorned with status tooltip hovers reflecting external delivery success or errors[cite: 1].\n- [ ] **Configuration Interfaces:**\n  * **User Preferences:** Integrate an adjustable configuration panel into `UserPreferencesPage.tsx` letting users select digest frequencies and toggle category opt-outs[cite: 1].\n  * **Administrative Settings:** Add an access-controlled notification management sub-card to `SettingsPage.tsx` (guarded via `hasMinRole(role, 'ciso')`) detailing global webhooks, SMTP configuration values, and toggle controls[cite: 1].\n\n\n### 3. CLI Changes (`pass/wafpass/`)\n\n- [ ] Extend `pass/wafpass/cli.py` by implementing a `wafpass controls marketplace` inspection subcommand (or updating `control list` scopes) to poll available server-side packages[cite: 1].\n- [ ] Add `wafpass controls install <pack-version>` to delegate package downloads and activation commands directly down to the server API[cite: 1].",
+      "comments": [],
+      "commenters": []
+    },
+    {
+      "id": "pass#38",
+      "repo": "pass",
+      "repoFullName": "WAF2p/pass",
+      "number": 38,
+      "title": "Feature Request: Implement Control Packs Marketplace (RFC)",
+      "state": "open",
+      "isPullRequest": false,
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "a2eeef"
+        }
+      ],
+      "author": {
+        "login": "lewandos",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+        "url": "https://github.com/lewandos"
+      },
+      "createdAt": "2026-07-17T18:03:06Z",
+      "updatedAt": "2026-07-18T07:42:42Z",
+      "url": "https://github.com/WAF2p/pass/issues/38",
+      "body": "## 📋 Context & Problem Statement\nThe dashboard currently features a `ControlsPacksPage` and the server exposes `/control-packs` endpoints, but functionality is restricted to admin-only uploads and basic catalogue syncs[cite: 1]. Auditors have highlighted that the framework's primary value lies in its curated compliance controls[cite: 1]. \n\nTo resolve this gap, the product must evolve to support **versioned, installable control packs** (e.g., CIS, BSI, ISO 27001, NIS2) equipped with **automatic update diffing**, **safe rollbacks**, and a clear audit history[cite: 1]. This issue tracks the transition of the snapshot mechanism into an internal marketplace model[cite: 1].\n\n\n## 🛠️ Possible Implementation Plan\n\n### 1. Server Changes (`wafpass-server`)\n\n#### Data Model & Migrations\n- [ ] Extend the `ControlPack` model in `wafpass_server/models.py` with the following attributes[cite: 1]:\n  * `name` (text, human-readable)[cite: 1]\n  * `tags` (JSONB list)[cite: 1]\n  * `frameworks` (JSONB list of mapped frameworks)[cite: 1]\n  * `author` (text)[cite: 1]\n  * `license` (text)[cite: 1]\n  * `source_url` (text)[cite: 1]\n  * `is_builtin` (bool, default `False`)[cite: 1]\n  * `is_remote` (bool, default `False`)[cite: 1]\n  * `status` (text, default `\"available\"`)[cite: 1]\n- [ ] Add an `origin` column (JSONB nullable dict) to the `Control` model tracking `pack_version`, `pack_version_updated`, and `is_custom`[cite: 1].\n- [ ] Create the `control_pack_events` tracking table[cite: 1]:\n  * `id`, `pack_version` (FK), `event` (`activated` | `rolled_back` | `deprecated` | `imported`), `actor_id`, `diff_summary` (JSONB), and `created_at`[cite: 1].\n- [ ] Generate Alembic migration `0039_enhance_control_packs.py` to add tables/columns and backfill `origin.pack_version` for controls stemming from the currently active pack[cite: 1].\n\n#### Diff Engine & Schemas\n- [ ] Implement schemas in `schemas.py`: `ControlPackMarketplaceOut`, `ControlPackDiffOut`, `ControlPackPreviewIn`, and update `ControlOut`[cite: 1].\n- [ ] Implement the core matching engine in `wafpass_server/pack_diff.py` via `compute_pack_diff()`[cite: 1]. Match controls by `id` and evaluate meaningful fields (`description`, `severity`, `pillar`, `type`, `checks`, `regulatory_mapping`) to generate structural additions, edits, and removals[cite: 1].\n\n#### Routers & External Registry\n- [ ] Update `routers/control_packs.py` to support marketplace workflows[cite: 1]:\n  * `GET /control-packs/marketplace` — role restricted to `ciso`[cite: 1].\n  * `GET /control-packs/{version}` and `/diff` endpoints[cite: 1].\n  * `POST /control-packs/{version}/preview` (maps directly to the diff functionality)[cite: 1].\n  * Enhance `activate`, `sync`, and `upload` targets to populate `Control.origin` and write log lines to `control_pack_events`[cite: 1].\n- [ ] Add `wafpass_marketplace_registry_url` to `config.py`[cite: 1].\n- [ ] Build `marketplace.py` helpers to fetch remote package indexes, unpack bundle archives (ZIP/JSON), and process imports[cite: 1]. Include an updated `POST /control-packs/marketplace/sync` execution endpoint[cite: 1].\n- [ ] Expose `origin` details inside `routers/controls.py` during `_to_out()` cycles[cite: 1].\n\n\n### 2. Dashboard Changes (`wafpass-dashboard`)\n\n- [ ] **API Interfaces (`src/api.ts`):** Bind `ControlPackDiffOut`, `MarketplacePack`, and updated metadata formats[cite: 1]. Export the required server invocation helpers[cite: 1].\n- [ ] **Interface Restructuring (`src/pages/ControlsPacksPage.tsx`):** Divide page views into two clean tabs[cite: 1]:\n  * **Marketplace:** Render pack information cards showing origin data, scope metrics, and framework classifications[cite: 1]. Ensure the \"Activate\" action remains locked until a \"Preview\" diff step has been viewed[cite: 1].\n  * **Installed / History:** Display deployment history and trigger rollback preview workflows[cite: 1].\n- [ ] **Diff Presentation Modal:** Integrate a tracking header mapping structural changes (added, modified, removed summaries) and hook up detailed control comparisons using `DiffViewer.tsx`[cite: 1].\n- [ ] **Catalogue Provenance UI (`ControlsCataloguePage.tsx`):** Display provenance badges using `origin.pack_version` next to control table rows and expose sources via look-up filters[cite: 1].\n- [ ] **Update Alerts:** Hook into existing admin update systems to emit warnings when newly synchronised versions of core packs drop from external registries[cite: 1].\n\n\n### 3. CLI Changes (`pass/wafpass/`)\n\n- [ ] Add a `wafpass controls marketplace` subcommand to fetch and display the remote package directory matrix[cite: 1].\n- [ ] Add a `wafpass controls install <pack-version>` subcommand to delegate download, extraction, and activation processing directly to the server orchestration layer[cite: 1].",
+      "comments": [
+        {
+          "id": 5006159707,
+          "author": {
+            "login": "lewandos",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+            "url": "https://github.com/lewandos"
+          },
+          "createdAt": "2026-07-17T18:13:07Z",
+          "updatedAt": "2026-07-17T18:14:44Z",
+          "body": "Just as am addition, this will be more work, but necessary for the future, as this will keep the base lean. Every controls pack needs to be rewritten and we need to have a reduplication, as sometimes frameworks hittingore than one control. Effort here is rather high. \n\nIn internet access environments the marketplace could be a bridge from our marketing page"
+        }
+      ],
+      "commenters": [
+        {
+          "login": "lewandos",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+          "url": "https://github.com/lewandos"
+        }
+      ]
+    },
+    {
+      "id": "pass#37",
+      "repo": "pass",
+      "repoFullName": "WAF2p/pass",
+      "number": 37,
+      "title": "Feature Request: Implement Maturity-Tier Enforcement Policy Gates (RFC)",
+      "state": "open",
+      "isPullRequest": false,
+      "labels": [
+        {
+          "name": "enhancement",
+          "color": "a2eeef"
+        }
+      ],
+      "author": {
+        "login": "lewandos",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/17043001?v=4",
+        "url": "https://github.com/lewandos"
+      },
+      "createdAt": "2026-07-17T17:50:14Z",
+      "updatedAt": "2026-07-17T17:50:14Z",
+      "url": "https://github.com/WAF2p/pass/issues/37",
+      "body": "## 📋 Context & Problem Statement\nCurrently, the maturity journey is purely a dashboard visualization and local settings concept. Auditors have flagged a critical gap: **there are no policy gates tying maturity tiers to CI/CD pipeline behavior** (e.g., preventing a project from deploying if it hasn't reached maturity level 3).\n\nThis issue tracks the implementation of an optional, opt-in enforcement capability as part of the triage RFC:\n* **CISOs** can set an organization-wide default policy.\n* **Architects** can set per-project targets.\n* **The Server** evaluates runs and flags failures.\n* **The CLI** blocks CI runs (non-zero exit) that fail to meet their target tier.\n\nTo preserve audit trails and backward compatibility, the server will **always accept and store every run**, but it will append a `maturity_gate` evaluation result to the response payload.\n\n## 🛠️ Possible Implementation Plan\n\n### 1. Server Changes (`wafpass-server`)\n\n#### Data Model & Migrations\n- [ ] Create a new single-row table `maturity_settings` in `models.py`:\n  - `id` (PK)\n  - `maturity_enforcement_enabled` (bool, default `False`)\n  - `default_maturity_target_level` (int, nullable)\n  - `enforced_stages` (JSONB, default `[\"production\"]`)\n- [ ] Add `maturity_target_level` (int | None) to the `ProjectPassport` model.\n- [ ] Add `maturity_gate` (JSONB, nullable dict | None) to the `Run` model.\n- [ ] Create Alembic migration script `0038_add_maturity_enforcement.py` to create the table, seed one disabled row, and add the new columns.\n\n#### Schemas & Core Logic\n- [ ] Implement Pydantic schemas: `MaturitySettingsOut`, `MaturitySettingsUpdate`.\n- [ ] Update `ProjectPassportUpsert` and `ProjectPassportOut` to include `maturity_target_level`.\n- [ ] Update `RunSummary` and `RunDetail` to include `maturity_gate: dict | None` (populate via `RunSummary.from_orm`).\n- [ ] Implement the evaluation logic helper in `wafpass_server/maturity_gate.py`:\n  ```python\n  async def evaluate_maturity_gate(db, run):\n      # 1. Skip unless run.run_metadata.get(\"is_cicd\") == True AND run.stage in enforced_stages\n      # 2. Load MaturitySettings; skip if enforcement disabled\n      # 3. Resolve target: project passport level takes precedence over org default\n      # 4. Skip if no target is configured\n      # 5. Determine achieved tier using tier_for_score(run.score) from achievements.py\n      # 6. Save gate payload: {\"passed\": achieved >= target, \"target_level\": target, \"achieved_level\": achieved, \"enforced\": True, \"reason\": \"...\"}",
+      "comments": [],
+      "commenters": []
+    }
+  ]
+}

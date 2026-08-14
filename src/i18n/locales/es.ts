@@ -40,6 +40,7 @@ const es: PartialTranslations = {
       leaderboard: 'Tabla de honor', journey: 'Viaje de madurez',
       userprefs: 'Mis preferencias', reference: 'Arquitectura de Referencia',
       antipattern: 'Museo de Anti-Patrón', bestpractices: 'Área de Mejores Prácticas',
+      rfc: 'RFC Tracker',
     },
   },
 

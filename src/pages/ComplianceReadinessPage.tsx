@@ -63,7 +63,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
     const fetchData = async () => {
       try {
         // Fetch compliance readiness data from server
-        const res = await fetch('/api/compliance-readiness')
+        const res = await fetch('/api/v1/compliance-readiness')
         if (res.ok) {
           const result = await res.json()
           setData(result)

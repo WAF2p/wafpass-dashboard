@@ -45,6 +45,7 @@ const de: PartialTranslations = {
       bestpractices: 'Best-Practice-Bereich',
       projectgroups: 'Projektgruppen',
       pipelines: 'Pipeline Operations Center',
+      rfc: 'RFC Tracker',
     },
   },
 
