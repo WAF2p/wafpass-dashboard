@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { Page } from '../routing'
 import { NotificationBell } from './NotificationBell'
 import { hasMinRole } from '../AuthContext'
+import { Settings, getMaturityMeta } from '../pages/settingsUtils'
+import { RunDetail, RunSummary } from '../api'
+import { useI18n } from '../i18n'
+import { loadUserPrefs, saveUserPrefs } from '../pages/userPrefsUtils'
+import { NavEntry, NavSection, buildNavSections, categoryDescriptions } from '../navigation/navModel'
 
 function chunkArray<T>(array: T[], size: number): T[][] {
   const result: T[][] = []
@@ -9,30 +14,6 @@ function chunkArray<T>(array: T[], size: number): T[][] {
     result.push(array.slice(i, i + size))
   }
   return result
-}
-import { Settings, getMaturityMeta } from '../pages/settingsUtils'
-import { RunDetail, RunSummary } from '../api'
-import { useI18n } from '../i18n'
-import { loadUserPrefs, saveUserPrefs } from '../pages/userPrefsUtils'
-
-export interface NavEntry {
-  page: Page
-  label: string
-  icon: string
-  gate?: boolean
-  danger?: boolean
-  count?: number
-  badge?: { label: string; variant: 'fail' | 'neutral' } | null
-  minRole?: string
-}
-
-export interface NavSection {
-  id: string
-  label: string
-  color: string
-  description: string
-  items: NavEntry[]
-  minRole?: string
 }
 
 export interface TopNavigationProps {
@@ -61,205 +42,9 @@ const roleIcons: Record<string, string> = {
   ciso: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4',
   architect: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
   engineer: 'M16 18l6-6-6-6M8 6l-6 6 6 6',
-  runs: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  runs: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zH21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   admin: 'M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 12c-6.627 0-12-5.373-12-12s5.373-12 12-12 12 5.373 12 12-5.373 12-12 12z',
   system: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-}
-
-const categoryDescriptions: Record<string, string> = {
-  overview: 'Executive summary and risk posture overview',
-  journey: 'Project maturity, achievements, and long-term progress',
-  bestpractices: 'Reference architecture and anti-patterns guidance',
-  ciso: 'Security, risk acceptance, waivers, and compliance',
-  architect: 'Infrastructure design, dependency analysis, and sandbox',
-  engineer: 'Finding resolution, remediation, and engineering work',
-  runs: 'Scan history, comparisons, and run management',
-  admin: 'User management, SSO, and system configuration',
-  system: 'System settings, access control, and feedback',
-}
-
-function buildNavSections(
-  run: RunDetail | null,
-  runs: RunSummary[],
-  settings: Settings,
-  waiverCount: number,
-  riskCount: number,
-  failCount: number,
-  t: (key: string) => string,
-): NavSection[] {
-  return [
-    {
-      id: 'overview',
-      label: t('nav.sections.overview'),
-      color: '#f59e0b',
-      description: categoryDescriptions['overview'] || 'Executive summary and risk posture overview',
-      items: [
-        { page: 'globaldashboard', label: t('nav.items.globaldashboard'), icon: 'M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 16.5V13.5l8 2.5z' },
-        { page: 'compliance', label: t('nav.items.compliance'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-        {
-          page: 'cost', label: t('nav.items.cost'),
-          gate: (settings.activePillars ?? []).includes('cost'),
-          icon: 'M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.5-2c-3.6 0-6.5 2.5-7.4 6M21 20a7.7 7.7 0 0 0-5.5 2c-3.6 0-6.5-2.5-7.4-6',
-        },
-        {
-          page: 'engineering', label: t('nav.items.engineering'),
-          icon: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
-        },
-        {
-          page: 'architecture', label: t('nav.items.architecture'),
-          icon: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
-        },
-        {
-          page: 'maturity', label: t('nav.items.maturity'),
-          icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8',
-        },
-        { page: 'pipelines', label: t('nav.items.pipelines'), icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-      ],
-    },
-    {
-      id: 'projects',
-      label: t('nav.sections.journey'),
-      color: '#14b8a6',
-      minRole: 'clevel',
-      description: categoryDescriptions['journey'] || 'Project maturity, achievements, and long-term progress',
-      items: [
-        { page: 'passports', label: t('nav.items.passports'), icon: 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2' },
-        { page: 'badge', label: t('nav.items.badge'), icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
-        { page: 'leaderboard', label: t('nav.items.leaderboard'), icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
-        { page: 'journey', label: t('nav.items.journey'), icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8' },
-      ],
-    },
-    {
-      id: 'bestpractices',
-      label: t('nav.sections.bestpractices'),
-      color: '#10b981',
-      minRole: 'clevel',
-      description: categoryDescriptions['bestpractices'] || 'Reference architecture and anti-patterns guidance',
-      items: [
-        { page: 'reference', label: t('nav.items.reference'), icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4' },
-        { page: 'antipattern', label: t('nav.items.antipattern'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-      ],
-    },
-    {
-      id: 'ciso',
-      label: t('nav.sections.ciso'),
-      color: '#0094ff',
-      description: categoryDescriptions['ciso'] || 'Security, risk acceptance, waivers, and compliance',
-      items: [
-        { page: 'risk', label: t('nav.items.risk'), count: riskCount, icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-        { page: 'waivers', label: t('nav.items.waivers'), count: waiverCount, icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-        {
-          page: 'skipped', label: t('nav.items.skipped'),
-          icon: 'M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z',
-          count: run ? (() => {
-            const active = new Set(run.findings.filter(f => { const s = f.status?.toUpperCase(); return s === 'PASS' || s === 'FAIL' }).map(f => f.control_id))
-            return run.controls_meta.filter(c => !active.has(c.id)).length
-          })() : undefined,
-        },
-        { page: 'audit', label: t('nav.items.audit'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
-        { page: 'evidence', label: t('nav.items.evidence'), gate: settings.evidenceCollection, icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-        { page: 'regions', label: t('nav.items.regions'), icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-      ],
-    },
-    {
-      id: 'architect',
-      label: t('nav.sections.architect'),
-      color: '#8b5cf6',
-      description: categoryDescriptions['architect'] || 'Infrastructure design, dependency analysis, and sandbox',
-      items: [
-        {
-          page: 'catalogue', label: t('nav.items.catalogue'),
-          icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4',
-        },
-        { page: 'exploitpath', label: t('nav.items.exploitpath'), danger: true, icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-        {
-          page: 'blastradius', label: t('nav.items.blastradius'),
-          gate: settings.blastRadius,
-          icon: 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z',
-        },
-        {
-          page: 'depgraph', label: t('nav.items.depgraph'),
-          gate: settings.dependencyGraph,
-          icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7',
-        },
-        {
-          page: 'modules', label: t('nav.items.modules'),
-          icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
-        },
-        {
-          page: 'changes', label: t('nav.items.changes'),
-          gate: settings.driftDetection,
-          icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4',
-        },
-        { page: 'sandbox', label: t('nav.items.sandbox'), icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
-        {
-          page: 'gapanalysis', label: t('nav.items.gapanalysis'),
-          minRole: 'architect',
-          icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-        },
-      ],
-    },
-    {
-      id: 'engineer',
-      label: t('nav.sections.engineer'),
-      color: '#22c55e',
-      description: categoryDescriptions['engineer'] || 'Finding resolution, remediation, and engineering work',
-      items: [
-        {
-          page: 'findings', label: t('nav.items.findings'),
-          icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
-          badge: failCount > 0 ? { label: String(failCount), variant: 'fail' as const } : null,
-        },
-        {
-          page: 'secrets', label: t('nav.items.secrets'),
-          gate: settings.secretScanner,
-          danger: true,
-          icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
-        },
-        { page: 'remediation', label: t('nav.items.remediation'), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-      ],
-    },
-    {
-      id: 'runs',
-      label: t('nav.sections.runs'),
-      color: '#22c55e',
-      minRole: 'engineer',
-      description: categoryDescriptions['runs'] || 'Scan history, comparisons, and run management',
-      items: [
-        { page: 'runscan', label: t('nav.items.runscan'), icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-        { page: 'runs', label: t('nav.items.runs'), count: runs.length > 0 ? runs.length : undefined, icon: 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z' },
-        { page: 'diff', label: t('nav.items.diff'), icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
-      ],
-    },
-    {
-      id: 'admin',
-      label: t('nav.sections.admin'),
-      color: '#f87171',
-      minRole: 'admin',
-      description: categoryDescriptions['admin'] || 'User management, SSO, and system configuration',
-      items: [
-        { page: 'users', label: t('nav.items.users'), icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-        { page: 'sso', label: t('nav.items.sso'), icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-        { page: 'apikeys', label: t('nav.items.apikeys'), icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z' },
-        { page: 'groupmappings', label: t('nav.items.groupmappings'), icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z' },
-        { page: 'projectgroups', label: t('nav.items.projectgroups'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
-        { page: 'controlspacks', label: t('nav.items.controlspacks'), icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-      ],
-    },
-    {
-      id: 'system',
-      label: t('nav.sections.system'),
-      color: '#94a3b8',
-      minRole: 'architect',
-      description: categoryDescriptions['system'] || 'System settings, access control, and feedback',
-      items: [
-        { page: 'access', label: t('nav.items.access'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
-        { page: 'settings', label: t('nav.items.settings'), icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-        { page: 'rfc',      label: t('nav.items.rfc'),      icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-        { page: 'feedback', label: t('nav.items.feedback'), icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
-      ],
-    },
-  ]
 }
 
 function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigate: (p: Page) => void }) {
@@ -311,7 +96,6 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
     </button>
   )
 }
-
 
 function NavSectionDropdown({ section, page, navigate, role }: { section: NavSection; page: Page; navigate: (p: Page) => void; role: string }) {
   const [expanded, setExpanded] = useState(false)
@@ -427,7 +211,7 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
                 {section.label}
               </p>
               <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--nav-text)', lineHeight: 1.6 }}>
-                {section.description}
+                {categoryDescriptions[section.id] || section.description}
               </p>
             </div>
           </div>
@@ -578,7 +362,7 @@ export default function TopNavigation({
 
 
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t)
-  const visibleSections = allSections.filter(s => hasMinRole(role, s.minRole ?? s.id))
+  const visibleSections = allSections.filter(s => hasMinRole(role, s.minRole ?? 'admin'))
 
   const currentRunLabel = run ? `${run.project || 'unnamed'} · ${new Date(run.created_at).toLocaleDateString()}` : 'Select run…'
 

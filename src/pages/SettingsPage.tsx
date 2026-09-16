@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { SERVER_URL_KEY, getApiBase } from '../api'
+import { SERVER_URL_KEY, VALIDATION_URL_KEY, getApiBase, getValidationGatewayBase } from '../api'
 import { FRAMEWORKS } from '../controls-data'
 import { LOCALES, useI18n } from '../i18n'
 import {
@@ -72,6 +72,12 @@ const selectStyle: React.CSSProperties = {
   width: '100%',
 }
 
+const inputStyle: React.CSSProperties = {
+  background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
+  borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.82rem', outline: 'none',
+  width: '100%', boxSizing: 'border-box',
+}
+
 const labelStyle: React.CSSProperties = {
   display: 'block', fontSize: '0.72rem', fontWeight: 600,
   color: 'var(--muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em',
@@ -101,6 +107,14 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
   const [serverStatusMsg, setServerStatusMsg] = useState('')
   const checkTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Validation gateway URL — stored independently, takes effect immediately
+  const [validationUrl, setValidationUrl] = useState(() => {
+    try { return localStorage.getItem(VALIDATION_URL_KEY) ?? '' } catch { return '' }
+  })
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle')
+  const [validationStatusMsg, setValidationStatusMsg] = useState('')
+  const validationCheckTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   function saveServerUrl(url: string) {
     const trimmed = url.trim().replace(/\/$/, '')
     setServerUrl(trimmed)
@@ -128,6 +142,38 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         .catch(e => {
           setServerStatus('error')
           setServerStatusMsg(e instanceof Error ? e.message : 'Unreachable')
+        })
+    }, 400)
+  }
+
+  function saveValidationUrl(url: string) {
+    const trimmed = url.trim().replace(/\/$/, '')
+    setValidationUrl(trimmed)
+    try { localStorage.setItem(VALIDATION_URL_KEY, trimmed) } catch {}
+  }
+
+  function checkValidationConnection(url: string) {
+    const base = url.trim().replace(/\/$/, '')
+    if (!base) { setValidationStatus('idle'); setValidationStatusMsg(''); return }
+    setValidationStatus('checking')
+    setValidationStatusMsg('')
+    if (validationCheckTimeout.current) clearTimeout(validationCheckTimeout.current)
+    validationCheckTimeout.current = setTimeout(() => {
+      fetch(`${base}/api/v1/validations/root.crt`)
+        .then(async res => {
+          if (res.ok) {
+            const text = await res.text()
+            const hasCert = text.includes('BEGIN CERTIFICATE')
+            setValidationStatus(hasCert ? 'ok' : 'error')
+            setValidationStatusMsg(hasCert ? 'Gateway root CA reachable' : 'Unexpected response')
+          } else {
+            setValidationStatus('error')
+            setValidationStatusMsg(`HTTP ${res.status} ${res.statusText}`)
+          }
+        })
+        .catch(e => {
+          setValidationStatus('error')
+          setValidationStatusMsg(e instanceof Error ? e.message : 'Unreachable')
         })
     }, 400)
   }
@@ -661,7 +707,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           subtitle={t('pages.settingsPage.connectionDesc')}
         />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '2rem', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '2rem', alignItems: 'start' }}>
 
           {/* Left: server URL */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -724,6 +770,63 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             </div>
           </div>
 
+          {/* Middle: validation gateway URL */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border)' }}>
+              Validation Gateway URL
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  value={validationUrl}
+                  onChange={e => { setValidationUrl(e.target.value); setValidationStatus('idle') }}
+                  onBlur={e => { saveValidationUrl(e.target.value); checkValidationConnection(e.target.value) }}
+                  placeholder="https://gateway.example.com"
+                  style={{
+                    flex: 1, background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
+                    borderRadius: '8px', padding: '0.45rem 0.7rem', fontSize: '0.82rem', outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={() => { saveValidationUrl(validationUrl); checkValidationConnection(validationUrl) }}
+                  style={{
+                    background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
+                    borderRadius: '8px', padding: '0.45rem 0.85rem', fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t('pages.settingsPage.testBtn')}
+                </button>
+              </div>
+              <div style={{ marginTop: '0.35rem', fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+                Base URL of the central WAF++ validation gateway. Used by the dashboard to request official countersignatures. Leave empty to use the build-time <code style={{ fontSize: '0.68rem' }}>VITE_VALIDATION_URL</code> value.
+              </div>
+            </div>
+
+            {validationStatus !== 'idle' && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem',
+                background: validationStatus === 'ok' ? 'rgba(34,197,94,.08)' : validationStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'rgba(218,44,56,.08)',
+                border: `1px solid ${validationStatus === 'ok' ? 'rgba(34,197,94,.3)' : validationStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'rgba(218,44,56,.3)'}`,
+                color: validationStatus === 'ok' ? '#15803d' : validationStatus === 'checking' ? '#0369a1' : '#DA2C38',
+              }}>
+                <span style={{ fontSize: '0.6rem' }}>
+                  {validationStatus === 'ok' ? '●' : validationStatus === 'checking' ? '○' : '✕'}
+                </span>
+                {validationStatus === 'checking' ? t('pages.settingsPage.checking') : validationStatusMsg}
+              </div>
+            )}
+
+            <div style={{ fontSize: '0.71rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
+              Active: <strong style={{ color: 'var(--text)' }}>{validationUrl.trim() || getValidationGatewayBase() || '(not configured)'}</strong>
+            </div>
+
+            <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+              The gateway must trust the server's sub-CA certificate (see <code style={{ color: 'var(--waf-brand)', fontSize: '0.68rem' }}>WAFPASS_SERVER_SUBCA_CERT</code> on the server).
+            </div>
+          </div>
+
           {/* Right: real engine guide */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border)' }}>
@@ -766,6 +869,84 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>
               {t('pages.settingsPage.statusProbe')}: <code style={{ color: 'var(--text)', fontSize: '0.71rem' }}>{(serverUrl.trim() || '') + '/api/v1/sandbox/status'}</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Validation Provenance Defaults ───────────────────────────────────── */}
+      <section className="card">
+        <SectionHeader
+          title={t('pages.settingsPage.sectionValidationProvenance')}
+          subtitle={t('pages.settingsPage.validationProvenanceDesc')}
+        />
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>{t('pages.settingsPage.validationOrganization')}</label>
+            <input
+              type="text"
+              value={s.validationMetadata?.organization ?? ''}
+              onChange={e => setS(prev => ({
+                ...prev,
+                validationMetadata: { ...(prev.validationMetadata ?? {}), organization: e.target.value },
+              }))}
+              placeholder={t('pages.settingsPage.validationOrganizationPlaceholder')}
+              style={inputStyle}
+            />
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
+              {t('pages.settingsPage.validationOrganizationDesc')}
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>{t('pages.settingsPage.validationEnvironment')}</label>
+            <input
+              type="text"
+              value={s.validationMetadata?.environment ?? ''}
+              onChange={e => setS(prev => ({
+                ...prev,
+                validationMetadata: { ...(prev.validationMetadata ?? {}), environment: e.target.value },
+              }))}
+              placeholder={t('pages.settingsPage.validationEnvironmentPlaceholder')}
+              style={inputStyle}
+            />
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
+              {t('pages.settingsPage.validationEnvironmentDesc')}
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>{t('pages.settingsPage.validationValidatedBy')}</label>
+            <input
+              type="text"
+              value={s.validationMetadata?.validatedBy ?? ''}
+              onChange={e => setS(prev => ({
+                ...prev,
+                validationMetadata: { ...(prev.validationMetadata ?? {}), validatedBy: e.target.value },
+              }))}
+              placeholder={t('pages.settingsPage.validationValidatedByPlaceholder')}
+              style={inputStyle}
+            />
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
+              {t('pages.settingsPage.validationValidatedByDesc')}
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>{t('pages.settingsPage.validationNotes')}</label>
+            <input
+              type="text"
+              value={s.validationMetadata?.notes ?? ''}
+              onChange={e => setS(prev => ({
+                ...prev,
+                validationMetadata: { ...(prev.validationMetadata ?? {}), notes: e.target.value },
+              }))}
+              placeholder={t('pages.settingsPage.validationNotesPlaceholder')}
+              style={inputStyle}
+            />
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
+              {t('pages.settingsPage.validationNotesDesc')}
             </div>
           </div>
         </div>

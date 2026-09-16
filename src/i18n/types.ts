@@ -123,7 +123,8 @@ export interface Translations {
       notifications: string
       pipelines: string
       'compliance-readiness': string
-      rfc: string
+      validations: string
+      shiprun: string
     }
   }
 
@@ -953,6 +954,7 @@ export interface Translations {
       sectionRegulatory: string
       sectionPdf: string
       sectionConnection: string
+      sectionValidationProvenance: string
       sectionVersion: string
       activeAtLevel: string
       controlCoverage: string
@@ -988,6 +990,19 @@ export interface Translations {
       regulatoryScopeDesc: string
       pdfSectionsDesc: string
       connectionDesc: string
+      validationProvenanceDesc: string
+      validationOrganization: string
+      validationOrganizationPlaceholder: string
+      validationOrganizationDesc: string
+      validationEnvironment: string
+      validationEnvironmentPlaceholder: string
+      validationEnvironmentDesc: string
+      validationValidatedBy: string
+      validationValidatedByPlaceholder: string
+      validationValidatedByDesc: string
+      validationNotes: string
+      validationNotesPlaceholder: string
+      validationNotesDesc: string
       backendServerUrl: string
       architectSandbox: string
       realEngineDesc: string
@@ -1897,16 +1912,86 @@ export interface Translations {
       highRiskLabel: string
     }
 
-    rfc: {
+    shiprun: {
       title: string
       subtitle: string
-      generated: string
-      open: string
-      closed: string
-      allRepos: string
-      allStatuses: string
-      searchPlaceholder: string
+      selectRun: string
+      apiKeyLabel: string
+      apiKeyHint: string
+      submitBtn: string
+      submitting: string
+      successTitle: string
+      successMsg: string
+      viewInRegistry: string
+      noRuns: string
+      colProject: string
+      colBranch: string
+      colStage: string
+      colScore: string
+      colFramework: string
+      colTriggeredBy: string
+      colControls: string
+      colDate: string
+      colAction: string
+      actionValidate: string
+      roleRequired: string
     }
+
+    validations: {
+      title: string
+      subtitle: string
+      connectionIssueTitle: string
+      serverLabel: string
+      gatewayLabel: string
+      checking: string
+      gatewayUrlInputLabel: string
+      gatewayUrlHint: string
+      openSettings: string
+      localOnlyHint: string
+      notFound: string
+      noValidations: string
+      requestPanelTitle: string
+      requestPanelHint: string
+      selectRunPlaceholder: string
+      runOptionLabel: string
+      apiKeyRequired: string
+      selectRunRequired: string
+      submitBtn: string
+      loadingRuns: string
+      serverCertLink: string
+      roleRequired: string
+      colStatus: string
+      colProject: string
+      colBranch: string
+      colGitSha: string
+      colValidated: string
+      colAction: string
+      runIdentity: string
+      cryptoProof: string
+      publicArtifacts: string
+      verificationUrl: string
+      badgeSvg: string
+      rawSvg: string
+      certificatePdf: string
+      rootCa: string
+      adminTitle: string
+      revokeBtn: string
+      revokeConfirm: string
+      metadataTitle: string
+      metadataHint: string
+      noMetadataHint: string
+      metadataSectionTitle: string
+      metaOrganization: string
+      metaEnvironment: string
+      metaValidatedBy: string
+      metaNotes: string
+      certServer: string
+      certIntermediate: string
+      certRoot: string
+      viewFull: string
+      hideFull: string
+    }
+
   }
 }
 
