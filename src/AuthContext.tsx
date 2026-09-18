@@ -8,8 +8,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { loginUser, logoutUser, refreshAccessToken, fetchUsers, type UserOut } from './api'
 
-// ── Role hierarchy (mirrors backend ROLE_HIERARCHY) ────────────────────────
-export const ROLE_HIERARCHY = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
+// ── Role hierarchy (dashboard ordering) ───────────────────────────────────
+// Admin is the super-user and outranks every other role, so it sits at index 0.
+// Lower index == higher rank.  hasMinRole returns true when the user rank is
+// at least as high as the required minimum.
+export const ROLE_HIERARCHY = ['admin', 'ciso', 'clevel', 'architect', 'engineer'] as const
 export type Role = typeof ROLE_HIERARCHY[number]
 
 export function roleIndex(role: string): number {
@@ -18,7 +21,7 @@ export function roleIndex(role: string): number {
 }
 
 export function hasMinRole(userRole: string, minimum: string): boolean {
-  return roleIndex(userRole) >= roleIndex(minimum)
+  return roleIndex(userRole) <= roleIndex(minimum)
 }
 
 // ── Storage keys ───────────────────────────────────────────────────────────

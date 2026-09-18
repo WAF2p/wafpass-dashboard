@@ -5,7 +5,9 @@ export const ALL_PAGES = [
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
   'reference', 'antipattern', 'notifications', 'legal', 'projectgroups', 'pipelines',
-  'compliance-readiness', 'autofix', 'engineering', 'architecture', 'maturity', 'rfc',
+  'compliance-readiness', 'autofix', 'engineering', 'architecture', 'maturity',
+  'validations',
+  'shiprun',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -62,7 +64,8 @@ export const PAGE_TITLE: Record<Page, string> = {
   engineering: 'Engineering Operations Center',
   architecture: 'Architecture Operations Center',
   maturity: 'Maturity Operations Center',
-  rfc: 'RFC Tracker',
+  validations: 'Validation Registry',
+  shiprun: 'Ship Run for Validation',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
@@ -115,7 +118,8 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   engineering: 'Single pane for findings, remediation sprints, secrets, and infrastructure change drift',
   architecture: 'Design intelligence: controls, attack paths, blast radius, dependencies, modules, sandbox, and reference architecture',
   maturity: 'Company and project maturity journey, stage progression, and next milestones',
-  rfc: 'Cross-repository Request for Comments tracker — status, authors, and commenters',
+  validations: 'Official cryptographic validations of WAF++ PASS runs — certificate chain, badges, and revocation status',
+  shiprun: 'Pick a recent scan run and submit it for official WAF++ validation countersignature.',
 }
 
 export interface FilterState {

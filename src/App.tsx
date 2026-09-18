@@ -64,7 +64,8 @@ const LegalPage              = lazy(() => import('./pages/LegalPage'))
 const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
 const PipelineOperationsCenter = lazy(() => import('./pages/PipelineOperationsCenter'))
 const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
-const RfcPage                = lazy(() => import('./pages/RfcPage'))
+const ValidationsPage        = lazy(() => import('./pages/ValidationsPage'))
+const ShipRunPage            = lazy(() => import('./pages/ShipRunPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -414,8 +415,10 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <PipelineOperationsCenter navigate={navigate} />
           ) : page === 'autofix' ? (
             <AutoFixPage run={run} onBack={() => navigate('dashboard')} />
-          ) : page === 'rfc' ? (
-            <RfcPage />
+          ) : page === 'validations' ? (
+            <ValidationsPage />
+          ) : page === 'shiprun' ? (
+            <ShipRunPage />
           ) : null}
         </Suspense>
         </main>

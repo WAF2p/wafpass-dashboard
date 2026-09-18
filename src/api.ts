@@ -1,6 +1,8 @@
 const ENV_API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+const ENV_VALIDATION_BASE = (import.meta.env.VITE_VALIDATION_URL as string | undefined) ?? ''
 
 export const SERVER_URL_KEY = 'wafpass_server_url'
+export const VALIDATION_URL_KEY = 'wafpass_validation_url'
 
 export function getApiBase(): string {
   try {
@@ -8,6 +10,40 @@ export function getApiBase(): string {
     if (stored?.trim()) return stored.trim().replace(/\/$/, '')
   } catch {}
   return ENV_API_BASE
+}
+
+export function getValidationGatewayBase(): string {
+  try {
+    const stored = localStorage.getItem(VALIDATION_URL_KEY)
+    if (stored?.trim()) return stored.trim().replace(/\/$/, '')
+  } catch {}
+  return ENV_VALIDATION_BASE
+}
+
+/** Probe whether the configured wafpass-server API base is reachable.
+ *  Returns true/false; never throws. */
+export async function checkApiReachable(): Promise<boolean> {
+  const base = getApiBase()
+  if (!base) return false
+  try {
+    const res = await fetch(`${base}/health`, { method: 'GET', cache: 'no-store' })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+/** Probe whether the configured validation gateway base is reachable.
+ *  Returns true/false; never throws. */
+export async function checkValidationGatewayReachable(): Promise<boolean> {
+  const base = getValidationGatewayBase()
+  if (!base) return false
+  try {
+    const res = await fetch(`${base}/health`, { method: 'GET', cache: 'no-store' })
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 // ── Auth token helpers ────────────────────────────────────────────────────────
@@ -876,6 +912,343 @@ export async function fetchLeaderboard(): Promise<LeaderboardOut> {
   return json.data
 }
 
+// ── Validation Registry API ─────────────────────────────────────────────────
+
+export interface ValidationRecord {
+  validation_id: string
+  canonical_hash: string
+  project: string
+  branch: string
+  git_sha: string
+  status: string
+  validated_at: string
+  server_public_key: string
+  server_signature: string
+  certificate_chain: string[]
+  badge_url: string
+  verification_url: string
+  expires_at: string | null
+  score?: number | null
+  pillar_scores?: Record<string, number> | null
+  metadata?: Record<string, unknown>
+}
+
+export interface ValidationBadge {
+  schema_version: string
+  kind: string
+  status: string
+  run_hash: string
+  score: number | null
+  project: string
+  branch: string
+  git_sha: string
+  validation_id: string
+  validated_at: string
+  badge_url: string
+  verification_url: string
+  signer_public_key: string
+  metadata?: Record<string, unknown>
+}
+
+export interface LocalAttestation {
+  public_key: string
+  signature: string
+  algorithm: string
+  canonical_hash: string
+  signed_at: string
+  signer_kind: string
+  run: Record<string, unknown>
+}
+
+export interface ValidationGatewaySubmit {
+  server_certificate: string
+  local_attestation: Record<string, unknown>
+  run: Record<string, unknown>
+  metadata?: Record<string, unknown>
+}
+
+export interface ValidationSubmitResult {
+  validation_id: string
+  status: string
+  canonical_hash: string
+  signed_at: string
+  badge_url: string
+  verification_url: string
+  certificate_chain: string[]
+  expires_at?: string
+  metadata?: Record<string, unknown>
+}
+
+export async function fetchValidations(): Promise<ValidationRecord[]> {
+  // GET /api/v1/validations is authenticated; we collect all validations
+  // visible to the caller (admin sees all, clevel/ciso see project-scoped rows).
+  // The server currently does not have a list endpoint, so we return [] here.
+  return []
+}
+
+export async function fetchValidation(id: string): Promise<ValidationRecord | null> {
+  const base = getApiBase()
+  const url = `${base}/api/v1/validations/${encodeURIComponent(id)}`
+  try {
+    const res = await fetch(url, { headers: _authHeaders() })
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Failed to fetch validation: ${res.status}`)
+    const json = await res.json() as ApiEnvelope<ValidationRecord>
+    return json.data
+  } catch (e) {
+    if (e instanceof TypeError) {
+      return null
+    }
+    throw e
+  }
+}
+
+function gatewayVerifyToRecord(raw: Record<string, unknown>): ValidationRecord {
+  const base = getValidationGatewayBase()
+  const id = String(raw.validation_id ?? raw.id ?? '')
+  const verificationUrl = raw.verification_url
+    ? toGatewayAbsoluteUrl(String(raw.verification_url))
+    : `${base}/api/v1/validations/${encodeURIComponent(id)}/verify`
+  const badgeUrl = raw.badge_url
+    ? toGatewayAbsoluteUrl(String(raw.badge_url))
+    : `${base}/api/v1/validations/${encodeURIComponent(id)}/badge.svg`
+  const chain = Array.isArray(raw.certificate_chain)
+    ? (raw.certificate_chain as string[])
+    : Array.isArray(raw.chain)
+      ? (raw.chain as Array<Record<string, string> | string>).map(c => (typeof c === 'string' ? c : c.pem ?? ''))
+      : []
+  return {
+    validation_id: id,
+    canonical_hash: String(raw.canonical_hash ?? ''),
+    project: String(raw.project ?? ''),
+    branch: String(raw.branch ?? ''),
+    git_sha: String(raw.git_sha ?? ''),
+    status: String(raw.status ?? 'unknown'),
+    validated_at: String(raw.signed_at ?? raw.validated_at ?? ''),
+    server_public_key: String(raw.server_public_key ?? ''),
+    server_signature: String(raw.server_signature ?? ''),
+    certificate_chain: chain,
+    badge_url: badgeUrl,
+    verification_url: verificationUrl,
+    expires_at: (raw.expires_at as string | null) ?? null,
+    score: typeof raw.score === 'number' ? raw.score : null,
+    pillar_scores: typeof raw.pillar_scores === 'object' && raw.pillar_scores !== null
+      ? raw.pillar_scores as Record<string, number>
+      : null,
+    metadata: {
+      ...(typeof raw.metadata === 'object' && raw.metadata !== null ? raw.metadata as Record<string, unknown> : {}),
+      server_id: raw.server_id,
+      iac_framework: raw.iac_framework,
+      stage: raw.stage,
+      local_signer_kind: raw.local_signer_kind,
+      local_public_key: raw.local_public_key,
+      chain_valid: raw.chain_valid,
+      gateway_source: true,
+    },
+  }
+}
+
+function gatewayBadgeJsonToBadge(id: string, raw: Record<string, unknown>): ValidationBadge {
+  const base = getValidationGatewayBase()
+  const badgeUrl = raw.badge_url
+    ? toGatewayAbsoluteUrl(String(raw.badge_url))
+    : `${base}/api/v1/validations/${encodeURIComponent(id)}/badge.svg`
+  const verificationUrl = raw.verification_url
+    ? toGatewayAbsoluteUrl(String(raw.verification_url))
+    : `${base}/api/v1/validations/${encodeURIComponent(id)}/verify`
+  return {
+    schema_version: String(raw.schemaVersion ?? raw.schema_version ?? '1'),
+    kind: String(raw.kind ?? 'validation'),
+    status: String(raw.message ?? raw.status ?? 'unknown'),
+    run_hash: String(raw.run_hash ?? raw.canonical_hash ?? ''),
+    score: typeof raw.score === 'number' ? raw.score : null,
+    project: String(raw.project ?? ''),
+    branch: String(raw.branch ?? ''),
+    git_sha: String(raw.git_sha ?? ''),
+    validation_id: String(raw.validation_id ?? id),
+    validated_at: String(raw.validated_at ?? raw.signed_at ?? ''),
+    badge_url: badgeUrl,
+    verification_url: verificationUrl,
+    signer_public_key: String(raw.signer_public_key ?? raw.server_public_key ?? ''),
+    metadata: typeof raw.metadata === 'object' && raw.metadata !== null
+      ? (raw.metadata as Record<string, unknown>)
+      : {},
+  }
+}
+
+export async function fetchGatewayValidation(id: string): Promise<ValidationRecord | null> {
+  const base = getValidationGatewayBase()
+  if (!base) return null
+  const url = `${base}/api/v1/validations/${encodeURIComponent(id)}/verify`
+  try {
+    const res = await fetch(url)
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Failed to fetch validation from gateway: ${res.status}`)
+    const json = await res.json() as ApiEnvelope<ValidationRecord> | ValidationRecord
+    const raw = (json as ApiEnvelope<ValidationRecord>).data ?? json
+    return gatewayVerifyToRecord(raw as unknown as Record<string, unknown>)
+  } catch (e) {
+    if (e instanceof TypeError) return null
+    throw e
+  }
+}
+
+export async function fetchValidationVerify(id: string): Promise<ValidationRecord | null> {
+  try {
+    const res = await fetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/verify`)
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Failed to verify validation: ${res.status}`)
+    const json = await res.json() as ApiEnvelope<ValidationRecord>
+    return json.data
+  } catch (e) {
+    if (e instanceof TypeError) return null
+    throw e
+  }
+}
+
+export async function fetchValidationBadge(id: string): Promise<ValidationBadge | null> {
+  try {
+    const res = await fetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/badge.json`)
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Failed to fetch badge: ${res.status}`)
+    const json = await res.json() as ApiEnvelope<ValidationBadge>
+    return json.data
+  } catch (e) {
+    if (e instanceof TypeError) return null
+    throw e
+  }
+}
+
+export async function fetchGatewayValidationBadge(id: string): Promise<ValidationBadge | null> {
+  const base = getValidationGatewayBase()
+  if (!base) return null
+  try {
+    const res = await fetch(`${base}/api/v1/validations/${encodeURIComponent(id)}/badge.json`)
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`Failed to fetch badge from gateway: ${res.status}`)
+    const json = await res.json() as ApiEnvelope<ValidationBadge> | ValidationBadge | Record<string, unknown>
+    const raw = (json as ApiEnvelope<ValidationBadge>).data ?? json
+    return gatewayBadgeJsonToBadge(id, raw as unknown as Record<string, unknown>)
+  } catch (e) {
+    if (e instanceof TypeError) return null
+    throw e
+  }
+}
+
+export async function fetchServerCertificate(): Promise<string> {
+  const base = getApiBase()
+  const url = `${base}/api/v1/validations/server.crt`
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`Failed to fetch server certificate: ${res.status}`)
+    return res.text()
+  } catch (e) {
+    if (e instanceof TypeError) {
+      throw new Error(`Cannot reach validation server at ${base}. Check Settings → Connection or ensure the server is running.`)
+    }
+    throw e
+  }
+}
+
+export async function createRunAttestation(runId: string): Promise<LocalAttestation> {
+  const res = await fetch(`${getApiBase()}/api/v1/runs/${encodeURIComponent(runId)}/attestation`, {
+    method: 'POST',
+    headers: _authHeaders(),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: `HTTP ${res.status}` })) as { detail?: string }
+    throw new Error(body.detail ?? `Failed to create attestation: ${res.status}`)
+  }
+  const json = await res.json() as ApiEnvelope<LocalAttestation>
+  return json.data
+}
+
+export async function submitValidation(payload: ValidationGatewaySubmit, apiKey: string): Promise<ValidationSubmitResult> {
+  const base = getValidationGatewayBase()
+  if (!base) {
+    throw new Error('Validation gateway URL is not configured. Set VITE_VALIDATION_URL or store it in Settings → Connection.')
+  }
+  const url = `${base}/api/v1/validations`
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+      },
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: `HTTP ${res.status}` })) as { detail?: string }
+      throw new Error(body.detail ?? `HTTP ${res.status}`)
+    }
+    const json = await res.json() as ApiEnvelope<ValidationSubmitResult> | ValidationSubmitResult
+    const data = (json as ApiEnvelope<ValidationSubmitResult>).data ?? (json as ValidationSubmitResult)
+    if (!data) throw new Error('Empty response from validation gateway')
+    return data
+  } catch (e) {
+    if (e instanceof TypeError) {
+      throw new Error(`Cannot reach validation gateway at ${base}. Ensure the gateway is running and CORS allows this origin, or switch to local/offline validation.`)
+    }
+    throw e
+  }
+}
+
+export async function revokeValidation(id: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/revoke`, {
+    method: 'POST',
+    headers: _authHeaders(),
+  })
+  if (!res.ok) throw new Error(`Failed to revoke validation: ${res.status}`)
+}
+
+export function getValidationBadgeSvgUrl(id: string): string {
+  return `${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/badge.svg`
+}
+
+export function getValidationCertificatePdfUrl(id: string): string {
+  return `${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/certificate.pdf`
+}
+
+export function getRootCertificateUrl(): string {
+  return `${getApiBase()}/api/v1/validations/root.crt`
+}
+
+export function getServerCertificateUrl(): string {
+  return `${getApiBase()}/api/v1/validations/server.crt`
+}
+
+export function getGatewayValidationBadgeSvgUrl(id: string): string {
+  const base = getValidationGatewayBase()
+  return `${base}/api/v1/validations/${encodeURIComponent(id)}/badge.svg`
+}
+
+export function getGatewayValidationCertificatePdfUrl(id: string): string {
+  const base = getValidationGatewayBase()
+  return `${base}/api/v1/validations/${encodeURIComponent(id)}/certificate.pdf`
+}
+
+export function getGatewayRootCertificateUrl(): string {
+  const base = getValidationGatewayBase()
+  return `${base}/api/v1/validations/root.crt`
+}
+
+export function getGatewayServerCertificateUrl(): string {
+  const base = getValidationGatewayBase()
+  return `${base}/api/v1/validations/server.crt`
+}
+
+/** Make a possibly-relative gateway URL absolute using the configured gateway base. */
+export function toGatewayAbsoluteUrl(pathOrUrl: string): string {
+  if (!pathOrUrl) return ''
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl
+  const base = getValidationGatewayBase()
+  if (!base) return pathOrUrl
+  const prefix = base.replace(/\/$/, '')
+  const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`
+  return `${prefix}${path}`
+}
+
 // ── Group → Role Mappings API ─────────────────────────────────────────────────
 
 export interface GroupRoleMappingOut {
@@ -1682,3 +2055,4 @@ export async function deleteNotification(id: string): Promise<void> {
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
+
