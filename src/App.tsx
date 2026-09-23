@@ -1,10 +1,11 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { ControlMeta, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, pushUserPrefsToServer, type UserOut } from './api'
+import { ControlMeta, createDemoRun, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, getServerUrl, pushUserPrefsToServer, type UserOut } from './api'
 import { useAuth } from './AuthContext'
 import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
 import OnboardingTour from './components/OnboardingTour'
 import RunSelectorModal from './components/RunSelectorModal'
+import WelcomeChecklist from './components/WelcomeChecklist'
 const UserPreferencesPage    = lazy(() => import('./pages/UserPreferencesPage'))
 const NotificationsPage      = lazy(() => import('./pages/NotificationsPage'))
 import TopNavigation from './components/TopNavigation'
@@ -108,6 +109,24 @@ function AuthenticatedApp({ user, role, onLogout }: {
   const mounted = useRef(false)
 
   const { runs, selectedId, setSelectedId, run, loadingRun, refetchRuns } = useRunLoader(initialRunId)
+  const [demoLoading, setDemoLoading] = useState(false)
+  const [demoError, setDemoError] = useState<string | null>(null)
+  const [demoRunId, setDemoRunId] = useState<string | null>(null)
+  const [showAdvancedOnboarding, setShowAdvancedOnboarding] = useState(false)
+
+  async function handleRunDemo() {
+    setDemoLoading(true)
+    setDemoError(null)
+    try {
+      const summary = await createDemoRun()
+      setDemoRunId(summary.id)
+      await refetchRuns()
+    } catch (e: unknown) {
+      setDemoError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setDemoLoading(false)
+    }
+  }
 
   function navigate(newPage: Page) {
     setPage(newPage)
@@ -339,31 +358,16 @@ function AuthenticatedApp({ user, role, onLogout }: {
             </div>
           ) : !run && runs.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: '1.25rem',
-                padding: '1.25rem 1.5rem', borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(0,148,255,.08) 0%, rgba(124,58,237,.06) 100%)',
-                border: '1px solid rgba(0,148,255,.25)',
-              }}>
-                <div style={{
-                  flexShrink: 0, width: '40px', height: '40px', borderRadius: '10px',
-                  background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg width="20" height="20" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.3rem' }}>
-                    Welcome to WAF++ PASS
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-                    No scan results yet. Run your first <code style={{ color: 'var(--waf-brand)', background: 'rgba(0,148,255,.08)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.78rem' }}>wafpass check</code> and push the results here to see your compliance dashboard — follow the guide below to get started in under 2 minutes.
-                  </div>
-                </div>
-              </div>
-              <RunScanPage />
+              <WelcomeChecklist
+                serverUrl={getServerUrl()}
+                demoLoading={demoLoading}
+                demoError={demoError}
+                demoRunId={demoRunId}
+                onRunDemo={handleRunDemo}
+                onOpenRunHistory={() => { setPage('runs'); window.history.pushState(null, '', buildHash('runs', selectedId)) }}
+                onShowAdvanced={() => setShowAdvancedOnboarding(v => !v)}
+              />
+              {showAdvancedOnboarding && <RunScanPage />}
             </div>
           ) : !run ? (
             <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>

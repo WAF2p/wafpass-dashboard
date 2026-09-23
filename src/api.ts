@@ -46,6 +46,13 @@ export async function checkValidationGatewayReachable(): Promise<boolean> {
   }
 }
 
+export function getServerUrl(): string {
+  const base = getApiBase()
+  if (base) return base
+  if (typeof window !== 'undefined') return window.location.origin
+  return ''
+}
+
 // ── Auth token helpers ────────────────────────────────────────────────────────
 
 export function getAccessToken(): string | null {
@@ -503,6 +510,25 @@ export async function sandboxStatus(): Promise<{ engine_available: boolean; cont
   const res = await fetch(`${getApiBase()}/api/v1/sandbox/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }>
+}
+
+export async function createDemoRun(): Promise<RunSummary> {
+  const res = await fetch(`${getApiBase()}/api/v1/sandbox/demo-run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  const json = await res.json() as ApiEnvelope<RunSummary>
+  return json.data
+}
+
+export async function fetchServerHealth(): Promise<{ status: string }> {
+  const res = await fetch(`${getApiBase()}/health`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<{ status: string }>
 }
 
 // ── Auto-fix ──────────────────────────────────────────────────────────────────

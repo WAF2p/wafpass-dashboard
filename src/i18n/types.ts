@@ -1993,6 +1993,44 @@ export interface Translations {
     }
 
   }
+
+  welcome: {
+    title: string
+    subtitle: string
+    subtitleShort: string
+    pathTryTitle: string
+    pathTryDesc: string
+    pathCliTitle: string
+    pathCliDesc: string
+    stepInit: string
+    stepInitDesc: string
+    stepScan: string
+    stepScanDesc: string
+    stepView: string
+    stepViewDesc: string
+    initCommand: string
+    runDemoCommand: string
+    runScanCommand: string
+    openRunHistory: string
+    seeExampleScan: string
+    seeExampleScanDesc: string
+    demoRunning: string
+    demoSuccess: string
+    demoError: string
+    serverStatus: string
+    serverOnline: string
+    serverOffline: string
+    stepPending: string
+    stepDone: string
+    stepInProgress: string
+    advancedOptions: string
+    advancedOptionsDesc: string
+    runServerScan: string
+    cliQuickstart: string
+    howToInstallTitle: string
+    howToInstallDesc: string
+    installCommand: string
+  }
 }
 
 export type DeepPartial<T> = T extends object
