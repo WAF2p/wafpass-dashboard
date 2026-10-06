@@ -195,11 +195,9 @@ function buildGeoJSON(detectedRegions: Array<[string, string, string | null]>) {
   const seen = new Set<string>()
   const azsByRegion: Record<string, string[]> = {}
   for (const [rawRegion, rawProvider, rawAz] of detectedRegions) {
-    if (!Array.isArray(rawRegion) && !Array.isArray(rawProvider)) continue
-    const provider = typeof rawProvider === 'string' ? rawProvider.toLowerCase() : ''
-    const region = typeof rawRegion === 'string'
-      ? (rawRegion.includes('sinacloud') ? normalizeSinacloudRegion(rawRegion) : rawRegion)
-      : ''
+    if (typeof rawRegion !== 'string' || typeof rawProvider !== 'string') continue
+    const provider = rawProvider.toLowerCase()
+    const region = rawRegion.includes('sinacloud') ? normalizeSinacloudRegion(rawRegion) : rawRegion
     if (!region || !provider) continue
     if (!azsByRegion[region]) azsByRegion[region] = []
     const az = typeof rawAz === 'string' && rawAz.trim() ? rawAz.trim() : null
@@ -345,6 +343,22 @@ export default function RegionsPage({ run }: Props) {
   const providers = useMemo(() => buildProviderData(run.detected_regions ?? []), [run.detected_regions])
   const geojson = useMemo(() => buildGeoJSON(run.detected_regions ?? []), [run.detected_regions])
 
+  const mapStyle = useMemo(() => ({
+    version: 8 as const,
+    sources: {
+      osm: {
+        type: 'raster' as const,
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: t('pages.regions.mapAttribution'),
+        maxzoom: 19,
+      },
+    },
+    layers: [
+      { id: 'osm', type: 'raster' as const, source: 'osm' },
+    ],
+  }), [t])
+
   const totalRegions = useMemo(() => providers.reduce((sum, p) => sum + p.regions.length, 0), [providers])
   const totalAZs = useMemo(() => providers.reduce((sum, p) => sum + p.azs.length, 0), [providers])
 
@@ -451,23 +465,7 @@ export default function RegionsPage({ run }: Props) {
             <MapGl
               initialViewState={{ latitude: 25, longitude: 15, zoom: 2 }}
               style={{ width: '100%', height: '100%' }}
-              mapStyle={{
-                version: 8,
-                sources: {
-                  osm: {
-                    type: 'raster',
-                    tiles: [
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    ],
-                    tileSize: 256,
-                    attribution: t('pages.regions.mapAttribution'),
-                    maxzoom: 19,
-                  },
-                },
-                layers: [
-                  { id: 'osm', type: 'raster', source: 'osm' },
-                ],
-              }}
+              mapStyle={mapStyle}
               scrollZoom={false}
             >
               <Source id="regions" type="geojson" data={geojson}>
