@@ -454,32 +454,18 @@ export default function RegionsPage({ run }: Props) {
               mapStyle={{
                 version: 8,
                 sources: {
-                  carto: {
+                  osm: {
                     type: 'raster',
                     tiles: [
-                      'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                      'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                      'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                      'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     ],
                     tileSize: 256,
                     attribution: t('pages.regions.mapAttribution'),
-                  },
-                  cartoDark: {
-                    type: 'raster',
-                    tiles: [
-                      'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                      'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                      'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                      'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                    ],
-                    tileSize: 256,
-                    attribution: t('pages.regions.mapAttribution'),
+                    maxzoom: 19,
                   },
                 },
                 layers: [
-                  { id: 'carto-light', type: 'raster', source: 'carto', layout: { visibility: 'visible' } },
-                  { id: 'carto-dark', type: 'raster', source: 'cartoDark', layout: { visibility: 'none' } },
+                  { id: 'osm', type: 'raster', source: 'osm' },
                 ],
               }}
               scrollZoom={false}
