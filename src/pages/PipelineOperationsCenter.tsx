@@ -5,9 +5,10 @@ import { Page, scoreColor } from '../routing'
 import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner } from './OperationsCenterShell'
 
 const WAF_COLORS = [
-  '#93c5fd', '#c4b5fd', '#67e8f9', '#6ee7b7', '#fcd34d', '#fca5a5',
-  '#60a5fa', '#a78bfa', '#818cf8', '#f9a8d4', '#5eead4', '#fb923c',
-  '#a3e635', '#94a3b8',
+  'var(--waf-brand)', 'var(--waf-info)', 'var(--score-high)', 'var(--waf-warn)',
+  'var(--waived)', 'var(--pass)', 'var(--fail)', 'var(--muted)',
+  'var(--waf-brand)', 'var(--waf-info)', 'var(--score-high)', 'var(--waf-warn)',
+  'var(--waived)', 'var(--pass)',
 ]
 
 function getProjectColor(project: string): string {
@@ -51,7 +52,7 @@ function getTimeAgo(iso: string): string {
 function CICDBadge({ isCICD }: { isCICD: boolean }) {
   if (!isCICD) return <span style={{ fontSize: '0.62rem', fontWeight: 400, color: 'var(--muted)' }}>manual</span>
   return (
-    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#10b9811a', color: '#10b981', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '4px', background: 'color-mix(in srgb, var(--pass) 10%, transparent)', color: 'var(--pass)', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
       CI/CD
     </span>
   )
@@ -172,7 +173,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = color
-        e.currentTarget.style.background = `${color}10`
+        e.currentTarget.style.background = `color-mix(in srgb, ${color} 6%, transparent)`
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = 'var(--border)'
@@ -193,7 +194,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         eyebrow="Operations Center"
         title={t('pages.pipelineOps.title')}
         subtitle={t('pages.pipelineOps.subtitle')}
-        accent="#f59e0b"
+        accent="var(--waf-warn)"
       >
         {!loading && (
           <div style={{ textAlign: 'right', minWidth: '140px' }}>
@@ -225,7 +226,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
           label={t('pages.pipelines.passRate')}
           value={`${metrics.passRate}%`}
           sub={`${metrics.needingAttention} ${t('pages.pipelines.scansNeedingAttention')}`}
-          color={metrics.passRate >= 80 ? '#059669' : '#d97706'}
+          color={metrics.passRate >= 80 ? 'var(--score-high)' : 'var(--waf-warn)'}
           icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
         />
         <KpiCard
@@ -239,14 +240,14 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
           label={t('pages.pipelines.activeProjects')}
           value={metrics.projects}
           sub={t('pages.pipelines.uniqueProjectsScanned')}
-          color="#8b5cf6"
+          color="var(--waf-info)"
           icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
         />
         <KpiCard
           label={t('pages.pipelineOps.recentRuns')}
           value={metrics.recentRuns}
           sub={t('pages.pipelineOps.last7Days')}
-          color="#22c55e"
+          color="var(--pass)"
           icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
           demo
         />
@@ -254,7 +255,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
           label={t('pages.pipelineOps.durationRange')}
           value="2–9m"
           sub={t('pages.pipelineOps.scanDuration')}
-          color="#f97316"
+          color="var(--waf-warn)"
           icon="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
           demo
         />
@@ -390,10 +391,10 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
               <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '0.25rem' }}>
                 {t('common.view')}
               </div>
-              {linkCard('runs', t('nav.items.runs'), 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z', '#0094ff')}
-              {linkCard('dashboard', t('nav.items.dashboard'), 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', '#22c55e')}
-              {linkCard('projectoverview', t('nav.items.projectoverview'), 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2', '#8b5cf6')}
-              {linkCard('runscan', t('nav.items.runscan'), 'M13 10V3L4 14h7v7l9-11h-7z', '#f59e0b')}
+              {linkCard('runs', t('nav.items.runs'), 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'var(--waf-brand)')}
+              {linkCard('dashboard', t('nav.items.dashboard'), 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 'var(--pass)')}
+              {linkCard('projectoverview', t('nav.items.projectoverview'), 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2', 'var(--waived)')}
+              {linkCard('runscan', t('nav.items.runscan'), 'M13 10V3L4 14h7v7l9-11h-7z', 'var(--waf-warn)')}
             </RightRail>
           </div>
         </div>

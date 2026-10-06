@@ -2,3 +2,10 @@ node_modules/
 dist/
 .env
 .env.local
+
+# SBOM / CNCF artifacts (generated in CI, not committed)
+sbom.*
+licenses.json
+requirements.sbom.txt
+.sbom-venv/
+.tools-venv/

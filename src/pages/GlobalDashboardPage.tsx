@@ -15,31 +15,64 @@ import {
 } from 'recharts'
 import { fetchProjectPassports, ProjectPassport, RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
-import { Page, scoreColor } from '../routing'
+import { Page } from '../routing'
 import { MATURITY_META } from './settingsUtils'
 import DashboardPage from './DashboardPage'
 import flightMapBg from '/flight-map-bg.png'
 
+// ── Semantic color helpers ────────────────────────────────────────────────────
+function scoreColor(s: number): string {
+  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
+}
+function pillarColor(key: string): string {
+  const map: Record<string, string> = {
+    security: 'var(--fail)',
+    cost: 'var(--waf-brand)',
+    operations: 'var(--waived)',
+    performance: 'var(--waf-warn)',
+    reliability: 'var(--score-high)',
+    sovereign: 'var(--waf-warn)',
+    sustainability: 'var(--score-high)',
+    agentic: 'var(--waived)',
+  }
+  return map[key] ?? 'var(--waf-brand)'
+}
+function stageColor(label: string): string {
+  const map: Record<string, string> = {
+    Hangar: 'var(--fail)',
+    'Pre-Flight': 'var(--waf-warn)',
+    Boarding: 'var(--waf-warn)',
+    Takeoff: 'var(--waf-brand)',
+    Cruise: 'var(--waived)',
+    Landing: 'var(--score-high)',
+  }
+  return map[label] ?? 'var(--waf-brand)'
+}
+function maturityColor(level: number): string {
+  const map = ['var(--fail)', 'var(--waf-warn)', 'var(--waf-brand)', 'var(--waived)', 'var(--score-high)']
+  return map[level - 1] ?? 'var(--waf-brand)'
+}
+
 // ── Pillar metadata ───────────────────────────────────────────────────────────
 const PILLAR_META: { key: string; label: string; color: string; icon: () => JSX.Element }[] = [
-  { key: 'security', label: 'Security', color: '#DA2C38', icon: ShieldIcon },
-  { key: 'cost', label: 'Cost', color: '#0094FF', icon: CostIcon },
-  { key: 'operations', label: 'Operations', color: '#8b5cf6', icon: OpsIcon },
-  { key: 'performance', label: 'Performance', color: '#f97316', icon: PerfIcon },
-  { key: 'reliability', label: 'Reliability', color: '#22c55e', icon: RelIcon },
-  { key: 'sovereign', label: 'Sovereignty', color: '#eab308', icon: SovIcon },
-  { key: 'sustainability', label: 'Sustainability', color: '#14b8a6', icon: SusIcon },
-  { key: 'agentic', label: 'Agentic', color: '#ec4899', icon: AgenticIcon },
+  { key: 'security', label: 'Security', color: pillarColor('security'), icon: ShieldIcon },
+  { key: 'cost', label: 'Cost', color: pillarColor('cost'), icon: CostIcon },
+  { key: 'operations', label: 'Operations', color: pillarColor('operations'), icon: OpsIcon },
+  { key: 'performance', label: 'Performance', color: pillarColor('performance'), icon: PerfIcon },
+  { key: 'reliability', label: 'Reliability', color: pillarColor('reliability'), icon: RelIcon },
+  { key: 'sovereign', label: 'Sovereignty', color: pillarColor('sovereign'), icon: SovIcon },
+  { key: 'sustainability', label: 'Sustainability', color: pillarColor('sustainability'), icon: SusIcon },
+  { key: 'agentic', label: 'Agentic', color: pillarColor('agentic'), icon: AgenticIcon },
 ]
 
 // ── Flight stage metadata ─────────────────────────────────────────────────────
 const STAGE_META: { label: string; range: string; description: string; color: string; min: number; max: number; icon: () => JSX.Element }[] = [
-  { label: 'Hangar', range: '0-19', description: 'Preparation', color: '#ef4444', min: 0, max: 19, icon: HangarIcon },
-  { label: 'Pre-Flight', range: '20-39', description: 'Safety & checks', color: '#f97316', min: 20, max: 39, icon: PreflightIcon },
-  { label: 'Boarding', range: '40-59', description: 'Passengers boarding', color: '#eab308', min: 40, max: 59, icon: BoardingIcon },
-  { label: 'Takeoff', range: '60-74', description: 'Rotation & takeoff', color: '#0094FF', min: 60, max: 74, icon: TakeoffIcon },
-  { label: 'Cruise', range: '75-89', description: 'In-flight cruising', color: '#8b5cf6', min: 75, max: 89, icon: CruiseIcon },
-  { label: 'Landing', range: '90-100', description: 'Descent & landing', color: '#059669', min: 90, max: 100, icon: LandingIcon },
+  { label: 'Hangar', range: '0-19', description: 'Preparation', color: stageColor('Hangar'), min: 0, max: 19, icon: HangarIcon },
+  { label: 'Pre-Flight', range: '20-39', description: 'Safety & checks', color: stageColor('Pre-Flight'), min: 20, max: 39, icon: PreflightIcon },
+  { label: 'Boarding', range: '40-59', description: 'Passengers boarding', color: stageColor('Boarding'), min: 40, max: 59, icon: BoardingIcon },
+  { label: 'Takeoff', range: '60-74', description: 'Rotation & takeoff', color: stageColor('Takeoff'), min: 60, max: 74, icon: TakeoffIcon },
+  { label: 'Cruise', range: '75-89', description: 'In-flight cruising', color: stageColor('Cruise'), min: 75, max: 89, icon: CruiseIcon },
+  { label: 'Landing', range: '90-100', description: 'Descent & landing', color: stageColor('Landing'), min: 90, max: 100, icon: LandingIcon },
 ]
 
 const MATURITY_THRESHOLDS: Record<number, number> = { 1: 0, 2: 40, 3: 60, 4: 75, 5: 90 }
@@ -132,7 +165,7 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
         borderRadius: '50%',
         background: `conic-gradient(${color} ${pct}%, var(--track) ${pct}%)`,
         padding: 10,
-        boxShadow: `0 12px 40px ${color}25`,
+        boxShadow: `0 12px 40px color-mix(in srgb, ${color} 16%, transparent)`,
       }}
     >
       <div
@@ -368,7 +401,7 @@ function FlightTimeline({ runs, passports }: { runs: RunSummary[]; passports: Pr
               <stop offset="100%" style={{ stopColor: 'var(--waf-brand)', stopOpacity: 0 }} />
             </radialGradient>
             <filter id="gdMarkerDrop" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="rgba(0,0,0,0.35)" floodOpacity="0.22" />
+              <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="color-mix(in srgb, var(--text) 35%, transparent)" floodOpacity="0.22" />
             </filter>
             <filter id="gdLabelShadow" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="var(--surface)" floodOpacity="0.95" />
@@ -435,14 +468,14 @@ function FlightTimeline({ runs, passports }: { runs: RunSummary[]; passports: Pr
                 {/* Marker circle */}
                 <circle r="16" fill={active ? 'var(--waf-brand)' : 'var(--surface)'} stroke="var(--waf-brand)" strokeWidth="1.5" />
                 {/* Icon */}
-                <g transform={`translate(-${iconSize / 2}, -${iconSize / 2})`} style={{ color: active ? '#fff' : 'var(--text)' }}>
+                <g transform={`translate(-${iconSize / 2}, -${iconSize / 2})`} style={{ color: active ? 'var(--surface)' : 'var(--text)' }}>
                   <stage.icon />
                 </g>
                 {/* Count badge */}
                 {active && (
                   <g transform="translate(12, -12)">
                     <circle r="9" fill="var(--waf-brand)" stroke="var(--surface)" strokeWidth="1.5" />
-                    <text x="0" y="1" textAnchor="middle" dominantBaseline="middle" fontSize="8" fontWeight="800" fill="#fff">
+                    <text x="0" y="1" textAnchor="middle" dominantBaseline="middle" fontSize="8" fontWeight="800" fill="var(--surface)">
                       {count}
                     </text>
                   </g>
@@ -588,8 +621,8 @@ function RecentActivity({ runs }: { runs: RunSummary[] }) {
             style={{
               padding: '0.2rem 0.55rem',
               borderRadius: '999px',
-              background: `${scoreColor(activity.score)}18`,
-              border: `1px solid ${scoreColor(activity.score)}40`,
+              background: `color-mix(in srgb, ${scoreColor(activity.score)} 10%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${scoreColor(activity.score)} 25%, transparent)`,
               color: scoreColor(activity.score),
               fontSize: '0.7rem',
               fontWeight: 800,
@@ -617,7 +650,7 @@ function ViewSwitcher({ activeView, onChange }: { activeView: 'flight' | 'dashbo
             borderRadius: '999px',
             border: `1px solid ${activeView === view ? 'var(--waf-brand)' : 'var(--border)'}`,
             background: activeView === view ? 'var(--waf-brand)' : 'var(--surface)',
-            color: activeView === view ? '#fff' : 'var(--text)',
+            color: activeView === view ? 'var(--surface)' : 'var(--text)',
             fontSize: '0.78rem',
             fontWeight: activeView === view ? 700 : 600,
             cursor: 'pointer',
@@ -740,11 +773,11 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
 
   const maturityChartData = useMemo(
     () => [
-      { label: 'L5', count: maturityDistribution.L5, color: '#059669' },
-      { label: 'L4', count: maturityDistribution.L4, color: '#8b5cf6' },
-      { label: 'L3', count: maturityDistribution.L3, color: '#0094FF' },
-      { label: 'L2', count: maturityDistribution.L2, color: '#f97316' },
-      { label: 'L1', count: maturityDistribution.L1, color: '#ef4444' },
+      { label: 'L5', count: maturityDistribution.L5, color: maturityColor(5) },
+      { label: 'L4', count: maturityDistribution.L4, color: maturityColor(4) },
+      { label: 'L3', count: maturityDistribution.L3, color: maturityColor(3) },
+      { label: 'L2', count: maturityDistribution.L2, color: maturityColor(2) },
+      { label: 'L1', count: maturityDistribution.L1, color: maturityColor(1) },
     ],
     [maturityDistribution]
   )
@@ -767,7 +800,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
     return (
       <div className="gd-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center', maxWidth: 420, padding: '2rem', borderRadius: '20px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div style={{ color: 'var(--waf-danger)', marginBottom: '1rem' }}><ErrorIcon /></div>
+          <div style={{ color: 'var(--fail)', marginBottom: '1rem' }}><ErrorIcon /></div>
           <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Error Loading Global Dashboard</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{error}</div>
         </div>
@@ -804,11 +837,11 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
               borderRadius: '10px',
               border: 'none',
               background: 'var(--waf-brand)',
-              color: '#fff',
+              color: 'var(--surface)',
               fontSize: '0.82rem',
               fontWeight: 700,
               cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,148,255,0.35)',
+              boxShadow: '0 4px 16px color-mix(in srgb, var(--waf-brand) 35%, transparent)',
             }}
           >
             Run First Scan
@@ -869,7 +902,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
           value={totalProjects}
           subtext={passports.length > 0 ? 'From passports' : 'From scan runs'}
           icon={<ProjectsIcon />}
-          color="#0094FF"
+          color="var(--waf-brand)"
           onClick={() => navigate('passports')}
         />
         <KpiTile
@@ -884,7 +917,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
           value={formatDate(latestRun?.created_at)}
           subtext={latestRun ? `${latestRun.project} · ${latestRun.branch}` : '-'}
           icon={<CalendarIcon />}
-          color="#8b5cf6"
+          color="var(--waived)"
         />
         <KpiTile
           label={t('pages.globaldashboard.globalScore')}
@@ -935,18 +968,18 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                         {p.displayName}
                       </div>
                       <div style={{ height: '4px', borderRadius: '999px', background: 'var(--track)', marginTop: '0.3rem', overflow: 'hidden' }}>
-                        <div style={{ width: `${p.score}%`, height: '100%', borderRadius: '999px', background: maturity.color, transition: 'width 0.8s ease' }} />
+                        <div style={{ width: `${p.score}%`, height: '100%', borderRadius: '999px', background: maturityColor(maturity.level), transition: 'width 0.8s ease' }} />
                       </div>
                     </div>
                     <div
                       style={{
                         fontSize: '0.65rem',
                         fontWeight: 800,
-                        color: maturity.color,
+                        color: maturityColor(maturity.level),
                         padding: '0.15rem 0.4rem',
                         borderRadius: '999px',
-                        background: `${maturity.color}18`,
-                        border: `1px solid ${maturity.color}35`,
+                        background: `color-mix(in srgb, ${maturityColor(maturity.level)} 10%, transparent)`,
+                        border: `1px solid color-mix(in srgb, ${maturityColor(maturity.level)} 20%, transparent)`,
                         flexShrink: 0,
                       }}
                     >
@@ -1001,8 +1034,8 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                       <div style={{ fontSize: '1.7rem', fontWeight: 800, color: scoreColor(featuredProject.score) }}>{featuredProject.score}</div>
                       <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.score')}</div>
                     </div>
-                    <div className="gd-featured-stat" style={{ borderColor: getMaturityForScore(featuredProject.score).color }}>
-                      <div style={{ fontSize: '1.7rem', fontWeight: 800, color: getMaturityForScore(featuredProject.score).color }}>
+                    <div className="gd-featured-stat" style={{ borderColor: maturityColor(getMaturityForScore(featuredProject.score).level) }}>
+                      <div style={{ fontSize: '1.7rem', fontWeight: 800, color: maturityColor(getMaturityForScore(featuredProject.score).level) }}>
                         {getMaturityForScore(featuredProject.score).level}
                       </div>
                       <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.level')}</div>
@@ -1081,7 +1114,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                     padding: '1rem 1.25rem',
                     borderRadius: '16px',
                     background: 'var(--bg)',
-                    border: `1px solid ${maturity.color}25`,
+                    border: `1px solid color-mix(in srgb, ${maturityColor(maturity.level)} 14%, transparent)`,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.85rem',
@@ -1099,9 +1132,9 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                     style={{
                       padding: '0.25rem 0.65rem',
                       borderRadius: '999px',
-                      background: `${maturity.color}18`,
-                      border: `1px solid ${maturity.color}35`,
-                      color: maturity.color,
+                      background: `color-mix(in srgb, ${maturityColor(maturity.level)} 10%, transparent)`,
+                      border: `1px solid color-mix(in srgb, ${maturityColor(maturity.level)} 20%, transparent)`,
+                      color: maturityColor(maturity.level),
                       fontSize: '0.68rem',
                       fontWeight: 800,
                       flexShrink: 0,
@@ -1159,7 +1192,7 @@ const globalDashboardCss = `
   right: -10%;
   width: 50%;
   height: 200%;
-  background: radial-gradient(circle, rgba(0,148,255,0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--waf-brand) 8%, transparent) 0%, transparent 70%);
   pointer-events: none;
 }
 .gd-hero-content {
@@ -1188,13 +1221,13 @@ const globalDashboardCss = `
   height: 7px;
   border-radius: 50%;
   background: var(--waf-brand);
-  box-shadow: 0 0 0 0 rgba(0,148,255,0.5);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--waf-brand) 50%, transparent);
   animation: gdPulse 2s infinite;
 }
 @keyframes gdPulse {
-  0% { box-shadow: 0 0 0 0 rgba(0,148,255,0.5); }
-  70% { box-shadow: 0 0 0 8px rgba(0,148,255,0); }
-  100% { box-shadow: 0 0 0 0 rgba(0,148,255,0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--waf-brand) 50%, transparent); }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 .gd-hero-title {
   font-size: 1.6rem;
@@ -1227,7 +1260,7 @@ const globalDashboardCss = `
 }
 .gd-btn-primary {
   background: var(--waf-brand);
-  color: #fff;
+  color: var(--surface);
   box-shadow: 0 4px 16px color-mix(in srgb, var(--waf-brand) 32%, var(--surface));
 }
 .gd-btn-primary:hover {
@@ -1390,18 +1423,18 @@ const globalDashboardCss = `
   gap: 1rem;
   padding: 0.75rem 1rem;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(5,150,105,0.08) 0%, rgba(5,150,105,0.02) 100%);
-  border: 1px solid rgba(5,150,105,0.18);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--score-high) 8%, transparent) 0%, color-mix(in srgb, var(--score-high) 2%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--score-high) 18%, transparent);
 }
 .gd-star-icon {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(5,150,105,0.12);
+  background: color-mix(in srgb, var(--score-high) 12%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #059669;
+  color: var(--score-high);
   flex-shrink: 0;
 }
 .gd-star-main {
@@ -1431,7 +1464,7 @@ const globalDashboardCss = `
 .gd-star-value {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #059669;
+  color: var(--score-high);
   line-height: 1;
 }
 .gd-star-label {
@@ -1454,7 +1487,7 @@ const globalDashboardCss = `
 }
 .gd-flight-wrap--real {
   border-radius: 20px;
-  box-shadow: inset 0 0 60px rgba(0,0,0,0.04), 0 10px 40px rgba(0,0,0,0.08);
+  box-shadow: inset 0 0 60px color-mix(in srgb, var(--text) 4%, transparent), 0 10px 40px color-mix(in srgb, var(--text) 8%, transparent);
   background-image: url('/flight-map-bg.png');
   background-size: cover;
   background-position: center 55%;
@@ -1469,7 +1502,7 @@ const globalDashboardCss = `
 
 .gd-flight-stage:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--text) 8%, transparent);
 }
 
 @media (max-width: 1100px) {

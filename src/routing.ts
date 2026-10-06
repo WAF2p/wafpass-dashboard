@@ -157,7 +157,7 @@ export function buildHash(page: Page, runId: string | null, filters: FilterState
 }
 
 export function scoreColor(s: number): string {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
+  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
 }
 
 export function buildJourneyHash(filters: FilterState = {}): string {

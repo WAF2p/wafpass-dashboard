@@ -5,6 +5,19 @@ import { Page, scoreColor } from '../routing'
 import { aggregateScore, companyTrend, JOURNEY_STAGES, latestRunByProject, nextStage, pointsToNextStage, stageFor } from './journeyUtils'
 import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, TwoColumnGrid } from './OperationsCenterShell'
 import StageBadge from './journey/components/StageBadge'
+import type { JourneyStage } from './journeyUtils'
+
+function stageColor(stage: JourneyStage): string {
+  switch (stage.idx) {
+    case 0: return 'var(--score-low)'
+    case 1: return 'var(--waf-warn)'
+    case 2: return 'var(--score-mid)'
+    case 3: return 'var(--waf-brand)'
+    case 4: return 'var(--waf-info)'
+    case 5: return 'var(--score-high)'
+    default: return 'var(--muted)'
+  }
+}
 
 function TrendLineChart({ data }: { data: { date: string; score: number }[] }) {
   const padding = { top: 28, right: 28, bottom: 42, left: 44 }
@@ -40,14 +53,14 @@ function TrendLineChart({ data }: { data: { date: string; score: number }[] }) {
       {/* Area under the line */}
       <path
         d={`${linePath} L ${points[points.length - 1]?.x ?? xFor(0)} ${padding.top + chartH} L ${points[0]?.x ?? xFor(0)} ${padding.top + chartH} Z`}
-        fill="rgba(218, 44, 56, 0.1)"
+        fill="color-mix(in srgb, var(--fail) 10%, transparent)"
       />
 
       {/* Trend line */}
       <path
         d={linePath}
         fill="none"
-        stroke="#DA2C38"
+        stroke="var(--fail)"
         strokeWidth={3}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -133,7 +146,7 @@ export default function MaturityOperationsCenter({
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = color
-        e.currentTarget.style.background = `${color}10`
+        e.currentTarget.style.background = `color-mix(in srgb, ${color} 6%, transparent)`
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = 'var(--border)'
@@ -154,7 +167,7 @@ export default function MaturityOperationsCenter({
         eyebrow="Operations Center"
         title={t('pages.maturityOps.title')}
         subtitle={t('pages.maturityOps.subtitle')}
-        accent="#DA2C38"
+        accent="var(--fail)"
       >
         {runs.length > 0 && (
           <div style={{ textAlign: 'right', minWidth: '180px' }}>
@@ -177,28 +190,28 @@ export default function MaturityOperationsCenter({
           label={t('pages.journey.companyAverage')}
           value={companyScore}
           sub={t('pages.journey.companyStage')}
-          color={companyStage.color}
+          color={stageColor(companyStage)}
           icon="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
         />
         <KpiCard
           label={t('pages.journey.projectsTracked')}
           value={projects.length}
           sub={t('common.projects')}
-          color="#0094ff"
+          color="var(--waf-brand)"
           icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
         />
         <KpiCard
           label={t('pages.journey.totalRuns')}
           value={runs.length}
           sub={t('pages.runs.runs')}
-          color="#22c55e"
+          color="var(--pass)"
           icon="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
         <KpiCard
           label={t('pages.maturityOps.selectedProject')}
           value={run?.project ?? '—'}
           sub={run ? `${run.score}/100 · ${stageFor(run.score).shortLabel}` : t('pages.costImpact.noRun')}
-          color="#8b5cf6"
+          color="var(--waf-info)"
           icon="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
         />
       </div>
@@ -228,7 +241,7 @@ export default function MaturityOperationsCenter({
                         </div>
                       </div>
                       <div style={{ flex: 1, height: '10px', background: 'var(--bg)', borderRadius: '999px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: '999px' }} />
+                        <div style={{ height: '100%', width: `${pct}%`, background: stageColor(s), borderRadius: '999px' }} />
                       </div>
                       <div style={{ width: '50px', textAlign: 'right', flexShrink: 0 }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>{s.count}</span>
@@ -307,9 +320,9 @@ export default function MaturityOperationsCenter({
                       label={r.project}
                       count={100 - r.score}
                       total={100}
-                      color="#DA2C38"
+                      color="var(--fail)"
                       meta={stageFor(r.score).shortLabel}
-                      badge={<MiniBadge color="#DA2C38">{r.score}</MiniBadge>}
+                      badge={<MiniBadge color="var(--fail)">{r.score}</MiniBadge>}
                     />
                   ))}
                 </div>
@@ -320,10 +333,10 @@ export default function MaturityOperationsCenter({
               <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '0.25rem' }}>
                 {t('common.view')}
               </div>
-              {linkCard('journey', t('nav.items.journey'), 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8', '#DA2C38')}
-              {linkCard('passports', t('nav.items.passports'), 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2', '#0094ff')}
-              {linkCard('leaderboard', t('nav.items.leaderboard'), 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', '#8b5cf6')}
-              {linkCard('projectoverview', t('nav.items.dashboard'), 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', '#22c55e')}
+              {linkCard('journey', t('nav.items.journey'), 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8', 'var(--fail)')}
+              {linkCard('passports', t('nav.items.passports'), 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2', 'var(--waived)')}
+              {linkCard('leaderboard', t('nav.items.leaderboard'), 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', 'var(--waived)')}
+              {linkCard('projectoverview', t('nav.items.dashboard'), 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 'var(--pass)')}
             </RightRail>
           </div>
         </TwoColumnGrid>
