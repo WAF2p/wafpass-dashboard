@@ -4,18 +4,17 @@ import { FRAMEWORKS } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
 import type { Settings } from './settingsUtils'
 import { useI18n } from '../i18n'
-import { useTheme } from '../theme'
 
 // All 8 pillars including agentic
 const PILLAR_META: { key: string; label: string; color: string; icon: () => JSX.Element }[] = [
-  { key: 'security',       label: 'Security',       color: '#ff4d4d', icon: ShieldIcon },
-  { key: 'cost',           label: 'Cost',           color: '#f97316', icon: CostIcon },
-  { key: 'operations',     label: 'Operations',     color: '#a78bfa', icon: OpsIcon },
-  { key: 'performance',    label: 'Performance',    color: '#facc15', icon: PerfIcon },
-  { key: 'reliability',    label: 'Reliability',    color: '#22d3ee', icon: RelIcon },
-  { key: 'sovereign',      label: 'Sovereignty',    color: '#2dd4bf', icon: SovIcon },
-  { key: 'sustainability', label: 'Sustainability', color: '#4ade80', icon: SusIcon },
-  { key: 'agentic',        label: 'Agentic',        color: '#f472b6', icon: AgenticIcon },
+  { key: 'security',       label: 'Security',       color: 'var(--fail)', icon: ShieldIcon },
+  { key: 'cost',           label: 'Cost',           color: 'var(--waf-brand)', icon: CostIcon },
+  { key: 'operations',     label: 'Operations',     color: 'var(--waived)', icon: OpsIcon },
+  { key: 'performance',    label: 'Performance',    color: 'var(--waf-warn)', icon: PerfIcon },
+  { key: 'reliability',    label: 'Reliability',    color: 'var(--pass)', icon: RelIcon },
+  { key: 'sovereign',      label: 'Sovereignty',    color: 'var(--score-high)', icon: SovIcon },
+  { key: 'sustainability', label: 'Sustainability', color: 'var(--pass)', icon: SusIcon },
+  { key: 'agentic',        label: 'Agentic',        color: 'var(--waived)', icon: AgenticIcon },
 ]
 
 function normalizePillarName(p: string): string {
@@ -25,26 +24,20 @@ function normalizePillarName(p: string): string {
 
 interface Props { run: RunDetail; settings?: Settings }
 
-function scoreColor(s: number, isDark = true) {
-  if (isDark) return s >= 80 ? '#00ff9d' : s >= 60 ? '#fbbf24' : '#ff2a6d'
-  return s >= 80 ? '#059669' : s >= 60 ? '#b45309' : '#dc2626'
+function scoreColor(s: number) {
+  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
 }
 
-function scoreGlow(s: number, isDark = true) {
-  if (!isDark) return s >= 80 ? 'rgba(5,150,105,0.35)' : s >= 60 ? 'rgba(180,83,9,0.35)' : 'rgba(220,38,38,0.45)'
-  return s >= 80 ? 'rgba(0,255,157,0.35)' : s >= 60 ? 'rgba(251,191,36,0.35)' : 'rgba(255,42,109,0.45)'
+function scoreGlow(s: number) {
+  return scoreColor(s)
 }
 
-function statusColor(role: 'good' | 'warn' | 'bad' | 'info' | 'text' | 'muted', isDark = true) {
-  const dark: Record<typeof role, string> = {
-    good: '#00ff9d', warn: '#fbbf24', bad: '#ff2a6d', info: '#38bdf8',
+function statusColor(role: 'good' | 'warn' | 'bad' | 'info' | 'text' | 'muted') {
+  const map: Record<typeof role, string> = {
+    good: 'var(--pass)', warn: 'var(--score-mid)', bad: 'var(--fail)', info: 'var(--waf-brand)',
     text: 'var(--text)', muted: 'var(--muted)',
   }
-  const light: Record<typeof role, string> = {
-    good: '#059669', warn: '#b45309', bad: '#dc2626', info: '#0284c7',
-    text: 'var(--text)', muted: 'var(--muted)',
-  }
-  return isDark ? dark[role] : light[role]
+  return map[role]
 }
 
 // ─── Icons (inline SVG, no external deps) ─────────────────────────────────────
@@ -76,7 +69,7 @@ function SignalIcon() { return <IconWrapper><path d="M2 20h.01" /><path d="M7 20
 
 // ─── Shared visual components ─────────────────────────────────────────────────
 
-function CircularScore({ value, size = 96, stroke = 8, color, track = 'rgba(148,163,184,0.15)' }: { value: number; size?: number; stroke?: number; color: string; track?: string }) {
+function CircularScore({ value, size = 96, stroke = 8, color, track = 'var(--track)' }: { value: number; size?: number; stroke?: number; color: string; track?: string }) {
   const pct = Math.min(100, Math.max(0, value))
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
@@ -138,11 +131,11 @@ function SectionCard({ title, subtitle, children, className = '', style = {} }: 
   )
 }
 
-function StatusBar({ score, passRate, isDark = true }: { score: number; passRate: number; isDark?: boolean }) {
+function StatusBar({ score, passRate }: { score: number; passRate: number }) {
   const armed = score >= 80
   const warning = score >= 60 && score < 80
   return (
-    <div className="scc-statusbar" data-scc-theme={isDark ? 'dark' : 'light'}>
+    <div className="scc-statusbar">
       <div className="scc-statusbar__line" />
       <div className={`scc-statusbar__badge ${armed ? 'scc-statusbar__badge--armed' : warning ? 'scc-statusbar__badge--warn' : 'scc-statusbar__badge--alert'}`}>
         <span className="scc-statusbar__pulse" />
@@ -151,11 +144,11 @@ function StatusBar({ score, passRate, isDark = true }: { score: number; passRate
       <div className="scc-statusbar__readouts">
         <div className="scc-statusbar__readout">
           <span className="scc-statusbar__label">POSTURE</span>
-          <span className="scc-statusbar__value" style={{ color: scoreColor(score, isDark) }}>{score}%</span>
+          <span className="scc-statusbar__value" style={{ color: scoreColor(score) }}>{score}%</span>
         </div>
         <div className="scc-statusbar__readout">
           <span className="scc-statusbar__label">PASS RATE</span>
-          <span className="scc-statusbar__value" style={{ color: scoreColor(passRate, isDark) }}>{passRate}%</span>
+          <span className="scc-statusbar__value" style={{ color: scoreColor(passRate) }}>{passRate}%</span>
         </div>
       </div>
     </div>
@@ -168,8 +161,6 @@ type SortKey = 'country' | 'name' | 'coverage_desc' | 'coverage_asc'
 
 export default function CompliancePage({ run, settings }: Props) {
   const { t } = useI18n()
-  const { themeName } = useTheme()
-  const isDark = themeName === 'dark'
   const [tab, setTab] = useState<'pillars' | 'frameworks'>('pillars')
   const catalogue = useControlsCatalogue()
 
@@ -225,10 +216,10 @@ export default function CompliancePage({ run, settings }: Props) {
 
   const severities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
   const sevColor: Record<string, string> = {
-    CRITICAL: isDark ? '#ff2a6d' : '#dc2626',
-    HIGH: isDark ? '#fbbf24' : '#b45309',
-    MEDIUM: isDark ? '#38bdf8' : '#0284c7',
-    LOW: isDark ? '#00ff9d' : '#059669',
+    CRITICAL: 'var(--fail)',
+    HIGH: 'var(--score-mid)',
+    MEDIUM: 'var(--waf-brand)',
+    LOW: 'var(--pass)',
   }
   const sevLabel: Record<string, string> = { CRITICAL: 'CRIT', HIGH: 'HIGH', MEDIUM: 'MED', LOW: 'LOW' }
 
@@ -242,10 +233,10 @@ export default function CompliancePage({ run, settings }: Props) {
   }
 
   const STATUS_COLOR: Record<string, string> = {
-    PASS: '#22c55e',
-    FAIL: '#DA2C38',
-    SKIP: isDark ? 'var(--muted)' : 'var(--muted)',
-    UNKNOWN: isDark ? 'var(--muted)' : 'var(--muted)',
+    PASS: 'var(--pass)',
+    FAIL: 'var(--fail)',
+    SKIP: 'var(--muted)',
+    UNKNOWN: 'var(--muted)',
   }
   const STATUS_ICON: Record<string, () => JSX.Element> = {
     PASS: CheckIcon, FAIL: XIcon, SKIP: MinusIcon, UNKNOWN: MinusIcon,
@@ -287,7 +278,7 @@ export default function CompliancePage({ run, settings }: Props) {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="scc-root" data-scc-theme={isDark ? 'dark' : 'light'}>
+    <div className="scc-root">
       <style>{securityCommandCenterCss}</style>
 
       {/* Hero — command center header */}
@@ -303,34 +294,34 @@ export default function CompliancePage({ run, settings }: Props) {
           </p>
         </div>
         <div className="scc-hero__score">
-          <CircularScore value={overallScore} size={150} stroke={10} color={scoreColor(overallScore, isDark)} track={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(15,23,42,0.08)'} />
+          <CircularScore value={overallScore} size={150} stroke={10} color={scoreColor(overallScore)} />
           <div className="scc-hero__score-label">
-            <span className="scc-hero__score-value" style={{ color: scoreColor(overallScore, isDark) }}>{overallScore}</span>
+            <span className="scc-hero__score-value" style={{ color: scoreColor(overallScore) }}>{overallScore}</span>
             <span className="scc-hero__score-unit">SECURITY POSTURE</span>
           </div>
         </div>
       </div>
 
       {/* Status bar */}
-      <StatusBar score={overallScore} passRate={overallPassRate} isDark={isDark} />
+      <StatusBar score={overallScore} passRate={overallPassRate} />
 
       {/* KPI tiles */}
-      <div className="scc-kpi-grid" data-scc-theme={isDark ? 'dark' : 'light'}>
+      <div className="scc-kpi-grid">
         <div className="scc-kpi scc-kpi--pass">
           <div className="scc-kpi__label">PASSING CHECKS</div>
-          <div className="scc-kpi__value" style={{ color: statusColor('good', isDark) }}>{overallPassRate}%</div>
+          <div className="scc-kpi__value" style={{ color: statusColor('good') }}>{overallPassRate}%</div>
         </div>
         <div className="scc-kpi scc-kpi--fail">
           <div className="scc-kpi__label">FAILED CHECKS</div>
-          <div className="scc-kpi__value" style={{ color: overallFailCount > 0 ? statusColor('bad', isDark) : statusColor('muted', isDark) }}>{overallFailCount}</div>
+          <div className="scc-kpi__value" style={{ color: overallFailCount > 0 ? statusColor('bad') : statusColor('muted') }}>{overallFailCount}</div>
         </div>
         <div className="scc-kpi scc-kpi--crit">
           <div className="scc-kpi__label">CRITICAL FINDINGS</div>
-          <div className="scc-kpi__value" style={{ color: overallCritCount > 0 ? statusColor('bad', isDark) : statusColor('muted', isDark) }}>{overallCritCount}</div>
+          <div className="scc-kpi__value" style={{ color: overallCritCount > 0 ? statusColor('bad') : statusColor('muted') }}>{overallCritCount}</div>
         </div>
         <div className="scc-kpi scc-kpi--frameworks">
           <div className="scc-kpi__label">FRAMEWORKS TRACKED</div>
-          <div className="scc-kpi__value" style={{ color: statusColor('info', isDark) }}>{FRAMEWORKS.length}</div>
+          <div className="scc-kpi__value" style={{ color: statusColor('info') }}>{FRAMEWORKS.length}</div>
         </div>
       </div>
 
@@ -353,7 +344,7 @@ export default function CompliancePage({ run, settings }: Props) {
             </SectionCard>
           ) : (
             <>
-              <div className="scc-pillar-grid" data-scc-theme={isDark ? 'dark' : 'light'}>
+              <div className="scc-pillar-grid">
                 {pillarStats.map(s => (
                   <div key={s.key} className="scc-pillar-card" style={{ '--pillar-color': s.color } as React.CSSProperties}>
                     <div className="scc-pillar-card__top">
@@ -361,7 +352,7 @@ export default function CompliancePage({ run, settings }: Props) {
                         <s.icon />
                       </div>
                       <div className="scc-pillar-card__ring">
-                        <CircularScore value={s.score} size={84} stroke={7} color={scoreColor(s.score, isDark)} track={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(15,23,42,0.08)'} />
+                        <CircularScore value={s.score} size={84} stroke={7} color={scoreColor(s.score)} />
                       </div>
                     </div>
                     <div className="scc-pillar-card__name">{s.pillar}</div>
@@ -372,25 +363,25 @@ export default function CompliancePage({ run, settings }: Props) {
                       <span className="scc-pill scc-pill--total">{s.total} total</span>
                     </div>
                     <div className="scc-pillar-card__bar">
-                      <span style={{ width: `${s.passRate}%`, background: scoreColor(s.passRate, isDark) }} />
+                      <span style={{ width: `${s.passRate}%`, background: scoreColor(s.passRate) }} />
                     </div>
                   </div>
                 ))}
               </div>
 
               <SectionCard title={t('compliance.failingFindings')} subtitle="Severity heatmap across pillars">
-                <div className="scc-heatmap" data-scc-theme={isDark ? 'dark' : 'light'}>
+                <div className="scc-heatmap">
                   {pillarStats.map(s => (
                     <div key={s.key} className="scc-heatmap__row">
                       <div className="scc-heatmap__pillar">
-                        <span className="scc-heatmap__dot" style={{ background: s.color, boxShadow: `0 0 10px ${s.color}` }} />
+                        <span className="scc-heatmap__dot" style={{ background: s.color, boxShadow: `0 0 10px color-mix(in srgb, ${s.color} 25%, transparent)` }} />
                         <span style={{ textTransform: 'capitalize' }}>{s.pillar}</span>
                       </div>
                       <div className="scc-heatmap__passrate">
                         <span className="scc-heatmap__bar-bg">
-                          <span className="scc-heatmap__bar-fg" style={{ width: `${s.passRate}%`, background: scoreColor(s.passRate, isDark), boxShadow: `0 0 8px ${scoreGlow(s.passRate, isDark)}` }} />
+                          <span className="scc-heatmap__bar-fg" style={{ width: `${s.passRate}%`, background: scoreColor(s.passRate), boxShadow: `0 0 8px ${scoreGlow(s.passRate)}` }} />
                         </span>
-                        <span className="scc-heatmap__pct" style={{ color: scoreColor(s.passRate, isDark) }}>{s.passRate}%</span>
+                        <span className="scc-heatmap__pct" style={{ color: scoreColor(s.passRate) }}>{s.passRate}%</span>
                       </div>
                       <div className="scc-heatmap__sevs">
                         {severities.map(sev => {
@@ -425,7 +416,7 @@ export default function CompliancePage({ run, settings }: Props) {
       {tab === 'frameworks' && (
         <div className="scc-framework-view">
           {/* Filter bar */}
-          <div className="scc-filter-bar" data-scc-theme={isDark ? 'dark' : 'light'}>
+          <div className="scc-filter-bar">
             <div className="scc-filter-bar__top">
               <div className="scc-search">
                 <SearchIcon />
@@ -479,10 +470,10 @@ export default function CompliancePage({ run, settings }: Props) {
               <div className="scc-empty">{t('compliance.noMatch')}</div>
             </SectionCard>
           ) : (
-            <div className="scc-framework-grid" data-scc-theme={isDark ? 'dark' : 'light'}>
+            <div className="scc-framework-grid">
               {frameworkStats.sorted.map(({ fw, mappedControls, passCount, failCount, passRate }) => {
                 const active = passRate !== null
-                const color = active ? scoreColor(passRate, isDark) : (isDark ? 'var(--muted)' : 'var(--muted)')
+                const color = active ? scoreColor(passRate) : 'var(--muted)'
                 const mapped = mappedControls.length
                 return (
                   <div key={fw.id} className="scc-framework-card" style={{ '--fw-color': color } as React.CSSProperties}>
@@ -495,7 +486,7 @@ export default function CompliancePage({ run, settings }: Props) {
                       </div>
                       {active ? (
                         <div className="scc-framework-card__ring">
-                          <CircularScore value={passRate} size={72} stroke={6} color={color} track={isDark ? 'rgba(148,163,184,0.15)' : 'rgba(15,23,42,0.08)'} />
+                          <CircularScore value={passRate} size={72} stroke={6} color={color} />
                         </div>
                       ) : (
                         <div className="scc-framework-card__unmapped">
@@ -509,7 +500,7 @@ export default function CompliancePage({ run, settings }: Props) {
                       <>
                         <div className="scc-framework-card__progress">
                           <div className="scc-framework-card__progress-bar">
-                            <span style={{ width: `${passRate}%`, background: color, boxShadow: `0 0 10px ${scoreGlow(passRate, isDark)}` }} />
+                            <span style={{ width: `${passRate}%`, background: color, boxShadow: `0 0 10px ${scoreGlow(passRate)}` }} />
                           </div>
                           <div className="scc-framework-card__progress-labels">
                             <span className="scc-fw-stat scc-fw-stat--pass"><CheckIcon /> {passCount} {t('compliance.passLabel')}</span>
@@ -581,13 +572,15 @@ const securityCommandCenterCss = `
   justify-content: space-between;
   gap: 1.5rem;
   background:
-    radial-gradient(circle at 20% 50%, rgba(0,148,255,0.12) 0%, transparent 40%),
-    radial-gradient(circle at 80% 20%, rgba(255,42,109,0.08) 0%, transparent 35%),
+    radial-gradient(circle at 20% 50%, color-mix(in srgb, var(--waf-brand) 12%, transparent) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--fail) 8%, transparent) 0%, transparent 35%),
     linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
-  border: 1px solid rgba(56,189,248,0.25);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 22%, transparent);
   border-radius: 20px;
   padding: 1.5rem 1.75rem;
-  box-shadow: 0 0 40px rgba(0,148,255,0.10), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow:
+    0 0 40px color-mix(in srgb, var(--waf-brand) 8%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
   flex-wrap: wrap;
   position: relative;
   overflow: hidden;
@@ -599,7 +592,7 @@ const securityCommandCenterCss = `
     0deg,
     transparent,
     transparent 3px,
-    rgba(0,0,0,0.12) 4px
+    color-mix(in srgb, var(--text) 8%, transparent) 4px
   );
   pointer-events: none;
   opacity: 0.35;
@@ -614,18 +607,18 @@ const securityCommandCenterCss = `
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255,42,109,0.15);
-  border: 1px solid rgba(255,42,109,0.35);
+  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent);
   border-radius: 4px;
   padding: 0.35rem 0.75rem;
   font-size: 0.65rem;
   font-weight: 800;
-  color: #ff2a6d;
+  color: var(--waf-brand);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   margin-bottom: 0.85rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  box-shadow: 0 0 12px rgba(255,42,109,0.20);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 16%, transparent);
 }
 .scc-hero__title {
   margin: 0;
@@ -667,29 +660,6 @@ const securityCommandCenterCss = `
   font-weight: 700;
   letter-spacing: 0.08em;
 }
-[data-scc-theme="light"] .scc-hero {
-  background:
-    radial-gradient(circle at 20% 50%, rgba(0,148,255,0.08) 0%, transparent 40%),
-    radial-gradient(circle at 80% 20%, rgba(220,38,38,0.05) 0%, transparent 35%),
-    linear-gradient(135deg, rgba(241,245,249,0.95) 0%, rgba(255,255,255,0.98) 100%);
-  border: 1px solid rgba(0,148,255,0.22);
-  box-shadow: 0 0 40px rgba(0,148,255,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
-}
-[data-scc-theme="light"] .scc-hero__badge {
-  background: rgba(220,38,38,0.08);
-  border: 1px solid rgba(220,38,38,0.25);
-  color: #dc2626;
-  box-shadow: 0 0 12px rgba(220,38,38,0.12);
-}
-[data-scc-theme="light"] .scc-hero__title {
-  color: var(--text);
-}
-[data-scc-theme="light"] .scc-hero__subtitle {
-  color: var(--muted);
-}
-[data-scc-theme="light"] .scc-hero__score-unit {
-  color: var(--muted);
-}
 
 /* Score ring */
 .scc-ring {
@@ -715,9 +685,6 @@ const securityCommandCenterCss = `
   font-weight: 700;
   letter-spacing: 0.06em;
 }
-[data-scc-theme="light"] .scc-ring__unit {
-  color: var(--muted);
-}
 
 /* Status bar */
 .scc-statusbar {
@@ -726,7 +693,7 @@ const securityCommandCenterCss = `
   justify-content: space-between;
   gap: 1rem;
   background: var(--bg);
-  border: 1px solid rgba(56,189,248,0.18);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 16%, transparent);
   border-radius: 12px;
   padding: 0.75rem 1rem;
   flex-wrap: wrap;
@@ -735,7 +702,7 @@ const securityCommandCenterCss = `
 .scc-statusbar__line {
   flex: 1;
   height: 2px;
-  background: linear-gradient(90deg, rgba(56,189,248,0.6), transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--waf-brand) 55%, transparent), transparent);
   min-width: 60px;
 }
 .scc-statusbar__badge {
@@ -750,24 +717,24 @@ const securityCommandCenterCss = `
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .scc-statusbar__badge--armed {
-  background: rgba(0,255,157,0.12);
-  border: 1px solid rgba(0,255,157,0.35);
-  color: #00ff9d;
+  background: color-mix(in srgb, var(--pass) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pass) 30%, transparent);
+  color: var(--pass);
 }
 .scc-statusbar__badge--warn {
-  background: rgba(251,191,36,0.12);
-  border: 1px solid rgba(251,191,36,0.35);
-  color: #fbbf24;
+  background: color-mix(in srgb, var(--score-mid) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--score-mid) 30%, transparent);
+  color: var(--score-mid);
 }
 .scc-statusbar__badge--alert {
-  background: rgba(255,42,109,0.15);
-  border: 1px solid rgba(255,42,109,0.4);
-  color: #ff2a6d;
+  background: color-mix(in srgb, var(--fail) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fail) 35%, transparent);
+  color: var(--fail);
   animation: sccPulseAlert 1.8s infinite;
 }
 @keyframes sccPulseAlert {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,42,109,0.35); }
-  50% { box-shadow: 0 0 12px 3px rgba(255,42,109,0.15); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--fail) 30%, transparent); }
+  50% { box-shadow: 0 0 12px 3px color-mix(in srgb, var(--fail) 12%, transparent); }
 }
 .scc-statusbar__pulse {
   width: 8px;
@@ -802,28 +769,6 @@ const securityCommandCenterCss = `
   font-weight: 800;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-[data-scc-theme="light"] .scc-statusbar {
-  background: rgba(255,255,255,0.7);
-  border: 1px solid rgba(0,148,255,0.18);
-}
-[data-scc-theme="light"] .scc-statusbar__badge--armed {
-  background: rgba(34,197,94,0.1);
-  border: 1px solid rgba(34,197,94,0.3);
-  color: #059669;
-}
-[data-scc-theme="light"] .scc-statusbar__badge--warn {
-  background: rgba(234,179,8,0.1);
-  border: 1px solid rgba(234,179,8,0.3);
-  color: #b45309;
-}
-[data-scc-theme="light"] .scc-statusbar__badge--alert {
-  background: rgba(220,38,38,0.1);
-  border: 1px solid rgba(220,38,38,0.3);
-  color: #dc2626;
-}
-[data-scc-theme="light"] .scc-statusbar__label {
-  color: var(--muted);
-}
 
 /* KPI grid */
 .scc-kpi-grid {
@@ -833,7 +778,7 @@ const securityCommandCenterCss = `
 }
 .scc-kpi {
   background: var(--surface);
-  border: 1px solid rgba(56,189,248,0.15);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 12%, transparent);
   border-radius: 14px;
   padding: 1.1rem;
   display: flex;
@@ -845,7 +790,7 @@ const securityCommandCenterCss = `
 }
 .scc-kpi:hover {
   transform: translateY(-2px);
-  border-color: rgba(56,189,248,0.35);
+  border-color: color-mix(in srgb, var(--waf-brand) 28%, transparent);
 }
 .scc-kpi::before {
   content: '';
@@ -855,10 +800,10 @@ const securityCommandCenterCss = `
   width: 100%;
   height: 2px;
 }
-.scc-kpi--pass::before { background: #00ff9d; box-shadow: 0 0 12px #00ff9d; }
-.scc-kpi--fail::before { background: #ff2a6d; box-shadow: 0 0 12px #ff2a6d; }
-.scc-kpi--crit::before { background: #ff2a6d; box-shadow: 0 0 12px #ff2a6d; }
-.scc-kpi--frameworks::before { background: #38bdf8; box-shadow: 0 0 12px #38bdf8; }
+.scc-kpi--pass::before { background: var(--pass); box-shadow: 0 0 12px color-mix(in srgb, var(--pass) 30%, transparent); }
+.scc-kpi--fail::before { background: var(--fail); box-shadow: 0 0 12px color-mix(in srgb, var(--fail) 30%, transparent); }
+.scc-kpi--crit::before { background: var(--fail); box-shadow: 0 0 12px color-mix(in srgb, var(--fail) 30%, transparent); }
+.scc-kpi--frameworks::before { background: var(--waf-brand); box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 30%, transparent); }
 .scc-kpi__label {
   font-size: 0.6rem;
   color: var(--muted);
@@ -871,27 +816,12 @@ const securityCommandCenterCss = `
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   line-height: 1;
 }
-[data-scc-theme="light"] .scc-kpi {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(0,148,255,0.18);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
-}
-[data-scc-theme="light"] .scc-kpi:hover {
-  border-color: rgba(0,148,255,0.35);
-}
-[data-scc-theme="light"] .scc-kpi--pass::before { background: #059669; box-shadow: 0 0 12px rgba(5,150,105,0.45); }
-[data-scc-theme="light"] .scc-kpi--fail::before { background: #dc2626; box-shadow: 0 0 12px rgba(220,38,38,0.45); }
-[data-scc-theme="light"] .scc-kpi--crit::before { background: #dc2626; box-shadow: 0 0 12px rgba(220,38,38,0.45); }
-[data-scc-theme="light"] .scc-kpi--frameworks::before { background: #0284c7; box-shadow: 0 0 12px rgba(2,132,199,0.45); }
-[data-scc-theme="light"] .scc-kpi__label {
-  color: var(--muted);
-}
 
 /* Tabs */
 .scc-tabs {
   display: inline-flex;
   background: var(--surface-el);
-  border: 1px solid rgba(56,189,248,0.18);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   border-radius: 10px;
   padding: 0.3rem;
   gap: 0.25rem;
@@ -914,52 +844,32 @@ const securityCommandCenterCss = `
 }
 .scc-tab:hover {
   color: var(--text);
-  background: rgba(56,189,248,0.08);
+  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
 }
 .scc-tab--active {
-  background: rgba(56,189,248,0.18);
-  color: #38bdf8;
-  box-shadow: 0 0 16px rgba(56,189,248,0.20);
+  background: color-mix(in srgb, var(--waf-brand) 15%, transparent);
+  color: var(--waf-brand);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--waf-brand) 15%, transparent);
 }
 .scc-tab--active:hover {
-  background: rgba(56,189,248,0.22);
-  color: #38bdf8;
+  background: color-mix(in srgb, var(--waf-brand) 20%, transparent);
+  color: var(--waf-brand);
 }
 .scc-tab__icon {
   opacity: 0.85;
-}
-[data-scc-theme="light"] .scc-tabs {
-  background: rgba(241,245,249,0.85);
-  border: 1px solid rgba(0,148,255,0.18);
-}
-[data-scc-theme="light"] .scc-tab {
-  color: var(--muted);
-}
-[data-scc-theme="light"] .scc-tab:hover {
-  color: var(--text);
-  background: rgba(0,148,255,0.08);
-}
-[data-scc-theme="light"] .scc-tab--active {
-  background: rgba(0,148,255,0.15);
-  color: #0284c7;
-  box-shadow: 0 0 16px rgba(0,148,255,0.15);
-}
-[data-scc-theme="light"] .scc-tab--active:hover {
-  background: rgba(0,148,255,0.2);
-  color: #0284c7;
 }
 
 /* Cards */
 .scc-card {
   background: var(--surface);
-  border: 1px solid rgba(56,189,248,0.12);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   backdrop-filter: blur(8px);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  box-shadow: var(--shadow-md);
 }
 .scc-card__header {
   display: flex;
@@ -984,20 +894,6 @@ const securityCommandCenterCss = `
   color: var(--muted);
   font-size: 0.85rem;
 }
-[data-scc-theme="light"] .scc-card {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(0,148,255,0.18);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
-}
-[data-scc-theme="light"] .scc-card__title {
-  color: var(--text);
-}
-[data-scc-theme="light"] .scc-card__subtitle {
-  color: var(--muted);
-}
-[data-scc-theme="light"] .scc-empty {
-  color: var(--muted);
-}
 
 /* Pillar tab */
 .scc-pillar-view {
@@ -1012,7 +908,7 @@ const securityCommandCenterCss = `
 }
 .scc-pillar-card {
   background: var(--surface);
-  border: 1px solid rgba(56,189,248,0.12);
+  border: 1px solid var(--border);
   border-top: 2px solid var(--pillar-color);
   border-radius: 14px;
   padding: 1.1rem;
@@ -1021,19 +917,14 @@ const securityCommandCenterCss = `
   gap: 0.75rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   backdrop-filter: blur(6px);
-}
-[data-scc-theme="light"] .scc-pillar-card {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(0,148,255,0.18);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  box-shadow: var(--shadow-sm);
 }
 .scc-pillar-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 24px rgba(56,189,248,0.08);
+  box-shadow:
+    0 8px 32px color-mix(in srgb, var(--text) 8%, transparent),
+    0 0 24px color-mix(in srgb, var(--pillar-color) 8%, transparent);
   border-color: var(--pillar-color);
-}
-[data-scc-theme="light"] .scc-pillar-card:hover {
-  box-shadow: 0 8px 24px rgba(15,23,42,0.12), 0 0 16px rgba(0,148,255,0.10);
 }
 .scc-pillar-card__top {
   display: flex;
@@ -1045,15 +936,11 @@ const securityCommandCenterCss = `
   height: 38px;
   border-radius: 10px;
   background: var(--bg);
-  border: 1px solid rgba(148,163,184,0.2);
+  border: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 12px var(--pillar-color, transparent);
-}
-[data-scc-theme="light"] .scc-pillar-card__icon {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(15,23,42,0.1);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--pillar-color) 25%, transparent);
 }
 .scc-pillar-card__name {
   font-size: 0.85rem;
@@ -1061,9 +948,6 @@ const securityCommandCenterCss = `
   color: var(--text);
   text-transform: capitalize;
   letter-spacing: 0.02em;
-}
-[data-scc-theme="light"] .scc-pillar-card__name {
-  color: var(--text);
 }
 .scc-pillar-card__counts {
   display: flex;
@@ -1080,22 +964,15 @@ const securityCommandCenterCss = `
   font-weight: 700;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-.scc-pill--pass { background: rgba(0,255,157,0.12); color: #00ff9d; border: 1px solid rgba(0,255,157,0.25); }
-.scc-pill--fail { background: rgba(255,42,109,0.12); color: #ff2a6d; border: 1px solid rgba(255,42,109,0.25); }
-.scc-pill--waived { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
-.scc-pill--total { background: var(--bg); color: var(--muted); border: 1px solid rgba(148,163,184,0.15); margin-left: auto; }
-[data-scc-theme="light"] .scc-pill--pass { background: rgba(34,197,94,0.12); color: #059669; border: 1px solid rgba(34,197,94,0.3); }
-[data-scc-theme="light"] .scc-pill--fail { background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.25); }
-[data-scc-theme="light"] .scc-pill--waived { background: rgba(139,92,246,0.1); color: #7c3aed; border: 1px solid rgba(139,92,246,0.25); }
-[data-scc-theme="light"] .scc-pill--total { background: rgba(241,245,249,0.8); color: var(--muted); border: 1px solid rgba(15,23,42,0.1); }
+.scc-pill--pass { background: color-mix(in srgb, var(--pass) 12%, transparent); color: var(--pass); border: 1px solid color-mix(in srgb, var(--pass) 22%, transparent); }
+.scc-pill--fail { background: color-mix(in srgb, var(--fail) 12%, transparent); color: var(--fail); border: 1px solid color-mix(in srgb, var(--fail) 22%, transparent); }
+.scc-pill--waived { background: color-mix(in srgb, var(--waived) 12%, transparent); color: var(--waived); border: 1px solid color-mix(in srgb, var(--waived) 22%, transparent); }
+.scc-pill--total { background: var(--bg); color: var(--muted); border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent); margin-left: auto; }
 .scc-pillar-card__bar {
   height: 4px;
-  background: rgba(148,163,184,0.12);
+  background: var(--track);
   border-radius: 999px;
   overflow: hidden;
-}
-[data-scc-theme="light"] .scc-pillar-card__bar {
-  background: rgba(15,23,42,0.08);
 }
 .scc-pillar-card__bar span {
   display: block;
@@ -1118,20 +995,12 @@ const securityCommandCenterCss = `
   padding: 0.7rem 0.9rem;
   border-radius: 10px;
   background: var(--bg);
-  border: 1px solid rgba(56,189,248,0.08);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 8%, transparent);
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-[data-scc-theme="light"] .scc-heatmap__row {
-  background: rgba(241,245,249,0.6);
-  border: 1px solid rgba(0,148,255,0.1);
-}
 .scc-heatmap__row:hover {
-  background: rgba(56,189,248,0.05);
-  border-color: rgba(56,189,248,0.2);
-}
-[data-scc-theme="light"] .scc-heatmap__row:hover {
-  background: rgba(0,148,255,0.05);
-  border-color: rgba(0,148,255,0.22);
+  background: color-mix(in srgb, var(--waf-brand) 5%, transparent);
+  border-color: color-mix(in srgb, var(--waf-brand) 18%, transparent);
 }
 .scc-heatmap__pillar {
   display: flex;
@@ -1141,9 +1010,6 @@ const securityCommandCenterCss = `
   font-weight: 700;
   color: var(--text);
   text-transform: capitalize;
-}
-[data-scc-theme="light"] .scc-heatmap__pillar {
-  color: var(--text);
 }
 .scc-heatmap__dot {
   width: 10px;
@@ -1160,12 +1026,9 @@ const securityCommandCenterCss = `
 .scc-heatmap__bar-bg {
   flex: 1;
   height: 5px;
-  background: rgba(148,163,184,0.12);
+  background: var(--track);
   border-radius: 999px;
   overflow: hidden;
-}
-[data-scc-theme="light"] .scc-heatmap__bar-bg {
-  background: rgba(15,23,42,0.08);
 }
 .scc-heatmap__bar-fg {
   height: 100%;
@@ -1189,27 +1052,17 @@ const securityCommandCenterCss = `
   padding: 0.25rem 0.45rem;
   border-radius: 4px;
   background: var(--bg);
-  border: 1px solid rgba(148,163,184,0.12);
+  border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent);
   font-size: 0.6rem;
   font-weight: 700;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-[data-scc-theme="light"] .scc-sev-chip {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(15,23,42,0.08);
-  color: var(--muted);
-}
 .scc-sev-chip--active {
   background: color-mix(in srgb, var(--sev-color) 14%, transparent);
   border-color: color-mix(in srgb, var(--sev-color) 45%, transparent);
   color: var(--sev-color);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--sev-color) 25%, transparent);
-}
-[data-scc-theme="light"] .scc-sev-chip--active {
-  background: color-mix(in srgb, var(--sev-color) 10%, transparent);
-  border-color: color-mix(in srgb, var(--sev-color) 40%, transparent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--sev-color) 15%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--sev-color) 22%, transparent);
 }
 .scc-sev-chip__label {
   opacity: 0.8;
@@ -1221,9 +1074,6 @@ const securityCommandCenterCss = `
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-[data-scc-theme="light"] .scc-heatmap__total {
-  color: var(--muted);
-}
 
 /* Frameworks tab */
 .scc-framework-view {
@@ -1233,18 +1083,14 @@ const securityCommandCenterCss = `
 }
 .scc-filter-bar {
   background: var(--surface);
-  border: 1px solid rgba(56,189,248,0.12);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 1rem 1.2rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
   backdrop-filter: blur(8px);
-}
-[data-scc-theme="light"] .scc-filter-bar {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(0,148,255,0.18);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  box-shadow: var(--shadow-sm);
 }
 .scc-filter-bar__top {
   display: flex;
@@ -1259,21 +1105,10 @@ const securityCommandCenterCss = `
   gap: 0.5rem;
   padding: 0.5rem 0.8rem;
   border-radius: 10px;
-  border: 1px solid rgba(56,189,248,0.18);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
-  color: #38bdf8;
+  color: var(--waf-brand);
   min-width: 0;
-}
-[data-scc-theme="light"] .scc-search {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(0,148,255,0.18);
-  color: #0284c7;
-}
-[data-scc-theme="light"] .scc-search input {
-  color: var(--text);
-}
-[data-scc-theme="light"] .scc-search input::placeholder {
-  color: var(--muted);
 }
 .scc-search input {
   flex: 1;
@@ -1290,17 +1125,12 @@ const securityCommandCenterCss = `
 .scc-select {
   padding: 0.5rem 0.75rem;
   border-radius: 10px;
-  border: 1px solid rgba(56,189,248,0.18);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
   color: var(--text);
   font-size: 0.82rem;
   cursor: pointer;
   outline: none;
-}
-[data-scc-theme="light"] .scc-select {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(0,148,255,0.18);
-  color: var(--text);
 }
 .scc-filter-actions {
   display: flex;
@@ -1309,7 +1139,7 @@ const securityCommandCenterCss = `
 .scc-btn-ghost {
   padding: 0.45rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(56,189,248,0.18);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
   color: var(--muted);
   font-size: 0.72rem;
@@ -1317,20 +1147,10 @@ const securityCommandCenterCss = `
   cursor: pointer;
   transition: all 0.15s ease;
 }
-[data-scc-theme="light"] .scc-btn-ghost {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(0,148,255,0.18);
-  color: var(--muted);
-}
-[data-scc-theme="light"] .scc-btn-ghost:hover {
-  color: var(--text);
-  border-color: rgba(0,148,255,0.4);
-  background: rgba(0,148,255,0.08);
-}
 .scc-btn-ghost:hover {
   color: var(--text);
-  border-color: rgba(56,189,248,0.4);
-  background: rgba(56,189,248,0.08);
+  border-color: color-mix(in srgb, var(--waf-brand) 30%, transparent);
+  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
 }
 .scc-country-chips {
   display: flex;
@@ -1343,7 +1163,7 @@ const securityCommandCenterCss = `
   gap: 0.35rem;
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid rgba(56,189,248,0.12);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 12%, transparent);
   background: var(--bg);
   color: var(--muted);
   font-size: 0.72rem;
@@ -1351,30 +1171,15 @@ const securityCommandCenterCss = `
   cursor: pointer;
   transition: all 0.15s ease;
 }
-[data-scc-theme="light"] .scc-country-chip {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(0,148,255,0.15);
-  color: var(--muted);
-}
 .scc-country-chip:hover {
-  border-color: rgba(56,189,248,0.3);
-  color: var(--text);
-}
-[data-scc-theme="light"] .scc-country-chip:hover {
-  border-color: rgba(0,148,255,0.3);
+  border-color: color-mix(in srgb, var(--waf-brand) 25%, transparent);
   color: var(--text);
 }
 .scc-country-chip--active {
-  border-color: rgba(56,189,248,0.45);
-  background: rgba(56,189,248,0.12);
-  color: #38bdf8;
-  box-shadow: 0 0 12px rgba(56,189,248,0.12);
-}
-[data-scc-theme="light"] .scc-country-chip--active {
-  border-color: rgba(0,148,255,0.45);
-  background: rgba(0,148,255,0.12);
-  color: #0284c7;
-  box-shadow: 0 0 12px rgba(0,148,255,0.12);
+  border-color: color-mix(in srgb, var(--waf-brand) 40%, transparent);
+  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
+  color: var(--waf-brand);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 12%, transparent);
 }
 .scc-country-chip__flag {
   font-size: 1rem;
@@ -1382,7 +1187,7 @@ const securityCommandCenterCss = `
 }
 .scc-country-chip__check {
   display: inline-flex;
-  color: #38bdf8;
+  color: var(--waf-brand);
 }
 
 .scc-framework-grid {
@@ -1392,7 +1197,7 @@ const securityCommandCenterCss = `
 }
 .scc-framework-card {
   background: var(--surface);
-  border: 1px solid rgba(56,189,248,0.12);
+  border: 1px solid var(--border);
   border-left: 3px solid var(--fw-color);
   border-radius: 14px;
   padding: 1.1rem;
@@ -1401,19 +1206,14 @@ const securityCommandCenterCss = `
   gap: 0.9rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   backdrop-filter: blur(6px);
-}
-[data-scc-theme="light"] .scc-framework-card {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(0,148,255,0.18);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  box-shadow: var(--shadow-sm);
 }
 .scc-framework-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 24px color-mix(in srgb, var(--fw-color) 12%, transparent);
+  box-shadow:
+    0 8px 32px color-mix(in srgb, var(--text) 8%, transparent),
+    0 0 24px color-mix(in srgb, var(--fw-color) 10%, transparent);
   border-color: var(--fw-color);
-}
-[data-scc-theme="light"] .scc-framework-card:hover {
-  box-shadow: 0 8px 24px rgba(15,23,42,0.12), 0 0 16px color-mix(in srgb, var(--fw-color) 10%, transparent);
 }
 .scc-framework-card__header {
   display: flex;
@@ -1437,14 +1237,8 @@ const securityCommandCenterCss = `
   font-weight: 700;
   color: var(--text);
 }
-[data-scc-theme="light"] .scc-framework-card__title {
-  color: var(--text);
-}
 .scc-framework-card__desc {
   font-size: 0.7rem;
-  color: var(--muted);
-}
-[data-scc-theme="light"] .scc-framework-card__desc {
   color: var(--muted);
 }
 .scc-framework-card__country {
@@ -1453,18 +1247,13 @@ const securityCommandCenterCss = `
   padding: 0.12rem 0.45rem;
   border-radius: 4px;
   background: var(--bg);
-  border: 1px solid rgba(148,163,184,0.12);
+  border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent);
   color: var(--muted);
   font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-top: 0.25rem;
-}
-[data-scc-theme="light"] .scc-framework-card__country {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(15,23,42,0.1);
-  color: var(--muted);
 }
 .scc-framework-card__ring {
   flex-shrink: 0;
@@ -1486,12 +1275,9 @@ const securityCommandCenterCss = `
 }
 .scc-framework-card__progress-bar {
   height: 5px;
-  background: rgba(148,163,184,0.12);
+  background: var(--track);
   border-radius: 999px;
   overflow: hidden;
-}
-[data-scc-theme="light"] .scc-framework-card__progress-bar {
-  background: rgba(15,23,42,0.08);
 }
 .scc-framework-card__progress-bar span {
   display: block;
@@ -1512,12 +1298,9 @@ const securityCommandCenterCss = `
   font-weight: 700;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-.scc-fw-stat--pass { color: #00ff9d; }
-.scc-fw-stat--fail { color: #ff2a6d; }
+.scc-fw-stat--pass { color: var(--pass); }
+.scc-fw-stat--fail { color: var(--fail); }
 .scc-fw-stat--total { color: var(--muted); margin-left: auto; }
-[data-scc-theme="light"] .scc-fw-stat--pass { color: #059669; }
-[data-scc-theme="light"] .scc-fw-stat--fail { color: #dc2626; }
-[data-scc-theme="light"] .scc-fw-stat--total { color: var(--muted); }
 .scc-framework-card__controls {
   display: flex;
   flex-wrap: wrap;
@@ -1537,7 +1320,7 @@ const securityCommandCenterCss = `
 }
 .scc-control-chip:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--ctrl-color) 20%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--ctrl-color) 18%, transparent);
 }
 .scc-control-chip__id {
   display: inline-flex;
@@ -1560,23 +1343,9 @@ const securityCommandCenterCss = `
 .scc-control-chip--more {
   align-self: center;
   background: var(--bg);
-  border-color: rgba(148,163,184,0.12);
+  border-color: color-mix(in srgb, var(--muted) 12%, transparent);
   color: var(--muted);
   font-weight: 700;
-}
-[data-scc-theme="light"] .scc-control-chip {
-  background: rgba(241,245,249,0.85);
-}
-[data-scc-theme="light"] .scc-control-chip__id {
-  color: var(--text);
-}
-[data-scc-theme="light"] .scc-control-chip__mapping {
-  color: var(--muted);
-}
-[data-scc-theme="light"] .scc-control-chip--more {
-  background: rgba(241,245,249,0.8);
-  border-color: rgba(15,23,42,0.1);
-  color: var(--muted);
 }
 .scc-framework-card__hint {
   font-size: 0.72rem;
@@ -1585,13 +1354,6 @@ const securityCommandCenterCss = `
   padding: 0.5rem;
   background: var(--bg);
   border-radius: 8px;
-}
-[data-scc-theme="light"] .scc-framework-card__unmapped {
-  color: var(--muted);
-}
-[data-scc-theme="light"] .scc-framework-card__hint {
-  color: var(--muted);
-  background: rgba(241,245,249,0.8);
 }
 
 @media (max-width: 900px) {

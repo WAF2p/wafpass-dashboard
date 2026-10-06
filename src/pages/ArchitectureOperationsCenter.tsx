@@ -18,7 +18,7 @@ function extractModulePath(resource: string): string {
   return segs.length > 0 ? segs.join('.') : '(root)'
 }
 const SEV_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-const SEV_COLORS: Record<string, string> = { CRITICAL: '#DA2C38', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e' }
+const SEV_COLORS: Record<string, string> = { CRITICAL: 'var(--fail)', HIGH: 'var(--waf-warn)', MEDIUM: 'var(--score-mid)', LOW: 'var(--pass)' }
 
 type PillarStat = { pillar: string; fail: number; pass: number; score: number }
 
@@ -111,7 +111,7 @@ export default function ArchitectureOperationsCenter({
       onMouseEnter={(e) => {
         if (disabled) return
         e.currentTarget.style.borderColor = color
-        e.currentTarget.style.background = `${color}10`
+        e.currentTarget.style.background = `color-mix(in srgb, ${color} 6%, transparent)`
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = 'var(--border)'
@@ -132,7 +132,7 @@ export default function ArchitectureOperationsCenter({
         eyebrow="Operations Center"
         title={t('pages.architectureOps.title')}
         subtitle={t('pages.architectureOps.subtitle')}
-        accent="#8b5cf6"
+        accent="var(--waf-info)"
       >
         {run && (
           <div style={{ textAlign: 'right', minWidth: '160px' }}>
@@ -157,28 +157,28 @@ export default function ArchitectureOperationsCenter({
           label={t('pages.architectureOps.controlsLoaded')}
           value={controlsLoaded}
           sub={t('pages.dashboard.controlsLoaded', { count: controlsRun })}
-          color="#0094ff"
+          color="var(--waf-brand)"
           icon="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
         />
         <KpiCard
           label={t('pages.architectureOps.failingModules')}
           value={failingModules}
           sub={t('pages.moduleScore.modulesWithFailures')}
-          color="#DA2C38"
+          color="var(--fail)"
           icon="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
         />
         <KpiCard
           label={t('pages.architectureOps.criticalFindings')}
           value={criticalCount}
           sub={t('pages.dashboard.critHigh')}
-          color="#f97316"
+          color="var(--waf-warn)"
           icon="M13 10V3L4 14h7v7l9-11h-7z"
         />
         <KpiCard
           label={t('pages.architectureOps.attackPaths')}
           value={12}
           sub={t('pages.exploitPaths.criticalPathsSub')}
-          color="#8b5cf6"
+          color="var(--waf-info)"
           icon="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
           demo
         />
@@ -223,7 +223,7 @@ export default function ArchitectureOperationsCenter({
                         <div style={{ height: '6px', background: 'var(--bg)', borderRadius: '999px', overflow: 'hidden' }}>
                           <div style={{ width: `${p.score}%`, height: '100%', background: scoreColor(p.score), borderRadius: '999px' }} />
                         </div>
-                        <div style={{ fontSize: '0.6rem', color: isHealthy ? '#059669' : '#d97706', fontWeight: 700 }}>
+                        <div style={{ fontSize: '0.6rem', color: isHealthy ? 'var(--score-high)' : 'var(--waf-warn)', fontWeight: 700 }}>
                           {isHealthy ? t('common.health') : t('common.needsAttention')}
                         </div>
                       </div>
@@ -267,13 +267,13 @@ export default function ArchitectureOperationsCenter({
             <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '0.25rem' }}>
               {t('common.view')}
             </div>
-            {linkCard('catalogue', t('nav.items.catalogue'), 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', '#0094ff')}
-            {linkCard('exploitpath', t('nav.items.exploitpath'), 'M13 10V3L4 14h7v7l9-11h-7z', '#DA2C38', !run)}
-            {linkCard('blastradius', t('nav.items.blastradius'), 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z', '#8b5cf6', !run)}
-            {linkCard('depgraph', t('nav.items.depgraph'), 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7', '#f97316', !run)}
-            {linkCard('modules', t('nav.items.modules'), 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', '#22c55e', !run)}
-            {linkCard('sandbox', t('nav.items.sandbox'), 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', '#d97706')}
-            {linkCard('reference', t('nav.items.reference'), 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', '#14b8a6')}
+            {linkCard('catalogue', t('nav.items.catalogue'), 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', 'var(--waf-brand)')}
+            {linkCard('exploitpath', t('nav.items.exploitpath'), 'M13 10V3L4 14h7v7l9-11h-7z', 'var(--fail)', !run)}
+            {linkCard('blastradius', t('nav.items.blastradius'), 'M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z', 'var(--waived)', !run)}
+            {linkCard('depgraph', t('nav.items.depgraph'), 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-10l6-3m0 13l5.447-2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7', 'var(--waived)', !run)}
+            {linkCard('modules', t('nav.items.modules'), 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', 'var(--pass)', !run)}
+            {linkCard('sandbox', t('nav.items.sandbox'), 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', 'var(--waf-warn)')}
+            {linkCard('reference', t('nav.items.reference'), 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', 'var(--score-high)')}
           </RightRail>
         </TwoColumnGrid>
       )}

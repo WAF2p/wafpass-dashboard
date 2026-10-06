@@ -6,8 +6,13 @@ import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCa
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 const SEV_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-const SEV_COLORS: Record<string, string> = { CRITICAL: '#DA2C38', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e' }
-const SEV_BG: Record<string, string> = { CRITICAL: '#DA2C3822', HIGH: '#f9731622', MEDIUM: '#eab30822', LOW: '#22c55e22' }
+const SEV_COLORS: Record<string, string> = { CRITICAL: 'var(--fail)', HIGH: 'var(--waf-warn)', MEDIUM: 'var(--score-mid)', LOW: 'var(--pass)' }
+const SEV_BG: Record<string, string> = {
+  CRITICAL: 'color-mix(in srgb, var(--fail) 13%, transparent)',
+  HIGH: 'color-mix(in srgb, var(--waf-warn) 13%, transparent)',
+  MEDIUM: 'color-mix(in srgb, var(--score-mid) 13%, transparent)',
+  LOW: 'color-mix(in srgb, var(--pass) 13%, transparent)',
+}
 
 function extractModulePath(resource: string): string {
   if (!resource?.trim()) return '(root)'
@@ -119,7 +124,7 @@ export default function EngineeringOperationsCenter({
       onMouseEnter={(e) => {
         if (disabled) return
         e.currentTarget.style.borderColor = color
-        e.currentTarget.style.background = `${color}10`
+        e.currentTarget.style.background = `color-mix(in srgb, ${color} 6%, transparent)`
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = 'var(--border)'
@@ -140,7 +145,7 @@ export default function EngineeringOperationsCenter({
         eyebrow="Operations Center"
         title={t('pages.engineeringOps.title')}
         subtitle={t('pages.engineeringOps.subtitle')}
-        accent="#22c55e"
+        accent="var(--pass)"
       >
         {run && (
           <div style={{ textAlign: 'right', minWidth: '160px' }}>
@@ -152,7 +157,7 @@ export default function EngineeringOperationsCenter({
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
             </div>
             {scoreDelta !== null && (
-              <div style={{ fontSize: '0.72rem', color: scoreDelta >= 0 ? '#059669' : '#DA2C38' }}>
+              <div style={{ fontSize: '0.72rem', color: scoreDelta >= 0 ? 'var(--score-high)' : 'var(--fail)' }}>
                 {scoreDelta >= 0 ? '+' : ''}{scoreDelta} {t('pages.changes.scoreDelta')}
               </div>
             )}
@@ -170,28 +175,28 @@ export default function EngineeringOperationsCenter({
           label={t('pages.engineeringOps.openFindings')}
           value={failed.length}
           sub={t('pages.dashboard.failedControls')}
-          color="#DA2C38"
+          color="var(--fail)"
           icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
         />
         <KpiCard
           label={t('pages.engineeringOps.secretHits')}
           value={secretHits}
           sub={t('pages.secretScan.secretsIssue')}
-          color="#f97316"
+          color="var(--waf-warn)"
           icon="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
         />
         <KpiCard
           label={t('pages.engineeringOps.planChanges')}
           value={planTotal}
           sub={t('pages.changes.infraChanges')}
-          color="#0094ff"
+          color="var(--waf-brand)"
           icon="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
         />
         <KpiCard
           label={t('pages.engineeringOps.sprintGain')}
           value={`+${sprintImpact.points}`}
           sub={t('pages.remediation.sprintImpact')}
-          color="#8b5cf6"
+          color="var(--waf-info)"
           icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
           demo
         />
@@ -272,7 +277,7 @@ export default function EngineeringOperationsCenter({
                       label={m.path}
                       count={m.count}
                       total={failed.length}
-                      color="#DA2C38"
+                      color="var(--fail)"
                       meta={`${m.resources} resources affected`}
                     />
                   ))}
@@ -285,10 +290,10 @@ export default function EngineeringOperationsCenter({
             <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '0.25rem' }}>
               {t('common.view')}
             </div>
-            {linkCard('findings', t('nav.items.findings'), 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', '#DA2C38', !run)}
-            {linkCard('remediation', t('nav.items.remediation'), 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', '#8b5cf6', !run)}
-            {linkCard('secrets', t('nav.items.secrets'), 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', '#f97316', !run)}
-            {linkCard('changes', t('nav.items.changes'), 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', '#0094ff', !run)}
+            {linkCard('findings', t('nav.items.findings'), 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', 'var(--fail)', !run)}
+            {linkCard('remediation', t('nav.items.remediation'), 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', 'var(--pass)', !run)}
+            {linkCard('secrets', t('nav.items.secrets'), 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', 'var(--waf-warn)', !run)}
+            {linkCard('changes', t('nav.items.changes'), 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', 'var(--waf-warn)', !run)}
           </RightRail>
         </TwoColumnGrid>
       )}

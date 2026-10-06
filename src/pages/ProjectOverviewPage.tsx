@@ -18,7 +18,28 @@ interface Props {
 // ── Maturity badge thresholds (score-based, independent of settings level) ────
 const MATURITY_THRESHOLDS: Record<number, number> = { 1: 0, 2: 40, 3: 60, 4: 75, 5: 90 }
 
-// ── Achievements ──────────────────────────────────────────────────────────────
+// ── Semantic color helpers ────────────────────────────────────────────────────
+
+function scoreColor(s: number) {
+  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
+}
+
+function alpha(color: string, opacity: number) {
+  return `color-mix(in srgb, ${color} ${Math.round(opacity * 100)}%, transparent)`
+}
+
+function maturityColor(level: number) {
+  const map: Record<number, string> = {
+    1: 'var(--score-mid)',
+    2: 'var(--waf-brand)',
+    3: 'var(--waf-info)',
+    4: 'var(--waived)',
+    5: 'var(--score-high)',
+  }
+  return map[level] ?? 'var(--waf-brand)'
+}
+
+// ── Achievements ────────────────────────────────────────────────────────────────
 
 type AchievementCategory = 'coverage' | 'quality' | 'consistency' | 'depth'
 
@@ -114,10 +135,10 @@ const ACHIEVEMENTS: Achievement[] = [
 ]
 
 const CATEGORY_COLOR: Record<AchievementCategory, string> = {
-  coverage:    '#0094FF',
-  quality:     '#22c55e',
-  consistency: '#f97316',
-  depth:       '#8b5cf6',
+  coverage:    'var(--waf-brand)',
+  quality:     'var(--score-high)',
+  consistency: 'var(--waf-warn)',
+  depth:       'var(--waived)',
 }
 const CATEGORY_LABEL: Record<AchievementCategory, string> = {
   coverage: 'Coverage', quality: 'Quality', consistency: 'Consistency', depth: 'Depth',
@@ -126,14 +147,14 @@ const CATEGORY_LABEL: Record<AchievementCategory, string> = {
 // ── Pillar metadata ───────────────────────────────────────────────────────────
 
 const PILLAR_META = [
-  { key: 'security',       label: 'Security',       color: '#DA2C38' },
-  { key: 'cost',           label: 'Cost',           color: '#0094FF' },
-  { key: 'operations',     label: 'Operations',     color: '#8b5cf6' },
-  { key: 'performance',    label: 'Performance',    color: '#f97316' },
-  { key: 'reliability',    label: 'Reliability',    color: '#22c55e' },
-  { key: 'sovereign',      label: 'Sovereignty',    color: '#eab308' },
-  { key: 'sustainability', label: 'Sustainability', color: '#14b8a6' },
-  { key: 'agentic',        label: 'Agentic',        color: '#ec4899' },
+  { key: 'security',       label: 'Security',       color: 'var(--fail)' },
+  { key: 'cost',           label: 'Cost',           color: 'var(--waf-brand)' },
+  { key: 'operations',     label: 'Operations',     color: 'var(--waived)' },
+  { key: 'performance',    label: 'Performance',    color: 'var(--waf-warn)' },
+  { key: 'reliability',    label: 'Reliability',    color: 'var(--pass)' },
+  { key: 'sovereign',      label: 'Sovereignty',    color: 'var(--waf-warn)' },
+  { key: 'sustainability', label: 'Sustainability', color: 'var(--score-high)' },
+  { key: 'agentic',        label: 'Agentic',        color: 'var(--waived)' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -144,7 +165,6 @@ function normalizePillarName(pillar: string): string {
   return pillar
 }
 
-function scoreColor(s: number) { return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38' }
 function fmt(iso: string) { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) }
 function fmtFull(iso: string) { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }
 
@@ -152,9 +172,9 @@ function fmtFull(iso: string) { return new Date(iso).toLocaleString(undefined, {
 // A proper hanging medal: bail ring + sunburst ring + layered circles + ornamental details.
 
 function MedalBadge({
-  levelNum, color, textColor, bg, earned,
+  levelNum, color, earned,
 }: {
-  levelNum: number; color: string; textColor: string; bg: string; earned: boolean
+  levelNum: number; color: string; earned: boolean
 }) {
   const cx = 50, cy = 70
 
@@ -175,8 +195,8 @@ function MedalBadge({
   const diaY = cy - 29
   const diamond = `${cx},${diaY - 4} ${cx + 3},${diaY} ${cx},${diaY + 4} ${cx - 3},${diaY}`
 
-  const fc = earned ? color : '#2d3d54'
-  const a = (v: number) => earned ? `${bg}${v})` : `rgba(15,25,42,${v})`
+  const paint = earned ? color : 'var(--muted)'
+  const a = (v: number) => alpha(paint, v)
 
   // Checkmark path (bottom-right of main ring, at r=38 and 315°)
   const checkX = +(cx + 27).toFixed(1)
@@ -193,37 +213,37 @@ function MedalBadge({
         {/* ── Bail (top attachment) ── */}
         {/* outer ring loop */}
         <circle cx={cx} cy="8" r="7"
-          fill="none" stroke={fc} strokeWidth="2.2" />
+          fill="none" stroke={paint} strokeWidth="2.2" />
         {/* inner hole */}
         <circle cx={cx} cy="8" r="3.5"
           fill={a(0.4)} />
         {/* vertical strap connecting bail to medal */}
         <rect x="44.5" y="13" width="11" height="18" rx="4"
-          fill={a(0.35)} stroke={fc} strokeWidth="1.6" />
+          fill={a(0.35)} stroke={paint} strokeWidth="1.6" />
 
         {/* ── Outer ambient glow (earned only) ── */}
         {earned && (
           <circle cx={cx} cy={cy} r="51"
-            fill={`${bg}0.06)`} />
+            fill={a(0.06)} />
         )}
 
         {/* ── Sunburst ring ── */}
         <polygon points={sunburst}
           fill={a(0.20)}
-          stroke={fc} strokeWidth="0.8"
+          stroke={paint} strokeWidth="0.8"
         />
 
         {/* ── Main medal ring ── */}
         <circle cx={cx} cy={cy} r="38"
           fill={a(0.24)}
-          stroke={fc} strokeWidth="2.8"
+          stroke={paint} strokeWidth="2.8"
         />
 
         {/* ── Decorative corner dots on ring ── */}
         {dots.map((d, i) => (
           <circle key={i}
             cx={+d.x.toFixed(1)} cy={+d.y.toFixed(1)} r="3.2"
-            fill={earned ? color : '#334155'}
+            fill={paint}
             opacity={earned ? 0.75 : 0.4}
           />
         ))}
@@ -231,25 +251,25 @@ function MedalBadge({
         {/* ── Inner content circle ── */}
         <circle cx={cx} cy={cy} r="29"
           fill={a(0.18)}
-          stroke={fc} strokeWidth="1.3" strokeOpacity="0.55"
+          stroke={paint} strokeWidth="1.3" strokeOpacity={0.55}
         />
 
         {/* ── Ornamental diamond tip at top of inner ring ── */}
         <polygon points={diamond}
-          fill={earned ? color : '#2d3d54'}
+          fill={paint}
           opacity={earned ? 0.65 : 0.35}
         />
 
         {/* ── Horizontal rule lines ── */}
         <line x1={cx - 17} y1={cy - 12} x2={cx + 17} y2={cy - 12}
-          stroke={fc} strokeWidth="1.1" strokeOpacity="0.5" />
+          stroke={paint} strokeWidth="1.1" strokeOpacity={0.5} />
         <line x1={cx - 17} y1={cy + 18} x2={cx + 17} y2={cy + 18}
-          stroke={fc} strokeWidth="1.1" strokeOpacity="0.5" />
+          stroke={paint} strokeWidth="1.1" strokeOpacity={0.5} />
 
         {/* ── Level number ── */}
         <text x={cx} y={cy + 4}
           textAnchor="middle" dominantBaseline="central"
-          fill={earned ? textColor : '#475569'}
+          fill={earned ? '#fff' : 'var(--muted)'}
           fontSize="24" fontWeight="900"
           fontFamily="system-ui,-apple-system,sans-serif"
         >
@@ -270,10 +290,10 @@ function MedalBadge({
         {/* ── Locked padlock (bottom-right of main ring) ── */}
         {!earned && (
           <g transform={`translate(${checkX},${checkY})`}>
-            <circle r="9.5" fill="rgba(12,22,40,0.85)" stroke="#2d3d54" strokeWidth="1.8" />
-            <rect x="-4.5" y="-1.5" width="9" height="7" rx="1.5" fill="#334155" />
+            <circle r="9.5" fill={alpha('var(--bg)', 0.85)} stroke="var(--muted)" strokeWidth="1.8" />
+            <rect x="-4.5" y="-1.5" width="9" height="7" rx="1.5" fill="var(--muted)" />
             <path d="M -3 -1.5 L -3 -5 Q -3 -8 0 -8 Q 3 -8 3 -5 L 3 -1.5"
-              fill="none" stroke="#334155" strokeWidth="2"
+              fill="none" stroke="var(--muted)" strokeWidth="2"
               strokeLinecap="round"
             />
           </g>
@@ -293,8 +313,8 @@ function CircleBadge({ title, description, category, iconPath, earned }: {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem',
       padding: '0.875rem 0.5rem 0.75rem', borderRadius: '12px', textAlign: 'center',
-      background: earned ? `${color}08` : 'var(--bg)',
-      border: `1px solid ${earned ? `${color}28` : 'var(--border)'}`,
+      background: earned ? alpha(color, 8 / 255) : 'var(--bg)',
+      border: `1px solid ${earned ? alpha(color, 40 / 255) : 'var(--border)'}`,
       opacity: earned ? 1 : 0.36,
       filter: earned ? 'none' : 'grayscale(1)',
       transition: 'opacity 0.3s, filter 0.3s',
@@ -302,12 +322,12 @@ function CircleBadge({ title, description, category, iconPath, earned }: {
       <div style={{ position: 'relative' }}>
         <div style={{
           width: '52px', height: '52px', borderRadius: '50%',
-          background: earned ? `${color}16` : 'rgba(30,41,59,0.5)',
-          border: `2px solid ${earned ? color : '#334155'}`,
+          background: earned ? alpha(color, 22 / 255) : alpha('var(--bg)', 0.5),
+          border: `2px solid ${earned ? color : 'var(--muted)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: earned ? `0 0 0 4px ${color}14` : 'none',
+          boxShadow: earned ? `0 0 0 4px ${alpha(color, 20 / 255)}` : 'none',
         }}>
-          <svg width="22" height="22" fill="none" stroke={earned ? color : '#475569'} viewBox="0 0 24 24">
+          <svg width="22" height="22" fill="none" stroke={earned ? color : 'var(--muted)'} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d={iconPath} />
           </svg>
         </div>
@@ -326,13 +346,13 @@ function CircleBadge({ title, description, category, iconPath, earned }: {
       </div>
       <span style={{
         fontSize: '0.58rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '999px',
-        background: earned ? `${color}15` : 'rgba(255,255,255,0.04)',
-        color: earned ? color : '#475569',
+        background: earned ? alpha(color, 21 / 255) : alpha('var(--text)', 0.04),
+        color: earned ? color : 'var(--muted)',
         textTransform: 'uppercase', letterSpacing: '0.05em',
       }}>
         {CATEGORY_LABEL[category]}
       </span>
-      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: earned ? 'var(--text)' : '#475569', lineHeight: 1.2 }}>{title}</div>
+      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: earned ? 'var(--text)' : 'var(--muted)', lineHeight: 1.2 }}>{title}</div>
       <div style={{ fontSize: '0.62rem', color: 'var(--muted)', lineHeight: 1.45, maxWidth: '120px' }}>{description}</div>
     </div>
   )
@@ -355,8 +375,8 @@ function SectionHeader({ title, sub, count, total }: { title: string; sub: strin
         )}
         <span style={{
           fontSize: '0.6rem', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: '999px',
-          background: 'rgba(0,148,255,0.08)', color: '#60a5fa',
-          border: '1px solid rgba(0,148,255,0.2)',
+          background: alpha('var(--waf-brand)', 0.08), color: 'var(--waf-brand)',
+          border: `1px solid ${alpha('var(--waf-brand)', 0.2)}`,
           textTransform: 'uppercase', letterSpacing: '0.07em',
         }}>Preview</span>
       </div>
@@ -421,6 +441,8 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
   // Current level = highest earned level
   const currentMeta = [...MATURITY_META].reverse().find(m => bestScore >= MATURITY_THRESHOLDS[m.level]) ?? MATURITY_META[0]
   const nextMeta    = MATURITY_META.find(m => m.level === currentMeta.level + 1)
+  const currentColor = maturityColor(currentMeta.level)
+  const nextColor    = nextMeta ? maturityColor(nextMeta.level) : currentColor
 
   // Progress bar
   const currentThreshold = MATURITY_THRESHOLDS[currentMeta.level]
@@ -481,7 +503,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'
-              ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(0,148,255,0.4)'
+              ;(e.currentTarget as HTMLButtonElement).style.borderColor = alpha('var(--waf-brand)', 0.4)
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted)'
@@ -513,7 +535,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 <span style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(latestRun.score) }}>{latestRun.score}</span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
                 {scoreDelta !== null && (
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, marginLeft: '0.2rem', color: scoreDelta >= 0 ? '#22c55e' : '#f87171' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, marginLeft: '0.2rem', color: scoreDelta >= 0 ? 'var(--pass)' : 'var(--fail)' }}>
                     {scoreDelta >= 0 ? '+' : ''}{scoreDelta}
                   </span>
                 )}
@@ -529,19 +551,19 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             </StatCard>
 
             <div style={{
-              background: `${currentMeta.bg}0.08)`, borderRadius: '12px',
-              padding: '1rem 1.25rem', border: `1px solid ${currentMeta.color}44`,
+              background: alpha(currentColor, 0.08), borderRadius: '12px',
+              padding: '1rem 1.25rem', border: `1px solid ${alpha(currentColor, 68 / 255)}`,
             }}>
               <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem', fontWeight: 600 }}>{t('pages.projectOverview.bestScoreLevel')}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{
                   width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
-                  background: `${currentMeta.bg}0.18)`, border: `2px solid ${currentMeta.color}`,
+                  background: alpha(currentColor, 0.18), border: `2px solid ${currentColor}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.72rem', fontWeight: 800, color: currentMeta.textColor,
+                  fontSize: '0.72rem', fontWeight: 800, color: '#fff',
                 }}>L{currentMeta.level}</div>
                 <div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: currentMeta.textColor }}>{currentMeta.short}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>{currentMeta.short}</div>
                   <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{t('pages.projectOverview.bestScore', { score: String(bestScore) })}/100</div>
                 </div>
               </div>
@@ -560,23 +582,23 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
 
           {/* ── Progress to next maturity level ──────────────────────────────── */}
           {nextMeta ? (
-            <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1.1rem 1.5rem', border: `1px solid ${currentMeta.color}33`, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1.1rem 1.5rem', border: `1px solid ${alpha(currentColor, 51 / 255)}`, position: 'relative', overflow: 'hidden' }}>
               {/* subtle background gradient */}
               <div style={{
                 position: 'absolute', inset: 0, pointerEvents: 'none',
-                background: `linear-gradient(90deg, ${currentMeta.bg}0.04) 0%, transparent 60%)`,
+                background: `linear-gradient(90deg, ${alpha(currentColor, 0.04)} 0%, transparent 60%)`,
               }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', position: 'relative' }}>
                 {/* Left: current level */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                    background: `${currentMeta.bg}0.2)`, border: `2px solid ${currentMeta.color}`,
+                    background: alpha(currentColor, 0.2), border: `2px solid ${currentColor}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.68rem', fontWeight: 800, color: currentMeta.textColor,
+                    fontSize: '0.68rem', fontWeight: 800, color: '#fff',
                   }}>L{currentMeta.level}</div>
                   <div>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: currentMeta.textColor }}>{currentMeta.short}</div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fff' }}>{currentMeta.short}</div>
                     <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.projectOverview.bestScore', { score: String(bestScore) })}</div>
                   </div>
                 </div>
@@ -590,14 +612,14 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 {/* Right: next level */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <div>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: nextMeta.textColor, textAlign: 'right' }}>{nextMeta.short}</div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: alpha('#fff', 0.88), textAlign: 'right' }}>{nextMeta.short}</div>
                     <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textAlign: 'right' }}>{t('pages.projectOverview.requiresScore', { score: String(nextThreshold) })}</div>
                   </div>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                    background: `${nextMeta.bg}0.12)`, border: `2px solid ${nextMeta.color}55`,
+                    background: alpha(nextColor, 31 / 255), border: `2px solid ${alpha(nextColor, 85 / 255)}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.68rem', fontWeight: 800, color: `${nextMeta.textColor}88`,
+                    fontSize: '0.68rem', fontWeight: 800, color: alpha('#fff', 0.88),
                     opacity: 0.65,
                   }}>L{nextMeta.level}</div>
                 </div>
@@ -607,7 +629,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               <div style={{ height: '11px', background: 'var(--bg)', borderRadius: '999px', overflow: 'hidden', position: 'relative' }}>
                 <div style={{
                   height: '100%', width: `${progressPct}%`,
-                  background: `linear-gradient(90deg, ${currentMeta.color}, ${nextMeta.color})`,
+                  background: `linear-gradient(90deg, ${currentColor}, ${nextColor})`,
                   borderRadius: '999px',
                   transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)',
                   position: 'relative',
@@ -615,7 +637,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                   {/* Shine stripe */}
                   <div style={{
                     position: 'absolute', top: 0, left: 0, right: 0, height: '45%',
-                    background: 'rgba(255,255,255,0.22)', borderRadius: '999px 999px 0 0',
+                    background: alpha('var(--text)', 0.22), borderRadius: '999px 999px 0 0',
                     pointerEvents: 'none',
                   }} />
                 </div>
@@ -629,15 +651,15 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             </div>
           ) : (
             <div style={{
-              background: `${currentMeta.bg}0.08)`, borderRadius: '12px',
-              padding: '1rem 1.5rem', border: `1px solid ${currentMeta.color}44`,
+              background: alpha(currentColor, 0.08), borderRadius: '12px',
+              padding: '1rem 1.5rem', border: `1px solid ${alpha(currentColor, 68 / 255)}`,
               display: 'flex', alignItems: 'center', gap: '0.75rem',
             }}>
-              <svg width="18" height="18" fill="none" stroke={currentMeta.color} viewBox="0 0 24 24">
+              <svg width="18" height="18" fill="none" stroke={currentColor} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
               <div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: currentMeta.textColor }}>{t('pages.projectOverview.maxMaturity')}</div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>{t('pages.projectOverview.maxMaturity')}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{t('pages.projectOverview.allBadgesEarned', { count: String(MATURITY_META.length) })}</div>
               </div>
             </div>
@@ -652,8 +674,8 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                   <AreaChart data={trendData} onClick={d => { if (d?.activePayload?.[0]?.payload?.id) onSelect(d.activePayload[0].payload.id) }} style={{ cursor: 'pointer' }}>
                     <defs>
                       <linearGradient id="projScoreGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#0094FF" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#0094FF" stopOpacity={0.02} />
+                        <stop offset="5%"  stopColor="var(--waf-brand)" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="var(--waf-brand)" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -670,10 +692,10 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                         </div>
                       )
                     }} />
-                    <ReferenceLine y={80} stroke="#059669" strokeDasharray="4 4" strokeOpacity={0.5} />
-                    <ReferenceLine y={60} stroke="#d97706" strokeDasharray="4 4" strokeOpacity={0.5} />
-                    <Area type="monotone" dataKey="score" stroke="#0094FF" strokeWidth={2} fill="url(#projScoreGrad)"
-                      dot={{ r: 4, fill: '#0094FF', cursor: 'pointer' }} activeDot={{ r: 6, cursor: 'pointer' }} />
+                    <ReferenceLine y={80} stroke="var(--score-high)" strokeDasharray="4 4" strokeOpacity={0.5} />
+                    <ReferenceLine y={60} stroke="var(--score-mid)" strokeDasharray="4 4" strokeOpacity={0.5} />
+                    <Area type="monotone" dataKey="score" stroke="var(--waf-brand)" strokeWidth={2} fill="url(#projScoreGrad)"
+                      dot={{ r: 4, fill: 'var(--waf-brand)', cursor: 'pointer' }} activeDot={{ r: 6, cursor: 'pointer' }} />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -719,17 +741,15 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                   <div key={m.level} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <MedalBadge
                       levelNum={m.level}
-                      color={m.color}
-                      textColor={m.textColor}
-                      bg={m.bg}
+                      color={maturityColor(m.level)}
                       earned={m.earned}
                     />
                     <div style={{ textAlign: 'center', maxWidth: '130px' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: m.earned ? 'var(--text)' : '#475569' }}>{m.label}</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: m.earned ? 'var(--text)' : 'var(--muted)' }}>{m.label}</div>
                       <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginTop: '0.2rem', lineHeight: 1.45 }}>{m.desc}</div>
                       <div style={{
                         marginTop: '0.35rem', fontSize: '0.6rem', fontWeight: 700,
-                        color: m.earned ? m.textColor : '#2d3d54',
+                        color: m.earned ? '#fff' : 'var(--muted)',
                       }}>
                         {m.earned ? t('pages.projectOverview.scoreReached', { score: String(MATURITY_THRESHOLDS[m.level]) }) : t('pages.projectOverview.requiresScore', { score: String(MATURITY_THRESHOLDS[m.level]) })}
                       </div>
@@ -779,8 +799,14 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {verifiedAchievements.map((a, i) => {
-                  const tierColors: Record<number, string> = { 1: '#d97706', 2: '#0094FF', 3: '#0891b2', 4: '#7c3aed', 5: '#059669' }
-                  const color = tierColors[a.tier_level] ?? '#0094FF'
+                  const tierColors: Record<number, string> = {
+                    1: 'var(--score-mid)',
+                    2: 'var(--waf-warn)',
+                    3: 'var(--waf-brand)',
+                    4: 'var(--waived)',
+                    5: 'var(--score-high)',
+                  }
+                  const color = tierColors[a.tier_level] ?? 'var(--waf-brand)'
                   const isCopied = copiedToken === a.verification_token
                   const verifyUrl = `${getApiBase() || window.location.origin}/api/v1/public/achievements/${a.verification_token}`
                   return (
@@ -790,7 +816,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                     }}>
                       <div style={{
                         width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                        background: `${color}18`, border: `2px solid ${color}`,
+                        background: alpha(color, 36 / 255), border: `2px solid ${color}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '0.72rem', fontWeight: 900, color,
                       }}>L{a.tier_level}</div>
@@ -799,7 +825,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{a.tier_label}</span>
                           <span style={{
                             fontSize: '0.6rem', fontWeight: 700, padding: '0.15rem 0.45rem', borderRadius: '999px',
-                            background: `${color}14`, color, border: `1px solid ${color}30`,
+                            background: alpha(color, 20 / 255), color, border: `1px solid ${alpha(color, 48 / 255)}`,
                             textTransform: 'uppercase', letterSpacing: '0.05em',
                           }}>Score {a.score}</span>
                         </div>
@@ -815,7 +841,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                           style={{
                             display: 'flex', alignItems: 'center', gap: '0.3rem',
                             padding: '0.3rem 0.65rem', borderRadius: '7px', fontSize: '0.72rem', fontWeight: 600,
-                            background: `${color}12`, color, border: `1px solid ${color}30`,
+                            background: alpha(color, 18 / 255), color, border: `1px solid ${alpha(color, 48 / 255)}`,
                             textDecoration: 'none', cursor: 'pointer',
                           }}
                         >
@@ -829,9 +855,9 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                           style={{
                             display: 'flex', alignItems: 'center', gap: '0.3rem',
                             padding: '0.3rem 0.65rem', borderRadius: '7px', fontSize: '0.72rem', fontWeight: 600,
-                            background: isCopied ? 'rgba(34,197,94,0.12)' : 'var(--bg)',
-                            color: isCopied ? '#15803d' : 'var(--muted)',
-                            border: `1px solid ${isCopied ? 'rgba(34,197,94,0.4)' : 'var(--border)'}`,
+                            background: isCopied ? alpha('var(--pass)', 0.12) : 'var(--bg)',
+                            color: isCopied ? 'var(--pass)' : 'var(--muted)',
+                            border: `1px solid ${isCopied ? alpha('var(--pass)', 0.4) : 'var(--border)'}`,
                             cursor: 'pointer', transition: 'all 0.15s',
                           }}
                         >

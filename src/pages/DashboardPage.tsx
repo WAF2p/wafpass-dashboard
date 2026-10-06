@@ -17,21 +17,21 @@ interface Props {
 // ── Palette ────────────────────────────────────────────────────────────────────
 
 const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: '#DC2626',
-  HIGH: '#F97316',
-  MEDIUM: '#F59E0B',
-  LOW: '#10B981',
+  CRITICAL: 'var(--fail)',
+  HIGH: 'var(--score-mid)',
+  MEDIUM: 'var(--waf-warn)',
+  LOW: 'var(--pass)',
 }
 
 const PILLAR_META: { key: string; label: string; color: string; slug: string }[] = [
-  { key: 'security', label: 'Security', color: '#DC2626', slug: 'SEC' },
-  { key: 'cost', label: 'Cost', color: '#0094FF', slug: 'CST' },
-  { key: 'operations', label: 'Operations', color: '#8B5CF6', slug: 'OPS' },
-  { key: 'performance', label: 'Performance', color: '#F97316', slug: 'PRF' },
-  { key: 'reliability', label: 'Reliability', color: '#10B981', slug: 'REL' },
-  { key: 'sovereign', label: 'Sovereignty', color: '#F59E0B', slug: 'SOV' },
-  { key: 'sustainability', label: 'Sustainability', color: '#14B8A6', slug: 'SUS' },
-  { key: 'agentic', label: 'Agentic', color: '#EC4899', slug: 'AGT' },
+  { key: 'security', label: 'Security', color: 'var(--fail)', slug: 'SEC' },
+  { key: 'cost', label: 'Cost', color: 'var(--waf-brand)', slug: 'CST' },
+  { key: 'operations', label: 'Operations', color: 'var(--waived)', slug: 'OPS' },
+  { key: 'performance', label: 'Performance', color: 'var(--waf-warn)', slug: 'PRF' },
+  { key: 'reliability', label: 'Reliability', color: 'var(--pass)', slug: 'REL' },
+  { key: 'sovereign', label: 'Sovereignty', color: 'var(--waf-warn)', slug: 'SOV' },
+  { key: 'sustainability', label: 'Sustainability', color: 'var(--score-high)', slug: 'SUS' },
+  { key: 'agentic', label: 'Agentic', color: 'var(--waived)', slug: 'AGT' },
 ]
 
 const PILLAR_COLOR: Record<string, string> = Object.fromEntries(
@@ -39,12 +39,17 @@ const PILLAR_COLOR: Record<string, string> = Object.fromEntries(
 )
 
 const PROVIDER_COLOR: Record<string, string> = {
-  aws: '#FF9900', azure: '#0078D4', gcp: '#34A853',
-  oci: '#F80000', alicloud: '#FF6A00', yandex: '#FCDB03',
+  aws: 'var(--waf-warn)', azure: 'var(--waf-brand)', gcp: 'var(--pass)',
+  oci: 'var(--fail)', alicloud: 'var(--waf-warn)', yandex: 'var(--score-mid)',
 }
 
 const SEVERITIES = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
-const HEAT_STEPS = ['#fff1f2', '#fecdd3', '#f43f5e', '#be123c']
+const HEAT_STEPS = [
+  'color-mix(in srgb, var(--fail) 8%, transparent)',
+  'color-mix(in srgb, var(--fail) 25%, transparent)',
+  'color-mix(in srgb, var(--fail) 55%, transparent)',
+  'color-mix(in srgb, var(--fail) 85%, transparent)',
+]
 
 function normalizePillarName(p: string): string {
   if (p === 'operational') return 'operations'
@@ -52,18 +57,15 @@ function normalizePillarName(p: string): string {
 }
 
 function scoreColor(s: number) {
-  return s >= 80 ? '#059669' : s >= 60 ? '#D97706' : '#DC2626'
+  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
 }
 
 function scoreLabel(s: number, t: (key: string) => string) {
   return s >= 80 ? t('pages.dashboard.goodPosture') : s >= 60 ? t('pages.dashboard.needsAttention') : t('pages.dashboard.highRisk')
 }
 
-function hex(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r},${g},${b},${alpha.toFixed(2)})`
+function hex(color: string, alpha: number): string {
+  return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`
 }
 
 function dateFmt(iso: string) {
@@ -143,7 +145,7 @@ function ScoreGauge({ score, label, size = 160 }: { score: number; label: string
         <defs>
           <linearGradient id={`gaugeGrad-${score}`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor={color} />
-            <stop offset="100%" stopColor={hex(color, 0.55)} />
+            <stop offset="100%" stopColor={`color-mix(in srgb, ${color} 55%, transparent)`} />
           </linearGradient>
         </defs>
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--track)" strokeWidth="14" />
@@ -184,8 +186,8 @@ function SectionTitle({ children, icon, action }: { children: React.ReactNode; i
 
 function SeverityBadge({ sev }: { sev: string }) {
   const u = sev.toUpperCase()
-  const c = SEVERITY_COLOR[u] ?? '#94a3b8'
-  return <span className="x-sev" style={{ background: hex(c, 0.12), color: c }}>{u}</span>
+  const c = SEVERITY_COLOR[u] ?? 'var(--muted)'
+  return <span className="x-sev" style={{ background: `color-mix(in srgb, ${c} 12%, transparent)`, color: c }}>{u}</span>
 }
 
 function ActionButton({ children, variant = 'primary', onClick, icon }: {
@@ -214,7 +216,7 @@ function NavTile({ icon, title, desc, value, accent, alert, onClick }: {
   const showVal = value !== undefined && value !== 0 && value !== '0'
   return (
     <button type="button" className={`x-navtile ${onClick ? 'x-navtile--click' : ''}`} onClick={onClick}>
-      <div className="x-navtile-icon" style={{ background: accent ? hex(accent, 0.1) : 'var(--bg)', color: accent || 'var(--waf-brand)' }}>
+      <div className="x-navtile-icon" style={{ background: accent ? `color-mix(in srgb, ${accent} 10%, transparent)` : 'var(--bg)', color: accent || 'var(--waf-brand)' }}>
         {icon}
       </div>
       <div className="x-navtile-body">
@@ -238,7 +240,7 @@ function StatPill({ label, value, sub, color }: {
 }) {
   const c = color || 'var(--text)'
   return (
-    <div className="x-statpill" style={{ borderColor: hex(c, 0.15), background: hex(c, 0.04) }}>
+    <div className="x-statpill" style={{ borderColor: `color-mix(in srgb, ${c} 15%, transparent)`, background: `color-mix(in srgb, ${c} 4%, transparent)` }}>
       <div className="x-statpill-value" style={{ color: c }}>{value}</div>
       <div className="x-statpill-label">{label}</div>
       <div className="x-statpill-sub">{sub}</div>
@@ -380,11 +382,11 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         </div>
 
         <div className="x-statbar">
-          <StatPill label={t('pages.dashboard.failedControls')} value={controlStats.fail} sub={`${controlIds.length} controls`} color="#DC2626" />
-          <StatPill label={t('pages.dashboard.critHigh')} value={critFails.length + highFails.length} sub={`${critFails.length} critical · ${highFails.length} high`} color="#F97316" />
-          <StatPill label={t('pages.dashboard.resourcesAtRisk')} value={failResources} sub={`${resources} scanned`} color="#D97706" />
-          <StatPill label={t('pages.dashboard.activeWaivers')} value={waiverCount} sub={`${riskCount} risks`} color="#8B5CF6" />
-          <StatPill label={t('pages.dashboard.avgCompliance')} value={`${avgCompliance}%`} sub={`${regulatoryAll.length} frameworks`} color="#10B981" />
+          <StatPill label={t('pages.dashboard.failedControls')} value={controlStats.fail} sub={`${controlIds.length} controls`} color="var(--fail)" />
+          <StatPill label={t('pages.dashboard.critHigh')} value={critFails.length + highFails.length} sub={`${critFails.length} critical · ${highFails.length} high`} color="var(--waf-warn)" />
+          <StatPill label={t('pages.dashboard.resourcesAtRisk')} value={failResources} sub={`${resources} scanned`} color="var(--score-mid)" />
+          <StatPill label={t('pages.dashboard.activeWaivers')} value={waiverCount} sub={`${riskCount} risks`} color="var(--waived)" />
+          <StatPill label={t('pages.dashboard.avgCompliance')} value={`${avgCompliance}%`} sub={`${regulatoryAll.length} frameworks`} color="var(--pass)" />
         </div>
       </header>
 
@@ -409,7 +411,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                 <span className="x-attention-code">{f.control_id}</span>
                 <span className="x-attention-text">{f.check_title}</span>
                 {f.pillar && (
-                  <span className="x-pill" style={{ background: hex(PILLAR_COLOR[f.pillar] ?? '#888', 0.12), color: PILLAR_COLOR[f.pillar] ?? '#888' }}>
+                  <span className="x-pill" style={{ background: hex(PILLAR_COLOR[f.pillar] ?? 'var(--muted)', 0.12), color: PILLAR_COLOR[f.pillar] ?? 'var(--muted)' }}>
                     {f.pillar}
                   </span>
                 )}
@@ -426,40 +428,40 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         <div className="x-nav-grid">
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navAnalysis')}</div>
-            <NavTile icon={I.list} title="Findings" value={allFails.length > 0 ? allFails.length : undefined} desc={`${passRate}% pass · ${totalChecks} checks`} accent="#DC2626" alert={allFails.length > 0} onClick={() => onNav?.('findings')} />
-            <NavTile icon={I.check} title="Compliance" value={`${avgCompliance}%`} desc={`${regulatoryAll.length} frameworks`} accent="#0094FF" onClick={() => onNav?.('compliance')} />
-            <NavTile icon={I.gap} title="Gap Analysis" value={allFails.length > 0 ? t('pages.dashboard.gapsLabel', { count: new Set(allFails.map(f => f.control_id)).size }) : undefined} desc="Effort ranked" accent="#8B5CF6" onClick={() => onNav?.('gapanalysis')} />
-            <NavTile icon={I.exploit} title="Exploit Paths" desc="Attack chains" accent="#DC2626" onClick={() => onNav?.('exploitpath')} />
-            <NavTile icon={I.blast} title="Blast Radius" value={failResources > 0 ? failResources : undefined} desc="Impact map" accent="#F97316" onClick={() => onNav?.('blastradius')} />
-            <NavTile icon={I.dep} title="Dep. Graph" desc="Topology" accent="#0D9488" onClick={() => onNav?.('depgraph')} />
+            <NavTile icon={I.list} title="Findings" value={allFails.length > 0 ? allFails.length : undefined} desc={`${passRate}% pass · ${totalChecks} checks`} accent="var(--fail)" alert={allFails.length > 0} onClick={() => onNav?.('findings')} />
+            <NavTile icon={I.check} title="Compliance" value={`${avgCompliance}%`} desc={`${regulatoryAll.length} frameworks`} accent="var(--waf-brand)" onClick={() => onNav?.('compliance')} />
+            <NavTile icon={I.gap} title="Gap Analysis" value={allFails.length > 0 ? t('pages.dashboard.gapsLabel', { count: new Set(allFails.map(f => f.control_id)).size }) : undefined} desc="Effort ranked" accent="var(--waived)" onClick={() => onNav?.('gapanalysis')} />
+            <NavTile icon={I.exploit} title="Exploit Paths" desc="Attack chains" accent="var(--fail)" onClick={() => onNav?.('exploitpath')} />
+            <NavTile icon={I.blast} title="Blast Radius" value={failResources > 0 ? failResources : undefined} desc="Impact map" accent="var(--waf-warn)" onClick={() => onNav?.('blastradius')} />
+            <NavTile icon={I.dep} title="Dep. Graph" desc="Topology" accent="var(--score-high)" onClick={() => onNav?.('depgraph')} />
           </div>
 
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navInfrastructure')}</div>
-            <NavTile icon={I.shield} title="Controls Catalogue" value={run.controls_loaded || run.controls_meta?.length || 0} desc={`${pillarHealth.length} pillars`} accent="#0094FF" onClick={() => onNav?.('catalogue')} />
-            <NavTile icon={I.globe} title="Deployed Regions" value={detectedRegions.length > 0 ? `${detectedRegions.length}` : undefined} desc={detectedRegions.length > 0 ? providerNames.map(p => p.toUpperCase()).join(', ') : 'Cloud footprint'} accent="#0EA5E9" onClick={() => onNav?.('regions')} />
-            <NavTile icon={I.key} title="Secret Scanner" value={secretUnsuppressed > 0 ? secretUnsuppressed : undefined} desc={`${secretCritical} critical secrets`} accent="#DC2626" alert={secretCritical > 0} onClick={() => onNav?.('secrets')} />
-            <NavTile icon={I.module} title="Module Scores" desc="Per-module breakdown" accent="#8B5CF6" onClick={() => onNav?.('modules')} />
-            <NavTile icon={I.dollar} title="Cost Impact" desc="Cost control estimates" accent="#10B981" onClick={() => onNav?.('cost')} />
-            <NavTile icon={I.drift} title="Changes & Drift" value={changeDelta > 0 ? changeDelta : undefined} desc="Plan deltas" accent="#F97316" onClick={() => onNav?.('changes')} />
+            <NavTile icon={I.shield} title="Controls Catalogue" value={run.controls_loaded || run.controls_meta?.length || 0} desc={`${pillarHealth.length} pillars`} accent="var(--waf-brand)" onClick={() => onNav?.('catalogue')} />
+            <NavTile icon={I.globe} title="Deployed Regions" value={detectedRegions.length > 0 ? `${detectedRegions.length}` : undefined} desc={detectedRegions.length > 0 ? providerNames.map(p => p.toUpperCase()).join(', ') : 'Cloud footprint'} accent="var(--waf-brand)" onClick={() => onNav?.('regions')} />
+            <NavTile icon={I.key} title="Secret Scanner" value={secretUnsuppressed > 0 ? secretUnsuppressed : undefined} desc={`${secretCritical} critical secrets`} accent="var(--fail)" alert={secretCritical > 0} onClick={() => onNav?.('secrets')} />
+            <NavTile icon={I.module} title="Module Scores" desc="Per-module breakdown" accent="var(--waived)" onClick={() => onNav?.('modules')} />
+            <NavTile icon={I.dollar} title="Cost Impact" desc="Cost control estimates" accent="var(--pass)" onClick={() => onNav?.('cost')} />
+            <NavTile icon={I.drift} title="Changes & Drift" value={changeDelta > 0 ? changeDelta : undefined} desc="Plan deltas" accent="var(--waf-warn)" onClick={() => onNav?.('changes')} />
           </div>
 
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navRiskGovernance')}</div>
-            <NavTile icon={I.waiver} title="Waivers" value={waiverCount > 0 ? waiverCount : undefined} desc="Active waivers" accent="#8B5CF6" onClick={() => onNav?.('waivers')} />
-            <NavTile icon={I.risk} title="Risk Acceptance" value={riskCount > 0 ? riskCount : undefined} desc="Approver trail" accent="#F97316" onClick={() => onNav?.('risk')} />
-            <NavTile icon={I.sprint} title="Remediation Sprint" desc="Fix queue" accent="#10B981" onClick={() => onNav?.('remediation')} />
-            <NavTile icon={I.skip} title="Skipped Controls" value={controlStats.skip > 0 ? controlStats.skip : undefined} desc="Coverage gaps" accent="#64748B" onClick={() => onNav?.('skipped')} />
+            <NavTile icon={I.waiver} title="Waivers" value={waiverCount > 0 ? waiverCount : undefined} desc="Active waivers" accent="var(--waived)" onClick={() => onNav?.('waivers')} />
+            <NavTile icon={I.risk} title="Risk Acceptance" value={riskCount > 0 ? riskCount : undefined} desc="Approver trail" accent="var(--waf-warn)" onClick={() => onNav?.('risk')} />
+            <NavTile icon={I.sprint} title="Remediation Sprint" desc="Fix queue" accent="var(--pass)" onClick={() => onNav?.('remediation')} />
+            <NavTile icon={I.skip} title="Skipped Controls" value={controlStats.skip > 0 ? controlStats.skip : undefined} desc="Coverage gaps" accent="var(--muted)" onClick={() => onNav?.('skipped')} />
           </div>
 
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navHistoryAudit')}</div>
-            <NavTile icon={I.history} title="Run History" value={runCount > 0 ? `${runCount}` : undefined} desc="Score trends" accent="#0094FF" onClick={() => onNav?.('runs')} />
-            <NavTile icon={I.diff} title="Run Comparison" desc="Side-by-side diff" accent="#8B5CF6" onClick={() => onNav?.('diff')} />
-            <NavTile icon={I.log} title="Audit Log" desc="Action record" accent="#64748B" onClick={() => onNav?.('audit')} />
-            <NavTile icon={I.evidence} title="Evidence Package" desc="Export bundle" accent="#0094FF" onClick={() => onNav?.('evidence')} />
-            <NavTile icon={I.play} title="Run Scan" desc="Browser scan" accent="#10B981" onClick={() => onNav?.('runscan')} />
-            <NavTile icon={I.code} title="Sandbox" desc="Terraform live" accent="#0094FF" onClick={() => onNav?.('sandbox')} />
+            <NavTile icon={I.history} title="Run History" value={runCount > 0 ? `${runCount}` : undefined} desc="Score trends" accent="var(--waf-brand)" onClick={() => onNav?.('runs')} />
+            <NavTile icon={I.diff} title="Run Comparison" desc="Side-by-side diff" accent="var(--waived)" onClick={() => onNav?.('diff')} />
+            <NavTile icon={I.log} title="Audit Log" desc="Action record" accent="var(--muted)" onClick={() => onNav?.('audit')} />
+            <NavTile icon={I.evidence} title="Evidence Package" desc="Export bundle" accent="var(--waf-brand)" onClick={() => onNav?.('evidence')} />
+            <NavTile icon={I.play} title="Run Scan" desc="Browser scan" accent="var(--pass)" onClick={() => onNav?.('runscan')} />
+            <NavTile icon={I.code} title="Sandbox" desc="Terraform live" accent="var(--waf-brand)" onClick={() => onNav?.('sandbox')} />
           </div>
         </div>
       </section>
@@ -471,7 +473,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
           <SectionTitle icon={I.shield}>{t('pages.dashboard.pillarHealth')}</SectionTitle>
           <div className="x-pillar-list">
             {pillarHealth.map(({ key, pillar, score, fails, total }) => {
-              const c = PILLAR_COLOR[key] ?? '#888'
+              const c = PILLAR_COLOR[key] ?? 'var(--muted)'
               const sc = scoreColor(score)
               const pct = total > 0 ? Math.round(((total - fails) / total) * 100) : 100
               return (
@@ -484,7 +486,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                     </div>
                   </div>
                   <div className="x-pillar-score" style={{ color: sc }}>{score}</div>
-                  <div className="x-pillar-status" style={{ color: fails > 0 ? '#DC2626' : '#059669' }}>
+                  <div className="x-pillar-status" style={{ color: fails > 0 ? 'var(--fail)' : 'var(--pass)' }}>
                     {fails > 0 ? t('pages.dashboard.failing', { count: fails }) : t('pages.dashboard.allPassing')}
                   </div>
                 </button>
@@ -556,8 +558,8 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             </SectionTitle>
             <div className="x-compliance-list">
               {regulatoryTop.map(({ fw, pass, total, pct }) => {
-                const color = pct >= 80 ? '#10B981' : pct >= 60 ? '#F59E0B' : '#DC2626'
-                const textColor = pct >= 80 ? '#059669' : pct >= 60 ? '#D97706' : '#DC2626'
+                const color = pct >= 80 ? 'var(--pass)' : pct >= 60 ? 'var(--waf-warn)' : 'var(--fail)'
+                const textColor = pct >= 80 ? 'var(--score-high)' : pct >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
                 return (
                   <div key={fw} className="x-compliance-row">
                     <span className="x-compliance-name" title={fw}>{fw}</span>
@@ -577,7 +579,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         {allFails.length > 0 && (
           <section className="x-card x-card--heatmap">
             <SectionTitle
-              icon={<span style={{ color: '#DC2626' }}>{I.fire}</span>}
+              icon={<span style={{ color: 'var(--fail)' }}>{I.fire}</span>}
               action={
                 <div className="x-heat-legend">
                   <span>Low</span>
@@ -605,7 +607,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                         const step = count === 0 ? -1 : Math.min(3, Math.floor((count / heatMax) * 4))
                         return (
                           <td key={s}>
-                            <div className={`x-heat-cell ${count > 0 ? 'x-heat-cell--active' : ''}`} style={count > 0 ? { background: HEAT_STEPS[step], color: step >= 2 ? '#fff' : '#991b1b' } : undefined}>
+                            <div className={`x-heat-cell ${count > 0 ? 'x-heat-cell--active' : ''}`} style={count > 0 ? { background: HEAT_STEPS[step], color: step >= 2 ? 'var(--surface)' : 'var(--fail)' } : undefined}>
                               {count === 0 ? '—' : count}
                             </div>
                           </td>
@@ -623,7 +625,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         {quickWins.length > 0 && (
           <section className="x-card x-card--wins">
             <SectionTitle
-              icon={<span style={{ color: '#10B981' }}>{I.bolt}</span>}
+              icon={<span style={{ color: 'var(--pass)' }}>{I.bolt}</span>}
               action={onNav && <ActionButton variant="primary" icon={I.bolt} onClick={() => onNav('autofix')}>{t('pages.dashboard.autoFix')}<span className="x-alpha">α</span></ActionButton>}
             >
               {t('pages.dashboard.quickWins')}
@@ -631,8 +633,8 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             <div className="x-win-list">
               {quickWins.map((f, i) => {
                 const sev = f.severity?.toUpperCase() ?? ''
-                const sevColor = SEVERITY_COLOR[sev] ?? '#94a3b8'
-                const pColor = PILLAR_COLOR[f.pillar ?? ''] ?? '#888'
+                const sevColor = SEVERITY_COLOR[sev] ?? 'var(--muted)'
+                const pColor = PILLAR_COLOR[f.pillar ?? ''] ?? 'var(--muted)'
                 return (
                   <button type="button" key={i} className="x-win-row" onClick={() => onNav?.('autofix')}>
                     <span className="x-win-idx">{i + 1}</span>
@@ -665,7 +667,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
               <div className="x-cloud-providers">
                 {Object.entries(providerCounts).map(([prov, cnt]) => (
                   <div key={prov} className="x-cloud-provider">
-                    <span className="x-cloud-dot" style={{ background: PROVIDER_COLOR[prov] ?? '#888' }} />
+                    <span className="x-cloud-dot" style={{ background: PROVIDER_COLOR[prov] ?? 'var(--muted)' }} />
                     <span className="x-cloud-name">{prov}</span>
                     <span className="x-cloud-cnt">{cnt} region{cnt > 1 ? 's' : ''}</span>
                   </div>
@@ -681,9 +683,9 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         <section className="x-checkbar">
           {[
             { label: t('pages.dashboard.checksRun'), value: totalChecks, sub: 'individual checks', color: 'var(--text)' },
-            { label: t('pages.dashboard.checkPassRate'), value: `${passRate}%`, sub: `${passChecks}/${totalChecks} passed`, color: passRate >= 80 ? '#10B981' : passRate >= 60 ? '#D97706' : '#DC2626' },
+            { label: t('pages.dashboard.checkPassRate'), value: `${passRate}%`, sub: `${passChecks}/${totalChecks} passed`, color: passRate >= 80 ? 'var(--pass)' : passRate >= 60 ? 'var(--waf-warn)' : 'var(--fail)' },
             { label: t('pages.dashboard.resourcesScanned'), value: resources, sub: 'unique resources', color: 'var(--waf-brand)' },
-            { label: t('pages.dashboard.resourcesFailing'), value: failResources, sub: 'with ≥1 failure', color: failResources > 0 ? '#DC2626' : '#10B981' },
+            { label: t('pages.dashboard.resourcesFailing'), value: failResources, sub: 'with ≥1 failure', color: failResources > 0 ? 'var(--fail)' : 'var(--pass)' },
           ].map(({ label, value, sub, color }) => (
             <div key={label} className="x-checkcard" style={{ borderColor: hex(color, 0.18) }}>
               <div className="x-checkcard-value" style={{ color }}>{value}</div>
@@ -736,11 +738,11 @@ const dashboardCss = `
 .x-btn--primary {
   background: var(--waf-brand);
   color: #fff;
-  box-shadow: 0 6px 20px rgba(0,148,255,0.35);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--waf-brand) 35%, transparent);
 }
 .x-btn--primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(0,148,255,0.45);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--waf-brand) 45%, transparent);
 }
 
 .x-btn--secondary {
@@ -756,14 +758,14 @@ const dashboardCss = `
   color: var(--waf-brand);
   padding: 0.35rem 0.65rem;
 }
-.x-btn--ghost:hover { background: rgba(0,148,255,0.08); }
+.x-btn--ghost:hover { background: color-mix(in srgb, var(--waf-brand) 8%, transparent); }
 
 .x-alpha {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(249,115,22,0.15);
-  color: #C2410C;
+  background: color-mix(in srgb, var(--waf-warn) 15%, transparent);
+  color: var(--score-mid);
   font-size: 0.58rem;
   font-weight: 800;
   padding: 0.08rem 0.32rem;
@@ -813,7 +815,7 @@ const dashboardCss = `
 /* Masthead */
 .x-masthead {
   position: relative;
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(0,148,255,0.04) 100%);
+  background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--waf-brand) 4%, transparent) 100%);
   border: 1px solid var(--border);
   border-radius: 28px;
   padding: 2rem;
@@ -826,7 +828,7 @@ const dashboardCss = `
   right: -15%;
   width: 55%;
   height: 180%;
-  background: radial-gradient(circle at 70% 30%, rgba(0,148,255,0.12), transparent 60%);
+  background: radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--waf-brand) 12%, transparent), transparent 60%);
   pointer-events: none;
 }
 .x-masthead-inner {
@@ -849,7 +851,7 @@ const dashboardCss = `
   gap: 0.45rem;
   padding: 0.35rem 0.85rem;
   border-radius: 999px;
-  background: rgba(0,148,255,0.10);
+  background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
   color: var(--waf-brand);
   font-size: 0.68rem;
   font-weight: 800;
@@ -887,9 +889,9 @@ const dashboardCss = `
   border: 1px solid transparent;
 }
 .x-chip--brand {
-  background: rgba(0,148,255,0.10);
+  background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
   color: var(--waf-brand);
-  border-color: rgba(0,148,255,0.15);
+  border-color: color-mix(in srgb, var(--waf-brand) 15%, transparent);
 }
 .x-chip--muted {
   background: transparent;
@@ -906,7 +908,7 @@ const dashboardCss = `
 .x-gauge {
   position: relative;
   flex-shrink: 0;
-  filter: drop-shadow(0 12px 30px rgba(0,148,255,0.12));
+  filter: drop-shadow(0 12px 30px color-mix(in srgb, var(--waf-brand) 12%, transparent));
 }
 .x-gauge-svg { position: absolute; inset: 0; }
 .x-gauge-inner {
@@ -918,7 +920,7 @@ const dashboardCss = `
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 2px 12px rgba(15,23,42,0.06);
+  box-shadow: inset 0 2px 12px color-mix(in srgb, var(--text) 6%, transparent);
 }
 .x-gauge-score { font-size: 2.1rem; font-weight: 800; line-height: 1; }
 .x-gauge-over { font-size: 0.65rem; color: var(--muted); font-weight: 700; }
@@ -979,8 +981,8 @@ const dashboardCss = `
 
 /* Attention strip */
 .x-attention {
-  background: linear-gradient(180deg, rgba(220,38,38,0.06) 0%, var(--surface) 60%);
-  border: 1px solid rgba(220,38,38,0.18);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fail) 6%, transparent) 0%, var(--surface) 60%);
+  border: 1px solid color-mix(in srgb, var(--fail) 18%, transparent);
   border-radius: 24px;
   padding: 1.25rem 1.5rem;
   display: grid;
@@ -998,8 +1000,8 @@ const dashboardCss = `
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 14px;
-  background: rgba(220,38,38,0.12);
-  color: #DC2626;
+  background: color-mix(in srgb, var(--fail) 12%, transparent);
+  color: var(--fail);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1026,7 +1028,7 @@ const dashboardCss = `
   padding: 0.65rem 0.9rem;
   border-radius: 12px;
   background: var(--surface);
-  border: 1px solid rgba(220,38,38,0.10);
+  border: 1px solid color-mix(in srgb, var(--fail) 10%, transparent);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
   text-align: left;
@@ -1035,7 +1037,7 @@ const dashboardCss = `
   color: inherit;
   min-width: 0;
 }
-.x-attention-row:hover { border-color: rgba(220,38,38,0.30); background: rgba(220,38,38,0.02); }
+.x-attention-row:hover { border-color: color-mix(in srgb, var(--fail) 30%, transparent); background: color-mix(in srgb, var(--fail) 2%, transparent); }
 .x-attention-code {
   font-family: ui-monospace, monospace;
   font-size: 0.72rem;
@@ -1149,7 +1151,7 @@ const dashboardCss = `
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #DC2626;
+  background: var(--fail);
   flex-shrink: 0;
 }
 .x-navtile-value {
@@ -1423,8 +1425,8 @@ const dashboardCss = `
   gap: 0.5rem;
   padding: 1rem 1.25rem;
   border-radius: 18px;
-  background: rgba(0,148,255,0.08);
-  border: 1px solid rgba(0,148,255,0.15);
+  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   width: max-content;
   max-width: 100%;
 }

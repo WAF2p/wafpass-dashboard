@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Finding, RunDetail } from '../api'
 import { useI18n } from '../i18n'
-import { useTheme } from '../theme'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface Props { run: RunDetail }
@@ -72,15 +71,15 @@ const CONTROL_COST: Record<string, CostBand> = {
   'WAF-COST-090': { min: 20,  max: 150, basis: 'Egress/transfer fees without traffic optimisation (VPC endpoints, PrivateLink, public IPs)', category: 'waste',   confidence: 'low'    },
 }
 
-const CATEGORY_META: Record<CostCategory, { label: string; color: string; bg: string; icon: string; desc: string; lightColor: string }> = {
-  waste:   { label: 'Direct waste',             color: '#ff2a6d', bg: 'rgba(220,38,38,.08)',   icon: '🔥', desc: 'Resources incurring unnecessary spend right now', lightColor: '#dc2626' },
-  savings: { label: 'Savings opportunity',      color: '#fbbf24', bg: 'rgba(217,119,6,.08)',   icon: '💰', desc: 'On-demand charges that reserved/committed pricing would reduce', lightColor: '#b45309' },
-  risk:    { label: 'Financial governance risk', color: '#a78bfa', bg: 'rgba(124,58,237,.08)',  icon: '⚠️', desc: 'Controls that, when failing, create untracked or future cost risk', lightColor: '#7c3aed' },
+const CATEGORY_META: Record<CostCategory, { label: string; icon: string; desc: string }> = {
+  waste:   { label: 'Direct waste',              icon: '🔥', desc: 'Resources incurring unnecessary spend right now' },
+  savings: { label: 'Savings opportunity',       icon: '💰', desc: 'On-demand charges that reserved/committed pricing would reduce' },
+  risk:    { label: 'Financial governance risk', icon: '⚠️', desc: 'Controls that, when failing, create untracked or future cost risk' },
 }
 
 const CONF_META: Record<string, { label: string; color: string }> = {
-  high:   { label: 'High confidence',   color: '#00ff9d' },
-  medium: { label: 'Medium confidence', color: '#fbbf24' },
+  high:   { label: 'High confidence',   color: 'var(--pass)' },
+  medium: { label: 'Medium confidence', color: 'var(--score-mid)' },
   low:    { label: 'Estimate only',     color: 'var(--muted)' },
 }
 
@@ -140,8 +139,10 @@ function fmtRange(min: number, max: number): string {
   return `${fmtDollar(min)}–${fmtDollar(max)}`
 }
 
-function categoryColor(cat: CostCategory, isDark: boolean) {
-  return isDark ? CATEGORY_META[cat].color : CATEGORY_META[cat].lightColor
+function categoryColor(cat: CostCategory) {
+  if (cat === 'waste') return 'var(--fail)'
+  if (cat === 'savings') return 'var(--score-mid)'
+  return 'var(--waf-info)'
 }
 
 // ─── Aggregated control item ──────────────────────────────────────────────────
@@ -222,17 +223,16 @@ function fetchBudgetAlertsStub(_run: RunDetail): { label: string; severity: 'ok'
 
 // ─── Horizontal bar chart ─────────────────────────────────────────────────────
 
-function CostBar({ min, max, maxVal, isDark }: { min: number; max: number; maxVal: number; isDark: boolean }) {
+function CostBar({ min, max, maxVal, color }: { min: number; max: number; maxVal: number; color: string }) {
   if (maxVal === 0) return null
   const cap = (v: number) => Math.min(100, Math.max(0, (v / maxVal) * 100))
   const startPct = cap(min)
   const endPct   = cap(max)
   const widthPct = Math.max(endPct - startPct, 0.5)
   const midPct   = cap((min + max) / 2)
-  const color = isDark ? '#ff2a6d' : '#dc2626'
   return (
-    <div className="coc-bar-bg">
-      <div className="coc-bar-range" style={{ left: `${startPct}%`, width: `${widthPct}%`, background: `${color}45` }} />
+    <div className="coc-bar-bg" style={{ '--bar-color': color } as React.CSSProperties}>
+      <div className="coc-bar-range" style={{ left: `${startPct}%`, width: `${widthPct}%`, background: `color-mix(in srgb, var(--bar-color) 25%, transparent)` }} />
       <div className="coc-bar-mid" style={{ left: `${midPct}%`, background: color }} />
     </div>
   )
@@ -240,16 +240,16 @@ function CostBar({ min, max, maxVal, isDark }: { min: number; max: number; maxVa
 
 // ─── Control card ─────────────────────────────────────────────────────────────
 
-function ControlCostCard({ item, maxMax, isDark }: { item: ControlCostItem; maxMax: number; isDark: boolean }) {
+function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: number }) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const cat  = CATEGORY_META[item.dominantCategory]
   const conf = CONF_META[item.dominantConf]
   const hasEstimate = item.totalMid > 0
-  const color = categoryColor(item.dominantCategory, isDark)
+  const color = categoryColor(item.dominantCategory)
 
   return (
-    <div className="coc-control-card" style={{ '--cat-color': color, '--cat-bg': isDark ? cat.bg : cat.bg.replace('rgba(220,38,38,.08)', 'rgba(220,38,38,.06)').replace('rgba(217,119,6,.08)', 'rgba(217,119,6,.06)').replace('rgba(124,58,237,.08)', 'rgba(124,58,237,.06)') } as React.CSSProperties}>
+    <div className="coc-control-card" style={{ '--cat-color': color } as React.CSSProperties}>
       <div className="coc-control-header" onClick={() => setOpen(o => !o)}>
         <span className="coc-control-icon">{cat.icon}</span>
         <div className="coc-control-meta">
@@ -258,10 +258,10 @@ function ControlCostCard({ item, maxMax, isDark }: { item: ControlCostItem; maxM
             <span className="coc-control-title">{item.controlTitle}</span>
           </div>
           <div className="coc-control-tags">
-            <span className="coc-tag" style={{ color, background: `${color}18`, borderColor: `${color}33` }}>{cat.label}</span>
+            <span className="coc-tag" style={{ color, background: `color-mix(in srgb, ${color} 9%, transparent)`, borderColor: `color-mix(in srgb, ${color} 20%, transparent)` }}>{cat.label}</span>
             <span className="coc-tag coc-tag--conf" style={{ color: conf.color }}>{conf.label}</span>
             <span className="coc-resource-count">{item.resourceBands.length} resource{item.resourceBands.length !== 1 ? 's' : ''}</span>
-            {hasEstimate && <CostBar min={item.totalMin} max={item.totalMax} maxVal={maxMax} isDark={isDark} />}
+            {hasEstimate && <CostBar min={item.totalMin} max={item.totalMax} maxVal={maxMax} color={color} />}
           </div>
         </div>
         <div className="coc-control-cost">
@@ -296,12 +296,12 @@ function ControlCostCard({ item, maxMax, isDark }: { item: ControlCostItem; maxM
                   const mid   = Math.round((band.min + band.max) / 2)
                   const rtype = finding.resource ? extractResourceType(finding.resource) : '—'
                   const cm    = CATEGORY_META[band.category]
-                  const ccol = categoryColor(band.category, isDark)
+                  const ccol = categoryColor(band.category)
                   return (
                     <tr key={i}>
                       <td title={finding.resource || ''}>{finding.resource || '—'}</td>
                       <td>{rtype}</td>
-                      <td><span className="coc-tag" style={{ color: ccol, background: `${ccol}15`, borderColor: `${ccol}25` }}>{cm.icon} {cm.label}</span></td>
+                      <td><span className="coc-tag" style={{ color: ccol, background: `color-mix(in srgb, ${ccol} 10%, transparent)`, borderColor: `color-mix(in srgb, ${ccol} 22%, transparent)` }}>{cm.icon} {cm.label}</span></td>
                       <td style={{ color: ccol }}>{band.min === 0 && band.max === 0 ? '—' : `~${fmtDollar(mid)}`}{band.min !== band.max && band.max > 0 && <div className="coc-resource-range">{fmtRange(band.min, band.max)}</div>}</td>
                       <td>{band.basis}</td>
                     </tr>
@@ -328,8 +328,6 @@ function ControlCostCard({ item, maxMax, isDark }: { item: ControlCostItem; maxM
 
 export default function CostImpactPage({ run }: Props) {
   const { t } = useI18n()
-  const { themeName } = useTheme()
-  const isDark = themeName === 'dark'
   const [catFilter, setCatFilter] = useState<CostCategory | 'all'>('all')
   const [search, setSearch] = useState('')
 
@@ -366,7 +364,7 @@ export default function CostImpactPage({ run }: Props) {
   const budgetAlerts = useMemo(() => fetchBudgetAlertsStub(run), [run])
 
   return (
-    <div className="coc-root" data-coc-theme={isDark ? 'dark' : 'light'}>
+    <div className="coc-root">
       <style>{costOperationsCenterCss}</style>
 
       {/* Hero */}
@@ -379,7 +377,7 @@ export default function CostImpactPage({ run }: Props) {
         </div>
         <div className="coc-hero__kpi">
           <div className="coc-hero__kpi-label">MONTHLY EXPOSURE</div>
-          <div className="coc-hero__kpi-value" style={{ color: hasCostFindings ? (isDark ? '#ff2a6d' : '#dc2626') : (isDark ? '#00ff9d' : '#059669') }}>
+          <div className="coc-hero__kpi-value" style={{ color: hasCostFindings ? 'var(--fail)' : 'var(--pass)' }}>
             {hasCostFindings ? `~${fmtDollar(totals.allMid)}` : '$0'}
           </div>
           <div className="coc-hero__kpi-range">{hasCostFindings ? `${fmtRange(totals.allMin, totals.allMax)} range` : 'No failing cost controls'}</div>
@@ -402,7 +400,7 @@ export default function CostImpactPage({ run }: Props) {
           <div className="coc-kpi__icon"><FlameIcon /></div>
           <div className="coc-kpi__meta">
             <div className="coc-kpi__label">DIRECT WASTE</div>
-            <div className="coc-kpi__value" style={{ color: categoryColor('waste', isDark) }}>~{fmtDollar(totals.byCategory.waste)}</div>
+            <div className="coc-kpi__value" style={{ color: categoryColor('waste') }}>~{fmtDollar(totals.byCategory.waste)}</div>
             <div className="coc-kpi__desc">{t('pages.costImpact.directWaste')}</div>
           </div>
         </div>
@@ -410,7 +408,7 @@ export default function CostImpactPage({ run }: Props) {
           <div className="coc-kpi__icon"><PiggyIcon /></div>
           <div className="coc-kpi__meta">
             <div className="coc-kpi__label">SAVINGS OPPORTUNITY</div>
-            <div className="coc-kpi__value" style={{ color: categoryColor('savings', isDark) }}>~{fmtDollar(totals.byCategory.savings)}</div>
+            <div className="coc-kpi__value" style={{ color: categoryColor('savings') }}>~{fmtDollar(totals.byCategory.savings)}</div>
             <div className="coc-kpi__desc">{t('pages.costImpact.savingsOpp')}</div>
           </div>
         </div>
@@ -418,7 +416,7 @@ export default function CostImpactPage({ run }: Props) {
           <div className="coc-kpi__icon"><ShieldCostIcon /></div>
           <div className="coc-kpi__meta">
             <div className="coc-kpi__label">GOVERNANCE RISK</div>
-            <div className="coc-kpi__value" style={{ color: categoryColor('risk', isDark) }}>~{fmtDollar(totals.byCategory.risk)}</div>
+            <div className="coc-kpi__value" style={{ color: categoryColor('risk') }}>~{fmtDollar(totals.byCategory.risk)}</div>
             <div className="coc-kpi__desc">{t('pages.costImpact.govRisk')}</div>
           </div>
         </div>
@@ -448,12 +446,12 @@ export default function CostImpactPage({ run }: Props) {
               <AreaChart data={history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="cocActual" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={isDark ? '#ff2a6d' : '#dc2626'} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={isDark ? '#ff2a6d' : '#dc2626'} stopOpacity={0.05} />
+                    <stop offset="0%" stopColor="var(--fail)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--fail)" stopOpacity={0.05} />
                   </linearGradient>
                   <linearGradient id="cocProjected" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={isDark ? '#00ff9d' : '#059669'} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={isDark ? '#00ff9d' : '#059669'} stopOpacity={0.05} />
+                    <stop offset="0%" stopColor="var(--pass)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--pass)" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="var(--track)" strokeDasharray="3 3" />
@@ -464,8 +462,8 @@ export default function CostImpactPage({ run }: Props) {
                   itemStyle={{ fontSize: 12 }}
                   formatter={(value: number, name: string) => [fmtDollar(value), name]}
                 />
-                <Area type="monotone" dataKey="actual" name="Actual spend" stroke={isDark ? '#ff2a6d' : '#dc2626'} strokeWidth={2} fill="url(#cocActual)" />
-                <Area type="monotone" dataKey="projected" name="Projected spend" stroke={isDark ? '#00ff9d' : '#059669'} strokeWidth={2} fill="url(#cocProjected)" strokeDasharray="5 5" />
+                <Area type="monotone" dataKey="actual" name="Actual spend" stroke="var(--fail)" strokeWidth={2} fill="url(#cocActual)" />
+                <Area type="monotone" dataKey="projected" name="Projected spend" stroke="var(--pass)" strokeWidth={2} fill="url(#cocProjected)" strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -522,7 +520,7 @@ export default function CostImpactPage({ run }: Props) {
                 if (count === 0) return null
                 const cm = CATEGORY_META[cat]
                 return (
-                  <button key={cat} onClick={() => setCatFilter(cat)} className={`coc-filter-chip ${catFilter === cat ? 'coc-filter-chip--active' : ''}`} style={{ '--chip-color': categoryColor(cat, isDark) } as React.CSSProperties}>
+                  <button key={cat} onClick={() => setCatFilter(cat)} className={`coc-filter-chip ${catFilter === cat ? 'coc-filter-chip--active' : ''}`} style={{ '--chip-color': categoryColor(cat) } as React.CSSProperties}>
                     {cm.icon} {cm.label} ({count})
                   </button>
                 )
@@ -558,13 +556,13 @@ export default function CostImpactPage({ run }: Props) {
                     .slice(0, 10)
                     .map(({ item, rb }, i) => {
                       const mid = Math.round((rb.band.min + rb.band.max) / 2)
-                      const ccol = categoryColor(rb.band.category, isDark)
+                      const ccol = categoryColor(rb.band.category)
                       const cm = CATEGORY_META[rb.band.category]
                       return (
                         <tr key={`${item.controlId}-${i}`}>
                           <td title={rb.finding.resource || ''}>{rb.finding.resource || '—'}</td>
                           <td>{item.controlId}</td>
-                          <td><span className="coc-tag" style={{ color: ccol, background: `${ccol}15`, borderColor: `${ccol}25` }}>{cm.icon} {cm.label}</span></td>
+                          <td><span className="coc-tag" style={{ color: ccol, background: `color-mix(in srgb, ${ccol} 10%, transparent)`, borderColor: `color-mix(in srgb, ${ccol} 22%, transparent)` }}>{cm.icon} {cm.label}</span></td>
                           <td style={{ color: ccol, fontWeight: 700 }}>{rb.band.min === 0 && rb.band.max === 0 ? '—' : `~${fmtDollar(mid)}`}</td>
                           <td><span className="coc-tag coc-tag--conf" style={{ color: CONF_META[rb.band.confidence].color }}>{CONF_META[rb.band.confidence].label}</span></td>
                         </tr>
@@ -582,7 +580,7 @@ export default function CostImpactPage({ run }: Props) {
               <div className="coc-section-card__subtitle">{t('pages.costImpact.sortedByImpact')}</div>
             </div>
             {filtered.map(item => (
-              <ControlCostCard key={item.controlId} item={item} maxMax={maxMax} isDark={isDark} />
+              <ControlCostCard key={item.controlId} item={item} maxMax={maxMax} />
             ))}
             {filtered.length === 0 && (
               <div className="coc-empty coc-empty--inline">
@@ -624,39 +622,27 @@ const costOperationsCenterCss = `
   justify-content: space-between;
   gap: 1.5rem;
   background:
-    radial-gradient(circle at 15% 50%, rgba(255,42,109,0.10) 0%, transparent 40%),
-    radial-gradient(circle at 85% 30%, rgba(251,191,36,0.08) 0%, transparent 35%),
+    radial-gradient(circle at 15% 50%, color-mix(in srgb, var(--waf-brand) 10%, transparent) 0%, transparent 40%),
+    radial-gradient(circle at 85% 30%, color-mix(in srgb, var(--score-mid) 7%, transparent) 0%, transparent 35%),
     linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
-  border: 1px solid rgba(255,42,109,0.25);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 18%, transparent);
   border-radius: 20px;
   padding: 1.5rem 1.75rem;
-  box-shadow: 0 0 40px rgba(255,42,109,0.10), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow:
+    0 0 40px color-mix(in srgb, var(--waf-brand) 7%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
   flex-wrap: wrap;
   position: relative;
   overflow: hidden;
-}
-[data-coc-theme="light"] .coc-hero {
-  background:
-    radial-gradient(circle at 15% 50%, rgba(220,38,38,0.06) 0%, transparent 40%),
-    radial-gradient(circle at 85% 30%, rgba(217,119,6,0.04) 0%, transparent 35%),
-    linear-gradient(135deg, rgba(241,245,249,0.95) 0%, rgba(255,255,255,0.98) 100%);
-  border: 1px solid rgba(220,38,38,0.18);
-  box-shadow: 0 0 40px rgba(220,38,38,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 .coc-hero__grid {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(255,42,109,0.03) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255,42,109,0.03) 1px, transparent 1px);
+    linear-gradient(90deg, color-mix(in srgb, var(--waf-brand) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--waf-brand) 4%, transparent) 1px, transparent 1px);
   background-size: 24px 24px;
   pointer-events: none;
-}
-[data-coc-theme="light"] .coc-hero__grid {
-  background:
-    linear-gradient(90deg, rgba(220,38,38,0.02) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(220,38,38,0.02) 1px, transparent 1px);
-  background-size: 24px 24px;
 }
 .coc-hero__content {
   flex: 1;
@@ -668,24 +654,18 @@ const costOperationsCenterCss = `
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255,42,109,0.15);
-  border: 1px solid rgba(255,42,109,0.35);
+  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent);
   border-radius: 4px;
   padding: 0.35rem 0.75rem;
   font-size: 0.65rem;
   font-weight: 800;
-  color: #ff2a6d;
+  color: var(--waf-brand);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   margin-bottom: 0.85rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  box-shadow: 0 0 12px rgba(255,42,109,0.20);
-}
-[data-coc-theme="light"] .coc-hero__badge {
-  background: rgba(220,38,38,0.08);
-  border: 1px solid rgba(220,38,38,0.25);
-  color: #dc2626;
-  box-shadow: 0 0 12px rgba(220,38,38,0.10);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 14%, transparent);
 }
 .coc-hero__title {
   margin: 0;
@@ -696,17 +676,11 @@ const costOperationsCenterCss = `
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-[data-coc-theme="light"] .coc-hero__title {
-  color: var(--text);
-}
 .coc-hero__subtitle {
   margin: 0.45rem 0 0;
   font-size: 0.82rem;
   color: var(--muted);
   max-width: 520px;
-}
-[data-coc-theme="light"] .coc-hero__subtitle {
-  color: var(--muted);
 }
 .coc-hero__kpi {
   flex-shrink: 0;
@@ -733,10 +707,6 @@ const costOperationsCenterCss = `
   font-size: 0.72rem;
   color: var(--muted);
 }
-[data-coc-theme="light"] .coc-hero__kpi-label,
-[data-coc-theme="light"] .coc-hero__kpi-range {
-  color: var(--muted);
-}
 
 /* KPI grid */
 .coc-kpi-grid {
@@ -746,7 +716,7 @@ const costOperationsCenterCss = `
 }
 .coc-kpi {
   background: var(--surface);
-  border: 1px solid rgba(255,42,109,0.15);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 12%, transparent);
   border-radius: 14px;
   padding: 1.1rem;
   display: flex;
@@ -756,18 +726,11 @@ const costOperationsCenterCss = `
   overflow: hidden;
   transition: transform 0.2s ease, border-color 0.2s ease;
   backdrop-filter: blur(6px);
-}
-[data-coc-theme="light"] .coc-kpi {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(220,38,38,0.15);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  box-shadow: var(--shadow-sm);
 }
 .coc-kpi:hover {
   transform: translateY(-2px);
-  border-color: rgba(255,42,109,0.35);
-}
-[data-coc-theme="light"] .coc-kpi:hover {
-  border-color: rgba(220,38,38,0.3);
+  border-color: color-mix(in srgb, var(--waf-brand) 26%, transparent);
 }
 .coc-kpi::before {
   content: '';
@@ -777,30 +740,21 @@ const costOperationsCenterCss = `
   width: 100%;
   height: 2px;
 }
-.coc-kpi--waste::before { background: #ff2a6d; box-shadow: 0 0 12px #ff2a6d; }
-.coc-kpi--savings::before { background: #fbbf24; box-shadow: 0 0 12px #fbbf24; }
-.coc-kpi--risk::before { background: #a78bfa; box-shadow: 0 0 12px #a78bfa; }
-.coc-kpi--resources::before { background: #38bdf8; box-shadow: 0 0 12px #38bdf8; }
-[data-coc-theme="light"] .coc-kpi--waste::before { background: #dc2626; box-shadow: 0 0 12px rgba(220,38,38,0.45); }
-[data-coc-theme="light"] .coc-kpi--savings::before { background: #b45309; box-shadow: 0 0 12px rgba(180,83,9,0.45); }
-[data-coc-theme="light"] .coc-kpi--risk::before { background: #7c3aed; box-shadow: 0 0 12px rgba(124,58,237,0.45); }
-[data-coc-theme="light"] .coc-kpi--resources::before { background: #0284c7; box-shadow: 0 0 12px rgba(2,132,199,0.45); }
+.coc-kpi--waste::before { background: var(--fail); box-shadow: 0 0 12px color-mix(in srgb, var(--fail) 30%, transparent); }
+.coc-kpi--savings::before { background: var(--score-mid); box-shadow: 0 0 12px color-mix(in srgb, var(--score-mid) 30%, transparent); }
+.coc-kpi--risk::before { background: var(--waf-info); box-shadow: 0 0 12px color-mix(in srgb, var(--waf-info) 30%, transparent); }
+.coc-kpi--resources::before { background: var(--waf-brand); box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 30%, transparent); }
 .coc-kpi__icon {
   width: 38px;
   height: 38px;
   border-radius: 10px;
   background: var(--bg);
-  border: 1px solid rgba(148,163,184,0.2);
+  border: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text);
   flex-shrink: 0;
-}
-[data-coc-theme="light"] .coc-kpi__icon {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(15,23,42,0.1);
-  color: var(--muted);
 }
 .coc-kpi__meta {
   flex: 1;
@@ -831,11 +785,6 @@ const costOperationsCenterCss = `
   color: var(--muted);
   line-height: 1.4;
 }
-[data-coc-theme="light"] .coc-kpi__label,
-[data-coc-theme="light"] .coc-kpi__unit,
-[data-coc-theme="light"] .coc-kpi__desc {
-  color: var(--muted);
-}
 
 /* Charts row */
 .coc-charts-row {
@@ -847,29 +796,20 @@ const costOperationsCenterCss = `
 .coc-alerts-card,
 .coc-section-card {
   background: var(--surface);
-  border: 1px solid rgba(255,42,109,0.12);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   backdrop-filter: blur(6px);
-}
-[data-coc-theme="light"] .coc-chart-card,
-[data-coc-theme="light"] .coc-alerts-card,
-[data-coc-theme="light"] .coc-section-card {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(220,38,38,0.15);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  box-shadow: var(--shadow-md);
 }
 .coc-chart-card__header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #ff2a6d;
-}
-[data-coc-theme="light"] .coc-chart-card__header {
-  color: #dc2626;
+  color: var(--waf-brand);
 }
 .coc-chart-card__title {
   font-size: 0.85rem;
@@ -877,9 +817,6 @@ const costOperationsCenterCss = `
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-[data-coc-theme="light"] .coc-chart-card__title {
-  color: var(--text);
 }
 .coc-chart-card__subtitle {
   font-size: 0.72rem;
@@ -903,12 +840,9 @@ const costOperationsCenterCss = `
   border: 1px solid transparent;
   font-size: 0.8rem;
 }
-.coc-alert--ok    { background: rgba(0,255,157,0.10); border-color: rgba(0,255,157,0.25); color: #00ff9d; }
-.coc-alert--warn  { background: rgba(251,191,36,0.10); border-color: rgba(251,191,36,0.25); color: #fbbf24; }
-.coc-alert--crit  { background: rgba(255,42,109,0.12); border-color: rgba(255,42,109,0.30); color: #ff2a6d; }
-[data-coc-theme="light"] .coc-alert--ok    { background: rgba(34,197,94,0.10); border-color: rgba(34,197,94,0.25); color: #059669; }
-[data-coc-theme="light"] .coc-alert--warn  { background: rgba(234,179,8,0.10); border-color: rgba(234,179,8,0.25); color: #b45309; }
-[data-coc-theme="light"] .coc-alert--crit  { background: rgba(220,38,38,0.10); border-color: rgba(220,38,38,0.25); color: #dc2626; }
+.coc-alert--ok    { background: color-mix(in srgb, var(--pass) 10%, transparent); border-color: color-mix(in srgb, var(--pass) 22%, transparent); color: var(--pass); }
+.coc-alert--warn  { background: color-mix(in srgb, var(--score-mid) 10%, transparent); border-color: color-mix(in srgb, var(--score-mid) 22%, transparent); color: var(--score-mid); }
+.coc-alert--crit  { background: color-mix(in srgb, var(--fail) 12%, transparent); border-color: color-mix(in srgb, var(--fail) 22%, transparent); color: var(--fail); }
 .coc-alert__label { font-weight: 600; }
 .coc-alert__value { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700; }
 .coc-stub-note {
@@ -918,14 +852,9 @@ const costOperationsCenterCss = `
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   background: var(--bg);
-  border: 1px dashed rgba(148,163,184,0.25);
+  border: 1px dashed color-mix(in srgb, var(--muted) 22%, transparent);
   color: var(--muted);
   font-size: 0.7rem;
-}
-[data-coc-theme="light"] .coc-stub-note {
-  background: rgba(241,245,249,0.8);
-  border: 1px dashed rgba(15,23,42,0.15);
-  color: var(--muted);
 }
 
 .coc-stub-banner {
@@ -934,31 +863,21 @@ const costOperationsCenterCss = `
   gap: 1rem;
   padding: 0.9rem 1.25rem;
   border-radius: 14px;
-  background: rgba(251,191,36,0.08);
-  border: 1px solid rgba(251,191,36,0.30);
-  box-shadow: 0 0 24px rgba(251,191,36,0.12);
-}
-[data-coc-theme="light"] .coc-stub-banner {
-  background: rgba(234,179,8,0.08);
-  border: 1px solid rgba(234,179,8,0.30);
-  box-shadow: 0 0 20px rgba(234,179,8,0.10);
+  background: color-mix(in srgb, var(--waf-warn) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-warn) 26%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--waf-warn) 10%, transparent);
 }
 .coc-stub-banner__icon {
   flex-shrink: 0;
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(251,191,36,0.15);
-  border: 1px solid rgba(251,191,36,0.35);
+  background: color-mix(in srgb, var(--waf-warn) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-warn) 30%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fbbf24;
-}
-[data-coc-theme="light"] .coc-stub-banner__icon {
-  background: rgba(234,179,8,0.12);
-  border: 1px solid rgba(234,179,8,0.30);
-  color: #b45309;
+  color: var(--waf-warn);
 }
 .coc-stub-banner__text {
   flex: 1;
@@ -967,58 +886,42 @@ const costOperationsCenterCss = `
 .coc-stub-banner__title {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #fbbf24;
+  color: var(--waf-warn);
   margin-bottom: 0.15rem;
-}
-[data-coc-theme="light"] .coc-stub-banner__title {
-  color: #b45309;
 }
 .coc-stub-banner__desc {
   font-size: 0.75rem;
   color: var(--muted);
   line-height: 1.45;
 }
-[data-coc-theme="light"] .coc-stub-banner__desc {
-  color: var(--muted);
-}
 .coc-stub-banner__badge {
   flex-shrink: 0;
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
-  background: rgba(251,191,36,0.15);
-  border: 1px solid rgba(251,191,36,0.35);
-  color: #fbbf24;
+  background: color-mix(in srgb, var(--waf-warn) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-warn) 30%, transparent);
+  color: var(--waf-warn);
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-}
-[data-coc-theme="light"] .coc-stub-banner__badge {
-  background: rgba(234,179,8,0.12);
-  border: 1px solid rgba(234,179,8,0.30);
-  color: #b45309;
 }
 .coc-stub-pill {
   margin-left: auto;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(251,191,36,0.12);
-  border: 1px solid rgba(251,191,36,0.30);
-  color: #fbbf24;
+  background: color-mix(in srgb, var(--waf-warn) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-warn) 26%, transparent);
+  color: var(--waf-warn);
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-[data-coc-theme="light"] .coc-stub-pill {
-  background: rgba(234,179,8,0.10);
-  border: 1px solid rgba(234,179,8,0.25);
-  color: #b45309;
-}
 
 /* Filter bar */
 .coc-filter-bar {
   background: var(--surface);
-  border: 1px solid rgba(255,42,109,0.12);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 0.85rem 1.1rem;
   display: flex;
@@ -1026,11 +929,7 @@ const costOperationsCenterCss = `
   align-items: center;
   flex-wrap: wrap;
   backdrop-filter: blur(6px);
-}
-[data-coc-theme="light"] .coc-filter-bar {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(220,38,38,0.15);
-  box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+  box-shadow: var(--shadow-sm);
 }
 .coc-search {
   flex: 1 1 220px;
@@ -1039,15 +938,10 @@ const costOperationsCenterCss = `
   gap: 0.5rem;
   padding: 0.5rem 0.8rem;
   border-radius: 10px;
-  border: 1px solid rgba(255,42,109,0.18);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
-  color: #ff2a6d;
+  color: var(--waf-brand);
   min-width: 0;
-}
-[data-coc-theme="light"] .coc-search {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(220,38,38,0.18);
-  color: #dc2626;
 }
 .coc-search input {
   flex: 1;
@@ -1058,11 +952,7 @@ const costOperationsCenterCss = `
   outline: none;
   min-width: 0;
 }
-[data-coc-theme="light"] .coc-search input {
-  color: var(--text);
-}
 .coc-search input::placeholder { color: var(--muted); }
-[data-coc-theme="light"] .coc-search input::placeholder { color: var(--muted); }
 .coc-filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1074,7 +964,7 @@ const costOperationsCenterCss = `
   gap: 0.35rem;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid rgba(255,42,109,0.15);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 12%, transparent);
   background: var(--bg);
   color: var(--muted);
   font-size: 0.72rem;
@@ -1082,24 +972,15 @@ const costOperationsCenterCss = `
   cursor: pointer;
   transition: all 0.15s ease;
 }
-[data-coc-theme="light"] .coc-filter-chip {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(220,38,38,0.12);
-  color: var(--muted);
-}
 .coc-filter-chip:hover {
-  border-color: rgba(255,42,109,0.3);
-  color: var(--text);
-}
-[data-coc-theme="light"] .coc-filter-chip:hover {
-  border-color: rgba(220,38,38,0.25);
+  border-color: color-mix(in srgb, var(--waf-brand) 25%, transparent);
   color: var(--text);
 }
 .coc-filter-chip--active {
-  border-color: var(--chip-color, rgba(255,42,109,0.45));
-  background: color-mix(in srgb, var(--chip-color, #ff2a6d) 12%, transparent);
-  color: var(--chip-color, #ff2a6d);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color, #ff2a6d) 12%, transparent);
+  border-color: var(--chip-color, var(--waf-brand));
+  background: color-mix(in srgb, var(--chip-color, var(--waf-brand)) 12%, transparent);
+  color: var(--chip-color, var(--waf-brand));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color, var(--waf-brand)) 12%, transparent);
 }
 .coc-filter-actions {
   display: flex;
@@ -1112,7 +993,7 @@ const costOperationsCenterCss = `
   gap: 0.35rem;
   padding: 0.45rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(255,42,109,0.18);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
   color: var(--muted);
   font-size: 0.72rem;
@@ -1120,20 +1001,10 @@ const costOperationsCenterCss = `
   cursor: pointer;
   transition: all 0.15s ease;
 }
-[data-coc-theme="light"] .coc-btn-ghost {
-  background: rgba(241,245,249,0.8);
-  border: 1px solid rgba(220,38,38,0.15);
-  color: var(--muted);
-}
 .coc-btn-ghost:hover {
   color: var(--text);
-  border-color: rgba(255,42,109,0.4);
-  background: rgba(255,42,109,0.08);
-}
-[data-coc-theme="light"] .coc-btn-ghost:hover {
-  color: var(--text);
-  border-color: rgba(220,38,38,0.3);
-  background: rgba(220,38,38,0.08);
+  border-color: color-mix(in srgb, var(--waf-brand) 30%, transparent);
+  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
 }
 
 /* Section cards */
@@ -1149,9 +1020,6 @@ const costOperationsCenterCss = `
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-[data-coc-theme="light"] .coc-section-card__title {
-  color: var(--text);
-}
 .coc-section-card__subtitle {
   font-size: 0.72rem;
   color: var(--muted);
@@ -1159,22 +1027,18 @@ const costOperationsCenterCss = `
 
 /* Control cards */
 .coc-control-card {
-  background: var(--cat-bg);
+  background: color-mix(in srgb, var(--cat-color) 6%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--cat-color) 22%, transparent);
   border-radius: 12px;
   margin-bottom: 0.65rem;
   overflow: hidden;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-[data-coc-theme="light"] .coc-control-card {
-  background: color-mix(in srgb, var(--cat-color) 5%, rgba(255,255,255,0.85));
-}
 .coc-control-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(0,0,0,0.25), 0 0 18px color-mix(in srgb, var(--cat-color) 10%, transparent);
-}
-[data-coc-theme="light"] .coc-control-card:hover {
-  box-shadow: 0 6px 20px rgba(15,23,42,0.10), 0 0 14px color-mix(in srgb, var(--cat-color) 8%, transparent);
+  box-shadow:
+    0 6px 24px color-mix(in srgb, var(--text) 8%, transparent),
+    0 0 18px color-mix(in srgb, var(--cat-color) 8%, transparent);
 }
 .coc-control-header {
   padding: 0.85rem 1rem;
@@ -1211,9 +1075,6 @@ const costOperationsCenterCss = `
   font-weight: 600;
   color: var(--text);
 }
-[data-coc-theme="light"] .coc-control-title {
-  color: var(--text);
-}
 .coc-control-tags {
   display: flex;
   gap: 0.4rem;
@@ -1232,16 +1093,10 @@ const costOperationsCenterCss = `
 }
 .coc-tag--conf {
   background: var(--bg);
-  border: 1px solid rgba(148,163,184,0.12);
-}
-[data-coc-theme="light"] .coc-tag--conf {
-  background: rgba(241,245,249,0.8);
+  border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent);
 }
 .coc-resource-count {
   font-size: 0.68rem;
-  color: var(--muted);
-}
-[data-coc-theme="light"] .coc-resource-count {
   color: var(--muted);
 }
 .coc-control-cost {
@@ -1302,22 +1157,15 @@ const costOperationsCenterCss = `
   white-space: nowrap;
   background: var(--bg);
 }
-[data-coc-theme="light"] .coc-resource-table th {
-  background: rgba(241,245,249,0.8);
-}
 .coc-resource-table td {
   padding: 0.5rem 0.6rem;
-  border-top: 1px solid rgba(148,163,184,0.10);
+  border-top: 1px solid color-mix(in srgb, var(--muted) 10%, transparent);
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 0;
-}
-[data-coc-theme="light"] .coc-resource-table td {
-  color: var(--muted);
-  border-top-color: rgba(15,23,42,0.08);
 }
 .coc-resource-table td:nth-child(2),
 .coc-resource-table td:nth-child(3),
@@ -1340,13 +1188,10 @@ const costOperationsCenterCss = `
 .coc-bar-bg {
   position: relative;
   height: 6px;
-  background: rgba(148,163,184,0.12);
+  background: var(--track);
   border-radius: 999px;
   overflow: hidden;
   width: 140px;
-}
-[data-coc-theme="light"] .coc-bar-bg {
-  background: rgba(15,23,42,0.08);
 }
 .coc-bar-range {
   position: absolute;
@@ -1373,26 +1218,16 @@ const costOperationsCenterCss = `
   margin-bottom: 0.4rem;
 }
 .coc-message--finding {
-  background: rgba(0,0,0,.03);
-  border: 1px solid rgba(148,163,184,0.15);
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent);
   color: var(--muted);
 }
-[data-coc-theme="light"] .coc-message--finding {
-  background: rgba(241,245,249,0.6);
-  border: 1px solid rgba(15,23,42,0.08);
-}
 .coc-message--fix {
-  background: rgba(0,255,157,0.08);
-  border: 1px solid rgba(0,255,157,0.18);
-  color: var(--text);
-}
-[data-coc-theme="light"] .coc-message--fix {
-  background: rgba(34,197,94,0.08);
-  border: 1px solid rgba(34,197,94,0.18);
+  background: color-mix(in srgb, var(--pass) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pass) 18%, transparent);
   color: var(--text);
 }
 .coc-message strong { color: var(--text); margin-right: 0.25rem; }
-[data-coc-theme="light"] .coc-message strong { color: var(--text); }
 
 /* Empty state */
 .coc-empty {
@@ -1402,25 +1237,22 @@ const costOperationsCenterCss = `
   gap: 0.75rem;
   padding: 3.5rem 1.5rem;
   background: var(--surface);
-  border: 1px solid rgba(0,255,157,0.15);
+  border: 1px solid color-mix(in srgb, var(--pass) 18%, transparent);
   border-radius: 16px;
-}
-[data-coc-theme="light"] .coc-empty {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(34,197,94,0.2);
+  box-shadow: var(--shadow-md);
 }
 .coc-empty--inline {
   background: transparent;
   border: none;
   padding: 2rem;
+  box-shadow: none;
 }
 .coc-empty__icon { font-size: 2rem; }
 .coc-empty__title {
   font-size: 1rem;
   font-weight: 700;
-  color: #00ff9d;
+  color: var(--pass);
 }
-[data-coc-theme="light"] .coc-empty__title { color: #059669; }
 .coc-empty__desc {
   font-size: 0.8rem;
   color: var(--muted);
@@ -1433,21 +1265,17 @@ const costOperationsCenterCss = `
   padding: 1rem 1.1rem;
   border-radius: 10px;
   background: var(--surface);
-  border: 1px solid rgba(148,163,184,0.12);
+  border: 1px solid var(--border);
   font-size: 0.72rem;
   color: var(--muted);
   line-height: 1.7;
-}
-[data-coc-theme="light"] .coc-methodology {
-  background: rgba(255,255,255,0.85);
-  border: 1px solid rgba(15,23,42,0.08);
+  box-shadow: var(--shadow-sm);
 }
 .coc-methodology strong {
   display: block;
   margin-bottom: 0.3rem;
   color: var(--text);
 }
-[data-coc-theme="light"] .coc-methodology strong { color: var(--text); }
 
 @media (max-width: 1000px) {
   .coc-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
