@@ -1,6 +1,6 @@
 import { RunDetail } from '../api'
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css'
+import { Map as MapGl, Source, Layer, Popup } from 'react-map-gl/maplibre'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { REGION_COORDS, REGION_LABELS, PROVIDER_COLORS } from '../region-data'
 import { useI18n } from '../i18n'
 import { useMemo, useState } from 'react'
@@ -150,7 +150,7 @@ function buildProviderData(detectedRegions: Array<[string, string, string | null
     }
   }
 
-  const providerMap = new Map<string, ProviderData>()
+  const providerMap: Map<string, ProviderData> = new Map()
   for (const r of normalized) {
     if (!r.provider || !r.region) continue
     const color = PROVIDER_COLORS[r.provider] ?? '#94a3b8'
@@ -188,13 +188,11 @@ function buildProviderData(detectedRegions: Array<[string, string, string | null
     }
   }
 
-  return Array.from(providerMap.values()).sort((a, b) => providerRank(a.provider) - providerRank(b.provider))
+  return Array.from(providerMap.values()).sort((a, b) => providerRank(a.provider) - providerRank(b.provider)) as ProviderData[]
 }
 
-function buildMarkers(detectedRegions: Array<[string, string, string | null]>) {
+function buildGeoJSON(detectedRegions: Array<[string, string, string | null]>) {
   const seen = new Set<string>()
-  const markers: Array<{ key: string; region: string; provider: string; coords: [number, number]; azs: string[] }> = []
-
   const azsByRegion: Record<string, string[]> = {}
   for (const [rawRegion, rawProvider, rawAz] of detectedRegions) {
     if (!Array.isArray(rawRegion) && !Array.isArray(rawProvider)) continue
@@ -212,6 +210,7 @@ function buildMarkers(detectedRegions: Array<[string, string, string | null]>) {
     }
   }
 
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = []
   for (const [rawRegion, rawProvider] of detectedRegions) {
     const provider = typeof rawProvider === 'string' ? rawProvider.toLowerCase() : ''
     const region = typeof rawRegion === 'string'
@@ -224,9 +223,20 @@ function buildMarkers(detectedRegions: Array<[string, string, string | null]>) {
     const key = `${region}:${provider}`
     if (seen.has(key)) continue
     seen.add(key)
-    markers.push({ key, region, provider, coords, azs: azsByRegion[region] ?? [] })
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [coords[1], coords[0]] },
+      properties: {
+        key,
+        region,
+        baseRegion,
+        provider,
+        color: PROVIDER_COLORS[provider] ?? '#94a3b8',
+        azs: azsByRegion[region] ?? [],
+      },
+    })
   }
-  return markers
+  return { type: 'FeatureCollection', features } as GeoJSON.FeatureCollection<GeoJSON.Point>
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -330,9 +340,10 @@ export default function RegionsPage({ run }: Props) {
   const { t } = useI18n()
   const [hoveredProvider, setHoveredProvider] = useState<string | null>(null)
   const [activeProvider, setActiveProvider] = useState<string | null>(null)
+  const [popup, setPopup] = useState<{ region: string; provider: string; azs: string[]; baseRegion: string; color: string } | null>(null)
 
   const providers = useMemo(() => buildProviderData(run.detected_regions ?? []), [run.detected_regions])
-  const markers = useMemo(() => buildMarkers(run.detected_regions ?? []), [run.detected_regions])
+  const geojson = useMemo(() => buildGeoJSON(run.detected_regions ?? []), [run.detected_regions])
 
   const totalRegions = useMemo(() => providers.reduce((sum, p) => sum + p.regions.length, 0), [providers])
   const totalAZs = useMemo(() => providers.reduce((sum, p) => sum + p.azs.length, 0), [providers])
@@ -406,7 +417,7 @@ export default function RegionsPage({ run }: Props) {
       </div>
 
       {/* ── Map ── */}
-      {markers.length > 0 && (
+      {geojson.features.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{
             padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)',
@@ -436,51 +447,98 @@ export default function RegionsPage({ run }: Props) {
               ))}
             </div>
           </div>
-          <MapContainer center={[25, 15]} zoom={2} style={{ height: '460px', width: '100%' }} scrollWheelZoom={false}>
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-              attribution={t('pages.regions.mapAttribution')}
-              className="light-mode-tiles"
-            />
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution={t('pages.regions.mapAttribution')}
-              className="dark-mode-tiles"
-            />
-            {markers.map(m => {
-              const baseRegion = m.provider === 'sinacloud' ? getSinacloudBaseRegion(m.region) : stripZoneSuffix(m.region)
-              const providerColor = PROVIDER_COLORS[m.provider] ?? '#94a3b8'
-              const isActive = !displayedProvider || displayedProvider === m.provider
-              const dimmed = displayedProvider && displayedProvider !== m.provider
-              return (
-                <CircleMarker
-                  key={m.key}
-                  center={m.coords}
-                  radius={isActive ? 9 : 7}
-                  pathOptions={{
-                    color: isActive ? '#ffffff' : providerColor,
-                    fillColor: providerColor,
-                    fillOpacity: dimmed ? 0.25 : isActive ? 0.85 : 0.55,
-                    weight: isActive ? 4 : 2,
+          <div style={{ height: '460px', width: '100%' }}>
+            <MapGl
+              initialViewState={{ latitude: 25, longitude: 15, zoom: 2 }}
+              style={{ width: '100%', height: '100%' }}
+              mapStyle={{
+                version: 8,
+                sources: {
+                  carto: {
+                    type: 'raster',
+                    tiles: [
+                      'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                      'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                      'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                      'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                    ],
+                    tileSize: 256,
+                    attribution: t('pages.regions.mapAttribution'),
+                  },
+                  cartoDark: {
+                    type: 'raster',
+                    tiles: [
+                      'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                      'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                      'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                      'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                    ],
+                    tileSize: 256,
+                    attribution: t('pages.regions.mapAttribution'),
+                  },
+                },
+                layers: [
+                  { id: 'carto-light', type: 'raster', source: 'carto', layout: { visibility: 'visible' } },
+                  { id: 'carto-dark', type: 'raster', source: 'cartoDark', layout: { visibility: 'none' } },
+                ],
+              }}
+              scrollZoom={false}
+            >
+              <Source id="regions" type="geojson" data={geojson}>
+                <Layer
+                  id="region-points"
+                  type="circle"
+                  paint={{
+                    'circle-radius': [
+                      'case',
+                      ['any', ['!', ['has', 'provider']], ['==', ['get', 'provider'], '']],
+                      7,
+                      ['==', ['to-string', ['get', 'provider']], displayedProvider ?? ''],
+                      9,
+                      7,
+                    ],
+                    'circle-color': ['get', 'color'],
+                    'circle-opacity': [
+                      'case',
+                      ['==', displayedProvider ?? '', ''],
+                      0.85,
+                      ['==', ['to-string', ['get', 'provider']], displayedProvider ?? ''],
+                      0.85,
+                      0.25,
+                    ],
+                    'circle-stroke-color': '#ffffff',
+                    'circle-stroke-width': [
+                      'case',
+                      ['==', ['to-string', ['get', 'provider']], displayedProvider ?? ''],
+                      4,
+                      2,
+                    ],
                   }}
+                />
+              </Source>
+              {popup && (
+                <Popup
+                  latitude={REGION_COORDS[popup.baseRegion]?.[0] ?? 0}
+                  longitude={REGION_COORDS[popup.baseRegion]?.[1] ?? 0}
+                  onClose={() => setPopup(null)}
+                  closeButton={false}
+                  offset={12}
                 >
-                  <Tooltip>
-                    <div style={{ fontSize: '0.8rem' }}>
-                      <strong style={{ color: providerColor }}>{m.region}</strong><br />
-                      <span style={{ color: 'var(--muted)' }}>{REGION_LABELS[baseRegion] ?? ''}</span><br />
-                      <span style={{ fontWeight: 600 }}>{PROVIDER_LABEL[m.provider] ?? m.provider}</span>
-                      {m.azs.length > 0 && (
-                        <div style={{ marginTop: '0.25rem', fontSize: '0.7rem' }}>
-                          {t('pages.regions.azsLabel')}: {m.azs.slice(0, 6).join(', ')}
-                          {m.azs.length > 6 && ` +${m.azs.length - 6}`}
-                        </div>
-                      )}
-                    </div>
-                  </Tooltip>
-                </CircleMarker>
-              )
-            })}
-          </MapContainer>
+                  <div style={{ fontSize: '0.8rem' }}>
+                    <strong style={{ color: popup.color }}>{popup.region}</strong><br />
+                    <span style={{ color: 'var(--muted)' }}>{REGION_LABELS[popup.baseRegion] ?? ''}</span><br />
+                    <span style={{ fontWeight: 600 }}>{PROVIDER_LABEL[popup.provider] ?? popup.provider}</span>
+                    {popup.azs.length > 0 && (
+                      <div style={{ marginTop: '0.25rem', fontSize: '0.7rem' }}>
+                        {t('pages.regions.azsLabel')}: {popup.azs.slice(0, 6).join(', ')}
+                        {popup.azs.length > 6 && ` +${popup.azs.length - 6}`}
+                      </div>
+                    )}
+                  </div>
+                </Popup>
+              )}
+            </MapGl>
+          </div>
         </div>
       )}
 
