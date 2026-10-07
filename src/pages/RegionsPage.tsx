@@ -1,9 +1,19 @@
 import { RunDetail } from '../api'
 import { Map as MapGl, Source, Layer, Popup } from 'react-map-gl/maplibre'
+import { NavigationControl, FullscreenControl, ScaleControl } from 'react-map-gl/maplibre'
+import { setWorkerUrl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { REGION_COORDS, REGION_LABELS, PROVIDER_COLORS } from '../region-data'
 import { useI18n } from '../i18n'
+import { useTheme } from '../theme'
 import { useMemo, useState } from 'react'
+
+// MapLibre loads its Web Worker from a relative URL by default. In a Vite
+// production build the worker file is not emitted next to the bundle, so the
+// SPA fallback returns index.html and the worker fails to parse. The npm
+// package ships maplibre-gl-worker.mjs / maplibre-gl-shared.mjs next to the
+// main bundle; point the worker at those files via jsdelivr.
+setWorkerUrl('https://cdn.jsdelivr.net/npm/maplibre-gl@6.12.0/dist/maplibre-gl-worker.mjs')
 
 // ── Region helpers ────────────────────────────────────────────────────────────
 
@@ -336,6 +346,7 @@ function RegionChip({
 
 export default function RegionsPage({ run }: Props) {
   const { t } = useI18n()
+  const { themeName } = useTheme()
   const [hoveredProvider, setHoveredProvider] = useState<string | null>(null)
   const [activeProvider, setActiveProvider] = useState<string | null>(null)
   const [popup, setPopup] = useState<{ region: string; provider: string; azs: string[]; baseRegion: string; color: string } | null>(null)
@@ -343,21 +354,33 @@ export default function RegionsPage({ run }: Props) {
   const providers = useMemo(() => buildProviderData(run.detected_regions ?? []), [run.detected_regions])
   const geojson = useMemo(() => buildGeoJSON(run.detected_regions ?? []), [run.detected_regions])
 
-  const mapStyle = useMemo(() => ({
-    version: 8 as const,
-    sources: {
-      osm: {
-        type: 'raster' as const,
-        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-        tileSize: 256,
-        attribution: t('pages.regions.mapAttribution'),
-        maxzoom: 19,
+  const isDark = themeName === 'dark'
+
+  const mapStyle = useMemo(
+    () => ({
+      version: 8 as const,
+      sources: {
+        osm: {
+          type: 'raster' as const,
+          tiles: isDark
+            ? [
+                'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              ]
+            : ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: isDark
+            ? 'Map data © OpenStreetMap contributors, © CARTO'
+            : t('pages.regions.mapAttribution'),
+          maxzoom: 19,
+        },
       },
-    },
-    layers: [
-      { id: 'osm', type: 'raster' as const, source: 'osm' },
-    ],
-  }), [t])
+      layers: [{ id: 'osm', type: 'raster' as const, source: 'osm' }],
+    }),
+    [t, isDark]
+  )
 
   const totalRegions = useMemo(() => providers.reduce((sum, p) => sum + p.regions.length, 0), [providers])
   const totalAZs = useMemo(() => providers.reduce((sum, p) => sum + p.azs.length, 0), [providers])
@@ -463,40 +486,47 @@ export default function RegionsPage({ run }: Props) {
           </div>
           <div style={{ height: '460px', width: '100%' }}>
             <MapGl
-              initialViewState={{ latitude: 25, longitude: 15, zoom: 2 }}
+              initialViewState={{ latitude: 48, longitude: 15, zoom: 2.8 }}
               style={{ width: '100%', height: '100%' }}
               mapStyle={mapStyle}
-              scrollZoom={false}
+              minZoom={2}
+              maxZoom={18}
+              scrollZoom={true}
+              dragPan={true}
+              dragRotate={false}
+              touchZoomRotate={true}
+              doubleClickZoom={true}
+              boxZoom={true}
+              keyboard={true}
+              interactiveLayerIds={['region-points']}
+              onClick={(e) => {
+                const f = e.features?.[0]
+                if (!f) return
+                const props = f.properties as any
+                setPopup({
+                  region: props.region,
+                  provider: props.provider,
+                  baseRegion: props.baseRegion,
+                  color: props.color,
+                  azs: Array.isArray(props.azs) ? props.azs : JSON.parse(props.azs ?? '[]'),
+                })
+              }}
             >
+              <NavigationControl position="top-left" showCompass={false} />
+              <FullscreenControl position="top-right" />
+              <ScaleControl position="bottom-left" unit="metric" />
               <Source id="regions" type="geojson" data={geojson}>
                 <Layer
                   id="region-points"
                   type="circle"
+                  source="regions"
                   paint={{
-                    'circle-radius': [
-                      'case',
-                      ['any', ['!', ['has', 'provider']], ['==', ['get', 'provider'], '']],
-                      7,
-                      ['==', ['to-string', ['get', 'provider']], displayedProvider ?? ''],
-                      9,
-                      7,
-                    ],
+                    'circle-radius': 14,
                     'circle-color': ['get', 'color'],
-                    'circle-opacity': [
-                      'case',
-                      ['==', displayedProvider ?? '', ''],
-                      0.85,
-                      ['==', ['to-string', ['get', 'provider']], displayedProvider ?? ''],
-                      0.85,
-                      0.25,
-                    ],
+                    'circle-opacity': 1,
                     'circle-stroke-color': '#ffffff',
-                    'circle-stroke-width': [
-                      'case',
-                      ['==', ['to-string', ['get', 'provider']], displayedProvider ?? ''],
-                      4,
-                      2,
-                    ],
+                    'circle-stroke-width': 3,
+                    'circle-stroke-opacity': 1,
                   }}
                 />
               </Source>

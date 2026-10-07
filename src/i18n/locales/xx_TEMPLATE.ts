@@ -124,6 +124,8 @@ const xx: PartialTranslations = {
       sso: 'SSO Settings',
       groupmappings: 'Group Mappings', controlspacks: 'Controls Upgrade',
       passports: 'Project Passports',
+      projectgroups: 'Project Groups',
+      projectoverview: 'Project Overview',
       badge: 'Badge Integration',
       leaderboard: 'Hall of Fame',
       journey: 'Maturity Journey',

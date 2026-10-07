@@ -120,6 +120,7 @@ export interface Translations {
       antipattern: string
       bestpractices: string
       projectgroups: string
+      projectoverview: string
       notifications: string
       pipelines: string
       'compliance-readiness': string

@@ -96,6 +96,7 @@ export interface RunSummary {
   controls_loaded: number
   controls_run: number
   created_at: string
+  completed_at?: string
 }
 
 // ── Pipeline performance metrics ──────────────────────────────────────────────

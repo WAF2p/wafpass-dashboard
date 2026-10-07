@@ -36,7 +36,7 @@ const es: PartialTranslations = {
       risk: 'Aceptación de riesgos', changes: 'Cambios y deriva', feedback: 'Comentarios',
       skipped: 'Controles omitidos', access: 'Acceso y roles', users: 'Usuarios',
       apikeys: 'Claves API', sso: 'Ajustes SSO', groupmappings: 'Mapeo de grupos',
-      controlspacks: 'Mejora de controles', passports: 'Pasaportes de proyecto', badge: 'Integración de insignia',
+      controlspacks: 'Mejora de controles', passports: 'Pasaportes de proyecto', projectgroups: 'Project Groups', projectoverview: 'Project Overview', badge: 'Integración de insignia',
       leaderboard: 'Tabla de honor', journey: 'Viaje de madurez',
       userprefs: 'Mis preferencias', reference: 'Arquitectura de Referencia',
       antipattern: 'Museo de Anti-Patrón', bestpractices: 'Área de Mejores Prácticas',
@@ -889,6 +889,19 @@ const es: PartialTranslations = {
       govRiskOnly: 'riesgo\nde gobernanza solo',
       methodology: '📌 Metodología',
       methodologyText: 'Las estimaciones se derivan de precios públicos de AWS y benchmarks de la industria (AWS Well-Architected, Cloud FinOps Foundation). Pérdida = gasto que ocurre ahora y podría eliminarse. Oportunidad de ahorro = gasto on-demand que el precios reservado/comprometido reduciría en 35-72%. Riesgo de gobernanza financiera = controles cuya falla crea exposición futura o no rastreada a costos. Las estimaciones no tienen en cuenta el volumen de datos, el tipo de instancia o los descuentos EDP negociados.',
+    },
+
+    pipelineOps: {
+      title: 'Pipeline Operations Center',
+      subtitle: 'CI/CD dashboard: scan volume, pass rate, average score, active projects, and recent pipeline activity.',
+      recentRuns: 'Recent runs',
+      last7Days: 'last 7 days',
+      durationRange: 'Duration range',
+      scanDuration: 'Scan duration',
+      showManualRuns: 'Show manual runs',
+      stubsInProgress: 'Live pipeline integrations are in progress',
+      stubsVoteRfc: 'Predictive duration forecasting and flaky-pipeline detection are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
+      stubBadge: 'demo',
     },
     dependencyGraph: {
       title: 'Grafo de dependencias',
