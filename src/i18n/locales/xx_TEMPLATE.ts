@@ -124,6 +124,8 @@ const xx: PartialTranslations = {
       sso: 'SSO Settings',
       groupmappings: 'Group Mappings', controlspacks: 'Controls Upgrade',
       passports: 'Project Passports',
+      projectgroups: 'Project Groups',
+      projectoverview: 'Project Overview',
       badge: 'Badge Integration',
       leaderboard: 'Hall of Fame',
       journey: 'Maturity Journey',
@@ -1599,7 +1601,7 @@ const xx: PartialTranslations = {
       azsCount: '{{count}} AZ(s)',
       hoverHint: 'Hover a provider to highlight its regions on the map.',
       providerBreakdown: 'Provider Breakdown',
-      mapAttribution: 'Map data © OpenStreetMap contributors, © CARTO',
+      mapAttribution: 'Map data © OpenStreetMap contributors',
     },
 
     sandbox: {

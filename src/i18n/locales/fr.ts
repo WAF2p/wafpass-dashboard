@@ -36,7 +36,7 @@ const fr: PartialTranslations = {
       risk: 'Acceptation des risques', changes: 'Changements & Dérive', feedback: 'Retour',
       skipped: 'Contrôles ignorés', access: 'Accès & Rôles', users: 'Utilisateurs',
       apikeys: 'Clés API', sso: 'Paramètres SSO', groupmappings: 'Mappage des groupes',
-      controlspacks: 'Mise à niveau des contrôles', passports: 'Passeports projet', badge: 'Intégration badge',
+      controlspacks: 'Mise à niveau des contrôles', passports: 'Passeports projet', projectgroups: 'Project Groups', projectoverview: 'Project Overview', badge: 'Intégration badge',
       leaderboard: 'Tableau d\'honneur', journey: 'Parcours de maturité',
       userprefs: 'Mes préférences',
       validations: "Registre de validation",
@@ -886,6 +886,19 @@ const fr: PartialTranslations = {
       govRiskOnly: 'risque\n	de gouvernance seulement',
       methodology: '📌 Méthodologie',
       methodologyText: 'Les estimations sont dérivées des prix publics AWS et des benchmarks du secteur (AWS Well-Architected, Cloud FinOps Foundation). Gaspill = dépense actuelle qui pourrait être éliminée. Opportunité d\'économie = dépense on-demand qui sera réduite de 35-72% par le tarif réservé/engagé. Risque de gouvernance financière = contrôles dont l\'échec crée une exposition coûts future ou non suivie. Les estimations ne tiennent pas compte du volume de données, du type d\'instance, ou des remises EDP négociées.',
+    },
+
+    pipelineOps: {
+      title: 'Pipeline Operations Center',
+      subtitle: 'CI/CD dashboard: scan volume, pass rate, average score, active projects, and recent pipeline activity.',
+      recentRuns: 'Recent runs',
+      last7Days: 'last 7 days',
+      durationRange: 'Duration range',
+      scanDuration: 'Scan duration',
+      showManualRuns: 'Show manual runs',
+      stubsInProgress: 'Live pipeline integrations are in progress',
+      stubsVoteRfc: 'Predictive duration forecasting and flaky-pipeline detection are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
+      stubBadge: 'demo',
     },
     dependencyGraph: {
       title: 'Graphe de dépendances',

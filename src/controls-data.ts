@@ -187,6 +187,7 @@ export const CONTROLS: Control[] = [
       { framework: 'GDPR', controls: ['Art. 44', 'Art. 46', 'Art. 49'] },
       { framework: 'EUCS (ENISA)', controls: ['DSP-01', 'DSP-02'] },
       { framework: 'BSI C5:2020', controls: ['LOC-01', 'LOC-02'] },
+      { framework: 'BSI C3A:2026', controls: ['Dimension 4 – Data: Data residency, data classification'] },
     ],
   },
   {
@@ -199,6 +200,7 @@ export const CONTROLS: Control[] = [
       { framework: 'GDPR', controls: ['Art. 32'] },
       { framework: 'EUCS (ENISA)', controls: ['CRY-02'] },
       { framework: 'ISO 27001:2022', controls: ['A.8.24'] },
+      { framework: 'BSI C3A:2026', controls: ['Dimension 4 – Data: Location of data processing', 'Dimension 1 – Strategic: Jurisdictional alignment'] },
     ],
   },
   {
@@ -497,6 +499,7 @@ export const FRAMEWORKS = [
   { id: 'eIDAS 2.0',                         label: 'eIDAS 2.0',                         desc: 'Electronic Identification, Authentication and Trust Services Regulation',               country: 'European Union', flag: '🇪🇺', region: 'eu' },
   // ── Germany ───────────────────────────────────────────────────────────────
   { id: 'BSI C5:2020',                       label: 'BSI C5:2020',                       desc: 'Cloud Computing Compliance Criteria Catalogue — Federal Office for Information Security', country: 'Germany',        flag: '🇩🇪', region: 'de' },
+  { id: 'BSI C3A:2026',                      label: 'BSI C3A:2026',                      desc: 'Cloud Computing – Sicherheitsanforderungen für die Kategorie wichtig (C3A) — BSI',        country: 'Germany',        flag: '🇩🇪', region: 'de' },
   { id: 'IT-Grundschutz',                    label: 'IT-Grundschutz',                    desc: 'BSI IT-Grundschutz Compendium — Baseline Protection Methodology',                         country: 'Germany',        flag: '🇩🇪', region: 'de' },
   { id: 'TISAX',                             label: 'TISAX',                             desc: 'Trusted Information Security Assessment Exchange — VDA/ENX Automotive',                 country: 'Germany',        flag: '🇩🇪', region: 'de' },
   // ── France ────────────────────────────────────────────────────────────────

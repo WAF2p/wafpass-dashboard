@@ -36,7 +36,7 @@ const pt: PartialTranslations = {
       risk: 'Acep. de Risco', changes: 'Mudanças e Deriva', feedback: 'Feedback',
       skipped: 'Controles Ignorados', access: 'Acesso e Funções', users: 'Usuários',
       apikeys: 'Chaves API', sso: 'Config. SSO', groupmappings: 'Mapeamento de Grupos',
-      controlspacks: 'Upgrade de Controles', passports: 'Passaportes de Projeto', badge: 'Integração de Badge',
+      controlspacks: 'Upgrade de Controles', passports: 'Passaportes de Projeto', projectgroups: 'Project Groups', projectoverview: 'Project Overview', badge: 'Integração de Badge',
       leaderboard: 'Hall da Fama', journey: 'Jornada de Maturidade',
       userprefs: 'Minhas Preferências', reference: 'Arquitetura de Referência',
       antipattern: 'Museu de Anti-Padrões', bestpractices: 'Área de Melhores Práticas',
@@ -472,6 +472,19 @@ const pt: PartialTranslations = {
       methodology: '📌 Metodologia', methodologyText: 'Estimativas são derivadas de preços públicos da AWS e benchmarks do setor (AWS Well-Architected, Cloud FinOps Foundation). Desperdício = gasto ocorrendo agora que poderia ser eliminado. Oportunidade de economia = gasto on-demand que preços reservados/comprometidos reduziriam em 35–72%. Risco de governança financeira = controles cuja falha cria exposição de custo futuro ou não rastreada. Estimativas não consideram volume de dados, tipo de instância ou descontos EDP negociados. Para valores precisos, use AWS Cost Explorer, AWS Compute Optimizer ou as ferramentas de gerenciamento de custos do seu provedor de nuvem.',
     },
 
+
+    pipelineOps: {
+      title: 'Pipeline Operations Center',
+      subtitle: 'CI/CD dashboard: scan volume, pass rate, average score, active projects, and recent pipeline activity.',
+      recentRuns: 'Recent runs',
+      last7Days: 'last 7 days',
+      durationRange: 'Duration range',
+      scanDuration: 'Scan duration',
+      showManualRuns: 'Show manual runs',
+      stubsInProgress: 'Live pipeline integrations are in progress',
+      stubsVoteRfc: 'Predictive duration forecasting and flaky-pipeline detection are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
+      stubBadge: 'demo',
+    },
     dependencyGraph: {
       title: 'Grafo de Dependências', noRun: 'Nenhum run carregado — selecione um run para ver o grafo de dependências.',
       failingGroup: 'FALHANDO', mixedGroup: 'MISTO', passingGroup: 'APROVANDO', skippedGroup: 'IGNORADO / ISENTO',

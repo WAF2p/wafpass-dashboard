@@ -44,6 +44,7 @@ const de: PartialTranslations = {
       antipattern: 'Anti-Muster Museum',
       bestpractices: 'Best-Practice-Bereich',
       projectgroups: 'Projektgruppen',
+      projectoverview: 'Projektübersicht',
       pipelines: 'Pipeline Operations Center',
       validations: 'Validierungsregister',
     },
@@ -340,6 +341,19 @@ const de: PartialTranslations = {
       methodologyText: 'Schätzungen werden aus AWS-Public-Pricing und Branchenbenchmarks abgeleitet (AWS Well-Architected, Cloud FinOps Foundation). Verschwendung = Ausgaben, die jetzt stattfinden und beseitigt werden könnten. Sparpotential = On-Demand-Ausgaben, die durch reservierte/verpflichtete Preisgestaltung um 35-72% reduziert werden würden. Finanzielles Governance-Risiko = Kontrollen, deren Versagen zukünftige oder nicht nachverfolgte Kostenexposition erzeugt. Schätzungen berücksichtigen keine Datenvolumen, Instanztypen oder verhandelte EDP-Rabatte.',
     },
 
+
+    pipelineOps: {
+      title: 'Pipeline Operations Center',
+      subtitle: 'CI/CD dashboard: scan volume, pass rate, average score, active projects, and recent pipeline activity.',
+      recentRuns: 'Recent runs',
+      last7Days: 'last 7 days',
+      durationRange: 'Duration range',
+      scanDuration: 'Scan duration',
+      showManualRuns: 'Show manual runs',
+      stubsInProgress: 'Live pipeline integrations are in progress',
+      stubsVoteRfc: 'Predictive duration forecasting and flaky-pipeline detection are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
+      stubBadge: 'demo',
+    },
     dependencyGraph: {
       title: 'Abhängigkeitsgraph',
       noRun: 'Kein Lauf geladen - wählen Sie einen Lauf aus, um den Abhängigkeitsgraph anzuzeigen.',

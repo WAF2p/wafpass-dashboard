@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchRuns, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
-import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner } from './OperationsCenterShell'
+import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard } from './OperationsCenterShell'
 
 const WAF_COLORS = [
   'var(--waf-brand)', 'var(--waf-info)', 'var(--score-high)', 'var(--waf-warn)',
@@ -22,6 +22,28 @@ function getProjectColor(project: string): string {
 
 function scoreLabel(s: number) {
   return s >= 80 ? 'Excellent' : s >= 60 ? 'Needs Attention' : 'High Risk'
+}
+
+function dayTooltip(day: { day: string; count: number; runs: RunSummary[]; hidden: number }): string {
+  const byProject = day.runs.reduce<Record<string, { count: number; avgScore: number }>>((acc, r) => {
+    const p = acc[r.project] || { count: 0, avgScore: 0 }
+    p.count += 1
+    p.avgScore += r.score
+    acc[r.project] = p
+    return acc
+  }, {})
+  const lines = [
+    `${new Date(day.day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`,
+    `Total runs: ${day.count}`,
+  ]
+  for (const [project, data] of Object.entries(byProject)) {
+    const avg = Math.round(data.avgScore / data.count)
+    lines.push(`  ${project}: ${data.count} (avg score ${avg})`)
+  }
+  if (day.hidden > 0) {
+    lines.push(`+${day.hidden} more run${day.hidden === 1 ? '' : 's'} hidden`)
+  }
+  return lines.join('\n')
 }
 
 function formatDate(iso: string): string {
@@ -100,7 +122,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
 
   const metrics = useMemo(() => {
     if (filteredRuns.length === 0) {
-      return { totalRuns: 0, passRate: 0, avgScore: 0, projects: 0, recentRuns: 0, needingAttention: 0 }
+      return { totalRuns: 0, passRate: 0, avgScore: 0, projects: 0, recentRuns: 0, needingAttention: 0, durationRange: '—' }
     }
     const totalRuns = filteredRuns.length
     const passCount = filteredRuns.filter(r => r.score >= 80).length
@@ -111,7 +133,32 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
     const recentRuns = filteredRuns.filter(r => new Date(r.created_at) > oneWeekAgo).length
     const needingAttention = totalRuns - passCount
-    return { totalRuns, passRate, avgScore, projects, recentRuns, needingAttention }
+    const durations = filteredRuns
+      .map(r => {
+        const start = new Date(r.created_at).getTime()
+        const end = r.completed_at ? new Date(r.completed_at).getTime() : start
+        return end - start
+      })
+      .filter(d => d > 0)
+    const min = durations.length ? Math.min(...durations) : 0
+    const max = durations.length ? Math.max(...durations) : 0
+    const formatSec = (ms: number) => {
+      const s = Math.max(1, Math.round(ms / 1000))
+      if (s >= 3600) {
+        const h = Math.floor(s / 3600)
+        const rem = s % 3600
+        const m = Math.floor(rem / 60)
+        return m > 0 ? `${h}h ${m}m` : `${h}h`
+      }
+      if (s >= 60) {
+        const m = Math.floor(s / 60)
+        const rem = s % 60
+        return rem > 0 ? `${m}m ${rem}s` : `${m}m`
+      }
+      return `${s}s`
+    }
+    const durationRange = min && max ? `${formatSec(min)} – ${formatSec(max)}` : '—'
+    return { totalRuns, passRate, avgScore, projects, recentRuns, needingAttention, durationRange }
   }, [filteredRuns])
 
   const runsByDay = useMemo(() => {
@@ -120,13 +167,19 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
       const dayKey = r.created_at.slice(0, 10)
       ;(byDay[dayKey] ??= []).push(r)
     }
-    const result: { day: string; count: number; runs: RunSummary[] }[] = []
+    const result: { day: string; count: number; runs: RunSummary[]; hidden: number }[] = []
     for (let i = 29; i >= 0; i--) {
       const date = new Date()
       date.setDate(date.getDate() - i)
       const dayKey = date.toISOString().split('T')[0]
-      const dayData = byDay[dayKey]
-      result.push({ day: dayKey, count: dayData?.length || 0, runs: dayData || [] })
+      const dayData = byDay[dayKey] || []
+      const maxVisible = 7
+      result.push({
+        day: dayKey,
+        count: dayData.length,
+        runs: dayData.slice(0, maxVisible),
+        hidden: Math.max(0, dayData.length - maxVisible),
+      })
     }
     return result
   }, [filteredRuns])
@@ -209,11 +262,6 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         )}
       </CenterHero>
 
-      <StubBanner
-        title={t('pages.pipelineOps.stubsInProgress')}
-        description={t('pages.pipelineOps.stubsVoteRfc')}
-      />
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
         <KpiCard
           label={t('pages.pipelines.totalScans')}
@@ -249,15 +297,13 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
           sub={t('pages.pipelineOps.last7Days')}
           color="var(--pass)"
           icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          demo
         />
         <KpiCard
           label={t('pages.pipelineOps.durationRange')}
-          value="2–9m"
+          value={metrics.durationRange}
           sub={t('pages.pipelineOps.scanDuration')}
           color="var(--waf-warn)"
           icon="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-          demo
         />
       </div>
 
@@ -297,7 +343,11 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', padding: '0.5rem 0', height: 160 }}>
                   {runsByDay.map((day) => (
-                    <div key={day.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', minWidth: 0 }}>
+                    <div
+                      key={day.day}
+                      style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', minWidth: 0 }}
+                      title={dayTooltip(day)}
+                    >
                       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '48px', gap: '2px', justifyContent: 'flex-end', height: '100%' }}>
                         {day.runs.map((run, j) => (
                           <div
@@ -310,10 +360,31 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                               borderRadius: '2px',
                               cursor: 'pointer',
                               opacity: 0.92,
+                              flexShrink: 0,
                             }}
                             title={`${run.project}: ${run.score}`}
                           />
                         ))}
+                        {day.hidden > 0 && (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.55rem',
+                              fontWeight: 700,
+                              color: 'var(--muted)',
+                              background: 'var(--bg)',
+                              borderRadius: '2px',
+                              flexShrink: 0,
+                            }}
+                            title={`${day.hidden} more run${day.hidden === 1 ? '' : 's'} on ${day.day}`}
+                          >
+                            +{day.hidden}
+                          </div>
+                        )}
                       </div>
                       {day.count > 0 && (
                         <span style={{ fontSize: '0.6rem', color: 'var(--muted)', fontWeight: 700 }}>{day.count}</span>

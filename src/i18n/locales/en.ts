@@ -39,7 +39,7 @@ const en: Translations = {
       risk: 'Risk Acceptance', changes: 'Changes & Drift', feedback: 'Feedback',
       skipped: 'Skipped Controls', access: 'Access & Roles', users: 'Users',
       apikeys: 'API Keys', sso: 'SSO Settings', groupmappings: 'Group Mappings', controlspacks: 'Controls Upgrade',
-      passports: 'Project Passports', projectgroups: 'Project Groups', badge: 'Badge Integration',
+      passports: 'Project Passports', projectgroups: 'Project Groups', projectoverview: 'Project Overview', badge: 'Badge Integration',
       leaderboard: 'Hall of Fame', journey: 'Maturity Journey',
       userprefs: 'My Preferences', reference: 'Reference Architecture',
       antipattern: 'Anti-Pattern Museum',
@@ -1627,7 +1627,7 @@ const en: Translations = {
       azsCount: '{{count}} AZ(s)',
       hoverHint: 'Hover a provider to highlight its regions on the map.',
       providerBreakdown: 'Provider Breakdown',
-      mapAttribution: 'Map data © OpenStreetMap contributors, © CARTO',
+      mapAttribution: 'Map data © OpenStreetMap contributors',
     },
 
     pipelines: {

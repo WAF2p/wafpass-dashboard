@@ -36,7 +36,7 @@ const el: PartialTranslations = {
       risk: 'Αποδοχή Ρίσκου', changes: 'Αλλαγές & Απόκλιση', feedback: 'Ανατροφοδότηση',
       skipped: 'Παραλειφθέντες Έλεγχοι', access: 'Πρόσβαση & Ρόλοι', users: 'Χρήστες',
       apikeys: 'Κλειδιά API', sso: 'Ρυθμίσεις SSO', groupmappings: 'Αντιστοιχίσεις Ομάδων',
-      controlspacks: 'Αναβάθμιση Ελέγχων', passports: 'Διαβατήρια Έργου', badge: 'Ενσωμάτωση Badge',
+      controlspacks: 'Αναβάθμιση Ελέγχων', passports: 'Διαβατήρια Έργου', projectgroups: 'Project Groups', projectoverview: 'Project Overview', badge: 'Ενσωμάτωση Badge',
       leaderboard: 'Hall of Fame', journey: 'Πορεία Ωριμότητας',
       userprefs: 'Οι Προτιμήσεις Μου', reference: 'Αρχιτεκτονική Αναφορά',
       antipattern: 'Μουσείο Αντι-Προτύπων', bestpractices: 'Περιοχή Βέλτιστων Πρακτικών',
@@ -464,6 +464,19 @@ const el: PartialTranslations = {
       methodology: '📌 Μεθοδολογία', methodologyText: 'Οι εκτιμήσεις προέρχονται από δημόσιες τιμές AWS και benchmarks του κλάδου. Για ακριβείς τιμές χρησιμοποιήστε AWS Cost Explorer ή αντίστοιχα εργαλεία διαχείρισης κόστους.',
     },
 
+
+    pipelineOps: {
+      title: 'Pipeline Operations Center',
+      subtitle: 'CI/CD dashboard: scan volume, pass rate, average score, active projects, and recent pipeline activity.',
+      recentRuns: 'Recent runs',
+      last7Days: 'last 7 days',
+      durationRange: 'Duration range',
+      scanDuration: 'Scan duration',
+      showManualRuns: 'Show manual runs',
+      stubsInProgress: 'Live pipeline integrations are in progress',
+      stubsVoteRfc: 'Predictive duration forecasting and flaky-pipeline detection are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
+      stubBadge: 'demo',
+    },
     dependencyGraph: {
       title: 'Γράφημα Εξαρτήσεων', noRun: 'Δεν έχει φορτωθεί σάρωση — επιλέξτε σάρωση για προβολή γραφήματος εξαρτήσεων.',
       failingGroup: 'ΑΠΟΤΥΓΧΑΝΕΙ', mixedGroup: 'ΜΙΚΤΟ', passingGroup: 'ΕΠΙΤΥΧΙΑ', skippedGroup: 'ΠΑΡΑΛΕΙΨΗ / ΕΞΑΙΡΕΣΗ',
