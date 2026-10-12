@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchRuns, RunSummary } from '../api'
+import { fetchPipelineMetrics, fetchPipelineTrends, fetchRuns, PipelineMetrics, PipelineTrends, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
 import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard } from './OperationsCenterShell'
@@ -24,26 +24,68 @@ function scoreLabel(s: number) {
   return s >= 80 ? 'Excellent' : s >= 60 ? 'Needs Attention' : 'High Risk'
 }
 
-function dayTooltip(day: { day: string; count: number; runs: RunSummary[]; hidden: number }): string {
-  const byProject = day.runs.reduce<Record<string, { count: number; avgScore: number }>>((acc, r) => {
-    const p = acc[r.project] || { count: 0, avgScore: 0 }
-    p.count += 1
-    p.avgScore += r.score
-    acc[r.project] = p
-    return acc
-  }, {})
-  const lines = [
-    `${new Date(day.day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`,
-    `Total runs: ${day.count}`,
-  ]
-  for (const [project, data] of Object.entries(byProject)) {
-    const avg = Math.round(data.avgScore / data.count)
-    lines.push(`  ${project}: ${data.count} (avg score ${avg})`)
+interface FlakyProject {
+  project: string
+  switches: number
+  recentRuns: number
+  passCount: number
+  failCount: number
+}
+
+function detectFlakyProjects(runs: RunSummary[], windowSize = 5): FlakyProject[] {
+  const byProject: Record<string, RunSummary[]> = {}
+  for (const r of runs) {
+    if (!r.is_cicd) continue
+    ;(byProject[r.project] ??= []).push(r)
   }
-  if (day.hidden > 0) {
-    lines.push(`+${day.hidden} more run${day.hidden === 1 ? '' : 's'} hidden`)
+  const flaky: FlakyProject[] = []
+  for (const [project, list] of Object.entries(byProject)) {
+    const sorted = [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, windowSize)
+    if (sorted.length < 3) continue
+    let switches = 0
+    let prevPass: boolean | null = null
+    let passCount = 0
+    let failCount = 0
+    for (const r of sorted) {
+      const isPass = r.score >= 80
+      if (isPass) passCount++
+      else failCount++
+      if (prevPass !== null && prevPass !== isPass) switches++
+      prevPass = isPass
+    }
+    if (passCount > 0 && failCount > 0 && switches >= 1) {
+      flaky.push({ project, switches, recentRuns: sorted.length, passCount, failCount })
+    }
   }
-  return lines.join('\n')
+  return flaky.sort((a, b) => b.switches - a.switches)
+}
+
+function forecastDuration(runs: RunSummary[], trends?: PipelineTrends | null): { predicted: string; trend: 'up' | 'down' | 'flat'; confidence: string } {
+  const stats = trends?.durationStats
+  if (!stats || stats.avg === 0) {
+    return { predicted: '—', trend: 'flat', confidence: '' }
+  }
+  // Simple trend: compare avg of last 7 days vs previous 7 days from raw runs
+  const now = Date.now()
+  const recent = runs.filter(r => r.completed_at && now - new Date(r.completed_at).getTime() <= 7 * 86400 * 1000)
+  const previous = runs.filter(r => {
+    if (!r.completed_at) return false
+    const ms = now - new Date(r.completed_at).getTime()
+    return ms > 7 * 86400 * 1000 && ms <= 14 * 86400 * 1000
+  })
+  const avg = (arr: RunSummary[]) => {
+    const vals = arr.map(r => new Date(r.completed_at!).getTime() - new Date(r.created_at).getTime()).filter(v => v > 0)
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
+  }
+  const recentAvg = avg(recent)
+  const previousAvg = avg(previous)
+  let trend: 'up' | 'down' | 'flat' = 'flat'
+  if (recentAvg && previousAvg) {
+    const change = (recentAvg - previousAvg) / previousAvg
+    if (change > 0.1) trend = 'up'
+    else if (change < -0.1) trend = 'down'
+  }
+  return { predicted: stats.avgLabel, trend, confidence: `${stats.minLabel} – ${stats.maxLabel}` }
 }
 
 function formatDate(iso: string): string {
@@ -82,10 +124,15 @@ function CICDBadge({ isCICD }: { isCICD: boolean }) {
 
 export default function PipelineOperationsCenter({ navigate }: { navigate?: (page: Page) => void }) {
   const { t } = useI18n()
-  const [runs, setRuns] = useState<RunSummary[]>([])
+  const [metrics, setMetrics] = useState<PipelineMetrics | null>(null)
+  const [trends, setTrends] = useState<PipelineTrends | null>(null)
+  const [chartRuns, setChartRuns] = useState<RunSummary[]>([])
+  const [recentRuns, setRecentRuns] = useState<RunSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showManualRuns, setShowManualRuns] = useState(false)
+
+  const isCicdFilter = showManualRuns ? undefined : true
 
   useEffect(() => {
     let cancelled = false
@@ -94,19 +141,22 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
 
     async function load() {
       try {
-        const all: RunSummary[] = []
-        let cursor: string | null = null
-        for (let i = 0; i < 3; i++) {
-          const result = await fetchRuns({ limit: 50, cursor: cursor ?? undefined })
-          if (cancelled) return
-          all.push(...result.items)
-          cursor = result.nextCursor
-          if (!cursor) break
-        }
-        if (!cancelled) {
-          setRuns(all)
-          setLoading(false)
-        }
+        const [m, tr, allRuns] = await Promise.all([
+          fetchPipelineMetrics(isCicdFilter),
+          fetchPipelineTrends(isCicdFilter),
+          fetchRuns({ limit: 200 }),
+        ])
+        if (cancelled) return
+        setMetrics(m)
+        setTrends(tr)
+        const filteredRuns = isCicdFilter === true
+          ? allRuns.items.filter(r => r.is_cicd)
+          : isCicdFilter === false
+            ? allRuns.items.filter(r => !r.is_cicd)
+            : allRuns.items
+        setChartRuns(filteredRuns)
+        setRecentRuns(filteredRuns.slice(0, 8))
+        setLoading(false)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load pipeline data')
@@ -116,96 +166,37 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
     }
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [isCicdFilter])
 
-  const filteredRuns = useMemo(() => showManualRuns ? runs : runs.filter(r => r.is_cicd), [runs, showManualRuns])
-
-  const metrics = useMemo(() => {
-    if (filteredRuns.length === 0) {
-      return { totalRuns: 0, passRate: 0, avgScore: 0, projects: 0, recentRuns: 0, needingAttention: 0, durationRange: '—' }
-    }
-    const totalRuns = filteredRuns.length
-    const passCount = filteredRuns.filter(r => r.score >= 80).length
-    const passRate = Math.round((passCount / totalRuns) * 100)
-    const avgScore = Math.round(filteredRuns.reduce((sum, r) => sum + r.score, 0) / totalRuns)
-    const projects = new Set(filteredRuns.map(r => r.project)).size
-    const oneWeekAgo = new Date()
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-    const recentRuns = filteredRuns.filter(r => new Date(r.created_at) > oneWeekAgo).length
-    const needingAttention = totalRuns - passCount
-    const durations = filteredRuns
-      .map(r => {
-        const start = new Date(r.created_at).getTime()
-        const end = r.completed_at ? new Date(r.completed_at).getTime() : start
-        return end - start
-      })
-      .filter(d => d > 0)
-    const min = durations.length ? Math.min(...durations) : 0
-    const max = durations.length ? Math.max(...durations) : 0
-    const formatSec = (ms: number) => {
-      const s = Math.max(1, Math.round(ms / 1000))
-      if (s >= 3600) {
-        const h = Math.floor(s / 3600)
-        const rem = s % 3600
-        const m = Math.floor(rem / 60)
-        return m > 0 ? `${h}h ${m}m` : `${h}h`
-      }
-      if (s >= 60) {
-        const m = Math.floor(s / 60)
-        const rem = s % 60
-        return rem > 0 ? `${m}m ${rem}s` : `${m}m`
-      }
-      return `${s}s`
-    }
-    const durationRange = min && max ? `${formatSec(min)} – ${formatSec(max)}` : '—'
-    return { totalRuns, passRate, avgScore, projects, recentRuns, needingAttention, durationRange }
-  }, [filteredRuns])
+  const topProjects = useMemo(() => metrics?.projectsList ?? [], [metrics])
 
   const runsByDay = useMemo(() => {
     const byDay: Record<string, RunSummary[]> = {}
-    for (const r of filteredRuns) {
+    for (const r of chartRuns) {
       const dayKey = r.created_at.slice(0, 10)
       ;(byDay[dayKey] ??= []).push(r)
     }
-    const result: { day: string; count: number; runs: RunSummary[]; hidden: number }[] = []
-    for (let i = 29; i >= 0; i--) {
+    const result: { day: string; count: number; visible: number; runs: RunSummary[] }[] = []
+    for (let i = 30; i >= 0; i--) {
       const date = new Date()
       date.setDate(date.getDate() - i)
       const dayKey = date.toISOString().split('T')[0]
-      const dayData = byDay[dayKey] || []
-      const maxVisible = 7
-      result.push({
-        day: dayKey,
-        count: dayData.length,
-        runs: dayData.slice(0, maxVisible),
-        hidden: Math.max(0, dayData.length - maxVisible),
-      })
+      const dayData = byDay[dayKey] ?? []
+      const sorted = [...dayData].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      result.push({ day: dayKey, count: dayData.length, visible: 7, runs: sorted.slice(0, 7) })
     }
     return result
-  }, [filteredRuns])
+  }, [chartRuns])
 
-  const topProjects = useMemo(() => {
-    const projectScores: Record<string, { scores: number[]; latest: RunSummary }> = {}
-    for (const r of filteredRuns) {
-      if (!projectScores[r.project]) projectScores[r.project] = { scores: [], latest: r }
-      projectScores[r.project].scores.push(r.score)
-      if (new Date(r.created_at) > new Date(projectScores[r.project].latest.created_at)) {
-        projectScores[r.project].latest = r
-      }
-    }
-    return Object.entries(projectScores)
-      .map(([project, data]) => ({
-        project,
-        avgScore: Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length),
-        latestScore: data.latest.score,
-        runCount: data.scores.length,
-        latestAt: data.latest.created_at,
-      }))
-      .sort((a, b) => b.avgScore - a.avgScore)
-      .slice(0, 6)
-  }, [filteredRuns])
+  const durationRange = useMemo(() => {
+    const stats = trends?.durationStats
+    if (!stats || stats.min === 0 && stats.max === 0) return '—'
+    if (stats.min === stats.max) return stats.avgLabel
+    return `${stats.minLabel} – ${stats.maxLabel}`
+  }, [trends])
 
-  const recentRuns = useMemo(() => filteredRuns.slice(0, 5), [filteredRuns])
+  const flakyProjects = useMemo(() => detectFlakyProjects(chartRuns), [chartRuns])
+  const durationForecast = useMemo(() => forecastDuration(chartRuns, trends), [chartRuns, trends])
 
   const linkCard = (page: Page, label: string, icon: string, color: string) => (
     <button
@@ -249,7 +240,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         subtitle={t('pages.pipelineOps.subtitle')}
         accent="var(--waf-warn)"
       >
-        {!loading && (
+        {!loading && metrics && (
           <div style={{ textAlign: 'right', minWidth: '140px' }}>
             <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.pipelines.averageScore')}
@@ -265,42 +256,42 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
         <KpiCard
           label={t('pages.pipelines.totalScans')}
-          value={metrics.totalRuns}
+          value={metrics?.totalRuns ?? '—'}
           sub={t('pages.pipelines.allTimeExecutions')}
           color="var(--waf-brand)"
           icon="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
         <KpiCard
           label={t('pages.pipelines.passRate')}
-          value={`${metrics.passRate}%`}
-          sub={`${metrics.needingAttention} ${t('pages.pipelines.scansNeedingAttention')}`}
-          color={metrics.passRate >= 80 ? 'var(--score-high)' : 'var(--waf-warn)'}
+          value={metrics ? `${metrics.passRate}%` : '—'}
+          sub={`${metrics?.failedRuns ?? 0} ${t('pages.pipelines.scansNeedingAttention')}`}
+          color={metrics && metrics.passRate >= 80 ? 'var(--score-high)' : 'var(--waf-warn)'}
           icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
         />
         <KpiCard
           label={t('pages.pipelines.averageScore')}
-          value={metrics.avgScore}
-          sub={scoreLabel(metrics.avgScore)}
-          color={scoreColor(metrics.avgScore)}
+          value={metrics?.avgScore ?? '—'}
+          sub={metrics ? scoreLabel(metrics.avgScore) : ''}
+          color={scoreColor(metrics?.avgScore ?? 0)}
           icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
         />
         <KpiCard
           label={t('pages.pipelines.activeProjects')}
-          value={metrics.projects}
+          value={metrics?.projects ?? '—'}
           sub={t('pages.pipelines.uniqueProjectsScanned')}
           color="var(--waf-info)"
           icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
         />
         <KpiCard
           label={t('pages.pipelineOps.recentRuns')}
-          value={metrics.recentRuns}
+          value={metrics?.recentRuns ?? '—'}
           sub={t('pages.pipelineOps.last7Days')}
           color="var(--pass)"
           icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
         />
         <KpiCard
           label={t('pages.pipelineOps.durationRange')}
-          value={metrics.durationRange}
+          value={durationRange}
           sub={t('pages.pipelineOps.scanDuration')}
           color="var(--waf-warn)"
           icon="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
@@ -316,7 +307,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
           <Icon path="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={32} />
           <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', fontWeight: 600 }}>{error}</div>
         </div>
-      ) : filteredRuns.length === 0 ? (
+      ) : metrics?.totalRuns === 0 ? (
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', border: '1px dashed var(--border)', borderRadius: '12px' }}>
           <Icon path="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" size={32} />
           <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', fontWeight: 600 }}>{t('pages.pipelines.noPipelineData')}</div>
@@ -341,64 +332,65 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', padding: '0.5rem 0', height: 160 }}>
-                  {runsByDay.map((day) => (
-                    <div
-                      key={day.day}
-                      style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', minWidth: 0 }}
-                      title={dayTooltip(day)}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '48px', gap: '2px', justifyContent: 'flex-end', height: '100%' }}>
-                        {day.runs.map((run, j) => (
-                          <div
-                            key={j}
-                            onClick={() => navigate?.('dashboard')}
-                            style={{
-                              width: '100%',
-                              height: '14px',
-                              background: getProjectColor(run.project),
-                              borderRadius: '2px',
-                              cursor: 'pointer',
-                              opacity: 0.92,
-                              flexShrink: 0,
-                            }}
-                            title={`${run.project}: ${run.score}`}
-                          />
-                        ))}
-                        {day.hidden > 0 && (
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.55rem',
-                              fontWeight: 700,
-                              color: 'var(--muted)',
-                              background: 'var(--bg)',
-                              borderRadius: '2px',
-                              flexShrink: 0,
-                            }}
-                            title={`${day.hidden} more run${day.hidden === 1 ? '' : 's'} on ${day.day}`}
-                          >
-                            +{day.hidden}
-                          </div>
+                <div style={{ display: 'flex', alignItems: 'stretch', gap: '2px', padding: '0.5rem 0', height: 160 }}>
+                  {runsByDay.map((day) => {
+                    const visibleCount = day.runs.length
+                    const hiddenCount = Math.max(0, day.count - visibleCount)
+                    return (
+                      <div
+                        key={day.day}
+                        style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', minWidth: 0, height: '100%' }}
+                        title={`${new Date(day.day).toLocaleDateString('en-GB')}: ${day.count} runs${hiddenCount > 0 ? ` (${visibleCount} shown, +${hiddenCount} more)` : ''}`}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            flexWrap: 'wrap',
+                            justifyContent: 'flex-end',
+                            alignContent: 'center',
+                            width: '100%',
+                            maxWidth: '48px',
+                            height: '100%',
+                            gap: '2px',
+                          }}
+                        >
+                          {day.runs.map((run, j) => (
+                            <button
+                              key={run.id ?? j}
+                              onClick={() => navigate?.('runs')}
+                              title={`${run.project}: ${run.score}`}
+                              style={{
+                                width: 9,
+                                height: 9,
+                                minWidth: 9,
+                                minHeight: 9,
+                                borderRadius: '50%',
+                                border: '1.5px solid var(--card-bg)',
+                                background: getProjectColor(run.project),
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.12)',
+                                cursor: 'pointer',
+                                padding: 0,
+                                transition: 'transform 0.15s ease',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.35)' }}
+                              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+                            />
+                          ))}
+                        </div>
+                        {day.count > 0 && (
+                          <span style={{ fontSize: '0.6rem', color: 'var(--muted)', fontWeight: 700 }}>{day.count}</span>
                         )}
+                        <span style={{ fontSize: '0.55rem', color: 'var(--muted)' }}>
+                          {new Date(day.day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        </span>
                       </div>
-                      {day.count > 0 && (
-                        <span style={{ fontSize: '0.6rem', color: 'var(--muted)', fontWeight: 700 }}>{day.count}</span>
-                      )}
-                      <span style={{ fontSize: '0.55rem', color: 'var(--muted)' }}>
-                        {new Date(day.day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                      </span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--muted)' }}>
-                  <span>{runsByDay[0]?.day ? new Date(runsByDay[0].day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
-                  <span>{t('pages.pipelines.last30Days')}</span>
-                  <span>{runsByDay[runsByDay.length - 1]?.day ? new Date(runsByDay[runsByDay.length - 1].day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.65rem', color: 'var(--muted)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--waf-brand)' }} /> run by project</span>
+                  <span style={{ marginLeft: 'auto' }}>{t('pages.pipelines.last30Days')}</span>
                 </div>
               </div>
             )}
@@ -467,6 +459,64 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
               {linkCard('projectoverview', t('nav.items.projectoverview'), 'M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2', 'var(--waived)')}
               {linkCard('runscan', t('nav.items.runscan'), 'M13 10V3L4 14h7v7l9-11h-7z', 'var(--waf-warn)')}
             </RightRail>
+          </div>
+
+          {/* Predictive analytics */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0.85rem', alignItems: 'start' }}>
+            <SectionCard title={t('pages.pipelineOps.flakyPipelines')} icon="M13 10V3L4 14h7v7l9-11h-7z">
+              {flakyProjects.length === 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg)' }}>
+                  <Icon path="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={20} />
+                  <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{t('pages.pipelineOps.flakyNoIssues')}</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--waf-warn)' }}>
+                    {t('pages.pipelineOps.flakyCount', { count: flakyProjects.length })}
+                  </div>
+                  {flakyProjects.slice(0, 4).map((fp) => (
+                    <PriorityRow
+                      key={fp.project}
+                      label={fp.project}
+                      count={fp.switches}
+                      total={fp.recentRuns - 1}
+                      color={getProjectColor(fp.project)}
+                      meta={t('pages.pipelineOps.flakySwitches', { count: fp.switches, window: fp.recentRuns })}
+                      badge={
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--pass)', fontWeight: 700 }}>{fp.passCount}P</span>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--fail)', fontWeight: 700 }}>{fp.failCount}F</span>
+                        </div>
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard title={t('pages.pipelineOps.durationForecast')} icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.pipelineOps.predictedDuration')}</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text)' }}>{durationForecast.predicted}</div>
+                  </div>
+                  <MiniBadge color={durationForecast.trend === 'up' ? 'var(--waf-warn)' : durationForecast.trend === 'down' ? 'var(--pass)' : 'var(--waf-info)'}>
+                    {durationForecast.trend === 'up' ? t('pages.pipelineOps.durationTrendUp') : durationForecast.trend === 'down' ? t('pages.pipelineOps.durationTrendDown') : t('pages.pipelineOps.durationTrendFlat')}
+                  </MiniBadge>
+                </div>
+                {durationForecast.confidence && (
+                  <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+                    {t('pages.pipelineOps.durationConfidence', { range: durationForecast.confidence })}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.65rem', color: 'var(--muted)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pass)' }} /> faster</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-warn)' }} /> slower</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-info)' }} /> stable</span>
+                </div>
+              </div>
+            </SectionCard>
           </div>
         </div>
       )}

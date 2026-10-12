@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { SERVER_URL_KEY, VALIDATION_URL_KEY, getApiBase, getValidationGatewayBase } from '../api'
+import {
+  SERVER_URL_KEY, VALIDATION_URL_KEY, getApiBase, getValidationGatewayBase,
+} from '../api'
 import { FRAMEWORKS } from '../controls-data'
 import { LOCALES, useI18n } from '../i18n'
 import {

@@ -145,6 +145,12 @@ export default function ShipRunPage() {
           canonical_hash: attestation.canonical_hash,
           signed_at: attestation.signed_at,
           signer_kind: attestation.signer_kind,
+          // Phase 4 — see LocalAttestation.mandant_id. The *external*
+          // validation gateway must also forward this through to
+          // POST /internal/sign for the round trip to carry it; until
+          // that separate repo is updated, the server degrades
+          // gracefully rather than rejecting the submission.
+          mandant_id: attestation.mandant_id ?? null,
         },
         run: attestation.run,
       }

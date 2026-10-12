@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Page } from '../routing'
 import { NotificationBell } from './NotificationBell'
-import { hasMinRole } from '../AuthContext'
+import MandateLogo from './MandateLogo'
+import { hasMinRole, useAuth } from '../AuthContext'
 import { Settings, getMaturityMeta } from '../pages/settingsUtils'
-import { RunDetail, RunSummary } from '../api'
+import { RunDetail, RunSummary, fetchMyMandate, fetchSwitchableMandants, type MandantOut } from '../api'
 import { useI18n } from '../i18n'
 import { loadUserPrefs, saveUserPrefs } from '../pages/userPrefsUtils'
 import { NavEntry, NavSection, buildNavSections, categoryDescriptions } from '../navigation/navModel'
@@ -45,6 +46,160 @@ const roleIcons: Record<string, string> = {
   runs: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zH21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   admin: 'M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 12c-6.627 0-12-5.373-12-12s5.373-12 12-12 12 5.373 12 12-5.373 12-12 12z',
   system: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+}
+
+// Same-session follow-up — the active mandate's own logo, always visible
+// in the top bar right next to the WAF++ logo, not just on the Mandates
+// page. "Active" mirrors MandateIndicator's own notion of it exactly:
+// - An ordinary mandate-scoped user: their one mandate, via
+//   fetchMyMandate() — there's never anything to switch, so it's always
+//   their own.
+// - A holding_admin/holding_viewer/group_admin/group_viewer currently
+//   narrowed into one specific mandate (dropdown or a logo click on the
+//   Mandates page): that mandate's logo, read straight off
+//   effectiveMandantLogoUrl — no extra fetch needed, since
+//   setEffectiveMandantId() already captures it at the moment of
+//   narrowing (the same way it already captured a name for the
+//   impersonation banner).
+// - The same role *not* narrowed ("All mandates"): nothing — there is no
+//   single active mandate to show a logo for, by construction, not an
+//   oversight.
+// Renders nothing in single_tenant mode by construction, same reasoning
+// as MandateIndicator: fetchMyMandate() returns null, and no switchable
+// role flag is ever true.
+export function ActiveMandateLogo() {
+  const { isHoldingAdmin, isHoldingViewer, isGroupAdmin, isGroupViewer, effectiveMandantId, effectiveMandantName, effectiveMandantLogoUrl } = useAuth()
+  const [myMandate, setMyMandate] = useState<MandantOut | null>(null)
+  const canSwitch = isHoldingAdmin || isHoldingViewer || isGroupAdmin || isGroupViewer
+
+  useEffect(() => {
+    if (canSwitch) return // narrowed state already lives in AuthContext
+    let cancelled = false
+    fetchMyMandate().then(m => { if (!cancelled) setMyMandate(m) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [canSwitch])
+
+  if (canSwitch) {
+    if (!effectiveMandantId) return null // "All mandates" — no single active one
+    return (
+      <div title={effectiveMandantName ?? undefined} style={{ display: 'flex', alignItems: 'center' }}>
+        <MandateLogo name={effectiveMandantName ?? '?'} logoUrl={effectiveMandantLogoUrl ?? ''} size={32} />
+      </div>
+    )
+  }
+
+  if (!myMandate) return null
+  return (
+    <div title={myMandate.name} style={{ display: 'flex', alignItems: 'center' }}>
+      <MandateLogo name={myMandate.name} logoUrl={myMandate.logo_url} size={32} />
+    </div>
+  )
+}
+
+// Phase 3.3 / Phase 6a / Phase 6b — mandate indicator + global context
+// switcher. Renders nothing in single_tenant mode by construction: a
+// mandate-scoped user's fetchMyMandate() always returns null then
+// (get_auth_context() never sets mandant_id outside multi_mandant mode),
+// and every holding/group flag is always false then too — so there's no
+// separate "is multi_mandant active" check needed.
+//
+// A real switcher (Phase 6a), not just a label, for any of the four roles
+// that have something to narrow: holding_admin/holding_viewer (every
+// mandate in the holding) and — Phase 6b / ADR-004 — group_admin/
+// group_viewer (just their own subtree). The selection is sent as
+// X-Mandant-Context on every request (api.ts's _authHeaders(), set via
+// AuthContext's setEffectiveMandantId) and validated fresh server-side on
+// every request (auth/deps.py's get_auth_context()/require_ingest()) —
+// picking a specific mandate narrows the view to exactly that mandate
+// (RLS bypass dropped for the request), picking "All mandates" restores
+// the caller's full bypass. All four roles share one list endpoint
+// (GET /admin/mandants/switchable), scoped server-side per role — before
+// that endpoint existed, holding_viewer got a read-only label instead of
+// a real switcher, since GET /mandants (holding_admin-only) gave it no
+// list to populate a dropdown with; that limitation is gone now that
+// there's an endpoint every switchable role can call.
+export function MandateIndicator() {
+  const { isHoldingAdmin, isHoldingViewer, isGroupAdmin, isGroupViewer, effectiveMandantId, setEffectiveMandantId } = useAuth()
+  const { t } = useI18n()
+  const [myMandate, setMyMandate] = useState<MandantOut | null>(null)
+  const [mandants, setMandants] = useState<MandantOut[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const canSwitch = isHoldingAdmin || isHoldingViewer || isGroupAdmin || isGroupViewer
+
+  useEffect(() => {
+    let cancelled = false
+    if (canSwitch) {
+      fetchSwitchableMandants()
+        .then(list => { if (!cancelled) setMandants(list) })
+        .catch(() => {})
+        .finally(() => { if (!cancelled) setLoaded(true) })
+    } else {
+      fetchMyMandate()
+        .then(m => { if (!cancelled) setMyMandate(m) })
+        .catch(() => {})
+        .finally(() => { if (!cancelled) setLoaded(true) })
+    }
+    return () => { cancelled = true }
+  }, [canSwitch])
+
+  if (!loaded) return null
+
+  // Styled to match the other top-nav pills (the run selector, the
+  // language button, etc.) — var(--nav-surf)/--nav-border/--nav-text,
+  // not a standalone colored pill. It used to use the same purple accent
+  // as the Mandate Administration page's own badges, which made sense
+  // there (a one-off status badge) but looked out of place sitting among
+  // otherwise-neutral top-nav controls.
+  if (canSwitch) {
+    return (
+      <div title={t('nav.mandateIndicator.switcherHint')} style={{
+        display: 'flex', alignItems: 'center', gap: '0.5rem',
+        padding: '0.5rem 0.75rem', borderRadius: '8px',
+        background: 'var(--nav-surf)', border: '1px solid var(--nav-border)',
+      }}>
+        <svg width="14" height="14" fill="none" stroke="var(--nav-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+          <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
+        </svg>
+        <select
+          value={effectiveMandantId ?? ''}
+          onChange={e => {
+            const id = e.target.value || null
+            const picked = id ? mandants.find(m => m.id === id) : null
+            setEffectiveMandantId(id, picked?.name ?? null, picked?.logo_url ?? null)
+            // Every page's already-fetched data was scoped under the
+            // *previous* context — a full reload is the simple, always-
+            // correct way to make every page re-fetch under the new one,
+            // same approach this file's own handleLanguageChange already
+            // uses for a global setting change.
+            window.location.reload()
+          }}
+          style={{
+            background: 'transparent', border: 'none', color: 'var(--nav-text)',
+            fontSize: '0.75rem', fontWeight: 500, whiteSpace: 'nowrap',
+            cursor: 'pointer', outline: 'none', appearance: 'none',
+            WebkitAppearance: 'none', paddingRight: '0.1rem',
+          }}
+        >
+          <option value="">{t('nav.mandateIndicator.allMandatesCount', { count: mandants.length })}</option>
+          {mandants.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+      </div>
+    )
+  }
+
+  if (!myMandate) return null
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.4rem',
+      padding: '0.3rem 0.65rem', borderRadius: '999px',
+      background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)',
+      fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap',
+    }}>
+      {myMandate.logo_url && <img src={myMandate.logo_url} alt="" style={{ width: '14px', height: '14px', borderRadius: '3px' }} />}
+      {myMandate.name}
+    </div>
+  )
 }
 
 function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigate: (p: Page) => void }) {
@@ -358,11 +513,11 @@ export default function TopNavigation({
 }: TopNavigationProps) {
   const { t, lang } = useI18n()
   const [linkCopied, setLinkCopied] = useState(false)
-  const showNotifications = role === 'admin'
-
-
-  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t)
-  const visibleSections = allSections.filter(s => hasMinRole(role, s.minRole ?? 'admin'))
+  const { isHoldingAdmin } = useAuth()
+  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
+  const effectiveRole = isHoldingAdmin ? 'admin' : role
+  const visibleSections = allSections.filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+  const showNotifications = effectiveRole === 'admin'
 
   const currentRunLabel = run ? `${run.project || 'unnamed'} · ${new Date(run.created_at).toLocaleDateString()}` : 'Select run…'
 
@@ -382,7 +537,12 @@ export default function TopNavigation({
     <header className="app-top-nav">
       {/* Logo */}
       <div className="app-top-nav-logo">
-        <img src="/logo.png" alt="WAF++ PASS" style={{ height: '32px', width: 'auto', objectFit: 'contain', filter: 'brightness(1.05)' }} />
+        <img className="app-top-nav-logo-img" src="/logo.png" alt="WAF++ PASS" style={{ height: '32px', width: 'auto', objectFit: 'contain', filter: 'brightness(1.05)' }} />
+        {/* Same-session follow-up — the active mandate's own logo, always
+            visible right next to the WAF++ logo, not just on the Mandates
+            page. See ActiveMandateLogo's own docstring for exactly what
+            "active" means for each role. */}
+        <ActiveMandateLogo />
       </div>
 
       {/* Navigation - only on large screens */}
@@ -393,7 +553,7 @@ export default function TopNavigation({
             section={section}
             page={page}
             navigate={navigate}
-            role={role}
+            role={effectiveRole}
           />
         ))}
       </div>
@@ -435,6 +595,9 @@ export default function TopNavigation({
 
         {/* Dark mode toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Mandate indicator (Phase 3.3) — renders nothing in single_tenant mode */}
+          <MandateIndicator />
+
           {/* Notifications bell (admin only) */}
           {showNotifications && <NotificationBell navigate={navigate} />}
 

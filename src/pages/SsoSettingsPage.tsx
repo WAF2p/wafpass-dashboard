@@ -1,6 +1,26 @@
 import { useEffect, useState } from 'react'
-import { deleteSsoConfig, fetchSsoConfigs, upsertSsoConfig, type SsoConfigOut } from '../api'
+import {
+  deleteMandantSsoConfig, deleteSsoConfig, fetchMandantSsoConfigs, fetchMandants, fetchMyMandate,
+  fetchSsoConfigs, upsertMandantSsoConfig, upsertSsoConfig, type MandantOut, type SsoConfigOut,
+} from '../api'
+import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
+
+/** Where a save/delete in this page actually lands (ADR-005): the
+ * instance-wide default, or one specific mandate's own override.
+ * `mandantSlug` is only needed for display/metadata URLs — every actual
+ * API call below is keyed by `mandantId`. */
+type SsoScope = { mandantId: string | null; mandantSlug: string | null }
+
+function scopeSave(scope: SsoScope, provider: 'oidc' | 'saml2', enabled: boolean, config: Record<string, unknown>) {
+  return scope.mandantId
+    ? upsertMandantSsoConfig(scope.mandantId, provider, enabled, config)
+    : upsertSsoConfig(provider, enabled, config)
+}
+
+function scopeDelete(scope: SsoScope, provider: 'oidc' | 'saml2') {
+  return scope.mandantId ? deleteMandantSsoConfig(scope.mandantId, provider) : deleteSsoConfig(provider)
+}
 
 // ── Field helpers ─────────────────────────────────────────────────────────────
 
@@ -84,7 +104,7 @@ function fromOidcForm(f: typeof OIDC_DEFAULTS): Record<string, unknown> {
   return out
 }
 
-function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSaved(): void }) {
+function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null; scope: SsoScope; onSaved(): void }) {
   const { t } = useI18n()
   const [enabled, setEnabled] = useState(initial?.enabled ?? false)
   const [form, setForm]       = useState(initial ? toOidcForm(initial.config) : { ...OIDC_DEFAULTS })
@@ -99,7 +119,7 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
     setSaving(true)
     setMsg(null)
     try {
-      await upsertSsoConfig('oidc', enabled, fromOidcForm(form))
+      await scopeSave(scope, 'oidc', enabled, fromOidcForm(form))
       setMsg({ ok: true, text: t('pages.sso.oidcSaved') })
       onSaved()
     } catch (e) {
@@ -113,7 +133,7 @@ function OidcSection({ initial, onSaved }: { initial: SsoConfigOut | null; onSav
     if (!confirm(t('pages.sso.oidcRemoveConfirm'))) return
     setSaving(true)
     try {
-      await deleteSsoConfig('oidc')
+      await scopeDelete(scope, 'oidc')
       setMsg({ ok: true, text: t('pages.sso.oidcRemoved') })
       setEnabled(false)
       setForm({ ...OIDC_DEFAULTS })
@@ -305,7 +325,7 @@ function fromSamlForm(f: typeof SAML_DEFAULTS): Record<string, unknown> {
   return out
 }
 
-function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSaved(): void }) {
+function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | null; scope: SsoScope; onSaved(): void }) {
   const { t } = useI18n()
   const [enabled, setEnabled] = useState(initial?.enabled ?? false)
   const [form, setForm]       = useState(initial ? toSamlForm(initial.config) : { ...SAML_DEFAULTS })
@@ -320,7 +340,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
     setSaving(true)
     setMsg(null)
     try {
-      await upsertSsoConfig('saml2', enabled, fromSamlForm(form))
+      await scopeSave(scope, 'saml2', enabled, fromSamlForm(form))
       setMsg({ ok: true, text: t('pages.sso.saml2Saved') })
       onSaved()
     } catch (e) {
@@ -334,7 +354,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
     if (!confirm(t('pages.sso.saml2RemoveConfirm'))) return
     setSaving(true)
     try {
-      await deleteSsoConfig('saml2')
+      await scopeDelete(scope, 'saml2')
       setMsg({ ok: true, text: t('pages.sso.saml2Removed') })
       setEnabled(false)
       setForm({ ...SAML_DEFAULTS })
@@ -346,7 +366,7 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
     }
   }
 
-  const metadataUrl = `${window.location.origin}/auth/saml/metadata`
+  const metadataUrl = `${window.location.origin}/auth/saml/metadata${scope.mandantSlug ? `?mandant=${encodeURIComponent(scope.mandantSlug)}` : ''}`
   const ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin']
 
   return (
@@ -497,14 +517,38 @@ function Saml2Section({ initial, onSaved }: { initial: SsoConfigOut | null; onSa
 
 export default function SsoSettingsPage() {
   const { t } = useI18n()
+  const { isHoldingAdmin, mandantId: ownMandantId } = useAuth()
   const [configs, setConfigs] = useState<SsoConfigOut[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
 
+  // ADR-005 — the mandate selector's choices. Empty while single-tenant or
+  // while the caller has no cross-mandate rights and no mandate of their
+  // own yet: the selector itself is hidden in that case (see below), so
+  // this never needs to render anything.
+  const [mandateOptions, setMandateOptions] = useState<MandantOut[]>([])
+  const [scope, setScope] = useState<SsoScope>({ mandantId: null, mandantSlug: null })
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (isHoldingAdmin) {
+          setMandateOptions(await fetchMandants())
+        } else if (ownMandantId) {
+          const mine = await fetchMyMandate()
+          if (mine) setMandateOptions([mine])
+        }
+      } catch {
+        // Selector just stays hidden/empty — the instance-wide default
+        // below is still fully usable without it.
+      }
+    })()
+  }, [isHoldingAdmin, ownMandantId])
+
   async function load() {
     setLoading(true)
     try {
-      setConfigs(await fetchSsoConfigs())
+      setConfigs(scope.mandantId ? await fetchMandantSsoConfigs(scope.mandantId) : await fetchSsoConfigs())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load SSO configuration')
     } finally {
@@ -512,10 +556,16 @@ export default function SsoSettingsPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [scope.mandantId])
 
-  const oidcCfg  = configs.find(c => c.id === 'oidc')  ?? null
-  const saml2Cfg = configs.find(c => c.id === 'saml2') ?? null
+  const oidcCfg  = configs.find(c => c.provider === 'oidc')  ?? null
+  const saml2Cfg = configs.find(c => c.provider === 'saml2') ?? null
+
+  function handleScopeChange(mandantId: string) {
+    if (!mandantId) { setScope({ mandantId: null, mandantSlug: null }); return }
+    const picked = mandateOptions.find(opt => opt.id === mandantId)
+    setScope({ mandantId, mandantSlug: picked?.slug ?? null })
+  }
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
@@ -538,8 +588,25 @@ export default function SsoSettingsPage() {
         <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>pip install "wafpass-server[saml]"</code>).
       </div>
 
-      <OidcSection  initial={oidcCfg}  onSaved={load} />
-      <Saml2Section initial={saml2Cfg} onSaved={load} />
+      {mandateOptions.length > 0 && (
+        <div className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+            {t('pages.sso.scopeLabel')}
+          </label>
+          <select
+            style={{ ...inputSx, width: 'auto', minWidth: '220px' }}
+            value={scope.mandantId ?? ''}
+            onChange={e => handleScopeChange(e.target.value)}
+          >
+            <option value="">{t('pages.sso.scopeDefault')}</option>
+            {mandateOptions.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+          <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{t('pages.sso.scopeHint')}</span>
+        </div>
+      )}
+
+      <OidcSection  key={`oidc-${scope.mandantId ?? 'default'}`}  initial={oidcCfg}  scope={scope} onSaved={load} />
+      <Saml2Section key={`saml2-${scope.mandantId ?? 'default'}`} initial={saml2Cfg} scope={scope} onSaved={load} />
 
     </div>
   )

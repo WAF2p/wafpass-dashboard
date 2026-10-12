@@ -3,6 +3,7 @@ import { ControlMeta, createDemoRun, fetchWaivers, fetchRisks, fetchUserPrefsFro
 import { useAuth } from './AuthContext'
 import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
+import ImpersonationBanner from './components/ImpersonationBanner'
 import OnboardingTour from './components/OnboardingTour'
 import RunSelectorModal from './components/RunSelectorModal'
 import WelcomeChecklist from './components/WelcomeChecklist'
@@ -46,6 +47,8 @@ const GapAnalysisPage        = lazy(() => import('./pages/GapAnalysisPage'))
 const CostImpactPage         = lazy(() => import('./pages/CostImpactPage'))
 const AccessRolesPage        = lazy(() => import('./pages/AccessRolesPage'))
 const UserManagementPage     = lazy(() => import('./pages/UserManagementPage'))
+const MandateManagementPage  = lazy(() => import('./pages/MandateManagementPage'))
+const MandateAdministrationPage = lazy(() => import('./pages/MandateAdministrationPage'))
 const ApiManagementPage      = lazy(() => import('./pages/ApiManagementPage'))
 const SsoSettingsPage        = lazy(() => import('./pages/SsoSettingsPage'))
 const GroupMappingsPage      = lazy(() => import('./pages/GroupMappingsPage'))
@@ -240,6 +243,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
   return (
     <I18nProvider lang={effectiveLang}>
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <ImpersonationBanner />
+
       {showRunModal && (
         <RunSelectorModal
           runs={runs}
@@ -318,6 +323,10 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ControlsPacksPage navigate={p => navigate(p as Page)} />
           ) : page === 'users' ? (
             <UserManagementPage />
+          ) : page === 'mandates' ? (
+            <MandateManagementPage />
+          ) : page === 'mandateadmin' ? (
+            <MandateAdministrationPage />
           ) : page === 'groupmappings' ? (
             <GroupMappingsPage />
           ) : page === 'apikeys' ? (

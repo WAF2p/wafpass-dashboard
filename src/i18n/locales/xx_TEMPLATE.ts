@@ -120,6 +120,8 @@ const xx: PartialTranslations = {
       skipped: 'Skipped Controls',
       access: 'Access & Roles',
       users: 'Users',
+      mandates: 'Mandates',       // Phase 3 — multi-mandant mandate CRUD
+      mandateadmin: 'Mandate Administration', // multi-mandant one-way activation switch
       apikeys: 'API Keys',
       sso: 'SSO Settings',
       groupmappings: 'Group Mappings', controlspacks: 'Controls Upgrade',
@@ -131,6 +133,17 @@ const xx: PartialTranslations = {
       journey: 'Maturity Journey',
       userprefs: 'My Preferences',
       validations: 'Validation Registry',
+    },
+    // Phase 3 / 6a / 6b — TopNavigation mandate scope indicator
+    mandateIndicator: {
+      allMandatesCount: 'All mandates ({{count}})',
+      switcherHint: 'Switch which mandate you are viewing — reloads the page scoped to your selection',
+    },
+    // Phase 6b — persistent "viewing as" banner above the top nav
+    impersonationBanner: {
+      viewingAs: 'Viewing as: {{name}} — this is not your full cross-mandate view',
+      unknownMandate: 'another mandate',
+      exit: 'Exit',
     },
   },
 
@@ -298,6 +311,9 @@ const xx: PartialTranslations = {
       or: 'or',
       footerLocal: 'Local authentication · Contact your administrator to create or reset your account.',
       footerSso: 'Local and SSO authentication enabled · Contact your administrator for access.',
+      mandantLabel: 'Company ID',
+      mandantPlaceholder: 'e.g. acme (optional)',
+      mandantHint: 'Only needed if your company has its own SSO connection.',
     },
 
     findings: {
@@ -562,6 +578,120 @@ const xx: PartialTranslations = {
       disableBtn: 'Disable',
       enableBtn: 'Enable',
       delBtn: 'Del',
+      // Phase 3 — multi-mandant mandate/holding_role assignment
+      colMandate: 'Mandate',
+      noMandate: '— none —',
+      mandateLabel: 'Mandate',
+      holdingRoleLabel: 'Holding role',
+      holdingRoleNone: '— none —',
+    },
+
+    // Phase 3 — MandateManagementPage.tsx, holding_admin only
+    mandates: {
+      holdingAdminRequired: 'holding_admin role required to manage mandates.',
+      totalMandates: 'Total Mandates',
+      active: 'Active',
+      mandatesHeader: 'Mandates',
+      newMandateBtn: 'New Mandate',
+      editMandateTitle: 'Edit Mandate',
+      newMandateTitle: 'New Mandate',
+      nameLabel: 'Name *',
+      slugLabel: 'Slug *',
+      slugHint: 'Lowercase letters, numbers and hyphens — cannot be changed after creation.',
+      logoUrlLabel: 'Logo URL',
+      colName: 'Name',
+      colSlug: 'Slug',
+      colCreated: 'Created',
+      colActions: 'Actions',
+      inheritedBadge: 'Inherited',
+      customOverrideBadge: 'Custom Override',
+      viewAsHint: "View {{name}}'s dashboard",
+      rollup: {
+        mandateCount: '{{count}} mandates total',
+        runCount: '{{count}} runs',
+        avgScore: 'avg score {{score}}',
+      },
+      editModal: {
+        tabGeneral: 'General & Branding',
+        tabGovernance: 'Governance & Sovereignty',
+        tabPolicy: 'Policy & Inheritance',
+        tabAudit: 'Audit & Metadata',
+        mandateTypeLabel: 'Mandate Type',
+        mandateType: {
+          holding: 'Holding',
+          subsidiary: 'Subsidiary',
+          division: 'Division',
+        },
+        parentLabel: 'Parent Mandate',
+        noParent: '— top-level (no parent) —',
+        jurisdictionLabel: 'Sovereign Region / Jurisdiction',
+        jurisdictionHint: 'A free-form region or country tag, e.g. "EU", "DE", "US-CA" — display only.',
+        riskTierLabel: 'Risk Tier',
+        riskTierNone: '— not set —',
+        riskTier: {
+          low: 'Low',
+          medium: 'Medium',
+          high: 'High',
+          critical: 'Critical',
+        },
+        dataResidencyLabel: 'Data Residency',
+        dataResidencyHint: 'Where this mandate’s data is expected to reside — display only, not enforced.',
+        authModeLabel: 'Authentication',
+        authModeHint: 'Controls which sign-in options this mandate’s users are offered.',
+        authMode: {
+          inherit: 'Inherit (default — shared SSO and/or local accounts)',
+          sso_optional: 'SSO optional (reserved, not yet enforced)',
+          local_only: 'Local accounts only — no SSO for this mandate',
+        },
+        authModeSsoConfigHint: 'Configure this mandate’s own OIDC/SAML2 connection on the SSO Settings page.',
+        policyInformationalNote: 'Policy inheritance is informational only in this release. Nothing here changes which controls actually run for this mandate — control packs remain global across every mandate (ADR-003). Per-mandate policy overrides are a separate, not-yet-decided extension.',
+        inheritPoliciesLabel: 'Inherit parent mandate’s policies',
+        inheritPoliciesHint: 'Shown for reference only — toggling this does not currently change enforcement.',
+        auditId: 'Mandate ID',
+        auditCreated: 'Created',
+        auditUpdated: 'Last modified',
+        auditUnavailableOnCreate: 'Audit metadata will be assigned once this mandate is created.',
+      },
+    },
+
+    // pages/MandateAdministrationPage.tsx — multi-mandant one-way activation
+    mandateAdmin: {
+      accessDenied: 'admin or holding_admin role required to view instance mode and activation.',
+      currentMode: 'Current mode:',
+      modeSingleTenant: 'Single-tenant',
+      modeMultiMandant: 'Multi-mandant',
+      userCount: '{{count}} user(s)',
+      mandantCount: '{{count}} mandate(s)',
+      irreversibleBadge: 'Multi-mandant mode · irreversible',
+      activatedBy: 'activated by {{username}}',
+      activateBtn: 'Activate multi-mandant mode',
+      confirmTitle: 'This cannot be undone',
+      confirmBody: 'Activating multi-mandant mode permanently changes how data is isolated at the database level. All existing data will be assigned to a default mandate. There is no way to switch back to single-tenant mode afterward.',
+      confirmBtn: 'Yes, activate permanently',
+      activating: 'Activating…',
+      impact: {
+        toggleLabel: 'What does this change?',
+        title: 'What activating multi-mandant mode actually changes',
+        intro: 'This is a one-way switch enforced by the server itself — read through all of this before activating. Once this instance is multi-mandant, there is no way back.',
+        dataHeading: 'Your existing data',
+        dataBody: 'Every existing user and every row in every tenant-scoped table — runs, findings, waivers, risk acceptances, API keys, evidence, project passports, achievements, and more — is automatically assigned to one newly-created default mandate (or the oldest mandate you already created by hand, if any). Nothing is deleted or hidden, and nothing changes visibly right away, since the whole instance starts out as a single mandate.',
+        enforcementHeading: 'Isolation becomes a database guarantee, not just an application rule',
+        enforcementBody: 'From the moment of activation, PostgreSQL row-level security enforces per-mandate isolation on every ordinary database connection the app makes — not only in the API code. A user assigned to one mandate genuinely cannot read or write another mandate’s rows, even through a bug in application logic.',
+        rolesHeading: 'Two new holding-wide roles start being enforced',
+        rolesBody: 'holding_admin (full read/write access across every mandate) and holding_viewer (read-only access across every mandate) take effect. These roles can already be set on user accounts today, but do nothing until this switch is activated.',
+        apiKeysHeading: 'Every API key needs exactly one mandate',
+        apiKeysBody: 'Any API key created from now on must belong to exactly one mandate. The legacy WAFPASS_API_KEY environment-variable key stops working for scan ingestion unless you explicitly map it to one mandate via the WAFPASS_LEGACY_API_KEY_MANDANT_SLUG setting.',
+        ssoHeading: 'SSO logins may need a mandate claim',
+        ssoBody: 'If your identity provider is configured with a mandate claim or attribute, new SSO logins must present it or they are rejected. Without one configured, newly-provisioned SSO users will have no mandate at all until a holding_admin assigns one by hand.',
+        badgesHeading: 'Existing badge URLs stop working',
+        badgesBody: 'Public status badges already embedded in a README (e.g. /api/v1/public/badge/{project}.svg) start returning an error, since a bare project name can no longer say which mandate’s project to show. Replace them with the mandate-qualified URL from the Badge Integration page.',
+        performanceHeading: 'Activation itself can briefly lock large tables',
+        performanceBody: 'Activation adds a not-null constraint to every tenant-scoped table inside one transaction. On an instance with a very large amount of existing scan history, this can briefly hold an exclusive lock on those tables — consider activating during a quiet period if your dataset is large.',
+        irreversibleHeading: 'This cannot be undone',
+        irreversibleBody: 'There is no deactivation endpoint or setting anywhere in WAF++. Once the instance mode is multi-mandant, the server permanently rejects any attempt to switch back.',
+        nextStepsHeading: 'What to do right after activating',
+        nextStepsBody: 'Activation only turns on enforcement — it does not split your data for you. Everything starts out in one default mandate. Use the Mandates page afterward to create additional companies and reassign users, API keys, and other resources to split them apart.',
+      },
     },
 
     sso: {
@@ -628,6 +758,9 @@ const xx: PartialTranslations = {
       roleAttrHint: 'SAML attribute with groups/roles.',
       overviewTitle: 'SSO Overview',
       overviewText: "Configure OIDC or SAML2 to allow users to sign in via your organisation's identity provider. When enabled, login buttons appear on the sign-in page. Local password accounts continue to work alongside SSO.",
+      scopeLabel: 'Configuring',
+      scopeDefault: 'Instance default (shared by every mandate)',
+      scopeHint: "A mandate's own override takes precedence over the default for its users.",
     },
 
     groupMappings: {
@@ -827,6 +960,11 @@ const xx: PartialTranslations = {
       revokeConfirm: 'Revoke API key "{{name}}"? CI/CD pipelines using this key will stop working immediately.',
       revokedKeysHeader: 'Revoked Keys ({{count}})',
       colName: 'Name',
+      colMandate: 'Mandate',
+      noMandate: '—',
+      targetMandateLabel: 'Mandate',
+      targetMandateDefault: 'My current mandate',
+      targetMandateHint: 'Which mandate this key will tag ingested runs with — holding_admin only. Leave as your current mandate unless you need a key for a different one.',
       usageRefHeader: 'Usage Reference',
       usageLogHeader: 'Usage Log',
       entrySingular: 'entry',
@@ -896,6 +1034,9 @@ const xx: PartialTranslations = {
       autoFixCount: '{{auto}} auto-fixable',
       manualCount: '{{count}} manual',
       gapsLabel: '{{count}} gaps',
+      trendStub: 'Run comparison & delta',
+      trendStubTitle: 'Score-delta sparklines are in the RFC queue',
+      trendStubDesc: 'Compare the current run against the previous run and see pillar-level deltas. Vote on the upcoming GitHub RFC to decide when this ships.',
     },
 
     settingsPage: {
@@ -950,6 +1091,7 @@ const xx: PartialTranslations = {
 
     badgePage: {
       noScansYet: 'No scan runs yet. Push your first wafpass result to generate a badge.',
+      noMandateForBadges: 'Badges are scoped to a single mandate once multi-mandant mode is active. Your account has no personal mandate assigned, so there is no single mandate to generate a badge URL for — ask a holding administrator to assign one, or view badges from an account that belongs to a specific mandate.',
       project: 'Project',
       deployMode: 'Deployment mode',
       liveModeLabel: 'Live (public server)',
@@ -1173,6 +1315,8 @@ const xx: PartialTranslations = {
       stubsInProgress: 'Live engineering integrations are in progress',
       stubsVoteRfc: 'Cross-page sprint metrics and mean-time-to-remediate are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
       stubBadge: 'demo',
+      mttrSub: 'avg. recovery time',
+      mttrTrend: 'MTTR trend',
     },
 
     architectureOps: {
@@ -1183,9 +1327,13 @@ const xx: PartialTranslations = {
       attackPaths: 'Attack paths',
       sandboxDrafts: 'Sandbox drafts',
       criticalFindings: 'Critical findings',
+      blastExposed: '{{count}} exposed resource(s)',
+      blastTopResource: 'Top impacted resource',
       stubsInProgress: 'Live architecture integrations are in progress',
       stubsVoteRfc: 'Cross-page attack-path scoring and sandbox draft tracking are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
       stubBadge: 'demo',
+      sandboxDraftsSub: 'saved sandbox snippets',
+      blastRadiusPreview: 'Blast-radius preview',
     },
 
     maturityOps: {
@@ -1195,6 +1343,8 @@ const xx: PartialTranslations = {
       stubsInProgress: 'Live maturity integrations are in progress',
       stubsVoteRfc: 'Predictive maturity forecasting and badge-verification pipelines are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
       stubBadge: 'demo',
+      predictiveForecast: 'Predictive maturity forecast',
+      badgeVerification: 'Badge verification pipeline',
     },
 
     pipelineOps: {
@@ -1208,6 +1358,8 @@ const xx: PartialTranslations = {
       stubsInProgress: 'Live pipeline integrations are in progress',
       stubsVoteRfc: 'Predictive duration forecasting and flaky-pipeline detection are currently demo integrations. Vote on the upcoming GitHub RFCs to decide which real endpoints ship first.',
       stubBadge: 'demo',
+      flakyPipelines: 'Flaky-pipeline detection',
+      durationForecast: 'Predictive duration forecast',
     },
 
     dependencyGraph: {
@@ -1668,6 +1820,15 @@ const xx: PartialTranslations = {
       noSkipped: 'No skipped controls for this run.',
     },
 
+
+    passports: {
+      bulkImport: 'Bulk import',
+      bulkImportRfc: 'Bulk passport import is planned — see RFC for CSV/YAML mapping.',
+      bulkExport: 'Bulk export',
+      bulkExportRfc: 'Bulk passport export is planned — see RFC for report formats.',
+      auditLog: 'Audit log',
+      auditLogRfc: 'Passport audit log is planned — see RFC for change tracking.',
+    },
   },
 
 }

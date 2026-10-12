@@ -5,8 +5,13 @@
  */
 import { Fragment, useEffect, useState } from 'react'
 import { useAuth } from '../AuthContext'
-import { fetchUsers, createUser, updateUser, deleteUser, fetchUserLogs, type UserOut, type UserAuditLogEntry } from '../api'
+import {
+  fetchUsers, createUser, updateUser, deleteUser, fetchUserLogs,
+  fetchMandants, fetchMyMandate, type UserOut, type UserAuditLogEntry, type MandantOut,
+} from '../api'
 import { useI18n } from '../i18n'
+
+const HOLDING_ROLES = ['', 'holding_admin', 'holding_viewer', 'group_admin', 'group_viewer'] as const
 
 const ALL_ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
 
@@ -374,13 +379,22 @@ interface UserFormState {
   role: string
   password: string
   is_active: boolean
+  // Phase 3.4 — only ever sent to the server when the viewing user is
+  // holding_admin; '' means "leave mandant_id unset" in this form's own
+  // bookkeeping (translated to omitting the key, not sending null, in
+  // handleSave — see there for why those aren't the same thing).
+  mandant_id: string
+  holding_role: string // '' | 'holding_admin' | 'holding_viewer'
 }
 
-const EMPTY_FORM: UserFormState = { username: '', display_name: '', image_url: '', role: 'engineer', password: '', is_active: true }
+const EMPTY_FORM: UserFormState = {
+  username: '', display_name: '', image_url: '', role: 'engineer', password: '', is_active: true,
+  mandant_id: '', holding_role: '',
+}
 
 export default function UserManagementPage() {
   const { t } = useI18n()
-  const { role, user } = useAuth()
+  const { role, user, isHoldingAdmin } = useAuth()
   const isAdmin = role === 'admin'
 
   const [users, setUsers]           = useState<UserOut[]>([])
@@ -393,6 +407,13 @@ export default function UserManagementPage() {
   const [saveErr, setSaveErr]       = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
+  // Phase 3.4 — mandate name resolution. A holding_admin sees every user
+  // across every mandate and can list all mandants; an ordinary admin only
+  // ever sees users in their *own* mandate (RLS), so one lookup for "my own
+  // mandate" covers every row they'll ever see.
+  const [mandants, setMandants]   = useState<MandantOut[]>([])
+  const [myMandate, setMyMandate] = useState<MandantOut | null>(null)
+
   function loadUsers() {
     setLoading(true)
     fetchUsers()
@@ -401,7 +422,25 @@ export default function UserManagementPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { loadUsers() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!isAdmin) return
+    loadUsers()
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    if (isHoldingAdmin) {
+      fetchMandants().then(setMandants).catch(() => {})
+    } else {
+      fetchMyMandate().then(setMyMandate).catch(() => {})
+    }
+  }, [isAdmin, isHoldingAdmin])
+
+  function mandateNameFor(u: UserOut): string {
+    if (!u.mandant_id) return t('pages.users.noMandate')
+    if (isHoldingAdmin) return mandants.find(m => m.id === u.mandant_id)?.name ?? u.mandant_id.slice(0, 8)
+    return myMandate?.name ?? u.mandant_id.slice(0, 8)
+  }
 
   function openCreate() {
     setEditId(null)
@@ -413,7 +452,11 @@ export default function UserManagementPage() {
   function openEdit(u: UserOut, e: React.MouseEvent) {
     e.stopPropagation()
     setEditId(u.id)
-    setForm({ username: u.username, display_name: u.display_name, image_url: u.image_url || '', role: u.role, password: '', is_active: u.is_active })
+    setForm({
+      username: u.username, display_name: u.display_name, image_url: u.image_url || '', role: u.role,
+      password: '', is_active: u.is_active,
+      mandant_id: u.mandant_id ?? '', holding_role: u.holding_role ?? '',
+    })
     setSaveErr(null)
     setShowForm(true)
   }
@@ -423,13 +466,24 @@ export default function UserManagementPage() {
     setSaveErr(null)
     try {
       if (editId) {
-        const payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string } = {
+        const payload: {
+          display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string
+          mandant_id?: string | null; holding_role?: string
+        } = {
           display_name: form.display_name,
           image_url: form.image_url || undefined,
           role: form.role,
           is_active: form.is_active,
         }
         if (form.password) payload.password = form.password
+        // Server-gated on holding_admin regardless, but only send these
+        // when the viewing user actually is one — a non-holding-admin's
+        // form never shows these fields, so form.mandant_id/holding_role
+        // would just be stale copies of whatever openEdit() prefilled.
+        if (isHoldingAdmin) {
+          payload.mandant_id = form.mandant_id || null // '' -> clear it
+          payload.holding_role = form.holding_role      // '' clears it server-side too
+        }
         await updateUser(editId, payload)
       } else {
         await createUser({ username: form.username, password: form.password, display_name: form.display_name, image_url: form.image_url, role: form.role })
@@ -553,6 +607,31 @@ export default function UserManagementPage() {
                   {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
+
+              {/* Phase 3.4 — holding_admin only, and only when editing an
+                  existing account (per plan: "when edited by a holding
+                  admin" — new-user mandate assignment is a separate,
+                  not-yet-built gap, flagged in .plan.md). */}
+              {isHoldingAdmin && editId && (
+                <>
+                  <div>
+                    <label style={labelStyle}>{t('pages.users.mandateLabel')}</label>
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.mandant_id}
+                      onChange={e => setForm(f => ({ ...f, mandant_id: e.target.value }))}>
+                      <option value="">{t('pages.users.noMandate')}</option>
+                      {mandants.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>{t('pages.users.holdingRoleLabel')}</label>
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.holding_role}
+                      onChange={e => setForm(f => ({ ...f, holding_role: e.target.value }))}>
+                      {HOLDING_ROLES.map(r => <option key={r} value={r}>{r || t('pages.users.holdingRoleNone')}</option>)}
+                    </select>
+                  </div>
+                </>
+              )}
+
               <div>
                 <label style={labelStyle}>{t('pages.users.imageUrlLabel')}</label>
                 <input style={inputStyle} value={form.image_url}
@@ -645,7 +724,7 @@ export default function UserManagementPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['', t('pages.users.colUser'), t('pages.users.colRole'), t('pages.users.colStatus'), t('pages.users.colLastLogin'), t('pages.users.colActions')].map(h => (
+                  {['', t('pages.users.colUser'), t('pages.users.colRole'), t('pages.users.colMandate'), t('pages.users.colStatus'), t('pages.users.colLastLogin'), t('pages.users.colActions')].map(h => (
                     <th key={h} style={{
                       padding: '0.55rem 0.875rem', textAlign: 'left',
                       fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
@@ -721,6 +800,18 @@ export default function UserManagementPage() {
 
                         <td style={{ padding: '0.6rem 0.875rem' }}>
                           <RoleBadge role={u.role} />
+                          {u.holding_role && (
+                            <span style={{
+                              display: 'inline-flex', marginLeft: '0.3rem', padding: '0.12rem 0.5rem', borderRadius: '5px',
+                              background: 'rgba(124,58,237,0.09)', color: '#7c3aed', fontWeight: 700, fontSize: '0.68rem',
+                            }}>
+                              {u.holding_role}
+                            </span>
+                          )}
+                        </td>
+
+                        <td style={{ padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                          {mandateNameFor(u)}
                         </td>
 
                         <td style={{ padding: '0.6rem 0.875rem' }}>

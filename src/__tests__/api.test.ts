@@ -1,8 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  deleteMandantSsoConfig,
+  fetchMandantSsoConfigs,
   fetchServerAuditEvents,
+  fetchSsoProviders,
   getApiBase,
+  getSsoAuthorizeUrl,
   pushAuditEvent,
+  upsertMandantSsoConfig,
 } from '../api'
 
 const SERVER_URL_KEY = 'wafpass_server_url'
@@ -136,5 +141,67 @@ describe('fetchServerAuditEvents', () => {
     await fetchServerAuditEvents()
     const init = fetchSpy.mock.calls[0][1] as RequestInit
     expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer mytoken')
+  })
+})
+
+// ── Per-mandant SSO config (ADR-005) ─────────────────────────────────────────
+
+describe('fetchSsoProviders / getSsoAuthorizeUrl — mandant scoping', () => {
+  afterEach(() => { localStorage.clear(); vi.restoreAllMocks() })
+
+  it('omits ?mandant= when no mandate is given', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([]), { status: 200 })
+    )
+    await fetchSsoProviders()
+    const url = fetchSpy.mock.calls[0][0] as string
+    expect(url).not.toContain('mandant')
+  })
+
+  it('sends the slug as ?mandant=<slug>', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([]), { status: 200 })
+    )
+    await fetchSsoProviders('acme')
+    const url = fetchSpy.mock.calls[0][0] as string
+    expect(url).toContain('/api/v1/sso/providers?mandant=acme')
+  })
+
+  it('getSsoAuthorizeUrl appends ?mandant= for oidc and saml2 alike', () => {
+    expect(getSsoAuthorizeUrl('oidc')).toBe('/api/v1/auth/oidc/authorize')
+    expect(getSsoAuthorizeUrl('oidc', 'acme')).toBe('/api/v1/auth/oidc/authorize?mandant=acme')
+    expect(getSsoAuthorizeUrl('saml2', 'acme')).toBe('/api/v1/auth/saml/login?mandant=acme')
+  })
+})
+
+describe('per-mandant SSO config CRUD', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('fetchMandantSsoConfigs hits the mandate-scoped endpoint', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([]), { status: 200 })
+    )
+    await fetchMandantSsoConfigs('m1')
+    const url = fetchSpy.mock.calls[0][0] as string
+    expect(url).toContain('/api/v1/sso/config/mandant/m1')
+  })
+
+  it('upsertMandantSsoConfig PUTs to the mandate+provider endpoint with the config body', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ id: 'oidc:m1', provider: 'oidc', mandant_id: 'm1', enabled: true, config: {}, updated_at: null }), { status: 200 })
+    )
+    await upsertMandantSsoConfig('m1', 'oidc', true, { client_id: 'acme-client' })
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('/api/v1/sso/config/mandant/m1/oidc')
+    expect(init.method).toBe('PUT')
+    expect(JSON.parse(init.body as string)).toEqual({ enabled: true, config: { client_id: 'acme-client' } })
+  })
+
+  it('deleteMandantSsoConfig DELETEs the mandate+provider endpoint', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }))
+    await deleteMandantSsoConfig('m1', 'saml2')
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('/api/v1/sso/config/mandant/m1/saml2')
+    expect(init.method).toBe('DELETE')
   })
 })

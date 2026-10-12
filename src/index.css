@@ -114,7 +114,7 @@ a { color: var(--waf-brand); text-decoration: none; }
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding-top: 64px;
+  padding-top: calc(var(--top-nav-height) + var(--impersonation-banner-height, 0px));
 }
 .app-main-content main {
   flex: 1;
@@ -128,7 +128,7 @@ a { color: var(--waf-brand); text-decoration: none; }
 /* ── Top Navigation (Desktop) ────────────────────────────────────── */
 .app-top-nav {
   position: fixed;
-  top: 0;
+  top: var(--impersonation-banner-height, 0px);
   left: 0;
   right: 0;
   z-index: 1000;
@@ -146,7 +146,43 @@ a { color: var(--waf-brand); text-decoration: none; }
 }
 :root {
   --top-nav-height: 64px;
+  --impersonation-banner-height: 0px;
 }
+/* Global Context Switcher impersonation banner (Phase 6a follow-up) —
+ * toggled by ImpersonationBanner.tsx adding/removing this class on <body>.
+ * Driving the top-nav/content offset off this one custom property (rather
+ * than a second copy of the .app-top-nav/.app-main-content rules) means
+ * there's exactly one place that knows the banner's height. */
+body.has-impersonation-banner {
+  --impersonation-banner-height: 36px;
+}
+.impersonation-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1001; /* above .app-top-nav's 1000 */
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: linear-gradient(90deg, #7c3aed, #6d28d9);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0 1rem;
+}
+.impersonation-banner button {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.impersonation-banner button:hover { background: rgba(255,255,255,0.25); }
 
 .app-top-nav::before {
   content: '';
@@ -160,8 +196,12 @@ a { color: var(--waf-brand); text-decoration: none; }
     rgba(255,255,255,0) 100%
   );
 }
-.app-top-nav-logo { display: flex; align-items: center; gap: 1rem; min-width: 0; position: relative; z-index: 1; }
-.app-top-nav-logo img { height: 32px; width: auto; object-fit: contain; filter: brightness(1.05) drop-shadow(0 1px 1px rgba(0,0,0,0.08)); }
+.app-top-nav-logo { display: flex; align-items: center; gap: 0.6rem; min-width: 0; position: relative; z-index: 1; }
+.app-top-nav-logo-img { height: 32px; width: auto; object-fit: contain; filter: brightness(1.05) drop-shadow(0 1px 1px rgba(0,0,0,0.08)); }
+/* A divider between the WAF++ logo and the active mandate's own logo
+   (ActiveMandateLogo in TopNavigation.tsx) — only shown when there's a
+   second logo to separate from, via the adjacent-sibling selector. */
+.app-top-nav-logo-img + div { padding-left: 0.6rem; border-left: 1px solid var(--nav-border); }
 .app-top-nav-logo-name { font-size: 0.65rem; color: var(--nav-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
 .app-top-nav-items { display: flex; align-items: center; gap: 0.25rem; flex: 1; justify-content: center; min-width: 0; position: relative; z-index: 1; }
 .app-top-nav-controls { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; min-width: 0; position: relative; z-index: 1; }
@@ -532,4 +572,78 @@ a { color: var(--waf-brand); text-decoration: none; }
 
 @media (max-width: 640px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Mandate org chart (Phase 6a follow-up) ──────────────────────────
+ * Classic pure-CSS org-chart connector recipe applied to a nested
+ * <ul>/<li> tree (MandateManagementPage.tsx) — generalizes to any depth
+ * and any sibling count automatically, so it doesn't need bespoke
+ * connector math per level. Each .org-chart is one independent tree
+ * (one top-level mandate with no parent, rendered as <ul class="org-chart">
+ * containing exactly one <li>); unrelated top-level mandates sit in their
+ * own separate .org-chart, side by side, with no connecting line between
+ * them. The root <li> is always an :only-child of its own <ul>, so the
+ * :only-child rule below already suppresses its own (unneeded) connector —
+ * no extra ":first level" special-casing needed on top of that.
+ *
+ * Every <li> defaults to 20px of top padding, making room for a connector
+ * above it; :only-child resets that to 0. This uniform default (rather
+ * than splitting "root gets 0, everyone else gets 20px" into two separate
+ * rules) matters for a single-child node specifically: its own
+ * (suppressed) padding-top must land on exactly 0 so the parent ul's own
+ * 20px "trunk" line (.org-chart ul ul::before) lands flush against the
+ * child with no gap — a split-rule version that forgot the :only-child
+ * override left a visible 20px gap with no connecting line for any
+ * mandate that has exactly one child. */
+.org-chart, .org-chart ul {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+.org-chart ul {
+  padding-top: 20px;
+  position: relative;
+}
+.org-chart li {
+  list-style: none;
+  position: relative;
+  padding: 20px 14px 0 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.org-chart li::before,
+.org-chart li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 50%;
+  border-top: 2px solid var(--border);
+  width: 50%;
+  height: 20px;
+}
+.org-chart li::after {
+  right: auto;
+  left: 50%;
+  border-left: 2px solid var(--border);
+}
+.org-chart li:only-child::after,
+.org-chart li:only-child::before { display: none; }
+.org-chart li:only-child { padding-top: 0; }
+.org-chart li:first-child::before,
+.org-chart li:last-child::after { border: 0 none; }
+.org-chart li:last-child::before {
+  border-right: 2px solid var(--border);
+  border-radius: 0 6px 0 0;
+}
+.org-chart li:first-child::after { border-radius: 6px 0 0 0; }
+.org-chart ul ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  border-left: 2px solid var(--border);
+  width: 0;
+  height: 20px;
 }

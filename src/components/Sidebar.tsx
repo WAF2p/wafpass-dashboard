@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { RunDetail, RunSummary, getActiveControlPack } from '../api'
-import { hasMinRole } from '../AuthContext'
+import { hasMinRole, useAuth } from '../AuthContext'
 import { getMaturityMeta, Settings } from '../pages/settingsUtils'
 import { Page, scoreColor } from '../routing'
 import { useI18n } from '../i18n'
@@ -187,9 +187,11 @@ export default function Sidebar({
   const [controlsCount, setControlsCount] = useState<number>(0)
   const [packControlCount, setPackControlCount] = useState<number>(0)
 
-  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t)
+  const { isHoldingAdmin } = useAuth()
+  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
+  const effectiveRole = isHoldingAdmin ? 'admin' : role
   const visibleSections = allSections.filter(s =>
-    hasMinRole(role, s.minRole ?? 'admin'))
+    hasMinRole(effectiveRole, s.minRole ?? 'admin'))
 
   // Use max of run count and pack count for accurate display
   useEffect(() => {
