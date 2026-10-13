@@ -3,6 +3,11 @@ import { fetchSsoProviders, getSsoAuthorizeUrl, type SsoProviderInfo } from '../
 import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 
+// ADR-005: a per-viewer convenience only (not a source of truth) — the
+// company ID typed here just gets re-sent on the next visit so returning
+// users of a dedicated per-mandant IdP don't have to retype it.
+const MANDANT_STORAGE_KEY = 'wafpass_login_mandant'
+
 export default function LoginPage() {
   const { login } = useAuth()
   const { t } = useI18n()
@@ -11,13 +16,27 @@ export default function LoginPage() {
   const [error, setError]       = useState<string | null>(null)
   const [loading, setLoading]   = useState(false)
   const [ssoProviders, setSsoProviders] = useState<SsoProviderInfo[]>([])
+  const [mandant, setMandant] = useState(() => {
+    try { return localStorage.getItem(MANDANT_STORAGE_KEY) ?? '' } catch { return '' }
+  })
 
   useEffect(() => {
-    fetchSsoProviders().then(setSsoProviders).catch(() => {})
+    fetchSsoProviders(mandant.trim() || undefined).then(setSsoProviders).catch(() => {})
+  }, [mandant])
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const ssoErr = params.get('sso_error')
     if (ssoErr) setError(`SSO error: ${ssoErr.replace(/_/g, ' ')}`)
   }, [])
+
+  function handleMandantChange(value: string) {
+    setMandant(value)
+    try {
+      if (value.trim()) localStorage.setItem(MANDANT_STORAGE_KEY, value.trim())
+      else localStorage.removeItem(MANDANT_STORAGE_KEY)
+    } catch { /* private window / blocked storage — fine, just not remembered */ }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -133,7 +152,7 @@ export default function LoginPage() {
             {ssoProviders.map(p => (
               <a
                 key={p.provider}
-                href={getSsoAuthorizeUrl(p.provider as 'oidc' | 'saml2')}
+                href={getSsoAuthorizeUrl(p.provider as 'oidc' | 'saml2', mandant.trim() || undefined)}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
                   padding: '0.6rem 1rem', borderRadius: '8px',
@@ -146,10 +165,38 @@ export default function LoginPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
                 {p.label}
+                {p.scope === 'mandant' && (
+                  <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 500 }}>({mandant.trim()})</span>
+                )}
               </a>
             ))}
           </div>
         )}
+
+        {/* ADR-005: optional per-mandant SSO — most deployments never touch this */}
+        <div>
+          <label style={{ display: 'block', fontSize: '0.68rem', color: 'var(--muted)', marginBottom: '0.3rem' }}>
+            {t('pages.login.mandantLabel')}
+          </label>
+          <input
+            type="text"
+            value={mandant}
+            onChange={e => handleMandantChange(e.target.value)}
+            placeholder={t('pages.login.mandantPlaceholder')}
+            autoComplete="organization"
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: 'var(--input-bg)', color: 'var(--input-text)',
+              border: '1px solid var(--input-border)', borderRadius: '8px',
+              padding: '0.4rem 0.7rem', fontSize: '0.78rem',
+              outline: 'none',
+            }}
+            disabled={loading}
+          />
+          <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+            {t('pages.login.mandantHint')}
+          </div>
+        </div>
 
         {/* Footer hint */}
         <div style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.6 }}>

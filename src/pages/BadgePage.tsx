@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchBadgeStatus, getApiBase, RunSummary } from '../api'
+import { badgeApiBasePath, fetchBadgeStatus, fetchInstanceMode, fetchMyMandate, getApiBase, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 
 interface Props {
@@ -129,62 +129,86 @@ export default function BadgePage({ runs }: Props) {
   const [status, setStatus] = useState<{ level: number; label: string; color: string; score: number | null } | null>(null)
   const [statusLoading, setStatusLoading] = useState(false)
 
+  // Multi-mandant mode scopes every badge URL by mandate slug — a bare
+  // project-name badge URL is ambiguous once more than one mandate can have
+  // a project with that name. See badges.py's module docstring.
+  const [mandateResolved, setMandateResolved] = useState(false)
+  const [mandantSlug, setMandantSlug] = useState<string | null>(null)
+  const [isMultiMandant, setIsMultiMandant] = useState(false)
+
+  useEffect(() => {
+    fetchInstanceMode()
+      .then(async m => {
+        const multi = m.instance_mode === 'multi_mandant'
+        setIsMultiMandant(multi)
+        if (multi) {
+          const mine = await fetchMyMandate().catch(() => null)
+          setMandantSlug(mine?.slug ?? null)
+        }
+      })
+      .catch(() => setIsMultiMandant(false))
+      .finally(() => setMandateResolved(true))
+  }, [])
+
   // sync project dropdown when runs load
   useEffect(() => {
     if (!project && projects.length > 0) setProject(projects[0])
   }, [projects]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const badgeBlocked = isMultiMandant && !mandantSlug
+
   useEffect(() => {
-    if (!project) return
+    if (!project || !mandateResolved || badgeBlocked) return
     setStatusLoading(true)
-    fetchBadgeStatus(project)
+    fetchBadgeStatus(project, mandantSlug)
       .then(s => {
         if (s) setStatus({ level: s.tier_level, label: s.tier_label, color: s.color, score: s.score })
         else setStatus(null)
       })
       .catch(() => setStatus(null))
       .finally(() => setStatusLoading(false))
-  }, [project])
+  }, [project, mandateResolved, badgeBlocked, mandantSlug])
 
   const apiBase = getApiBase() || window.location.origin
-  const badgeUrl   = `${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}.svg`
+  const badgePath  = badgeApiBasePath(mandantSlug)
+  const badgeUrl   = `${apiBase}${badgePath}/${encodeURIComponent(project)}.svg`
   const verifyBase = apiBase
 
   // ── Snippet generators ────────────────────────────────────────────────────
 
   function snippets(fmt: SnippetFormat): string {
     const img  = badgeUrl
-    const link = `${verifyBase}/api/v1/public/badge/${encodeURIComponent(project)}/json`
+    const link = `${verifyBase}${badgePath}/${encodeURIComponent(project)}/json`
     const alt  = `WAF++ PASS – ${project}`
 
     switch (fmt) {
       case 'markdown':
         return mode === 'offline'
-          ? `<!-- Download the badge SVG and commit it to your repo: -->\n<!-- ${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/download -->\n\n![WAF++ PASS](./badge/wafpass-badge.svg)`
+          ? `<!-- Download the badge SVG and commit it to your repo: -->\n<!-- ${apiBase}${badgePath}/${encodeURIComponent(project)}/download -->\n\n![WAF++ PASS](./badge/wafpass-badge.svg)`
           : `[![WAF++ PASS](${img})](${verifyBase})\n\n<!-- Or link to a verified achievement: -->\n<!-- [![WAF++ PASS](${img})](${verifyBase}/api/v1/public/achievements/{token}) -->`
 
       case 'html':
         return mode === 'offline'
-          ? `<!-- Download: ${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/download -->\n<img src="./badge/wafpass-badge.svg"\n     alt="${alt}"\n     title="${alt}"\n     style="height: 20px;" />`
+          ? `<!-- Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download -->\n<img src="./badge/wafpass-badge.svg"\n     alt="${alt}"\n     title="${alt}"\n     style="height: 20px;" />`
           : `<a href="${verifyBase}" target="_blank" rel="noopener">\n  <img src="${img}"\n       alt="${alt}"\n       title="${alt}"\n       style="height: 20px;" />\n</a>`
 
       case 'asciidoc':
         return mode === 'offline'
-          ? `// Download: ${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/download\nimage::./badge/wafpass-badge.svg[${alt}]`
+          ? `// Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\nimage::./badge/wafpass-badge.svg[${alt}]`
           : `image:${img}[${alt},link=${verifyBase}]`
 
       case 'rst':
         return mode === 'offline'
-          ? `.. Download: ${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/download\n\n.. image:: ./badge/wafpass-badge.svg\n   :alt: ${alt}`
+          ? `.. Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\n\n.. image:: ./badge/wafpass-badge.svg\n   :alt: ${alt}`
           : `.. image:: ${img}\n   :target: ${verifyBase}\n   :alt: ${alt}`
 
       case 'orgmode':
         return mode === 'offline'
-          ? `# Download: ${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/download\n[[./badge/wafpass-badge.svg]]`
+          ? `# Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\n[[./badge/wafpass-badge.svg]]`
           : `[[${verifyBase}][${img}]]`
 
       case 'json':
-        return `# JSON status endpoint — useful for CI scripts and custom badge renderers:\ncurl '${link}'\n\n# Example response:\n{\n  "project": "${project}",\n  "tier_level": ${status?.level ?? 5},\n  "tier_label": "${status?.label ?? 'Excellence'}",\n  "score": ${status?.score ?? 95},\n  "color": "${status?.color ?? '#059669'}",\n  "badge_url": "/api/v1/public/badge/${encodeURIComponent(project)}.svg",\n  "updated_at": "2026-04-23T10:00:00+00:00"\n}\n\n# GitHub Actions — fail if below L3:\nSCORE=$(curl -s '${link}' | jq '.tier_level')\nif [ "$SCORE" -lt 3 ]; then\n  echo "WAF++ maturity gate failed (L$SCORE < L3)" && exit 1\nfi`
+        return `# JSON status endpoint — useful for CI scripts and custom badge renderers:\ncurl '${link}'\n\n# Example response:\n{\n  "project": "${project}",\n  "tier_level": ${status?.level ?? 5},\n  "tier_label": "${status?.label ?? 'Excellence'}",\n  "score": ${status?.score ?? 95},\n  "color": "${status?.color ?? '#059669'}",\n  "badge_url": "${badgePath}/${encodeURIComponent(project)}.svg",\n  "updated_at": "2026-04-23T10:00:00+00:00"\n}\n\n# GitHub Actions — fail if below L3:\nSCORE=$(curl -s '${link}' | jq '.tier_level')\nif [ "$SCORE" -lt 3 ]; then\n  echo "WAF++ maturity gate failed (L$SCORE < L3)" && exit 1\nfi`
 
       default: return ''
     }
@@ -198,6 +222,14 @@ export default function BadgePage({ runs }: Props) {
     return (
       <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
         {t('pages.badgePage.noScansYet')}
+      </div>
+    )
+  }
+
+  if (mandateResolved && badgeBlocked) {
+    return (
+      <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem', maxWidth: '32rem', marginInline: 'auto' }}>
+        {t('pages.badgePage.noMandateForBadges')}
       </div>
     )
   }
@@ -339,7 +371,7 @@ export default function BadgePage({ runs }: Props) {
             <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
               <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.download')}</div>
               <a
-                href={`${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/download`}
+                href={`${apiBase}${badgePath}/${encodeURIComponent(project)}/download`}
                 download
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '0.4rem', alignSelf: 'flex-start',
@@ -449,7 +481,7 @@ jobs:
     steps:
       - name: Check WAF++ maturity tier
         run: |
-          TIER=$(curl -sf '${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/json' | jq '.tier_level')
+          TIER=$(curl -sf '${apiBase}${badgePath}/${encodeURIComponent(project)}/json' | jq '.tier_level')
           echo "Current tier: L$TIER"
           if [ "$TIER" -lt 3 ]; then
             echo "::error::WAF++ maturity gate failed — current tier L$TIER is below required L3 (Governed)"
@@ -477,7 +509,7 @@ jobs:
     - apk add --no-cache curl jq
   script:
     - |
-      TIER=$(curl -sf '${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/json' | jq '.tier_level')
+      TIER=$(curl -sf '${apiBase}${badgePath}/${encodeURIComponent(project)}/json' | jq '.tier_level')
       echo "WAF++ maturity tier: L$TIER"
       [ "$TIER" -ge 3 ] || (echo "Gate failed — tier L$TIER below L3" && exit 1)
   rules:
@@ -538,7 +570,7 @@ jobs:
           </div>
         </div>
         <div style={{ padding: '1.25rem' }}>
-          <CodeBlock lang="markdown" code={`<!-- shields.io dynamic badge via the JSON endpoint -->\n![WAF++ PASS](https://img.shields.io/endpoint?url=${encodeURIComponent(`${apiBase}/api/v1/public/badge/${encodeURIComponent(project)}/json`)}&style=flat-square&label=WAF%2B%2B+PASS)`} t={t} />
+          <CodeBlock lang="markdown" code={`<!-- shields.io dynamic badge via the JSON endpoint -->\n![WAF++ PASS](https://img.shields.io/endpoint?url=${encodeURIComponent(`${apiBase}${badgePath}/${encodeURIComponent(project)}/json`)}&style=flat-square&label=WAF%2B%2B+PASS)`} t={t} />
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
             The JSON endpoint returns a <code style={{ color: 'var(--text)' }}>schemaVersion=1</code>-compatible payload automatically
             when shields.io's <code style={{ color: 'var(--text)' }}>endpoint</code> badge type is used — shields.io handles rendering,

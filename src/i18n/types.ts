@@ -107,6 +107,8 @@ export interface Translations {
       skipped: string
       access: string
       users: string
+      mandates: string
+      mandateadmin: string
       apikeys: string
       sso: string
       groupmappings: string
@@ -126,6 +128,20 @@ export interface Translations {
       'compliance-readiness': string
       validations: string
       shiprun: string
+    }
+    // Phase 3.3 / 6a / 6b — the TopNavigation mandate scope indicator (see
+    // components/TopNavigation.tsx's MandateIndicator). A real switcher
+    // for holding_admin/holding_viewer/group_admin/group_viewer.
+    mandateIndicator: {
+      allMandatesCount: string // {{count}}
+      switcherHint: string
+    }
+    // components/ImpersonationBanner.tsx — the strip shown above the top
+    // nav while "viewing as" one mandate via the Global Context Switcher.
+    impersonationBanner: {
+      viewingAs: string // {{name}}
+      unknownMandate: string
+      exit: string
     }
   }
 
@@ -328,6 +344,12 @@ export interface Translations {
       or: string
       footerLocal: string    // "Local authentication · Contact your administrator…"
       footerSso: string      // "Local and SSO authentication enabled · Contact your administrator…"
+      // ADR-005 — per-mandant SSO: an optional slug the login page sends
+      // as ?mandant=<slug> so a holding's own dedicated IdP (if any) is
+      // offered instead of (or alongside) the instance-wide one.
+      mandantLabel: string     // "Company ID"
+      mandantPlaceholder: string // "e.g. acme (optional)"
+      mandantHint: string      // "Only needed if your company has its own SSO connection."
     }
 
     findings: {
@@ -613,6 +635,129 @@ export interface Translations {
       disableBtn: string
       enableBtn: string
       delBtn: string
+      // Phase 3.4 — multi-mandant mandate/holding_role assignment
+      colMandate: string
+      noMandate: string
+      mandateLabel: string
+      holdingRoleLabel: string
+      holdingRoleNone: string
+    }
+
+    // Phase 3.2 — MandateManagementPage.tsx, holding_admin only: CRUD for
+    // the companies ("mandates") inside this holding.
+    mandates: {
+      holdingAdminRequired: string
+      totalMandates: string
+      active: string
+      mandatesHeader: string
+      newMandateBtn: string
+      editMandateTitle: string
+      newMandateTitle: string
+      nameLabel: string
+      slugLabel: string
+      slugHint: string
+      logoUrlLabel: string
+      uploadLogoBtn: string
+      logoLoaded: string
+      logoSizeHint: string
+      colName: string
+      colSlug: string
+      colCreated: string
+      colActions: string
+      // Phase 6a — hierarchy/governance metadata, display only (no RLS
+      // effect). See .plan.md's "Phase 6a" section.
+      inheritedBadge: string
+      customOverrideBadge: string
+      viewAsHint: string // {{name}}
+      rollup: {
+        mandateCount: string // {{count}}
+        runCount: string     // {{count}}
+        avgScore: string     // {{score}}
+      }
+      editModal: {
+        tabGeneral: string
+        tabGovernance: string
+        tabPolicy: string
+        tabAudit: string
+        mandateTypeLabel: string
+        mandateType: {
+          holding: string
+          subsidiary: string
+          division: string
+        }
+        parentLabel: string
+        noParent: string
+        jurisdictionLabel: string
+        jurisdictionHint: string
+        riskTierLabel: string
+        riskTierNone: string
+        riskTier: {
+          low: string
+          medium: string
+          high: string
+          critical: string
+        }
+        dataResidencyLabel: string
+        dataResidencyHint: string
+        // ADR-005 — per-mandant auth policy, alongside the other governance
+        // attributes above.
+        authModeLabel: string   // "Authentication"
+        authModeHint: string
+        authMode: {
+          inherit: string      // "Inherit (default — shared SSO and/or local)"
+          sso_optional: string // "SSO optional (reserved)"
+          local_only: string   // "Local accounts only — no SSO for this mandate"
+        }
+        authModeSsoConfigHint: string // links to the SSO Settings page for the actual provider config
+        policyInformationalNote: string
+        inheritPoliciesLabel: string
+        inheritPoliciesHint: string
+        auditId: string
+        auditCreated: string
+        auditUpdated: string
+        auditUnavailableOnCreate: string
+      }
+    }
+
+    // Phase 3.1/this-session — one-way multi-mandant activation.
+    // pages/MandateAdministrationPage.tsx (moved out of SettingsPage).
+    mandateAdmin: {
+      accessDenied: string
+      currentMode: string
+      modeSingleTenant: string
+      modeMultiMandant: string
+      userCount: string    // {{count}}
+      mandantCount: string // {{count}}
+      irreversibleBadge: string
+      activatedBy: string  // {{username}}
+      activateBtn: string
+      confirmTitle: string
+      confirmBody: string
+      confirmBtn: string
+      activating: string
+      impact: {
+        toggleLabel: string
+        title: string
+        intro: string
+        dataHeading: string
+        dataBody: string
+        enforcementHeading: string
+        enforcementBody: string
+        rolesHeading: string
+        rolesBody: string
+        apiKeysHeading: string
+        apiKeysBody: string
+        ssoHeading: string
+        ssoBody: string
+        badgesHeading: string
+        badgesBody: string
+        performanceHeading: string
+        performanceBody: string
+        irreversibleHeading: string
+        irreversibleBody: string
+        nextStepsHeading: string
+        nextStepsBody: string
+      }
     }
 
     sso: {
@@ -679,6 +824,10 @@ export interface Translations {
       roleAttrHint: string
       overviewTitle: string       // "SSO Overview"
       overviewText: string
+      // ADR-005 — the mandate scope selector above the OIDC/SAML2 forms.
+      scopeLabel: string    // "Configuring"
+      scopeDefault: string  // "Instance default (shared by every mandate)"
+      scopeHint: string     // "A mandate's own override takes precedence over the default for its users."
     }
 
     groupMappings: {
@@ -862,6 +1011,12 @@ export interface Translations {
       revokeConfirm: string       // 'Revoke API key "{{name}}"? CI/CD pipelines using this key will stop working immediately.'
       revokedKeysHeader: string   // "Revoked Keys ({{count}})"
       colName: string
+      // Phase 6b follow-up — "sending to a specific mandate" completeness.
+      colMandate: string
+      noMandate: string
+      targetMandateLabel: string
+      targetMandateDefault: string
+      targetMandateHint: string
       usageRefHeader: string
       usageLogHeader: string
       entrySingular: string
@@ -931,6 +1086,9 @@ export interface Translations {
       autoFixCount: string         // "{{auto}} auto-fixable"
       manualCount: string          // "{{count}} manual"
       gapsLabel: string            // "{{count}} gaps"
+      trendStub: string
+      trendStubTitle: string
+      trendStubDesc: string
     }
 
     antipattern: {
@@ -1015,6 +1173,7 @@ export interface Translations {
 
     badgePage: {
       noScansYet: string
+      noMandateForBadges: string
       project: string
       deployMode: string
       liveModeLabel: string
@@ -1234,7 +1393,9 @@ export interface Translations {
       planChanges: string
       sprintGain: string
       mttr: string
+      mttrSub: string
       mttrDemoValue: string
+      mttrTrend: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1247,7 +1408,11 @@ export interface Translations {
       failingModules: string
       attackPaths: string
       sandboxDrafts: string
+      sandboxDraftsSub: string
       criticalFindings: string
+      blastRadiusPreview: string
+      blastExposed: string
+      blastTopResource: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1257,6 +1422,8 @@ export interface Translations {
       title: string
       subtitle: string
       selectedProject: string
+      predictiveForecast: string
+      badgeVerification: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1270,6 +1437,16 @@ export interface Translations {
       durationRange: string
       scanDuration: string
       showManualRuns: string
+      flakyPipelines: string
+      flakyCount: string
+      flakyNoIssues: string
+      flakySwitches: string
+      durationForecast: string
+      predictedDuration: string
+      durationTrendUp: string
+      durationTrendDown: string
+      durationTrendFlat: string
+      durationConfidence: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1706,6 +1883,15 @@ export interface Translations {
       requiresScore: string        // "Requires {{score}}+"
       scoreReached: string         // "Score {{score}}+ reached"
       clickToOpen: string
+    }
+
+    passports: {
+      bulkImport: string
+      bulkImportRfc: string
+      bulkExport: string
+      bulkExportRfc: string
+      auditLog: string
+      auditLogRfc: string
     }
 
     regions: {

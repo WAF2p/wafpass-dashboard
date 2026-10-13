@@ -59,10 +59,59 @@ export function getAccessToken(): string | null {
   try { return localStorage.getItem('wafpass_access_token') } catch { return null }
 }
 
-/** Returns an Authorization header object if a token is stored, else empty object. */
+// ── Global Context Switcher (Phase 6a) ────────────────────────────────────────
+// A holding_admin/holding_viewer's chosen "viewing as" mandate. Persisted in
+// localStorage (same pattern as the access token) so it survives a reload;
+// read fresh on every request via _authHeaders() rather than threaded
+// through every call site, same reasoning as the access token itself.
+// Server-side: wafpass_server/auth/deps.py's get_auth_context() /
+// require_ingest() validate this against the caller's actual role on every
+// request — a non-holding user (or a stale/bogus id) is a no-op, not a
+// privilege escalation, so there's nothing for the frontend to validate
+// beyond "is this a real mandate the caller could pick from the dropdown."
+const MANDANT_CONTEXT_KEY = 'wafpass_mandant_context'
+// Display name/logo only — never trusted for access control (the server
+// always re-validates the id itself), just so the impersonation banner /
+// switcher / top-bar logo can show them without an extra round trip after
+// a reload.
+const MANDANT_CONTEXT_NAME_KEY = 'wafpass_mandant_context_name'
+const MANDANT_CONTEXT_LOGO_KEY = 'wafpass_mandant_context_logo'
+
+export function getMandantContext(): string | null {
+  try { return localStorage.getItem(MANDANT_CONTEXT_KEY) } catch { return null }
+}
+
+export function getMandantContextName(): string | null {
+  try { return localStorage.getItem(MANDANT_CONTEXT_NAME_KEY) } catch { return null }
+}
+
+export function getMandantContextLogoUrl(): string | null {
+  try { return localStorage.getItem(MANDANT_CONTEXT_LOGO_KEY) } catch { return null }
+}
+
+export function setMandantContext(mandantId: string | null, name?: string | null, logoUrl?: string | null): void {
+  try {
+    if (mandantId) {
+      localStorage.setItem(MANDANT_CONTEXT_KEY, mandantId)
+      if (name) localStorage.setItem(MANDANT_CONTEXT_NAME_KEY, name)
+      else localStorage.removeItem(MANDANT_CONTEXT_NAME_KEY)
+      if (logoUrl) localStorage.setItem(MANDANT_CONTEXT_LOGO_KEY, logoUrl)
+      else localStorage.removeItem(MANDANT_CONTEXT_LOGO_KEY)
+    } else {
+      localStorage.removeItem(MANDANT_CONTEXT_KEY)
+      localStorage.removeItem(MANDANT_CONTEXT_NAME_KEY)
+      localStorage.removeItem(MANDANT_CONTEXT_LOGO_KEY)
+    }
+  } catch {}
+}
+
+/** Returns Authorization / X-Mandant-Context headers for whatever is currently stored. */
 function _authHeaders(): Record<string, string> {
   const t = getAccessToken()
-  return t ? { Authorization: `Bearer ${t}` } : {}
+  const headers: Record<string, string> = t ? { Authorization: `Bearer ${t}` } : {}
+  const mandantContext = getMandantContext()
+  if (mandantContext) headers['X-Mandant-Context'] = mandantContext
+  return headers
 }
 
 export interface Finding {
@@ -139,16 +188,18 @@ export interface PipelineTrends {
   }
 }
 
-export async function fetchPipelineMetrics(): Promise<PipelineMetrics> {
+export async function fetchPipelineMetrics(isCicd?: boolean): Promise<PipelineMetrics> {
   const url = new URL(`${getApiBase()}/api/v1/pipelines/metrics`, window.location.origin)
+  if (isCicd !== undefined) url.searchParams.set('is_cicd', String(isCicd))
   const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch pipeline metrics: ${res.status}`)
   const json = await res.json() as ApiEnvelope<PipelineMetrics>
   return json.data
 }
 
-export async function fetchPipelineTrends(): Promise<PipelineTrends> {
+export async function fetchPipelineTrends(isCicd?: boolean): Promise<PipelineTrends> {
   const url = new URL(`${getApiBase()}/api/v1/pipelines/trends`, window.location.origin)
+  if (isCicd !== undefined) url.searchParams.set('is_cicd', String(isCicd))
   const res = await fetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch pipeline trends: ${res.status}`)
   const json = await res.json() as ApiEnvelope<PipelineTrends>
@@ -289,8 +340,14 @@ export interface BadgeStatus {
   updated_at: string | null
 }
 
-export async function fetchBadgeStatus(project: string): Promise<BadgeStatus | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/public/badge/${encodeURIComponent(project)}/json`)
+export function badgeApiBasePath(mandantSlug?: string | null): string {
+  return mandantSlug
+    ? `/api/v1/public/badge/m/${encodeURIComponent(mandantSlug)}`
+    : `/api/v1/public/badge`
+}
+
+export async function fetchBadgeStatus(project: string, mandantSlug?: string | null): Promise<BadgeStatus | null> {
+  const res = await fetch(`${getApiBase()}${badgeApiBasePath(mandantSlug)}/${encodeURIComponent(project)}/json`)
   if (!res.ok) return null
   return res.json() as Promise<BadgeStatus>
 }
@@ -712,6 +769,8 @@ export interface UserOut {
   last_login_at: string | null
   created_at: string | null
   updated_at: string | null
+  mandant_id: string | null
+  holding_role: string | null // null | 'holding_admin' | 'holding_viewer' | 'group_admin' | 'group_viewer'
 }
 
 export interface LoginResponse {
@@ -771,7 +830,20 @@ export async function createUser(payload: { username: string; password: string; 
   return res.json() as Promise<UserOut>
 }
 
-export async function updateUser(id: string, payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string; group?: string }): Promise<UserOut> {
+export async function updateUser(id: string, payload: {
+  display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string; group?: string
+  // Phase 3.4 — holding_admin only (server-enforced).
+  // mandant_id: `null` explicitly clears it (a holding-only account);
+  // omitting the key entirely leaves it unchanged — JSON.stringify drops
+  // `undefined` keys but keeps `null` ones, matching the server's
+  // model_fields_set distinction exactly.
+  mandant_id?: string | null
+  // holding_role is checked server-side with a plain `is not None`, not
+  // model_fields_set — sending `null` is indistinguishable from omitting
+  // it (both leave it unchanged). Send `''` to clear it; a non-empty
+  // string ('holding_admin' | 'holding_viewer') to set it.
+  holding_role?: string
+}): Promise<UserOut> {
   const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
@@ -787,6 +859,181 @@ export async function updateUser(id: string, payload: { display_name?: string; i
 export async function deleteUser(id: string): Promise<void> {
   const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+// ── Multi-mandant administration (Phase 2/3) ──────────────────────────────────
+// See decisions/adrs/ADR-003-multi-mandant-tenancy.md and .plan.md.
+
+export interface InstanceModeOut {
+  instance_mode: string // 'single_tenant' | 'multi_mandant'
+  changed_at: string | null
+  changed_by_username: string | null
+  can_activate: boolean
+  user_count: number
+  mandant_count: number
+}
+
+export async function fetchInstanceMode(): Promise<InstanceModeOut> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/instance-mode`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch instance mode: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<InstanceModeOut>
+  return json.data
+}
+
+export interface ActivationSummary {
+  instance_mode: string
+  default_mandant_id: string
+  default_mandant_name: string
+  users_assigned: number
+  activated_by: string
+}
+
+/** One-way. See SettingsPage's confirmation dialog — this call cannot be undone. */
+export async function activateMultiMandant(): Promise<ActivationSummary> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/activate-multi-mandant`, {
+    method: 'POST',
+    headers: _authHeaders(),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Activation failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Activation failed')
+  }
+  const json = await res.json() as ApiEnvelope<ActivationSummary>
+  return json.data
+}
+
+export type MandateType = 'holding' | 'subsidiary' | 'division'
+export type RiskTier = 'low' | 'medium' | 'high' | 'critical'
+// ADR-005: "inherit" — SSO buttons shown per whatever's configured
+// (instance-wide default and/or this mandate's own override); "local_only"
+// — no SSO entrypoints offered for this mandate, ever, regardless of what's
+// configured elsewhere. "sso_optional" is reserved and enforces nothing yet.
+export type AuthMode = 'inherit' | 'sso_optional' | 'local_only'
+
+export interface MandantOut {
+  id: string
+  name: string
+  slug: string
+  logo_url: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  // Phase 6a — organizational/display metadata only, no RLS effect. See
+  // .plan.md's "Phase 6a" section and the server's Mandant model docstring.
+  parent_id: string | null
+  mandate_type: MandateType
+  jurisdiction: string | null
+  risk_tier: RiskTier | null
+  data_residency: string | null
+  inherit_parent_policies: boolean
+  auth_mode: AuthMode
+}
+
+export interface MandantRollupOut {
+  mandant_id: string
+  mandate_count: number
+  run_count: number
+  avg_score: number | null
+}
+
+export interface MandantCreatePayload {
+  name: string
+  slug: string
+  logo_url?: string
+  parent_id?: string | null
+  mandate_type?: MandateType
+  jurisdiction?: string | null
+  risk_tier?: RiskTier | null
+  data_residency?: string | null
+  inherit_parent_policies?: boolean
+  auth_mode?: AuthMode
+}
+
+export interface MandantUpdatePayload {
+  name?: string
+  logo_url?: string
+  is_active?: boolean
+  // Include the key with value `null` to explicitly clear parent_id
+  // (make this mandate top-level) — omitting the key leaves it unchanged.
+  // Mirrors the server's MandantUpdate.model_fields_set distinction.
+  parent_id?: string | null
+  mandate_type?: MandateType
+  jurisdiction?: string | null
+  risk_tier?: RiskTier | null
+  data_residency?: string | null
+  inherit_parent_policies?: boolean
+  auth_mode?: AuthMode
+}
+
+/** Any authenticated user — the caller's own mandate, or null for a
+ * holding-only account or while in single_tenant mode. See `GET
+ * /my-mandate`'s docstring for why this can't just be `GET /mandants`. */
+export async function fetchMyMandate(): Promise<MandantOut | null> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/my-mandate`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch my mandate: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<MandantOut | null>
+  return json.data
+}
+
+/** holding_admin only — server returns 403 otherwise. */
+export async function fetchMandants(): Promise<MandantOut[]> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch mandants: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<MandantOut[]>
+  return json.data
+}
+
+/**
+ * Phase 6b / ADR-004 — the mandates the caller's Global Context Switcher
+ * can narrow into: every mandate in the holding for holding_admin/
+ * holding_viewer, or just the caller's own subtree (self + descendants)
+ * for group_admin/group_viewer. Requires one of those four roles —
+ * server returns 403 otherwise.
+ */
+export async function fetchSwitchableMandants(): Promise<MandantOut[]> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants/switchable`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch switchable mandants: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<MandantOut[]>
+  return json.data
+}
+
+export async function createMandant(payload: MandantCreatePayload): Promise<MandantOut> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Create failed')
+  }
+  const json = await res.json() as ApiEnvelope<MandantOut>
+  return json.data
+}
+
+export async function updateMandant(id: string, payload: MandantUpdatePayload): Promise<MandantOut> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Update failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Update failed')
+  }
+  const json = await res.json() as ApiEnvelope<MandantOut>
+  return json.data
+}
+
+/** holding_admin only. Aggregated run/score counts for this mandate plus
+ * every descendant mandate (Phase 6a) — see the server endpoint's docstring. */
+export async function fetchMandantRollup(id: string): Promise<MandantRollupOut> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants/${encodeURIComponent(id)}/rollup`, {
+    headers: _authHeaders(),
+  })
+  if (!res.ok) throw new Error(`Failed to fetch mandant rollup: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<MandantRollupOut>
+  return json.data
 }
 
 export interface UserAuditLogEntry {
@@ -814,6 +1061,10 @@ export interface ApiKeyOut {
   is_active: boolean
   created_at: string
   last_used_at: string | null
+  // Which mandate this key's ingested runs get tagged with — null only in
+  // single_tenant mode. A holding_admin sees every key across every
+  // mandate (RLS bypass); this is what lets the UI tell them apart.
+  mandant_id: string | null
 }
 
 export interface ApiKeyCreateResponse extends ApiKeyOut {
@@ -826,11 +1077,19 @@ export async function fetchApiKeys(): Promise<ApiKeyOut[]> {
   return res.json() as Promise<ApiKeyOut[]>
 }
 
-export async function createApiKey(name: string): Promise<ApiKeyCreateResponse> {
+/**
+ * `targetMandantId` lets a holding_admin create a key for a *specific*
+ * mandate directly — holding_admin-only server-side; an ordinary admin
+ * passing it gets a 403 (it would otherwise be a privilege-escalation
+ * path: minting a key for data they can't see themselves). Omitted: the
+ * key is tagged with the acting user's own current effective mandate,
+ * same as before this parameter existed.
+ */
+export async function createApiKey(name: string, targetMandantId?: string | null): Promise<ApiKeyCreateResponse> {
   const res = await fetch(`${getApiBase()}/api/v1/auth/api-keys`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(targetMandantId ? { name, mandant_id: targetMandantId } : { name }),
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: 'Create failed' })) as { detail?: string }
@@ -865,6 +1124,9 @@ export async function fetchApiKeyLogs(keyId: string, limit = 50): Promise<ApiKey
 
 export interface SsoConfigOut {
   id: string
+  provider: 'oidc' | 'saml2'
+  // ADR-005: null = the instance-wide default; set = a per-mandant override.
+  mandant_id: string | null
   enabled: boolean
   config: Record<string, unknown>
   updated_at: string | null
@@ -874,8 +1136,13 @@ export interface SsoProviderInfo {
   provider: string
   enabled: boolean
   label: string
+  // ADR-005: "mandant" when resolved from a per-mandant override, "default"
+  // when it fell back to the instance-wide one.
+  scope: 'default' | 'mandant'
 }
 
+/** The instance-wide default configs only — see
+ * fetchMandantSsoConfigs() for a specific mandate's overrides (ADR-005). */
 export async function fetchSsoConfigs(): Promise<SsoConfigOut[]> {
   const res = await fetch(`${getApiBase()}/api/v1/sso/config`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -900,16 +1167,54 @@ export async function deleteSsoConfig(provider: 'oidc' | 'saml2'): Promise<void>
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
-export async function fetchSsoProviders(): Promise<SsoProviderInfo[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/providers`)
+/**
+ * ADR-005: per-mandant SSO config overrides. A holding_admin may target
+ * any mandate; a mandate-scoped admin may only target their own (server
+ * returns 403 otherwise).
+ */
+export async function fetchMandantSsoConfigs(mandantId: string): Promise<SsoConfigOut[]> {
+  const res = await fetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json() as Promise<SsoConfigOut[]>
+}
+
+export async function upsertMandantSsoConfig(
+  mandantId: string, provider: 'oidc' | 'saml2', enabled: boolean, config: Record<string, unknown>,
+): Promise<SsoConfigOut> {
+  const res = await fetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}/${provider}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify({ enabled, config }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Save failed' })) as { detail?: string }
+    throw new Error(body.detail ?? 'Save failed')
+  }
+  return res.json() as Promise<SsoConfigOut>
+}
+
+export async function deleteMandantSsoConfig(mandantId: string, provider: 'oidc' | 'saml2'): Promise<void> {
+  const res = await fetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}/${provider}`, {
+    method: 'DELETE', headers: _authHeaders(),
+  })
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+}
+
+/** `mandant` (ADR-005): the mandate's own slug, to prefer its per-mandant
+ * override over the instance-wide default. Omit on single-tenant or when
+ * the mandate isn't known yet (e.g. before the user picks one). */
+export async function fetchSsoProviders(mandant?: string): Promise<SsoProviderInfo[]> {
+  const qs = mandant ? `?mandant=${encodeURIComponent(mandant)}` : ''
+  const res = await fetch(`${getApiBase()}/api/v1/sso/providers${qs}`)
   if (!res.ok) return []
   return res.json() as Promise<SsoProviderInfo[]>
 }
 
-export function getSsoAuthorizeUrl(provider: 'oidc' | 'saml2'): string {
+export function getSsoAuthorizeUrl(provider: 'oidc' | 'saml2', mandant?: string): string {
   const base = getApiBase()
-  if (provider === 'oidc') return `${base}/api/v1/auth/oidc/authorize`
-  return `${base}/api/v1/auth/saml/login`
+  const qs = mandant ? `?mandant=${encodeURIComponent(mandant)}` : ''
+  if (provider === 'oidc') return `${base}/api/v1/auth/oidc/authorize${qs}`
+  return `${base}/api/v1/auth/saml/login${qs}`
 }
 
 // ── Leaderboard ───────────────────────────────────────────────────────────────
@@ -985,6 +1290,12 @@ export interface LocalAttestation {
   signed_at: string
   signer_kind: string
   run: Record<string, unknown>
+  // Phase 4 — not part of the signed payload; see wafpass_server's
+  // LocalAttestationOut.mandant_id for why. Must be forwarded through
+  // local_attestation below for the gateway round trip to carry it — and
+  // the external validation gateway repo must forward it too; until it
+  // does, this degrades gracefully server-side rather than failing.
+  mandant_id?: string | null
 }
 
 export interface ValidationGatewaySubmit {

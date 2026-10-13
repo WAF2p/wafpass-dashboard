@@ -6,8 +6,8 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 import {
-  fetchApiKeys, createApiKey, revokeApiKey, fetchApiKeyLogs,
-  type ApiKeyOut, type ApiKeyCreateResponse, type ApiKeyUsageLogEntry,
+  fetchApiKeys, createApiKey, revokeApiKey, fetchApiKeyLogs, fetchMandants, fetchMyMandate,
+  type ApiKeyOut, type ApiKeyCreateResponse, type ApiKeyUsageLogEntry, type MandantOut,
 } from '../api'
 
 function timeAgo(iso: string): string {
@@ -52,7 +52,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
 
   return (
     <tr>
-      <td colSpan={5} style={{ padding: '0 1rem 0.875rem', background: 'var(--bg)' }}>
+      <td colSpan={6} style={{ padding: '0 1rem 0.875rem', background: 'var(--bg)' }}>
         <div style={{
           borderRadius: '12px',
           background: 'var(--surface)',
@@ -170,7 +170,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function ApiManagementPage() {
-  const { role } = useAuth()
+  const { role, isHoldingAdmin } = useAuth()
   const { t } = useI18n()
   const isAdmin = role === 'admin'
 
@@ -179,11 +179,19 @@ export default function ApiManagementPage() {
   const [error, setError]         = useState<string | null>(null)
   const [creating, setCreating]   = useState(false)
   const [newName, setNewName]     = useState('')
+  const [targetMandantId, setTargetMandantId] = useState('')
   const [createErr, setCreateErr] = useState<string | null>(null)
   const [newKey, setNewKey]       = useState<ApiKeyCreateResponse | null>(null)
   const [copied, setCopied]       = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const rawKeyRef = useRef<HTMLInputElement>(null)
+
+  // "Sending to a specific mandate" completeness — mirrors
+  // UserManagementPage.tsx's own mandate-name resolution exactly: a
+  // holding_admin sees (and can target) every mandate; an ordinary admin
+  // only ever has their own, so one lookup covers every key they'll see.
+  const [mandants, setMandants]   = useState<MandantOut[]>([])
+  const [myMandate, setMyMandate] = useState<MandantOut | null>(null)
 
   function loadKeys() {
     setLoading(true)
@@ -195,14 +203,30 @@ export default function ApiManagementPage() {
 
   useEffect(() => { if (isAdmin) loadKeys() }, [isAdmin]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!isAdmin) return
+    if (isHoldingAdmin) {
+      fetchMandants().then(setMandants).catch(() => {})
+    } else {
+      fetchMyMandate().then(setMyMandate).catch(() => {})
+    }
+  }, [isAdmin, isHoldingAdmin])
+
+  function mandateNameFor(k: ApiKeyOut): string {
+    if (!k.mandant_id) return t('pages.apikeys.noMandate')
+    if (isHoldingAdmin) return mandants.find(m => m.id === k.mandant_id)?.name ?? k.mandant_id.slice(0, 8)
+    return myMandate?.name ?? k.mandant_id.slice(0, 8)
+  }
+
   async function handleCreate() {
     if (!newName.trim()) return
     setCreating(true)
     setCreateErr(null)
     try {
-      const result = await createApiKey(newName.trim())
+      const result = await createApiKey(newName.trim(), targetMandantId || null)
       setNewKey(result)
       setNewName('')
+      setTargetMandantId('')
       loadKeys()
     } catch (e) {
       setCreateErr((e as Error).message)
@@ -349,6 +373,27 @@ export default function ApiManagementPage() {
                 }}
               />
             </div>
+            {isHoldingAdmin && mandants.length > 0 && (
+              <div style={{ width: '220px', flexShrink: 0 }}>
+                <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.28rem', display: 'block' }}>
+                  {t('pages.apikeys.targetMandateLabel')}
+                </label>
+                <select
+                  value={targetMandantId}
+                  onChange={e => setTargetMandantId(e.target.value)}
+                  title={t('pages.apikeys.targetMandateHint')}
+                  style={{
+                    width: '100%', padding: '0.42rem 0.65rem', borderRadius: '8px',
+                    border: '1px solid var(--border)', background: 'var(--bg)',
+                    color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box', outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">{t('pages.apikeys.targetMandateDefault')}</option>
+                  {mandants.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+            )}
             <button
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
@@ -395,7 +440,7 @@ export default function ApiManagementPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {[t('pages.apikeys.colKey'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated'), t('pages.apikeys.colLastUsed'), ''].map(h => (
+                  {[t('pages.apikeys.colKey'), t('pages.apikeys.colMandate'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated'), t('pages.apikeys.colLastUsed'), ''].map(h => (
                     <th key={h} style={{
                       padding: '0.55rem 0.875rem', textAlign: 'left',
                       fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
@@ -443,6 +488,9 @@ export default function ApiManagementPage() {
                             </div>
                             {k.name}
                           </div>
+                        </td>
+                        <td style={{ padding: '0.6rem 0.875rem', color: 'var(--muted)', fontSize: '0.78rem' }}>
+                          {mandateNameFor(k)}
                         </td>
                         <td style={{ padding: '0.6rem 0.875rem' }}>
                           <code style={{
@@ -502,7 +550,7 @@ export default function ApiManagementPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {[t('pages.apikeys.colName'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated')].map(h => (
+                  {[t('pages.apikeys.colName'), t('pages.apikeys.colMandate'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated')].map(h => (
                     <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                   ))}
                 </tr>
@@ -511,6 +559,7 @@ export default function ApiManagementPage() {
                 {revokedKeys.map((k, i) => (
                   <tr key={k.id} style={{ borderBottom: i < revokedKeys.length - 1 ? '1px solid var(--border)' : undefined }}>
                     <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', textDecoration: 'line-through' }}>{k.name}</td>
+                    <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', fontSize: '0.78rem' }}>{mandateNameFor(k)}</td>
                     <td style={{ padding: '0.55rem 0.875rem' }}>
                       <code style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '0.1rem 0.4rem', borderRadius: '5px', fontSize: '0.72rem', color: 'var(--muted)' }}>
                         {k.key_prefix}…

@@ -1,8 +1,8 @@
-import { useMemo } from 'react'
-import { Finding, RunDetail } from '../api'
+import { useEffect, useMemo, useState } from 'react'
+import { Finding, RunDetail, fetchRuns } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
-import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner, TwoColumnGrid } from './OperationsCenterShell'
+import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, TwoColumnGrid } from './OperationsCenterShell'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 
@@ -89,6 +89,26 @@ export default function ArchitectureOperationsCenter({
 
   const criticalCount = useMemo(() => failed.filter(f => severityOf(f) === 'CRITICAL').length, [failed])
 
+  const attackPaths = useMemo(() => {
+    const publicFacing = /0\.0\.0\.0|\:\:\/0|public|internet|ingress|0\.0\.0\.0\/0/i
+    return failed.filter(f => {
+      const sev = severityOf(f)
+      if (sev !== 'CRITICAL' && sev !== 'HIGH') return false
+      const text = `${f.resource ?? ''} ${f.message ?? ''} ${f.check_title ?? ''}`
+      return publicFacing.test(text)
+    }).length
+  }, [failed])
+
+  const [sandboxDrafts, setSandboxDrafts] = useState(0)
+  useEffect(() => {
+    fetchRuns({ limit: 200 })
+      .then(page => {
+        const drafts = page.items.filter(r => r.is_cicd && r.stage !== 'prod' && r.stage !== 'production').length
+        setSandboxDrafts(drafts)
+      })
+      .catch(() => setSandboxDrafts(0))
+  }, [])
+
   const linkCard = (page: Page, label: string, icon: string, color: string, disabled?: boolean) => (
     <button
       key={page}
@@ -147,11 +167,6 @@ export default function ArchitectureOperationsCenter({
         )}
       </CenterHero>
 
-      <StubBanner
-        title={t('pages.architectureOps.stubsInProgress')}
-        description={t('pages.architectureOps.stubsVoteRfc')}
-      />
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
         <KpiCard
           label={t('pages.architectureOps.controlsLoaded')}
@@ -176,11 +191,17 @@ export default function ArchitectureOperationsCenter({
         />
         <KpiCard
           label={t('pages.architectureOps.attackPaths')}
-          value={12}
+          value={attackPaths}
           sub={t('pages.exploitPaths.criticalPathsSub')}
           color="var(--waf-info)"
           icon="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-          demo
+        />
+        <KpiCard
+          label={t('pages.architectureOps.sandboxDrafts')}
+          value={sandboxDrafts}
+          sub={t('pages.architectureOps.sandboxDraftsSub')}
+          color="var(--waf-warn)"
+          icon="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
         />
       </div>
 
@@ -260,6 +281,43 @@ export default function ArchitectureOperationsCenter({
                   ))}
                 </div>
               )}
+            </SectionCard>
+
+            {/* Blast-radius preview */}
+            <SectionCard title={t('pages.architectureOps.blastRadiusPreview')} icon="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
+              {(() => {
+                const exposed = failed.filter(f => {
+                  const text = `${f.resource ?? ''} ${f.message ?? ''} ${f.check_title ?? ''}`
+                  return /0\.0\.0\.|\:\:\/0|public|internet|ingress|0\.0\.0\.0\/0/i.test(text)
+                })
+                const byResource = new Map<string, number>()
+                for (const f of exposed) {
+                  byResource.set(f.resource, (byResource.get(f.resource) || 0) + 1)
+                }
+                const top = [...byResource.entries()].sort((a, b) => b[1] - a[1])[0]
+                return exposed.length === 0 ? (
+                  <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textAlign: 'center', padding: '1rem' }}>{t('common.noData')}</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <MiniBadge color="var(--fail)">{t('pages.architectureOps.blastExposed', { count: exposed.length })}</MiniBadge>
+                      {top && <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('pages.architectureOps.blastTopResource')}: {top[0]}</span>}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                      {top ? (
+                        <PriorityRow
+                          key={top[0]}
+                          label={top[0]}
+                          count={top[1]}
+                          total={exposed.length}
+                          color="var(--fail)"
+                          meta={`${Math.round((top[1] / exposed.length) * 100)}% of exposed findings`}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })()}
             </SectionCard>
           </div>
 

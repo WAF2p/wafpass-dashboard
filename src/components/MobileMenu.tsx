@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Page } from '../routing'
-import { hasMinRole } from '../AuthContext'
+import { hasMinRole, useAuth } from '../AuthContext'
 import { Settings } from '../pages/settingsUtils'
 import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
@@ -99,8 +99,10 @@ export default function MobileMenu({
 
   if (!mobileMenuOpen) return null
 
-  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t)
-  const visibleSections = allSections.filter(s => hasMinRole(role, s.minRole ?? 'admin'))
+  const { isHoldingAdmin } = useAuth()
+  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
+  const effectiveRole = isHoldingAdmin ? 'admin' : role
+  const visibleSections = allSections.filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
 
   // Only show on mobile devices - use matchMedia for reliable detection
   if (typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches) {
@@ -216,7 +218,7 @@ export default function MobileMenu({
             section={section}
             onSectionClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
             page={page}
-            role={role}
+            role={effectiveRole}
           />
         ))}
       </div>
@@ -231,7 +233,7 @@ export default function MobileMenu({
             {allSections.find(s => s.id === expandedSection)?.label}
           </div>
           {allSections.find(s => s.id === expandedSection)?.items
-            .filter(item => !item.minRole || hasMinRole(role, item.minRole))
+            .filter(item => !item.minRole || hasMinRole(effectiveRole, item.minRole))
             .map(item => (
               <NavItem
                 key={item.page}
