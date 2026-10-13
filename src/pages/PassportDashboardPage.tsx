@@ -62,18 +62,44 @@ function mrzPad(str: string, len: number) {
   return str.toUpperCase().replace(/[^A-Z0-9]/g, '<').slice(0, len).padEnd(len, '<')
 }
 
+function getHostname(url: string): string | null {
+  try {
+    return new URL(url).hostname.toLowerCase()
+  } catch {
+    return null
+  }
+}
+
+function hostIs(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`)
+}
+
+function hostHasLabel(hostname: string, label: string): boolean {
+  // Match the label as a whole DNS label: gitlab.example.com, gitlab.com, etc.
+  return (
+    hostname === label ||
+    hostname.startsWith(`${label}.`) ||
+    hostname.endsWith(`.${label}`) ||
+    hostname.includes(`.${label}.`)
+  )
+}
+
 function detectRepoType(url: string): 'github' | 'gitlab' | 'bitbucket' | 'generic' {
-  if (url.includes('github.com')) return 'github'
-  if (url.includes('gitlab.com') || url.includes('gitlab.')) return 'gitlab'
-  if (url.includes('bitbucket.')) return 'bitbucket'
+  const hostname = getHostname(url)
+  if (!hostname) return 'generic'
+  if (hostIs(hostname, 'github.com')) return 'github'
+  if (hostIs(hostname, 'gitlab.com') || hostHasLabel(hostname, 'gitlab')) return 'gitlab'
+  if (hostHasLabel(hostname, 'bitbucket')) return 'bitbucket'
   return 'generic'
 }
 
 function detectDocsType(url: string): 'confluence' | 'notion' | 'gitbook' | 'readme' | 'generic' {
-  if (url.includes('atlassian.') || url.includes('confluence')) return 'confluence'
-  if (url.includes('notion.so') || url.includes('notion.com')) return 'notion'
-  if (url.includes('gitbook.io') || url.includes('gitbook.com')) return 'gitbook'
-  if (url.includes('readme.io') || url.includes('readme.com')) return 'readme'
+  const hostname = getHostname(url)
+  if (!hostname) return 'generic'
+  if (hostHasLabel(hostname, 'atlassian') || hostHasLabel(hostname, 'confluence')) return 'confluence'
+  if (hostIs(hostname, 'notion.so') || hostIs(hostname, 'notion.com')) return 'notion'
+  if (hostIs(hostname, 'gitbook.io') || hostIs(hostname, 'gitbook.com')) return 'gitbook'
+  if (hostIs(hostname, 'readme.io') || hostIs(hostname, 'readme.com')) return 'readme'
   return 'generic'
 }
 
