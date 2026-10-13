@@ -1,5 +1,12 @@
 // Shared settings types and utilities — extracted so SettingsPage can be lazy-loaded.
 
+export interface ValidationMetadata {
+  organization?: string
+  environment?: string
+  validatedBy?: string
+  notes?: string
+}
+
 export interface ReportSections {
   executiveSummary: boolean
   pillarBreakdown: boolean
@@ -36,6 +43,8 @@ export interface Settings {
   defaultLanguage: string
   // PDF Report
   reportSections: ReportSections
+  // Validation certificate provenance defaults
+  validationMetadata: ValidationMetadata
 }
 
 export interface MaturityState {
@@ -46,11 +55,11 @@ export interface MaturityState {
 export const ALL_PILLARS = ['security', 'cost', 'operations', 'reliability', 'performance', 'sovereign', 'sustainability', 'agentic']
 
 export const PILLAR_COUNTS: Record<string, number> = {
-  security: 13, cost: 10, operations: 10, reliability: 10,
-  performance: 10, sovereign: 10, sustainability: 10, agentic: 0,
+  security: 13, cost: 10, operations: 11, reliability: 10,
+  performance: 10, sovereign: 10, sustainability: 10, agentic: 10,
 }
-export const SEV_COUNTS = { critical: 8, high: 34, medium: 28, low: 3 }
-export const TOTAL_CONTROLS = 73
+export const SEV_COUNTS = { critical: 8, high: 39, medium: 32, low: 4, informational: 1 }
+export const TOTAL_CONTROLS = 84
 
 export function controlsForLevel(level: number): number {
   const sevThresholds: Record<number, string[]> = {
@@ -106,6 +115,7 @@ export const DEFAULT_SETTINGS: Settings = {
   regulatoryRegions: ['global', 'eu', 'de'],
   defaultLanguage: 'en',
   reportSections: DEFAULT_REPORT_SECTIONS,
+  validationMetadata: {},
 }
 
 export const MATURITY_PRESETS: Record<number, Partial<Settings>> = {

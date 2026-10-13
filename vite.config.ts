@@ -8,18 +8,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/auth':     { target: API, changeOrigin: true },
-      '/runs':     { target: API, changeOrigin: true },
-      '/controls': { target: API, changeOrigin: true },
-      '/waivers':  { target: API, changeOrigin: true },
-      '/risks':    { target: API, changeOrigin: true },
-      '/sandbox':  { target: API, changeOrigin: true },
-      '/scan':     { target: API, changeOrigin: true },
-      '/api':      { target: API, changeOrigin: true },
-      '/health':   { target: API, changeOrigin: true },
-      '/projects': { target: API, changeOrigin: true },
-      '/sso':      { target: API, changeOrigin: true },
-      '/evidence': { target: API, changeOrigin: true },
+      // API routes are versioned under /api/v1; /api catches them all.
+      '/api':              { target: API, changeOrigin: true },
+      '/health':           { target: API, changeOrigin: true },
+      '/framework-update-info.yml': { target: API, changeOrigin: true },
     },
   },
   build: {

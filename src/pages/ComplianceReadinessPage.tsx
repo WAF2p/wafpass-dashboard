@@ -63,7 +63,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
     const fetchData = async () => {
       try {
         // Fetch compliance readiness data from server
-        const res = await fetch('/api/compliance-readiness')
+        const res = await fetch('/api/v1/compliance-readiness')
         if (res.ok) {
           const result = await res.json()
           setData(result)
@@ -560,6 +560,8 @@ function getFrameworkDescription(name: string): string {
     'ISO 27001:2022': 'Information Security Management Systems',
     'BSI C5': 'Cloud Computing Compliance Criteria Catalogue',
     'BSI C5:2020': 'Cloud Computing Compliance Criteria Catalogue',
+    'BSI C3A': 'Cloud Computing Security Requirements for Important Category (C3A)',
+    'BSI C3A:2026': 'Cloud Computing Security Requirements for Important Category (C3A)',
     'EUCS': 'EU Cybersecurity Certification Scheme for Cloud',
     'EUCS (ENISA)': 'EU Cybersecurity Certification Scheme for Cloud',
     'CSRD': 'Corporate Sustainability Reporting Directive',

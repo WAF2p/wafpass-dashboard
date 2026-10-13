@@ -1,9 +1,11 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { ControlMeta, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, pushUserPrefsToServer } from './api'
+import { ControlMeta, createDemoRun, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, getServerUrl, pushUserPrefsToServer, type UserOut } from './api'
 import { useAuth } from './AuthContext'
 import { I18nProvider } from './i18n'
 import LoginPage from './pages/LoginPage'
+import OnboardingTour from './components/OnboardingTour'
 import RunSelectorModal from './components/RunSelectorModal'
+import WelcomeChecklist from './components/WelcomeChecklist'
 const UserPreferencesPage    = lazy(() => import('./pages/UserPreferencesPage'))
 const NotificationsPage      = lazy(() => import('./pages/NotificationsPage'))
 import TopNavigation from './components/TopNavigation'
@@ -51,15 +53,20 @@ const ProjectOverviewPage    = lazy(() => import('./pages/ProjectOverviewPage'))
 const PassportDashboardPage  = lazy(() => import('./pages/PassportDashboardPage'))
 const BadgePage              = lazy(() => import('./pages/BadgePage'))
 const LeaderboardPage        = lazy(() => import('./pages/LeaderboardPage'))
-const MaturityJourneyPage    = lazy(() => import('./pages/MaturityJourneyPage'))
+const JourneyPage            = lazy(() => import('./pages/journey/JourneyPage'))
 const ControlsPacksPage      = lazy(() => import('./pages/ControlsPacksPage'))
 const GlobalDashboardPage    = lazy(() => import('./pages/GlobalDashboardPage'))
+const EngineeringOperationsCenter = lazy(() => import('./pages/EngineeringOperationsCenter'))
+const ArchitectureOperationsCenter = lazy(() => import('./pages/ArchitectureOperationsCenter'))
+const MaturityOperationsCenter = lazy(() => import('./pages/MaturityOperationsCenter'))
 const ReferenceArchitecturePage = lazy(() => import('./pages/ReferenceArchitecturePage'))
 const AntiPatternMuseumPage = lazy(() => import('./pages/AntiPatternMuseumPage'))
 const LegalPage              = lazy(() => import('./pages/LegalPage'))
 const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
-const PipelinesPage          = lazy(() => import('./PipelinesPage'))
+const PipelineOperationsCenter = lazy(() => import('./pages/PipelineOperationsCenter'))
 const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
+const ValidationsPage        = lazy(() => import('./pages/ValidationsPage'))
+const ShipRunPage            = lazy(() => import('./pages/ShipRunPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -83,7 +90,7 @@ export default function App() {
 
 
 function AuthenticatedApp({ user, role, onLogout }: {
-  user: { username: string; display_name: string; image_url: string; role: string }
+  user: UserOut
   role: string
   onLogout(): Promise<void>
 }) {
@@ -97,9 +104,29 @@ function AuthenticatedApp({ user, role, onLogout }: {
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [waiverCount, setWaiverCount] = useState(0)
   const [riskCount, setRiskCount] = useState(0)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const onboardingAutoLaunched = useRef(false)
   const mounted = useRef(false)
 
   const { runs, selectedId, setSelectedId, run, loadingRun, refetchRuns } = useRunLoader(initialRunId)
+  const [demoLoading, setDemoLoading] = useState(false)
+  const [demoError, setDemoError] = useState<string | null>(null)
+  const [demoRunId, setDemoRunId] = useState<string | null>(null)
+  const [showAdvancedOnboarding, setShowAdvancedOnboarding] = useState(false)
+
+  async function handleRunDemo() {
+    setDemoLoading(true)
+    setDemoError(null)
+    try {
+      const summary = await createDemoRun()
+      setDemoRunId(summary.id)
+      await refetchRuns()
+    } catch (e: unknown) {
+      setDemoError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setDemoLoading(false)
+    }
+  }
 
   function navigate(newPage: Page) {
     setPage(newPage)
@@ -171,6 +198,20 @@ function AuthenticatedApp({ user, role, onLogout }: {
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-launch onboarding on first login after installation unless already seen
+  useEffect(() => {
+    if (onboardingAutoLaunched.current) return
+    if (!user?.created_at || !user?.last_login_at) return
+    if (userPrefs.hasSeenOnboarding) return
+    const created = new Date(user.created_at).getTime()
+    const lastLogin = new Date(user.last_login_at).getTime()
+    const isFirstLogin = Math.abs(created - lastLogin) <= 5 * 60 * 1000
+    if (isFirstLogin) {
+      onboardingAutoLaunched.current = true
+      setShowOnboarding(true)
+    }
+  }, [user, userPrefs.hasSeenOnboarding])
+
   const debouncedServerPush = useCallback((p: UserPreferences) => {
     if (prefsSyncTimer.current) clearTimeout(prefsSyncTimer.current)
     setPrefsSyncStatus('syncing')
@@ -209,6 +250,18 @@ function AuthenticatedApp({ user, role, onLogout }: {
         />
       )}
 
+      <OnboardingTour
+        open={showOnboarding}
+        onClose={() => {
+          handleUserPrefsChange({ ...userPrefs, hasSeenOnboarding: true })
+          setShowOnboarding(false)
+        }}
+        onComplete={() => {
+          handleUserPrefsChange({ ...userPrefs, hasSeenOnboarding: true })
+          setShowOnboarding(false)
+        }}
+      />
+
       <div className="app-main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* Desktop navigation: Top navigation for desktop, Sidebar hidden on mobile */}
         <TopNavigation
@@ -226,6 +279,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           onOpenUserPrefs={() => navigate('userprefs')}
           onLogout={onLogout}
           onShowRunModal={() => setShowRunModal(true)}
+          onOpenOnboarding={() => setShowOnboarding(true)}
         />
 
         {/* Page content */}
@@ -238,9 +292,9 @@ function AuthenticatedApp({ user, role, onLogout }: {
           {page === 'userprefs' ? (
             <UserPreferencesPage prefs={userPrefs} user={user} syncStatus={prefsSyncStatus} onChange={handleUserPrefsChange} />
           ) : page === 'journey' ? (
-            <MaturityJourneyPage run={run} runs={runs} maturityLevel={maturityLevel} settings={settings} waiverCount={waiverCount} riskCount={riskCount} navigate={navigate} />
+            <JourneyPage run={run} runs={runs} navigate={navigate} />
           ) : page === 'globaldashboard' ? (
-            <GlobalDashboardPage runs={runs} navigate={navigate} />
+            <GlobalDashboardPage run={run} runs={runs} navigate={navigate} />
           ) : page === 'leaderboard' ? (
             <LeaderboardPage />
           ) : page === 'badge' ? (
@@ -261,7 +315,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
               onBack={() => navigate('passports')}
             />
           ) : page === 'controlspacks' ? (
-            <ControlsPacksPage />
+            <ControlsPacksPage navigate={p => navigate(p as Page)} />
           ) : page === 'users' ? (
             <UserManagementPage />
           ) : page === 'groupmappings' ? (
@@ -304,31 +358,16 @@ function AuthenticatedApp({ user, role, onLogout }: {
             </div>
           ) : !run && runs.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: '1.25rem',
-                padding: '1.25rem 1.5rem', borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(0,148,255,.08) 0%, rgba(124,58,237,.06) 100%)',
-                border: '1px solid rgba(0,148,255,.25)',
-              }}>
-                <div style={{
-                  flexShrink: 0, width: '40px', height: '40px', borderRadius: '10px',
-                  background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg width="20" height="20" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.3rem' }}>
-                    Welcome to WAF++ PASS
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-                    No scan results yet. Run your first <code style={{ color: 'var(--waf-brand)', background: 'rgba(0,148,255,.08)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.78rem' }}>wafpass check</code> and push the results here to see your compliance dashboard — follow the guide below to get started in under 2 minutes.
-                  </div>
-                </div>
-              </div>
-              <RunScanPage />
+              <WelcomeChecklist
+                serverUrl={getServerUrl()}
+                demoLoading={demoLoading}
+                demoError={demoError}
+                demoRunId={demoRunId}
+                onRunDemo={handleRunDemo}
+                onOpenRunHistory={() => { setPage('runs'); window.history.pushState(null, '', buildHash('runs', selectedId)) }}
+                onShowAdvanced={() => setShowAdvancedOnboarding(v => !v)}
+              />
+              {showAdvancedOnboarding && <RunScanPage />}
             </div>
           ) : !run ? (
             <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
@@ -362,6 +401,12 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ModuleScorePage run={run} />
           ) : page === 'cost' ? (
             <CostImpactPage run={run} />
+          ) : page === 'engineering' ? (
+            <EngineeringOperationsCenter run={run} runs={runs} navigate={navigate} />
+          ) : page === 'architecture' ? (
+            <ArchitectureOperationsCenter run={run} navigate={navigate} />
+          ) : page === 'maturity' ? (
+            <MaturityOperationsCenter run={run} runs={runs} navigate={navigate} />
           ) : page === 'reference' ? (
             <ReferenceArchitecturePage />
           ) : page === 'antipattern' ? (
@@ -371,9 +416,13 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'projectgroups' ? (
             <ProjectGroupsPage />
           ) : page === 'pipelines' ? (
-            <PipelinesPage />
+            <PipelineOperationsCenter navigate={navigate} />
           ) : page === 'autofix' ? (
             <AutoFixPage run={run} onBack={() => navigate('dashboard')} />
+          ) : page === 'validations' ? (
+            <ValidationsPage />
+          ) : page === 'shiprun' ? (
+            <ShipRunPage />
           ) : null}
         </Suspense>
         </main>

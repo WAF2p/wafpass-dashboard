@@ -40,9 +40,44 @@ jobs:
         env:
           VITE_API_URL: ""
 
+      # ── Generate SBOMs (CNCF requirement) ─────────────────────────────────────
+      - name: Generate CycloneDX SBOM
+        run: npx @cyclonedx/cyclonedx-npm@1 --output-file sbom.cyclonedx.json
+
+      - name: Install Syft
+        run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SPDX SBOM
+        run: syft file:package-lock.json -o spdx-json=sbom.spdx.json
+
+      - name: Generate license report
+        run: npx license-checker --json --out licenses.json
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wafpass-dashboard-sbom
+          path: |
+            sbom.cyclonedx.json
+            sbom.spdx.json
+            licenses.json
+
+      # ── Attest build provenance (CNCF / GitHub) ───────────────────────────────
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            sbom.cyclonedx.json
+            sbom.spdx.json
+            licenses.json
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name:              ${{ steps.ver.outputs.tag }}
           name:                  WAF++ PASS Dashboard ${{ steps.ver.outputs.tag }}
           generate_release_notes: true
+          files: |
+            sbom.cyclonedx.json
+            sbom.spdx.json
+            licenses.json

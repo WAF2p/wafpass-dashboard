@@ -4,7 +4,7 @@
  *
  * Strategy:
  *  1. Serve the localStorage cache immediately (no render flash).
- *  2. In a background effect, fetch /controls from the server.
+ *  2. In a background effect, fetch /api/v1/controls from the server.
  *  3. Merge: server fields (pillar, severity, description) win for basic metadata;
  *     static file fills in UI-only fields (title, rationale, threat, regulatory_mapping,
  *     automated_checks) that the catalogue endpoint does not store.

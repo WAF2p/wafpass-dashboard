@@ -10,6 +10,8 @@ React SPA for visualising WAF++ PASS compliance scan results. Part of the [WAF++
 
 No Python dependency. No local scan access. All data comes from `wafpass-server`.
 
+> **BREAKING CHANGE:** The dashboard now calls `wafpass-server` endpoints under `/api/v1`. Make sure the server is on a version that serves `/api/v1/*`, and update any custom reverse proxy or CORS setup to forward `/api` instead of individual paths like `/runs` or `/controls`.
+
 ---
 
 ## Quick start
@@ -36,7 +38,7 @@ npm install
 npm run dev
 ```
 
-Opens at `http://localhost:5173`. In dev mode, Vite proxies `/runs`, `/controls`, `/waivers`, `/risks`, `/sandbox`, and `/health` to `http://localhost:8000`.
+Opens at `http://localhost:5173`. In dev mode, Vite proxies `/api` (all versioned endpoints under `/api/v1`) and `/health` to `http://localhost:8000`.
 
 ---
 
@@ -65,7 +67,7 @@ Copy `.env.example` to `.env.local` for local development — Vite reads `.env.l
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_API_URL` | `""` (same origin) | Base URL of wafpass-server — no trailing slash, no `/runs` suffix, e.g. `http://localhost:8000` |
+| `VITE_API_URL` | `""` (same origin) | Base URL of wafpass-server — no trailing slash, no `/api/v1/runs` suffix, e.g. `http://localhost:8000` |
 
 In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:8000` automatically, so `VITE_API_URL` is only needed for cross-origin or local dev setups.
 
@@ -143,7 +145,7 @@ Settings has five maturity presets (L1–L5) that configure which controls, pill
 
 ### Achievements and Leaderboard
 
-Projects earn cryptographically-signed maturity tier badges when they reach a compliance score threshold for the first time. Each achievement has a unique verification token that resolves to a public HTML page at `/public/achievements/{token}` — suitable for embedding in READMEs and external dashboards.
+Projects earn cryptographically-signed maturity tier badges when they reach a compliance score threshold for the first time. Each achievement has a unique verification token that resolves to a public HTML page at `/api/v1/public/achievements/{token}` — suitable for embedding in READMEs and external dashboards.
 
 **Tier thresholds:** L1 Foundational (≥0), L2 Operational (≥40), L3 Governed (≥60), L4 Optimized (≥75), L5 Excellence (≥90).
 
@@ -163,9 +165,9 @@ The Evidence page has two sections:
 
 **Evidence Locker** — lock the package server-side for tamper-proof audit handover:
 1. Click **Lock on server** — the snapshot is frozen and a SHA-256 hash digest is computed from its canonical representation.
-2. A unique **public token** is generated — auditors access the frozen HTML report at `/evidence/p/{token}` without needing a login.
+2. A unique **public token** is generated — auditors access the frozen HTML report at `/api/v1/evidence/p/{token}` without needing a login.
 3. A **QR code** is displayed (SVG, generated via the `segno` library) linking directly to the public auditor URL — scan with a phone to verify.
-4. The SHA-256 hash appears in the evidence header and can be verified independently against the raw JSON snapshot at `/evidence/{id}/snapshot`.
+4. The SHA-256 hash appears in the evidence header and can be verified independently against the raw JSON snapshot at `/api/v1/evidence/{id}/snapshot`.
 
 Once locked, the snapshot is immutable. Deleting requires `admin` role.
 
@@ -181,7 +183,7 @@ A per-filtered-view CSV export button is always available in the filter bar.
 
 The Sandbox page lets you paste IaC snippets (currently Terraform HCL) and evaluate them against WAF++ controls instantly. Two modes:
 - **Mock engine** — browser-side regex evaluation, no server needed
-- **Real engine** — POSTs to `/sandbox`, runs the actual wafpass-core evaluation pipeline
+- **Real engine** — POSTs to `/api/v1/sandbox`, runs the actual wafpass-core evaluation pipeline
 
 See Settings → Connection & Real Engine to enable and configure the real engine.
 
@@ -197,7 +199,7 @@ Team members can add comments to findings in the **Scan Findings** page. Comment
 - Delete comments (author or owner of the finding)
 - User mentions with automatic profile display
 
-Comments are synced with the server via `GET /findings-comments` and `POST /findings-comments` endpoints.
+Comments are synced with the server via `GET /api/v1/findings-comments` and `POST /api/v1/findings-comments` endpoints.
 
 ### User and API key management
 
@@ -252,7 +254,7 @@ docker build -t wafpass-dashboard .
 docker run -p 3000:80 wafpass-dashboard
 ```
 
-The image is nginx serving the static build. The nginx config proxies API paths (`/runs`, `/controls`, `/waivers`, `/risks`, `/sandbox`, `/health`) to `wafpass-server:8000`.
+The image is nginx serving the static build. The nginx config proxies `/api` (all versioned endpoints under `/api/v1`), `/health`, `/version`, and `/framework-update-info.yml` to `wafpass-server:8000`.
 
 ---
 
