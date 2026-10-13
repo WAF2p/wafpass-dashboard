@@ -311,6 +311,37 @@ export async function fetchRun(id: string): Promise<RunDetail> {
   return json.data
 }
 
+export interface FrameworkStats {
+  name: string
+  description: string
+  controls: number
+  pct: number
+}
+
+export interface MissingRemediationControl {
+  id: string
+  title: string
+  category: string
+  severity: string
+}
+
+export interface ComplianceReadinessData {
+  totalFrameworkCoverage: number
+  frameworkCount: number
+  evidenceCompleteness: number
+  findingsWithoutRemediation: number
+  readinessScore: number
+  frameworks: FrameworkStats[]
+  controlsWithoutRemediation: MissingRemediationControl[]
+}
+
+export async function fetchComplianceReadiness(runId: string): Promise<ComplianceReadinessData> {
+  const res = await fetch(`${getApiBase()}/api/v1/runs/${encodeURIComponent(runId)}/compliance-readiness`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to fetch compliance readiness: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<ComplianceReadinessData>
+  return json.data
+}
+
 export interface ProjectAchievement {
   id: string
   project: string

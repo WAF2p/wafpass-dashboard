@@ -9,31 +9,21 @@
  * - Expiration tracking for waivers/risk acceptances
  */
 import { useEffect, useState } from 'react'
-import { RunDetail, WaiverRecord, RiskRecord, fetchWaivers, fetchRisks } from '../api'
+import {
+  ComplianceReadinessData,
+  FrameworkStats,
+  RunDetail,
+  RiskRecord,
+  WaiverRecord,
+  fetchComplianceReadiness,
+  fetchRisks,
+  fetchWaivers,
+} from '../api'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
   run: RunDetail | null
-}
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface FrameworkStats {
-  name: string
-  description: string
-  controls: number
-  pct: number
-}
-
-interface ComplianceReadinessData {
-  totalFrameworkCoverage: number
-  frameworkCount: number
-  evidenceCompleteness: number
-  findingsWithoutRemediation: number
-  readinessScore: number
-  frameworks: FrameworkStats[]
-  controlsWithoutRemediation: Array<{ id: string; title: string; category: string; severity: string }>
 }
 
 
@@ -58,26 +48,36 @@ export default function ComplianceReadinessPage({ run }: Props) {
   const [data, setData] = useState<ComplianceReadinessData | null>(null)
   const [waivers, setWaivers] = useState<WaiverRecord[]>([])
   const [risks, setRisks] = useState<RiskRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [usingFallback, setUsingFallback] = useState(false)
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (!run) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    setUsingFallback(false)
+
+    const loadData = async () => {
       try {
-        // Fetch compliance readiness data from server
-        const res = await fetch('/api/v1/compliance-readiness')
-        if (res.ok) {
-          const result = await res.json()
-          setData(result)
-        } else {
-          // Fallback to in-memory calculation if API fails
-          setData(calculateReadinessFromRun(run))
-        }
-      } catch {
+        const result = await fetchComplianceReadiness(run.id)
+        setData(result)
+      } catch (err) {
+        // Fallback to in-memory calculation if server is unreachable
         setData(calculateReadinessFromRun(run))
+        setUsingFallback(true)
+        setError(err instanceof Error ? err.message : 'Server unavailable. Showing offline estimate.')
+      } finally {
+        setLoading(false)
       }
 
-      // Fetch waivers and risks separately
+      // Fetch waivers and risks separately, scoped to the run's project
       try {
-        const [w, r] = await Promise.all([fetchWaivers(), fetchRisks()])
+        const [w, r] = await Promise.all([fetchWaivers(run.project), fetchRisks(run.project)])
         setWaivers(w)
         setRisks(r)
       } catch {
@@ -93,7 +93,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
       }
     }
 
-    fetchData()
+    loadData()
   }, [run])
 
   if (!run) {
@@ -104,8 +104,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
     )
   }
 
-  // Fallback calculation if server data is not available
-  const readinessData = data || calculateReadinessFromRun(run)
+  const readinessData = data ?? calculateReadinessFromRun(run)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -115,11 +114,43 @@ export default function ComplianceReadinessPage({ run }: Props) {
           Compliance Readiness
         </h1>
         <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--muted)' }}>
-          Evidence collection status and audit readiness scores — prepare for compliance audits with offline support
+          Evidence collection status and audit readiness scores — prepare for compliance audits
         </p>
       </div>
 
-      {/* ── Stats Dashboard ────────────────────────────────────────────────────── */}
+      {usingFallback && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          background: 'rgba(217,119,6,.08)',
+          border: '1px solid rgba(217,119,6,.3)',
+          borderRadius: '8px',
+          color: '#d97706',
+          fontSize: '0.75rem',
+        }}>
+          <strong>Offline estimate:</strong> evidence metrics require a server connection. Framework coverage and remediation gaps are calculated from the local run data.
+        </div>
+      )}
+
+      {error && !usingFallback && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          background: 'rgba(220,38,38,.08)',
+          border: '1px solid rgba(220,38,38,.3)',
+          borderRadius: '8px',
+          color: '#dc2626',
+          fontSize: '0.75rem',
+        }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem' }}>
+          Loading compliance readiness metrics…
+        </div>
+      ) : (
+        <>
+          {/* ── Stats Dashboard ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
         <StatCard
           label="Controls Mapped"
@@ -435,6 +466,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
           </div>
         )}
       </div>
+      </>)}
     </div>
   )
 }
@@ -485,6 +517,14 @@ function StatCard({ label, value, color, bg, border, highlight = false }: {
 
 // ─── Fallback calculation ────────────────────────────────────────────────────
 
+function frameworksForControl(control: RunDetail['controls_meta'][number]): Set<string> {
+  return new Set((control.regulatory_mapping || []).map(m => m.framework).filter(Boolean))
+}
+
+function controlHasRemediation(control: RunDetail['controls_meta'][number]): boolean {
+  return (control.checks || []).some(check => (check.remediation || '').trim().length > 0)
+}
+
 function calculateReadinessFromRun(run: RunDetail | null): ComplianceReadinessData {
   if (!run) {
     return {
@@ -498,53 +538,56 @@ function calculateReadinessFromRun(run: RunDetail | null): ComplianceReadinessDa
     }
   }
 
-  // Count controls with regulatory mapping
-  const controlsWithFramework = run.controls_meta.filter(c => c.regulatory_mapping && c.regulatory_mapping.length > 0)
-  const totalFrameworkCoverage = run.controls_meta.length > 0
-    ? Math.round((controlsWithFramework.length / run.controls_meta.length) * 100)
+  const controls = run.controls_meta || []
+  const totalControls = controls.length
+
+  // Framework coverage: % of controls mapped to at least one framework
+  const mappedControls = controls.filter(c => frameworksForControl(c).size > 0)
+  const totalFrameworkCoverage = totalControls > 0
+    ? Math.round((mappedControls.length / totalControls) * 100)
     : 0
 
-  // Count unique frameworks
-  const frameworkSet = new Set<string>()
-  run.controls_meta.forEach(c => {
-    c.regulatory_mapping?.forEach(m => frameworkSet.add(m.framework))
-  })
-  const frameworkCount = frameworkSet.size
+  // Build per-framework stats. Offline fallback has no evidence data, so bars show 0%
+  // to avoid the previous hard-coded 100% bug.
+  const frameworkNames = new Set<string>()
+  controls.forEach(c => frameworksForControl(c).forEach(fw => frameworkNames.add(fw)))
 
-  // Evidence completeness (controls with evidence defined)
-  const controlsWithEvidence = run.controls_meta.filter(c => (c as any).evidence && (c as any).evidence.required && (c as any).evidence.required.length > 0)
-  const evidenceCompleteness = run.controls_meta.length > 0
-    ? Math.round((controlsWithEvidence.length / run.controls_meta.length) * 100)
-    : 0
-
-  // Find controls missing remediation (check remediation field)
-  const controlsWithoutRemediation = run.controls_meta.filter(c => !(c as any).remediation || (c as any).remediation.trim() === '').map(c => ({
-    id: c.id,
-    title: c.title,
-    category: c.category || 'unknown',
-    severity: c.severity || 'medium',
-  }))
-
-  // Calculate readiness score
-  const remediationPenalty = Math.min(20, Math.round((controlsWithoutRemediation.length / run.controls_meta.length) * 20))
-  const readinessScore = Math.max(0, Math.round((totalFrameworkCoverage * 0.4) + (evidenceCompleteness * 0.4) - remediationPenalty))
-
-  // Framework stats
   const frameworks: FrameworkStats[] = []
-  frameworkSet.forEach(fwName => {
-    const frameworkControls = run.controls_meta.filter(c => c.regulatory_mapping?.some(m => m.framework === fwName))
+  frameworkNames.forEach(fwName => {
+    const fwControls = controls.filter(c => frameworksForControl(c).has(fwName))
     frameworks.push({
       name: fwName,
       description: getFrameworkDescription(fwName),
-      controls: frameworkControls.length,
-      pct: Math.round((frameworkControls.filter(c => c.regulatory_mapping?.some(m => m.framework === fwName)).length / frameworkControls.length) * 100) || 0,
+      controls: fwControls.length,
+      pct: 0,
     })
   })
-  frameworks.sort((a, b) => b.pct - a.pct)
+  frameworks.sort((a, b) => a.name.localeCompare(b.name))
+
+  // Evidence completeness: unknown offline, so report 0 rather than guess.
+  const evidenceCompleteness = 0
+
+  // Controls missing remediation: require at least one check with non-empty remediation text
+  const controlsWithoutRemediation = controls
+    .filter(c => !controlHasRemediation(c))
+    .map(c => ({
+      id: c.id,
+      title: c.title,
+      category: c.category || 'unknown',
+      severity: c.severity || 'medium',
+    }))
+
+  const remediationPenalty = totalControls > 0
+    ? Math.min(20, Math.round((controlsWithoutRemediation.length / totalControls) * 20))
+    : 0
+  const readinessScore = Math.max(
+    0,
+    Math.round((totalFrameworkCoverage * 0.4) + (evidenceCompleteness * 0.4) - remediationPenalty),
+  )
 
   return {
     totalFrameworkCoverage,
-    frameworkCount,
+    frameworkCount: frameworkNames.size,
     evidenceCompleteness,
     findingsWithoutRemediation: controlsWithoutRemediation.length,
     readinessScore,
@@ -567,6 +610,13 @@ function getFrameworkDescription(name: string): string {
     'CSRD': 'Corporate Sustainability Reporting Directive',
     'SOC 2': 'AICPA Service Organization Controls — Trust Services Criteria',
     'SOC 2 Type II': 'AICPA Service Organization Controls — Trust Services Criteria',
+    'PCI DSS v4.0': 'Payment Card Industry Data Security Standard v4.0',
+    'CIS Controls v8': 'Center for Internet Security Controls v8',
+    'COBIT 2019': 'Control Objectives for Information and Related Technologies',
+    'NIS2': 'Network and Information Security Directive (EU) 2022/2555',
+    'DORA': 'Digital Operational Resilience Act (EU) 2022/2554',
+    'CSA STAR': 'Cloud Security Alliance Security, Trust & Assurance Registry',
+    'IT-Grundschutz': 'BSI IT-Grundschutz Compendium',
   }
   return descriptions[name] || ''
 }

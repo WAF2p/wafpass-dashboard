@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   deleteMandantSsoConfig,
+  fetchComplianceReadiness,
   fetchMandantSsoConfigs,
   fetchServerAuditEvents,
   fetchSsoProviders,
@@ -203,5 +204,53 @@ describe('per-mandant SSO config CRUD', () => {
     const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
     expect(url).toContain('/api/v1/sso/config/mandant/m1/saml2')
     expect(init.method).toBe('DELETE')
+  })
+})
+
+// ── Compliance readiness ──────────────────────────────────────────────────────
+
+describe('fetchComplianceReadiness', () => {
+  const mockData = {
+    totalFrameworkCoverage: 80,
+    frameworkCount: 3,
+    evidenceCompleteness: 40,
+    findingsWithoutRemediation: 2,
+    readinessScore: 42,
+    frameworks: [],
+    controlsWithoutRemediation: [],
+  }
+
+  afterEach(() => vi.restoreAllMocks())
+
+  it('fetches the run-scoped endpoint and returns data', async () => {
+    localStorage.setItem('wafpass_server_url', 'http://server:8000')
+    localStorage.setItem('wafpass_access_token', 'tok')
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ data: mockData }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    )
+
+    const result = await fetchComplianceReadiness('run-123')
+    expect(result).toEqual(mockData)
+  })
+
+  it('uses the configured API base and sends auth headers', async () => {
+    localStorage.setItem('wafpass_server_url', 'http://server:8000')
+    localStorage.setItem('wafpass_access_token', 'tok')
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ data: mockData }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    )
+
+    await fetchComplianceReadiness('run-123')
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('http://server:8000/api/v1/runs/run-123/compliance-readiness')
+    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer tok')
+  })
+
+  it('throws on non-ok response', async () => {
+    localStorage.setItem('wafpass_server_url', 'http://server:8000')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('Not found', { status: 404 }))
+    await expect(fetchComplianceReadiness('run-123')).rejects.toThrow('Failed to fetch compliance readiness')
   })
 })
