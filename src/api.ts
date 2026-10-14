@@ -1082,6 +1082,111 @@ export async function fetchUserLogs(userId: string, limit = 100): Promise<UserAu
   return res.json() as Promise<UserAuditLogEntry[]>
 }
 
+export interface AdminAuditLogEntry {
+  id: string
+  actor_id: string | null
+  actor_username: string | null
+  action: string
+  detail: Record<string, unknown>
+  ip: string
+  mandant_id: string | null
+  timestamp: string
+}
+
+export async function fetchAdminLogs(params?: { limit?: number; action?: string }): Promise<AdminAuditLogEntry[]> {
+  const url = new URL(`${getApiBase()}/api/v1/admin/logs`, window.location.origin)
+  if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
+  if (params?.action) url.searchParams.set('action', params.action)
+  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json() as ApiEnvelope<AdminAuditLogEntry[]>
+  return json.data
+}
+
+// ── Syslog / SIEM forwarder ─────────────────────────────────────────────────────
+
+export const SYSLOG_ACTIONS = [
+  'login_success',
+  'login_failed',
+  'logout',
+  'user_invited',
+  'user_role_changed',
+  'user_deactivated',
+  'user_deleted',
+  'project_created',
+  'project_updated',
+  'project_deleted',
+  'mandant_created',
+  'mandant_updated',
+  'mandant_deleted',
+  'api_key_rotated',
+  'sso_config_changed',
+  'syslog_config_changed',
+  'rule_created',
+  'rule_updated',
+  'rule_deleted',
+  'waiver_created',
+  'waiver_approved',
+  'waiver_rejected',
+  'waiver_deleted',
+  'finding_suppressed',
+  'finding_comment_created',
+  'control_created',
+  'control_updated',
+  'control_deleted',
+]
+
+export interface SyslogConfig {
+  enabled: boolean
+  host: string
+  port: number
+  protocol: 'udp' | 'tcp'
+  syslog_format: 'rfc3164' | 'rfc5424'
+  facility: number
+  tls_enabled: boolean
+  program_tag: string
+  severity_overrides: Record<string, number>
+  updated_at: string
+}
+
+export type SyslogConfigInput = Omit<SyslogConfig, 'updated_at'>
+
+export interface SyslogTestResult {
+  success: boolean
+  message: string
+}
+
+export async function fetchSyslogConfig(): Promise<SyslogConfig> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/syslog-config`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json() as ApiEnvelope<SyslogConfig>
+  return json.data
+}
+
+export async function updateSyslogConfig(payload: SyslogConfigInput): Promise<SyslogConfig> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/syslog-config`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: 'Save failed' })) as { detail?: string }
+    throw new Error(body.detail ?? `HTTP ${res.status}`)
+  }
+  const json = await res.json() as ApiEnvelope<SyslogConfig>
+  return json.data
+}
+
+export async function testSyslogConfig(): Promise<SyslogTestResult> {
+  const res = await fetch(`${getApiBase()}/api/v1/admin/syslog-config/test`, {
+    method: 'POST',
+    headers: _authHeaders() },
+  )
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json() as ApiEnvelope<SyslogTestResult>
+  return json.data
+}
+
 // ── API key management ────────────────────────────────────────────────────────
 
 export interface ApiKeyOut {

@@ -331,6 +331,34 @@ export interface Translations {
     failingFindings: string
     passLabel: string
     failLabel: string
+    frameworkDetailTab: string
+    openGapAnalysis: string
+  }
+
+  frameworkDetail: {
+    back: string
+    passRate: string
+    mapped: string
+    passed: string
+    failed: string
+    unknown: string
+    controlsTitle: string
+    controlsSubtitle: string
+    searchPlaceholder: string
+    groupByRequirement: string
+    controls: string
+    noMappedControls: string
+    noSearchMatch: string
+    notFound: string
+    requirementsTitle: string
+    requirementsSubtitle: string
+    requirements: string
+    mappedRequirements: string
+    unmappedRequirements: string
+    coverageRate: string
+    requirementMapped: string
+    requirementUnmapped: string
+    allRequirementsCovered: string
   }
 
   pages: {
@@ -538,6 +566,8 @@ export interface Translations {
     }
 
     audit: {
+      heroTitle: string
+      heroSubtitle: string
       totalEvents: string
       waiverEvents: string
       riskEvents: string
@@ -545,14 +575,20 @@ export interface Translations {
       controlsTracked: string
       critHighTracked: string
       oldestFailure: string
-      tabEvents: string           // "Event Timeline ({{count}})"
-      tabExposure: string         // "Control Exposure ({{count}})"
+      tabEvents: string
+      tabExposure: string
+      serverSyncActive: string
+      serverSyncLocal: string
+      serverSyncActiveDetail: string
+      serverSyncLocalDetail: string
+      exportCsv: string
+      exportJson: string
       clearLog: string
-      clearConfirm: string        // "Permanently clear all audit data?"
-      clearYes: string            // "Yes, clear"
-      searchPlaceholder: string   // "Search events…"
+      clearConfirm: string
+      clearYes: string
+      searchPlaceholder: string
       allCategories: string
-      noEvents: string            // "No audit events yet"
+      noEvents: string
       noEventsHint: string
       colControl: string
       colResource: string
@@ -562,6 +598,77 @@ export interface Translations {
       colFirstSeen: string
       colAge: string
       noFirstSeen: string
+      diffBefore: string
+      diffAfter: string
+      eventId: string
+      ageDays: string
+      exposureAlert: string
+      exposureAlertSla: string
+      exposureHint: string
+    }
+
+    adminLogs: {
+      heroTitle: string
+      heroSubtitle: string
+      totalEvents: string
+      uniqueActors: string
+      actionTypes: string
+      serverIpEvents: string
+      tabEvents: string
+      tabDetails: string
+      serverSyncActive: string
+      serverSyncLocal: string
+      serverSyncActiveDetail: string
+      serverSyncLocalDetail: string
+      exportCsv: string
+      searchPlaceholder: string
+      allActions: string
+      noEvents: string
+      noEventsHint: string
+      colTimestamp: string
+      colAction: string
+      colActor: string
+      colIp: string
+      colMandate: string
+      eventId: string
+      ageDays: string
+      detailLabel: string
+      jsonLabel: string
+      accessDenied: string
+      syslogHint: string
+      siemStatus: string
+      siemConfigured: string
+      siemNotConfigured: string
+      siemEnabled: string
+      siemDisabled: string
+      configureSiem: string
+      siemModalTitle: string
+      siemEnabledLabel: string
+      siemHostLabel: string
+      siemPortLabel: string
+      siemProtocolLabel: string
+      siemFormatLabel: string
+      siemFacilityLabel: string
+      siemProgramTagLabel: string
+      siemTlsLabel: string
+      siemSeverityOverrides: string
+      siemActionLabel: string
+      siemSeverityLabel: string
+      siemAddOverride: string
+      siemRemoveOverride: string
+      siemSave: string
+      siemTest: string
+      siemTestSending: string
+      siemTestSuccess: string
+      siemTestFailed: string
+      siemCancel: string
+      siemHostRequired: string
+      siemPortRange: string
+      siemInvalidProtocol: string
+      siemInvalidFormat: string
+      siemSaveFailed: string
+      siemLoadFailed: string
+      siemKpiTitle: string
     }
 
     leaderboard: {
@@ -941,42 +1048,53 @@ export interface Translations {
     }
 
     gapanalysis: {
-      resourcesToFix: string      // "{{count}} resource(s) to fix"
-      unlocksReqs: string         // "unlocks {{count}} req(s)"
-      failingCheck: string        // "Failing check:"
-      fixLabel: string            // "Fix:"
-      failingChecks: string       // "Failing checks ({{count}})"
-      passingChecks: string       // "Passing checks ({{count}})"
-      affectedResources: string   // "Affected resources ({{count}})"
-      moreItems: string           // "+{{count}} more"
-      currentCoverage: string     // "Current coverage"
-      afterGapsFixed: string      // "After all gaps fixed"
-      controlsToFix: string       // "controls to fix"
-      passing: string             // "passing"
-      waived: string              // "waived"
-      noData: string              // "no data"
-      requirementsMet: string     // "{{met}} of {{total}} requirements currently met"
-      gapsCount: string           // "{{count}} gaps"
-      exportCsv: string           // "↓ Export CSV"
-      noControlsMapped: string    // "No controls mapped to {{framework}}"
-      noControlsMappedDesc: string // "This run's controls do not include regulatory mappings for {{framework}}."
-      tabRoadmap: string          // "Remediation Roadmap"
-      tabRequirements: string     // "Requirements Map"
-      sortByLabel: string         // "Sort by:"
-      sortEfficiency: string      // "Shortest path (effort ÷ requirements)"
-      sortSeverity: string        // "Highest severity first"
-      sortValue: string           // "Most requirements unlocked first"
-      showPassingControls: string // "Show passing controls"
-      shortestPathIntro: string   // "Shortest path to {{framework}} compliance: Fix the {{count}} controls below in order."
-      shortestPathDetail: string  // "Each item shows how many resources need remediating (effort) and how many framework requirements it unlocks (value). Controls ranked #1 give you the highest requirement coverage per unit of effort."
-      allPassingGap: string       // "All {{framework}}-mapped controls are passing — no gaps detected"
-      passingControlsHeader: string // "Passing controls ({{count}})"
-      reqsMapped: string          // "{{total}} {{framework}} requirements mapped"
-      reqsMet: string             // "{{count}} met"
-      reqsGaps: string            // "{{count}} gaps"
-      afterFix: string            // "{{cumulative}}/{{total}} after fix"
-      waivedLabel: string         // "waived · {{owner}}"
-      riskAcceptedLabel: string   // "risk accepted · {{approver}}"
+      heroTitle: string
+      heroSubtitle: string
+      frameworkSelectorTitle: string
+      frameworkSelectorSubtitle: string
+      jurisdictionLabel: string
+      regulationLabel: string
+      resourcesToFix: string
+      unlocksReqs: string
+      failingCheck: string
+      fixLabel: string
+      failingChecks: string
+      passingChecks: string
+      affectedResources: string
+      moreItems: string
+      currentCoverage: string
+      afterGapsFixed: string
+      controlsToFix: string
+      passing: string
+      waived: string
+      noData: string
+      requirementsMet: string
+      gapsCount: string
+      exportCsv: string
+      noControlsMapped: string
+      noControlsMappedDesc: string
+      tabRoadmap: string
+      tabRequirements: string
+      requirementsMapSubtitle: string
+      sortByLabel: string
+      sortEfficiency: string
+      sortSeverity: string
+      sortValue: string
+      showPassingControls: string
+      shortestPathIntro: string
+      shortestPathDetail: string
+      allPassingGap: string
+      passingControlsHeader: string
+      reqsMapped: string
+      reqsMet: string
+      reqsGaps: string
+      afterFix: string
+      waivedLabel: string
+      riskAcceptedLabel: string
+      resourcesToFixTotal: string
+      criticalFindings: string
+      highFindings: string
+      backToSoc: string
     }
 
     access: {
@@ -1221,6 +1339,7 @@ export interface Translations {
 
     changes: {
       title: string
+      subtitle: string
       noChanges: string
       searchPlaceholder: string
       allActions: string
@@ -1285,6 +1404,12 @@ export interface Translations {
       colType: string
       colProvider: string
       colAction: string
+      changeDetail: string
+      kpiAdd: string
+      kpiChange: string
+      kpiReplace: string
+      kpiDestroy: string
+      kpiUnchanged: string
       close: string
       runsLabel: string           // "{{count}} run(s)"
       remediation: string
@@ -2122,6 +2247,16 @@ export interface Translations {
       colAction: string
       actionValidate: string
       roleRequired: string
+    }
+
+    validationCenter: {
+      title: string
+      subtitle: string
+      tabRegistry: string
+      tabShip: string
+      teaserLabel: string
+      teaserText: string
+      downloadRootCa: string
     }
 
     validations: {

@@ -4,6 +4,14 @@ import { FRAMEWORKS } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
 import type { Settings } from './settingsUtils'
 import { useI18n } from '../i18n'
+import FrameworkDetailPage from './FrameworkDetailPage'
+import {
+  CircularScore, SectionCard, SegmentedTabs, SocStyles,
+  CheckIcon, XIcon, MinusIcon, GlobeIcon, SearchIcon, GridIcon, ListIcon, LockIcon, SignalIcon,
+  ShieldIcon, CostIcon, OpsIcon, PerfIcon, RelIcon, SovIcon, SusIcon, AgenticIcon, ArrowRightIcon,
+  scoreColor, scoreGlow, statusColor,
+} from './shared/SocComponents'
+import type { Page } from '../routing'
 
 // All 8 pillars including agentic
 const PILLAR_META: { key: string; label: string; color: string; icon: () => JSX.Element }[] = [
@@ -22,114 +30,7 @@ function normalizePillarName(p: string): string {
   return p
 }
 
-interface Props { run: RunDetail; settings?: Settings }
-
-function scoreColor(s: number) {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
-
-function scoreGlow(s: number) {
-  return scoreColor(s)
-}
-
-function statusColor(role: 'good' | 'warn' | 'bad' | 'info' | 'text' | 'muted') {
-  const map: Record<typeof role, string> = {
-    good: 'var(--pass)', warn: 'var(--score-mid)', bad: 'var(--fail)', info: 'var(--waf-brand)',
-    text: 'var(--text)', muted: 'var(--muted)',
-  }
-  return map[role]
-}
-
-// ─── Icons (inline SVG, no external deps) ─────────────────────────────────────
-
-function IconWrapper({ children, size = 16 }: { children: React.ReactNode; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      {children}
-    </svg>
-  )
-}
-
-function ShieldIcon() { return <IconWrapper><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></IconWrapper> }
-function CostIcon() { return <IconWrapper><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></IconWrapper> }
-function OpsIcon() { return <IconWrapper><path d="M12 2a10 10 0 1 0 10 10H12V2z" /><path d="M21 12a9 9 0 0 0-9-9" /></IconWrapper> }
-function PerfIcon() { return <IconWrapper><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></IconWrapper> }
-function RelIcon() { return <IconWrapper><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="M12 6v6l4 2" /></IconWrapper> }
-function SovIcon() { return <IconWrapper><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></IconWrapper> }
-function SusIcon() { return <IconWrapper><path d="M12 22c4.97 0 9-4.03 9-9-4.5 0-9-4.5-9-9-4.5 4.5-9 9-9 9 0 4.97 4.03 9 9 9z" /></IconWrapper> }
-function AgenticIcon() { return <IconWrapper><path d="M12 2a4 4 0 0 1 4 4c0 2.5-2 4-4 7-2-3-4-4.5-4-7a4 4 0 0 1 4-4z" /><circle cx="12" cy="15" r="3" /></IconWrapper> }
-function SearchIcon() { return <IconWrapper><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></IconWrapper> }
-function CheckIcon() { return <IconWrapper size={14}><polyline points="20 6 9 17 4 12" /></IconWrapper> }
-function XIcon() { return <IconWrapper size={14}><path d="M18 6 6 18M6 6l12 12" /></IconWrapper> }
-function MinusIcon() { return <IconWrapper size={14}><path d="M5 12h14" /></IconWrapper> }
-function GlobeIcon() { return <IconWrapper><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></IconWrapper> }
-function LockIcon() { return <IconWrapper><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></IconWrapper> }
-function GridIcon() { return <IconWrapper><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></IconWrapper> }
-function SignalIcon() { return <IconWrapper><path d="M2 20h.01" /><path d="M7 20v-4" /><path d="M12 20v-8" /><path d="M17 20V8" /><path d="M22 4v16" /></IconWrapper> }
-
-// ─── Shared visual components ─────────────────────────────────────────────────
-
-function CircularScore({ value, size = 96, stroke = 8, color, track = 'var(--track)' }: { value: number; size?: number; stroke?: number; color: string; track?: string }) {
-  const pct = Math.min(100, Math.max(0, value))
-  const r = (size - stroke) / 2
-  const c = 2 * Math.PI * r
-  const offset = c - (pct / 100) * c
-  return (
-    <div className="scc-ring" style={{ width: size, height: size, filter: `drop-shadow(0 0 8px ${scoreGlow(value)})` }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <defs>
-          <linearGradient id={`sccGrad-${value}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={color} />
-            <stop offset="100%" stopColor={color} stopOpacity="0.5" />
-          </linearGradient>
-        </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
-        <circle
-          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={`url(#sccGrad-${value})`}
-          strokeWidth={stroke} strokeDasharray={c} strokeDashoffset={offset}
-          strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1)' }}
-        />
-      </svg>
-      <div className="scc-ring__inner">
-        <span className="scc-ring__value" style={{ color }}>{value}</span>
-        <span className="scc-ring__unit">/100</span>
-      </div>
-    </div>
-  )
-}
-
-function SegmentedTabs<T extends string>({ options, value, onChange }: { options: { key: T; label: string; icon?: () => JSX.Element }[]; value: T; onChange: (v: T) => void }) {
-  return (
-    <div className="scc-tabs">
-      {options.map(opt => {
-        const active = value === opt.key
-        const Icon = opt.icon
-        return (
-          <button
-            key={opt.key}
-            className={`scc-tab ${active ? 'scc-tab--active' : ''}`}
-            onClick={() => onChange(opt.key)}
-          >
-            {Icon && <span className="scc-tab__icon"><Icon /></span>}
-            <span>{opt.label}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function SectionCard({ title, subtitle, children, className = '', style = {} }: { title: string; subtitle?: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
-  return (
-    <div className={`scc-card ${className}`} style={style}>
-      <div className="scc-card__header">
-        <div className="scc-card__title">{title}</div>
-        {subtitle && <div className="scc-card__subtitle">{subtitle}</div>}
-      </div>
-      {children}
-    </div>
-  )
-}
+interface Props { run: RunDetail; settings?: Settings; navigate?: (page: Page, filters?: { framework?: string }) => void }
 
 function StatusBar({ score, passRate }: { score: number; passRate: number }) {
   const armed = score >= 80
@@ -159,9 +60,10 @@ function StatusBar({ score, passRate }: { score: number; passRate: number }) {
 
 type SortKey = 'country' | 'name' | 'coverage_desc' | 'coverage_asc'
 
-export default function CompliancePage({ run, settings }: Props) {
+export default function CompliancePage({ run, settings, navigate }: Props) {
   const { t } = useI18n()
-  const [tab, setTab] = useState<'pillars' | 'frameworks'>('pillars')
+  const [tab, setTab] = useState<'pillars' | 'frameworks' | 'framework-detail'>('pillars')
+  const [detailFrameworkId, setDetailFrameworkId] = useState<string | null>(null)
   const catalogue = useControlsCatalogue()
 
   // Framework filter state
@@ -279,6 +181,7 @@ export default function CompliancePage({ run, settings }: Props) {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="scc-root">
+      <SocStyles />
       <style>{securityCommandCenterCss}</style>
 
       {/* Hero — command center header */}
@@ -328,8 +231,9 @@ export default function CompliancePage({ run, settings }: Props) {
       {/* Tabs */}
       <SegmentedTabs
         options={[
-          { key: 'pillars',    label: t('compliance.pillarTab'),    icon: GridIcon },
-          { key: 'frameworks', label: t('compliance.frameworkTab'), icon: GlobeIcon },
+          { key: 'pillars',          label: t('compliance.pillarTab'),          icon: GridIcon },
+          { key: 'frameworks',       label: t('compliance.frameworkTab'),       icon: GlobeIcon },
+          { key: 'framework-detail', label: t('compliance.frameworkDetailTab'), icon: ListIcon, disabled: tab !== 'framework-detail' },
         ]}
         value={tab}
         onChange={setTab}
@@ -476,7 +380,16 @@ export default function CompliancePage({ run, settings }: Props) {
                 const color = active ? scoreColor(passRate) : 'var(--muted)'
                 const mapped = mappedControls.length
                 return (
-                  <div key={fw.id} className="scc-framework-card" style={{ '--fw-color': color } as React.CSSProperties}>
+                  <div
+                    key={fw.id}
+                    className={`scc-framework-card ${mapped > 0 ? 'scc-framework-card--clickable' : ''}`}
+                    style={{ '--fw-color': color } as React.CSSProperties}
+                    onClick={mapped > 0 ? () => { setDetailFrameworkId(fw.id); setTab('framework-detail') } : undefined}
+                    role={mapped > 0 ? 'button' : undefined}
+                    tabIndex={mapped > 0 ? 0 : undefined}
+                    aria-label={mapped > 0 ? `${fw.label} details` : undefined}
+                    onKeyDown={mapped > 0 ? e => { if (e.key === 'Enter' || e.key === ' ') { setDetailFrameworkId(fw.id); setTab('framework-detail') } } : undefined}
+                  >
                     <div className="scc-framework-card__header">
                       <div className="scc-framework-card__flag">{fw.flag}</div>
                       <div className="scc-framework-card__meta">
@@ -536,6 +449,16 @@ export default function CompliancePage({ run, settings }: Props) {
                       </>
                     )}
 
+                    {active && mapped > 0 && navigate && (
+                      <button
+                        className="scc-framework-card__gaps"
+                        onClick={e => { e.stopPropagation(); navigate('gapanalysis', { framework: fw.id }) }}
+                        aria-label={`${fw.label} gap analysis`}
+                      >
+                        {t('compliance.openGapAnalysis')} <ArrowRightIcon />
+                      </button>
+                    )}
+
                     {!active && mapped === 0 && (
                       <div className="scc-framework-card__hint">{t('compliance.noMappingDesc')}</div>
                     )}
@@ -544,6 +467,17 @@ export default function CompliancePage({ run, settings }: Props) {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Framework detail tab (in-page drill-down) ─────────────────────────── */}
+      {tab === 'framework-detail' && (
+        <div className="scc-framework-view">
+          <FrameworkDetailPage
+            run={run}
+            navigate={page => { if (page === 'compliance') setTab('frameworks') }}
+            frameworkId={detailFrameworkId ?? undefined}
+          />
         </div>
       )}
     </div>
@@ -661,31 +595,6 @@ const securityCommandCenterCss = `
   letter-spacing: 0.08em;
 }
 
-/* Score ring */
-.scc-ring {
-  position: relative;
-}
-.scc-ring__inner {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.scc-ring__value {
-  font-size: 1.4rem;
-  font-weight: 800;
-  line-height: 1;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-.scc-ring__unit {
-  font-size: 0.55rem;
-  color: var(--muted);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-
 /* Status bar */
 .scc-statusbar {
   display: flex;
@@ -768,131 +677,6 @@ const securityCommandCenterCss = `
   font-size: 0.95rem;
   font-weight: 800;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-/* KPI grid */
-.scc-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-.scc-kpi {
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 12%, transparent);
-  border-radius: 14px;
-  padding: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-.scc-kpi:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--waf-brand) 28%, transparent);
-}
-.scc-kpi::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-}
-.scc-kpi--pass::before { background: var(--pass); box-shadow: 0 0 12px color-mix(in srgb, var(--pass) 30%, transparent); }
-.scc-kpi--fail::before { background: var(--fail); box-shadow: 0 0 12px color-mix(in srgb, var(--fail) 30%, transparent); }
-.scc-kpi--crit::before { background: var(--fail); box-shadow: 0 0 12px color-mix(in srgb, var(--fail) 30%, transparent); }
-.scc-kpi--frameworks::before { background: var(--waf-brand); box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 30%, transparent); }
-.scc-kpi__label {
-  font-size: 0.6rem;
-  color: var(--muted);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-.scc-kpi__value {
-  font-size: 1.7rem;
-  font-weight: 800;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  line-height: 1;
-}
-
-/* Tabs */
-.scc-tabs {
-  display: inline-flex;
-  background: var(--surface-el);
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
-  border-radius: 10px;
-  padding: 0.3rem;
-  gap: 0.25rem;
-  align-self: flex-start;
-  backdrop-filter: blur(8px);
-}
-.scc-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1.1rem;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.scc-tab:hover {
-  color: var(--text);
-  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
-}
-.scc-tab--active {
-  background: color-mix(in srgb, var(--waf-brand) 15%, transparent);
-  color: var(--waf-brand);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--waf-brand) 15%, transparent);
-}
-.scc-tab--active:hover {
-  background: color-mix(in srgb, var(--waf-brand) 20%, transparent);
-  color: var(--waf-brand);
-}
-.scc-tab__icon {
-  opacity: 0.85;
-}
-
-/* Cards */
-.scc-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-md);
-}
-.scc-card__header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.scc-card__title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.scc-card__subtitle {
-  font-size: 0.72rem;
-  color: var(--muted);
-}
-
-.scc-empty {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--muted);
-  font-size: 0.85rem;
 }
 
 /* Pillar tab */
@@ -1122,72 +906,9 @@ const securityCommandCenterCss = `
 .scc-search input::placeholder {
   color: var(--muted);
 }
-.scc-select {
-  padding: 0.5rem 0.75rem;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 0.82rem;
-  cursor: pointer;
-  outline: none;
-}
 .scc-filter-actions {
   display: flex;
   gap: 0.4rem;
-}
-.scc-btn-ghost {
-  padding: 0.45rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
-  background: var(--bg);
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.scc-btn-ghost:hover {
-  color: var(--text);
-  border-color: color-mix(in srgb, var(--waf-brand) 30%, transparent);
-  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
-}
-.scc-country-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-.scc-country-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 12%, transparent);
-  background: var(--bg);
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.scc-country-chip:hover {
-  border-color: color-mix(in srgb, var(--waf-brand) 25%, transparent);
-  color: var(--text);
-}
-.scc-country-chip--active {
-  border-color: color-mix(in srgb, var(--waf-brand) 40%, transparent);
-  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
-  color: var(--waf-brand);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 12%, transparent);
-}
-.scc-country-chip__flag {
-  font-size: 1rem;
-  line-height: 1;
-}
-.scc-country-chip__check {
-  display: inline-flex;
-  color: var(--waf-brand);
 }
 
 .scc-framework-grid {
@@ -1214,6 +935,16 @@ const securityCommandCenterCss = `
     0 8px 32px color-mix(in srgb, var(--text) 8%, transparent),
     0 0 24px color-mix(in srgb, var(--fw-color) 10%, transparent);
   border-color: var(--fw-color);
+}
+.scc-framework-card--clickable {
+  cursor: pointer;
+  outline: none;
+}
+.scc-framework-card--clickable:focus-visible {
+  box-shadow:
+    0 8px 32px color-mix(in srgb, var(--text) 8%, transparent),
+    0 0 0 2px var(--waf-brand);
+  border-color: var(--waf-brand);
 }
 .scc-framework-card__header {
   display: flex;
@@ -1357,7 +1088,6 @@ const securityCommandCenterCss = `
 }
 
 @media (max-width: 900px) {
-  .scc-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .scc-heatmap__row {
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
@@ -1371,8 +1101,6 @@ const securityCommandCenterCss = `
   .scc-hero__score { align-self: center; }
   .scc-statusbar { flex-direction: column; align-items: flex-start; }
   .scc-statusbar__readouts { width: 100%; justify-content: space-between; }
-  .scc-tabs { align-self: stretch; }
-  .scc-tab { flex: 1; justify-content: center; }
   .scc-pillar-grid { grid-template-columns: 1fr; }
   .scc-framework-grid { grid-template-columns: 1fr; }
   .scc-filter-bar__top > * { flex: 1 1 100%; }

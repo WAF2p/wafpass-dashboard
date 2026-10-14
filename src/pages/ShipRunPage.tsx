@@ -80,9 +80,14 @@ function Card({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function ShipRunPage() {
+export interface ShipRunPageProps {
+  mode?: 'page' | 'panel'
+}
+
+export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
   const { t } = useI18n()
   const { role } = useAuth()
+  const panel = mode === 'panel'
   const canSubmit = hasMinRole(role ?? 'clevel', 'clevel')
 
   const [runs, setRuns] = useState<RunSummary[]>([])
@@ -209,15 +214,17 @@ export default function ShipRunPage() {
   ]
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '1.25rem' }}>
-        <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', color: 'var(--text)' }}>
-          {t('pages.shiprun.title')}
-        </h1>
-        <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
-          {t('pages.shiprun.subtitle')}
-        </p>
-      </div>
+    <div style={panel ? undefined : { padding: '1.25rem 1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
+      {!panel && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', color: 'var(--text)' }}>
+            {t('pages.shiprun.title')}
+          </h1>
+          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
+            {t('pages.shiprun.subtitle')}
+          </p>
+        </div>
+      )}
 
       {!gatewayConfigured && (
         <Card>

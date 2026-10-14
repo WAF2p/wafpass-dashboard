@@ -14,7 +14,7 @@ import Footer from './components/Footer'
 import PdfReport from './components/PdfReport'
 import { loadMaturityState, saveMaturityState, Settings } from './pages/settingsUtils'
 import { DEFAULT_USER_PREFS, loadUserPrefs, saveUserPrefs, UserPreferences } from './pages/userPrefsUtils'
-import { buildHash, Page, parseHash } from './routing'
+import { buildHash, FilterState, Page, parseHash } from './routing'
 import { useControlsCatalogue } from './useControlsCatalogue'
 import { useRunLoader } from './useRunLoader'
 import { NotificationProvider } from './notifications/context'
@@ -24,6 +24,7 @@ const DashboardPage          = lazy(() => import('./pages/DashboardPage'))
 const FindingsPage           = lazy(() => import('./pages/FindingsPage'))
 const CompliancePage         = lazy(() => import('./pages/CompliancePage'))
 const ComplianceReadinessPage = lazy(() => import('./pages/ComplianceReadinessPage'))
+const FrameworkDetailPage     = lazy(() => import('./pages/FrameworkDetailPage'))
 const RegionsPage            = lazy(() => import('./pages/RegionsPage'))
 const ExploitPathsPage       = lazy(() => import('./pages/ExploitPathsPage'))
 const RunsListPage           = lazy(() => import('./pages/RunsListPage'))
@@ -68,8 +69,7 @@ const LegalPage              = lazy(() => import('./pages/LegalPage'))
 const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
 const PipelineOperationsCenter = lazy(() => import('./pages/PipelineOperationsCenter'))
 const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
-const ValidationsPage        = lazy(() => import('./pages/ValidationsPage'))
-const ShipRunPage            = lazy(() => import('./pages/ShipRunPage'))
+const ValidationCenterPage   = lazy(() => import('./pages/ValidationCenterPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -100,6 +100,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
   // Capture the hash run ID once on mount for deep-link restoration
   const [initialRunId] = useState(() => parseHash().runId)
   const [page, setPage] = useState<Page>(() => parseHash().page)
+  const [filters, setFilters] = useState<FilterState>(() => parseHash().filters)
   const [showRunModal, setShowRunModal] = useState(false)
   const [userPrefs, setUserPrefs] = useState<UserPreferences>(loadUserPrefs)
   const [prefsSyncStatus, setPrefsSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
@@ -131,33 +132,35 @@ function AuthenticatedApp({ user, role, onLogout }: {
     }
   }
 
-  function navigate(newPage: Page) {
+  function navigate(newPage: Page, nextFilters?: FilterState) {
     setPage(newPage)
-    window.history.pushState(null, '', buildHash(newPage, selectedId))
+    setFilters(nextFilters ?? {})
+    // URL is pushed by the page-change effect below, keeping filters in sync.
   }
 
   // Keep URL in sync with page changes
   useEffect(() => {
     if (!mounted.current) return
-    window.history.pushState(null, '', buildHash(page, selectedId))
+    window.history.pushState(null, '', buildHash(page, selectedId, filters))
   }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reflect run selection in URL without creating a new history entry
   useEffect(() => {
-    window.history.replaceState(null, '', buildHash(page, selectedId))
+    window.history.replaceState(null, '', buildHash(page, selectedId, filters))
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle browser back/forward and initialise URL on bare root
   useEffect(() => {
     function onPopState() {
-      const { page: p, runId } = parseHash()
+      const { page: p, runId, filters: f } = parseHash()
       setPage(p)
+      setFilters(f)
       if (runId) setSelectedId(runId)
     }
     window.addEventListener('popstate', onPopState)
     mounted.current = true
     if (!window.location.hash || window.location.hash === '#') {
-      window.history.replaceState(null, '', buildHash(page, selectedId))
+      window.history.replaceState(null, '', buildHash(page, selectedId, filters))
     }
     return () => window.removeEventListener('popstate', onPopState)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -387,11 +390,13 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'findings' ? (
             <FindingsPage run={run} />
           ) : page === 'compliance' ? (
-            <CompliancePage run={run} settings={settings} />
+            <CompliancePage run={run} settings={settings} navigate={navigate} />
           ) : page === 'compliance-readiness' ? (
             <ComplianceReadinessPage run={run} />
+          ) : page === 'framework-detail' ? (
+            <FrameworkDetailPage run={run} navigate={p => navigate(p as Page)} frameworkId={filters.framework} />
           ) : page === 'gapanalysis' ? (
-            <GapAnalysisPage run={run} />
+            <GapAnalysisPage run={run} navigate={p => navigate(p as Page)} frameworkId={filters.framework} />
           ) : page === 'changes' ? (
             <ChangesPage run={run} runs={runs} />
           ) : page === 'regions' ? (
@@ -428,10 +433,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <PipelineOperationsCenter navigate={navigate} />
           ) : page === 'autofix' ? (
             <AutoFixPage run={run} onBack={() => navigate('dashboard')} />
-          ) : page === 'validations' ? (
-            <ValidationsPage />
-          ) : page === 'shiprun' ? (
-            <ShipRunPage />
+          ) : page === 'validations' || page === 'shiprun' ? (
+            <ValidationCenterPage initialTab={page === 'shiprun' ? 'ship' : 'registry'} />
           ) : null}
         </Suspense>
         </main>

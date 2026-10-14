@@ -461,7 +461,7 @@ export const CONTROLS: Control[] = [
   },
 ]
 
-export const FRAMEWORKS = [
+const FRAMEWORKS_RAW = [
   // ── International / Global ────────────────────────────────────────────────
   { id: 'AWS Well-Architected Framework',    label: 'AWS Well-Architected Framework',    desc: 'AWS Cloud Best Practices',                                                              country: 'International',  flag: '🌍', region: 'global' },
   { id: 'Azure Well-Architected Framework',  label: 'Azure Well-Architected Framework',  desc: 'Microsoft Azure Best Practices',                                                        country: 'International',  flag: '🌍', region: 'global' },
@@ -498,9 +498,9 @@ export const FRAMEWORKS = [
   { id: 'EU CSRD (Corporate Sustainability Reporting Directive)', label: 'CSRD',           desc: 'Corporate Sustainability Reporting Directive (EU) 2022/2464',                            country: 'European Union', flag: '🇪🇺', region: 'eu' },
   { id: 'eIDAS 2.0',                         label: 'eIDAS 2.0',                         desc: 'Electronic Identification, Authentication and Trust Services Regulation',               country: 'European Union', flag: '🇪🇺', region: 'eu' },
   // ── Germany ───────────────────────────────────────────────────────────────
-  { id: 'BSI C5:2020',                       label: 'BSI C5:2020',                       desc: 'Cloud Computing Compliance Criteria Catalogue — Federal Office for Information Security', country: 'Germany',        flag: '🇩🇪', region: 'de' },
-  { id: 'BSI C3A:2026',                      label: 'BSI C3A:2026',                      desc: 'Cloud Computing – Sicherheitsanforderungen für die Kategorie wichtig (C3A) — BSI',        country: 'Germany',        flag: '🇩🇪', region: 'de' },
-  { id: 'IT-Grundschutz',                    label: 'IT-Grundschutz',                    desc: 'BSI IT-Grundschutz Compendium — Baseline Protection Methodology',                         country: 'Germany',        flag: '🇩🇪', region: 'de' },
+  { id: 'BSI C5:2020',                       label: 'BSI C5:2020',                       desc: 'Cloud Computing Compliance Criteria Catalogue — Federal Office for Information Security', country: 'Germany',        flag: '🇩🇪', region: 'de', logoUrl: 'https://www.bsi.bund.de/SiteGlobals/Frontend/Images/logo-bsi-smaller.svg?__blob=normal&v=3' },
+  { id: 'BSI C3A:2026',                      label: 'BSI C3A:2026',                      desc: 'Cloud Computing – Sicherheitsanforderungen für die Kategorie wichtig (C3A) — BSI',        country: 'Germany',        flag: '🇩🇪', region: 'de', logoUrl: 'https://www.bsi.bund.de/SiteGlobals/Frontend/Images/logo-bsi-smaller.svg?__blob=normal&v=3' },
+  { id: 'IT-Grundschutz',                    label: 'IT-Grundschutz',                    desc: 'BSI IT-Grundschutz Compendium — Baseline Protection Methodology',                         country: 'Germany',        flag: '🇩🇪', region: 'de', logoUrl: 'https://www.bsi.bund.de/SiteGlobals/Frontend/Images/logo-bsi-smaller.svg?__blob=normal&v=3' },
   { id: 'TISAX',                             label: 'TISAX',                             desc: 'Trusted Information Security Assessment Exchange — VDA/ENX Automotive',                 country: 'Germany',        flag: '🇩🇪', region: 'de' },
   // ── France ────────────────────────────────────────────────────────────────
   { id: 'ANSSI SecNumCloud',                 label: 'ANSSI SecNumCloud',                 desc: 'French National Cybersecurity Agency Cloud Service Provider Qualification',             country: 'France',         flag: '🇫🇷', region: 'fr' },
@@ -540,7 +540,35 @@ export const FRAMEWORKS = [
   // ── Internal ──────────────────────────────────────────────────────────────
   { id: 'Internal Governance',               label: 'Internal Governance',               desc: 'Internal organizational policies and procedures',                                       country: 'Other',          flag: '🏢', region: 'internal' },
   { id: 'FinOps Foundation',                 label: 'FinOps Foundation',                 desc: 'Cloud financial management best practices',                                             country: 'Other',          flag: '🏢', region: 'internal' },
-]
+] as const
+
+function frameworkHashColor(id: string): string {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0x7fffffff
+  return `hsl(${h % 360} 70% 45%)`
+}
+
+function frameworkInitials(label: string): string {
+  return label
+    .split(/\s+/)
+    .filter(w => w && /[A-Za-z0-9]/.test(w))
+    .map(w => w[0].toUpperCase())
+    .slice(0, 3)
+    .join('')
+}
+
+function makeFrameworkLogo(fw: typeof FRAMEWORKS_RAW[number]): string {
+  if ('logoUrl' in fw && typeof fw.logoUrl === 'string' && fw.logoUrl) {
+    return fw.logoUrl
+  }
+  const bg = frameworkHashColor(fw.id)
+  const text = frameworkInitials(fw.label)
+  const fontSize = text.length > 2 ? 18 : 24
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><rect width="64" height="64" rx="12" fill="${bg}"/><text x="32" y="37" text-anchor="middle" font-size="${fontSize}" font-weight="800" fill="white" font-family="ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif">${text}</text></svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+export const FRAMEWORKS = FRAMEWORKS_RAW.map(f => ({ ...f, logo: makeFrameworkLogo(f) }))
 
 export const PILLAR_COLOR: Record<string, string> = {
   security:       '#DA2C38',

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRun, Finding, PlanChange, PlanChanges, RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
+import {
+  SocStyles, SectionCard, KpiTile, SegmentedTabs,
+  ListIcon,
+} from './shared/SocComponents'
 
 interface Props { run: RunDetail; runs: RunSummary[] }
 
@@ -167,24 +171,24 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
           <strong>⚠ Security-sensitive attributes changing:</strong>{' '}{securityChanges.map(c => c.key).join(', ')}
         </div>
       )}
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem' }}>
+      <table className="changes-attr-table">
         <thead>
-          <tr style={{ background: 'var(--bg)' }}>
-            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: 'var(--muted)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, width: '22%' }}>Attribute</th>
-            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: beforeColor, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, width: '39%' }}>{beforeLabel}</th>
-            <th style={{ padding: '0.3rem 0.6rem', textAlign: 'left', color: afterColor,  fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, width: '39%' }}>{afterLabel}</th>
+          <tr>
+            <th>Attribute</th>
+            <th style={{ color: beforeColor }}>{beforeLabel}</th>
+            <th style={{ color: afterColor }}>{afterLabel}</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(({ key, before: b, after: a, isUnknown, isSecurity }) => (
-            <tr key={key} style={{ borderTop: '1px solid var(--border)', background: isSecurity ? 'rgba(217,119,6,.04)' : undefined }}>
-              <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', color: isSecurity ? '#d97706' : 'var(--muted)', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+            <tr key={key} style={{ background: isSecurity ? 'rgba(217,119,6,.04)' : undefined }}>
+              <td style={{ color: isSecurity ? '#d97706' : 'var(--muted)' }}>
                 {isSecurity && <span style={{ marginRight: '0.2rem' }}>⚠</span>}{key}
               </td>
-              <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', verticalAlign: 'top', wordBreak: 'break-word', background: 'rgba(220,38,38,.04)', borderRight: '2px solid rgba(220,38,38,.12)' }}>
+              <td style={{ background: 'rgba(220,38,38,.04)', borderRight: '2px solid rgba(220,38,38,.12)' }}>
                 {b !== undefined ? renderAttrValue(b) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
               </td>
-              <td style={{ padding: '0.35rem 0.6rem', fontFamily: 'monospace', verticalAlign: 'top', wordBreak: 'break-word', background: 'rgba(22,163,74,.04)' }}>
+              <td style={{ background: 'rgba(22,163,74,.04)' }}>
                 {a !== undefined ? renderAttrValue(a, isUnknown) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
               </td>
             </tr>
@@ -199,10 +203,10 @@ function TailbreakAlert({ type }: { type: string }) {
   const { t } = useI18n()
   const risks = getTailbreakRisks(type)
   return (
-    <div style={{ padding: '0.7rem 0.85rem', borderRadius: '8px', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.22)', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#dc2626' }}>{t('pages.changes.tailbreakAlert')}</div>
-      <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-        {risks.map((r, i) => <li key={i} style={{ fontSize: '0.77rem', color: '#7f1d1d', lineHeight: 1.55 }}>{r}</li>)}
+    <div className="changes-alert changes-alert--danger">
+      <div className="changes-alert__title">{t('pages.changes.tailbreakAlert')}</div>
+      <ul>
+        {risks.map((r, i) => <li key={i}>{r}</li>)}
       </ul>
     </div>
   )
@@ -212,7 +216,7 @@ function CreateDetail({ after, afterUnknown }: { after: Attrs | null | undefined
   const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'rgba(22,163,74,.07)', border: '1px solid rgba(22,163,74,.2)', fontSize: '0.77rem', color: '#14532d' }}>
+      <div className="changes-alert changes-alert--success">
         This resource will be <strong>created</strong>. Attributes marked <em>({t('pages.changes.computedAtApply').replace('(', '').replace(')', '')})</em> will be assigned by the provider.
       </div>
       <div>
@@ -227,7 +231,7 @@ function UpdateDetail({ before, after, afterUnknown }: { before: Attrs | null | 
   const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'rgba(217,119,6,.07)', border: '1px solid rgba(217,119,6,.2)', fontSize: '0.77rem', color: '#78350f' }}>
+      <div className="changes-alert changes-alert--warn">
         This resource will be <strong>updated in-place</strong> — no downtime from replacement. Only changed attributes are shown.
       </div>
       <div>
@@ -255,7 +259,7 @@ function ReplaceDetail({ before, after, afterUnknown, type }: { before: Attrs | 
   const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'rgba(124,58,237,.07)', border: '1px solid rgba(124,58,237,.2)', fontSize: '0.77rem', color: '#4c1d95' }}>
+      <div className="changes-alert changes-alert--info">
         <strong>Replace = Destroy + Create.</strong> The existing resource will be <strong>destroyed</strong> and a new one created in its place. This typically causes downtime.
       </div>
       <TailbreakAlert type={type} />
@@ -275,91 +279,70 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
   const afterUnknown = change.after_unknown as Attrs | null | undefined
 
   return (
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 99 }} />
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-        width: '1560px', maxWidth: '95vw', maxHeight: '86vh',
-        background: 'var(--card-bg)', borderRadius: '14px',
-        boxShadow: '0 24px 64px rgba(0,0,0,.4)',
-        display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden',
-      }}>
-        <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '2.1rem', height: '2.1rem', borderRadius: '7px', background: bg, color, fontFamily: 'monospace', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>{icon}</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'monospace', fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)', wordBreak: 'break-all', lineHeight: 1.35 }}>{change.address}</div>
-            <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: bg, color, fontSize: '0.64rem', fontWeight: 700 }}>{label}</span>
-              <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.64rem', fontWeight: 600, fontFamily: 'monospace' }}>{change.type}</span>
-              {change.provider && <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: 'rgba(0,148,255,.08)', color: 'var(--waf-brand)', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>{change.provider}</span>}
-              {change.module_address && <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.64rem', fontFamily: 'monospace' }}>module: {change.module_address}</span>}
+    <div className="changes-modal-portal">
+      <div className="changes-modal-backdrop" onClick={onClose} />
+      <div className="changes-modal">
+        <div className="changes-modal__header">
+          <div className="changes-modal__badge" style={{ background: bg, color }}>{icon}</div>
+          <div className="changes-modal__title-block">
+            <div className="changes-modal__address">{change.address}</div>
+            <div className="changes-modal__meta">
+              <span className="changes-badge" style={{ background: bg, color }}>{label}</span>
+              <span className="changes-badge changes-badge--muted">{change.type}</span>
+              {change.provider && <span className="changes-badge changes-badge--brand">{change.provider}</span>}
+              {change.module_address && <span className="changes-badge changes-badge--muted">module: {change.module_address}</span>}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.4rem', padding: '0 0.15rem', lineHeight: 1, flexShrink: 0 }}>×</button>
+          <button className="changes-modal__close" onClick={onClose}>×</button>
         </div>
-        <div style={{ flex: 1, overflow: 'auto', padding: '1.25rem' }}>
+        <div className="changes-modal__body">
           {change.action === 'create'  && <CreateDetail  after={after} afterUnknown={afterUnknown} />}
           {change.action === 'update'  && <UpdateDetail  before={before} after={after} afterUnknown={afterUnknown} />}
           {change.action === 'delete'  && <DeleteDetail  before={before} type={change.type} />}
           {change.action === 'replace' && <ReplaceDetail before={before} after={after} afterUnknown={afterUnknown} type={change.type} />}
         </div>
-        <div style={{ padding: '0.65rem 1.25rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.4rem 1.1rem', borderRadius: '7px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>{t('pages.changes.close')}</button>
+        <div className="changes-modal__footer">
+          <button className="scc-btn-ghost" onClick={onClose}>{t('pages.changes.close')}</button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
 function ChangeRow({ change, onClick }: { change: PlanChange; onClick: () => void }) {
   const { color, bg, icon } = actionMeta(change.action)
   return (
-    <tr onClick={onClick} style={{ borderTop: '1px solid var(--border)', cursor: 'pointer' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--bg)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = '' }}>
-      <td style={{ padding: '0.65rem 0.75rem', width: '2.25rem', textAlign: 'center' }}>
+    <tr onClick={onClick} className="changes-row">
+      <td style={{ width: '2.25rem', textAlign: 'center' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5rem', height: '1.5rem', borderRadius: '5px', background: bg, color, fontFamily: 'monospace', fontWeight: 800, fontSize: '0.8rem' }}>{icon}</span>
       </td>
-      <td style={{ padding: '0.65rem 0.5rem' }}>
+      <td>
         <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text)', fontWeight: 600 }}>{change.address}</div>
         {change.module_address && <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.1rem' }}>module: {change.module_address}</div>}
       </td>
-      <td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}><span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--muted)' }}>{change.type}</span></td>
-      <td style={{ padding: '0.65rem 0.5rem', whiteSpace: 'nowrap' }}>
-        {change.provider && <span style={{ padding: '0.1rem 0.4rem', borderRadius: '999px', background: 'rgba(0,148,255,.08)', color: 'var(--waf-brand)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>{change.provider}</span>}
+      <td style={{ whiteSpace: 'nowrap' }}><span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--muted)' }}>{change.type}</span></td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        {change.provider && <span className="changes-badge changes-badge--brand">{change.provider}</span>}
       </td>
-      <td style={{ padding: '0.65rem 0.75rem', whiteSpace: 'nowrap' }}>
-        <span style={{ padding: '0.15rem 0.5rem', borderRadius: '999px', background: bg, color, fontSize: '0.68rem', fontWeight: 700 }}>{actionMeta(change.action).label}</span>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        <span className="changes-badge" style={{ background: bg, color }}>{actionMeta(change.action).label}</span>
       </td>
     </tr>
-  )
-}
-
-function SummaryPill({ count, action }: { count: number; action: string }) {
-  const { label, color, bg, icon } = actionMeta(action)
-  if (count === 0) return null
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 1.25rem', borderRadius: '12px', background: bg, border: `1px solid ${color}33`, minWidth: '90px' }}>
-      <div style={{ fontSize: '1.875rem', fontWeight: 800, color, lineHeight: 1 }}>{count}</div>
-      <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginTop: '0.2rem' }}>
-        <span style={{ marginRight: '0.25rem', fontFamily: 'monospace', fontWeight: 800 }}>{icon}</span>{label}
-      </div>
-    </div>
   )
 }
 
 function NoChanges({ plan }: { plan: PlanChanges }) {
   const { t } = useI18n()
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 2rem', gap: '1rem', textAlign: 'center' }}>
-      <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', background: 'rgba(22,163,74,.1)', border: '2px solid rgba(22,163,74,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="changes-empty">
+      <div className="changes-empty__icon">
         <svg style={{ width: '1.75rem', height: '1.75rem', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
       <div>
-        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#16a34a' }}>{t('pages.changes.noPlanChanges')}</div>
-        <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginTop: '0.35rem' }}>{t('pages.changes.noPlanChangesDesc')}</div>
+        <div className="changes-empty__title">{t('pages.changes.noPlanChanges')}</div>
+        <div className="changes-empty__desc">{t('pages.changes.noPlanChangesDesc')}</div>
       </div>
       {plan.summary.no_op > 0 && <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t('pages.changes.resourcesUpToDate', { count: String(plan.summary.no_op), s: plan.summary.no_op !== 1 ? 's' : '' })}</div>}
     </div>
@@ -378,7 +361,7 @@ function NoPlanData({ run }: { run: RunDetail }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '680px' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '1rem 1.1rem', borderRadius: '10px', background: 'rgba(148,163,184,.08)', border: '1px solid rgba(148,163,184,.2)' }}>
+      <div className="changes-banner changes-banner--info">
         <div>
           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>{t('pages.changes.noPlanData')}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -387,11 +370,11 @@ function NoPlanData({ run }: { run: RunDetail }) {
         </div>
       </div>
       <div>
-        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.changes.howToIncludePlan')}</div>
+        <SectionLabel>{t('pages.changes.howToIncludePlan')}</SectionLabel>
         <div style={{ position: 'relative' }}>
-          <pre style={{ background: '#0f172a', color: '#e2e8f0', borderRadius: '8px', padding: '0.875rem 3rem 0.875rem 0.875rem', fontSize: '0.78rem', overflowX: 'auto', lineHeight: 1.8, margin: 0 }}>{cmd}</pre>
+          <pre className="changes-code">{cmd}</pre>
           <button onClick={() => navigator.clipboard.writeText(cmd).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })}
-            style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: '5px', color: copied ? '#22c55e' : '#94a3b8', fontSize: '0.65rem', padding: '0.2rem 0.5rem', cursor: 'pointer' }}>
+            className="changes-copy-btn">
             {copied ? t('common.copied') : t('common.copy')}
           </button>
         </div>
@@ -438,28 +421,28 @@ function DriftCard({ item, direction }: { item: DriftItem; direction: 'regressed
   const [open, setOpen] = useState(false)
   const color = direction === 'regressed' ? (SEV_COLOR[item.severity?.toLowerCase()] ?? '#94a3b8') : '#059669'
   return (
-    <div style={{ border: `1px solid ${color}33`, borderRadius: 8, marginBottom: 8, overflow: 'hidden', background: `${color}08` }}>
-      <div style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 10 }} onClick={() => setOpen(o => !o)}>
-        <span style={{ fontSize: 10, fontWeight: 700, color, background: `${color}22`, border: `1px solid ${color}44`, borderRadius: 4, padding: '2px 6px', textTransform: 'uppercase', flexShrink: 0, marginTop: 1 }}>
+    <div className="changes-drift-card" style={{ borderColor: `${color}33`, background: `${color}08` }}>
+      <div className="changes-drift-card__header" onClick={() => setOpen(o => !o)}>
+        <span className="changes-sev-badge" style={{ color, borderColor: `${color}44`, background: `${color}22` }}>
           {item.severity}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{item.check_title || item.control_id}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{item.resource}</div>
+          <div className="changes-drift-card__title">{item.check_title || item.control_id}</div>
+          <div className="changes-drift-card__resource">{item.resource}</div>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
+        <span className="changes-drift-card__chevron">{open ? '▲' : '▼'}</span>
       </div>
       {open && (
-        <div style={{ padding: '0 14px 12px', borderTop: `1px solid ${color}22` }}>
-          <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.message}</div>
+        <div className="changes-drift-card__body" style={{ borderTopColor: `${color}22` }}>
+          <div className="changes-drift-card__message">{item.message}</div>
           {item.remediation && (
-            <div style={{ marginTop: 8, padding: '8px 10px', background: 'var(--bg-secondary)', borderRadius: 6, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-secondary)' }}>{t('pages.changes.remediation')}</strong> {item.remediation}
+            <div className="changes-drift-card__remediation">
+              <strong>{t('pages.changes.remediation')}</strong> {item.remediation}
             </div>
           )}
-          <div style={{ marginTop: 6, display: 'flex', gap: 6 }}>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderRadius: 4, padding: '2px 6px' }}>{item.pillar}</span>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderRadius: 4, padding: '2px 6px', fontFamily: 'monospace' }}>{item.check_id}</span>
+          <div className="changes-drift-card__tags">
+            <span>{item.pillar}</span>
+            <span style={{ fontFamily: 'monospace' }}>{item.check_id}</span>
           </div>
         </div>
       )}
@@ -476,12 +459,12 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
     .slice(-12)
 
   if (sorted.length < 2) return (
-    <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
+    <div style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center', padding: '16px 0' }}>
       {t('pages.changes.needMoreRuns')}
     </div>
   )
 
-  const W = 280, H = 72, PAD = 8
+  const W = 240, H = 72, PAD = 8
   const scores = sorted.map(r => r.score)
   const min = Math.max(0, Math.min(...scores) - 5)
   const max = Math.min(100, Math.max(...scores) + 5)
@@ -499,13 +482,13 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
         const c = r.score >= 80 ? '#059669' : r.score >= 60 ? '#d97706' : '#dc2626'
         return (
           <g key={r.id}>
-            <circle cx={px(i)} cy={py(r.score)} r={isCur ? 5 : 3} fill={isCur ? c : 'var(--card-bg)'} stroke={c} strokeWidth={isCur ? 2 : 1.5} />
+            <circle cx={px(i)} cy={py(r.score)} r={isCur ? 5 : 3} fill={isCur ? c : 'var(--surface)'} stroke={c} strokeWidth={isCur ? 2 : 1.5} />
             {isCur && <text x={px(i)} y={py(r.score) - 8} textAnchor="middle" fontSize={9} fill={c} fontWeight={700}>{r.score}</text>}
           </g>
         )
       })}
-      <text x={PAD} y={H} fontSize={8} fill="var(--text-muted)">{sorted[0].score}</text>
-      <text x={W - PAD} y={H} fontSize={8} fill="var(--text-muted)" textAnchor="end">{sorted[sorted.length - 1].score}</text>
+      <text x={PAD} y={H} fontSize={8} fill="var(--muted)">{sorted[0].score}</text>
+      <text x={W - PAD} y={H} fontSize={8} fill="var(--muted)" textAnchor="end">{sorted[sorted.length - 1].score}</text>
     </svg>
   )
 }
@@ -521,77 +504,65 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: 300, flexShrink: 0 }}>
-
-      {/* Score trend */}
-      <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{t('pages.changes.scoreTrend')} · {run.project}</div>
+    <div className="changes-sidebar">
+      <SectionCard title={t('pages.changes.scoreTrend')} subtitle={`${run.project} · ${t('pages.changes.runsLabel', { count: String(projectRuns.length), s: projectRuns.length !== 1 ? 's' : '' })}`}>
         <ScoreTrend projectRuns={projectRuns} currentId={run.id} />
-        <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)' }}>
-          <span>{t('pages.changes.oldest')}</span><span>{t('pages.changes.runsLabel', { count: String(projectRuns.length), s: projectRuns.length !== 1 ? 's' : '' })}</span><span>{t('pages.changes.latest')}</span>
-        </div>
-      </div>
+      </SectionCard>
 
-      {/* Pillar delta */}
       {prevRun && (
-        <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{t('pages.changes.pillarDelta')}</div>
+        <SectionCard title={t('pages.changes.pillarDelta')}>
           {Object.entries(run.pillar_scores).map(([pillar, score]) => {
             const prev = prevRun.pillar_scores[pillar] ?? score
             const delta = score - prev
             return (
-              <div key={pillar} style={{ marginBottom: 7 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', maxWidth: 170, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pillar}</span>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: delta > 0 ? '#059669' : delta < 0 ? '#dc2626' : 'var(--text-muted)' }}>
+              <div key={pillar} style={{ marginBottom: '0.55rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.15rem' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pillar}</span>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: delta > 0 ? '#059669' : delta < 0 ? '#dc2626' : 'var(--muted)' }}>
                       {delta > 0 ? '+' : ''}{delta !== 0 ? delta.toFixed(0) : '—'}
                     </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', width: 26, textAlign: 'right' }}>{score.toFixed(0)}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text)', width: 24, textAlign: 'right' }}>{score.toFixed(0)}</span>
                   </div>
                 </div>
-                <div style={{ height: 4, background: 'var(--bg-secondary)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: 'var(--bg)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${score}%`, background: score >= 80 ? '#059669' : score >= 60 ? '#d97706' : '#dc2626', borderRadius: 2 }} />
                 </div>
               </div>
             )
           })}
-        </div>
+        </SectionCard>
       )}
 
-      {/* Plan summary */}
       {run.plan_changes && (
-        <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{t('pages.changes.planSummary')}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <SectionCard title={t('pages.changes.planSummary')}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {(Object.entries(run.plan_changes.summary) as [string, number][]).filter(([, v]) => v > 0).map(([key, val]) => {
               const meta = actionMeta(key === 'add' ? 'create' : key === 'change' ? 'update' : key === 'destroy' ? 'delete' : key)
               return (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, background: meta.bg, border: `1px solid ${meta.color}33` }}>
-                  <span style={{ fontWeight: 700, color: meta.color, fontSize: 14 }}>{meta.icon}</span>
-                  <span style={{ fontWeight: 700, color: meta.color, fontSize: 13 }}>{val}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{key}</span>
+                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', background: meta.bg, border: `1px solid ${meta.color}33` }}>
+                  <span style={{ fontWeight: 700, color: meta.color, fontSize: '0.75rem', fontFamily: 'monospace' }}>{meta.icon}</span>
+                  <span style={{ fontWeight: 700, color: meta.color, fontSize: '0.75rem' }}>{val}</span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'capitalize' }}>{key}</span>
                 </div>
               )
             })}
           </div>
-          <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-muted)' }}>
+          <div style={{ marginTop: '0.65rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
             Terraform {run.plan_changes.terraform_version} · {new Date(run.plan_changes.scanned_at).toLocaleString()}
           </div>
-        </div>
+        </SectionCard>
       )}
 
-      {/* Baseline run */}
       {prevRun && (
-        <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>{t('pages.changes.driftBaseline')}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+        <SectionCard title={t('pages.changes.driftBaseline')}>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.7 }}>
             <div><strong>Branch:</strong> {prevRun.branch}</div>
             <div><strong>Score:</strong> {prevRun.score}</div>
             <div><strong>SHA:</strong> <span style={{ fontFamily: 'monospace' }}>{prevRun.git_sha?.slice(0, 8)}</span></div>
             <div><strong>Date:</strong> {new Date(prevRun.created_at).toLocaleString()}</div>
           </div>
-        </div>
+        </SectionCard>
       )}
     </div>
   )
@@ -622,63 +593,56 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
     return true
   })
 
-  const selectStyle = { background: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none' }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="changes-tab-stack">
       {selected && <ChangeDetailModal change={selected} onClose={() => setSelected(null)} />}
 
-      <div style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: 'rgba(0,148,255,.05)', border: '1px solid rgba(0,148,255,.15)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
-        <div><span style={{ fontWeight: 600, color: 'var(--text)' }}>{t('pages.changes.terraform')}</span>{plan.terraform_version && <span style={{ marginLeft: '0.35rem', fontFamily: 'monospace' }}>v{plan.terraform_version}</span>}</div>
+      <div className="changes-banner changes-banner--brand">
+        <div><span style={{ fontWeight: 700, color: 'var(--text)' }}>{t('pages.changes.terraform')}</span>{plan.terraform_version && <span style={{ marginLeft: '0.35rem', fontFamily: 'monospace' }}>v{plan.terraform_version}</span>}</div>
         {plan.scanned_at && <div>{t('pages.changes.planCaptured')} <span style={{ color: 'var(--text)' }}>{new Date(plan.scanned_at).toLocaleString()}</span></div>}
-        <div style={{ marginLeft: 'auto', fontWeight: 600, color: totalChanges > 0 ? '#d97706' : '#16a34a' }}>
+        <div style={{ marginLeft: 'auto', fontWeight: 700, color: totalChanges > 0 ? '#d97706' : '#16a34a' }}>
           {totalChanges === 0 ? t('pages.changes.noChanges') : t('pages.changes.resourceChanges', { count: String(totalChanges), s: totalChanges !== 1 ? 's' : '' })}
         </div>
       </div>
 
       {totalChanges === 0 ? (
-        <div className="card" style={{ padding: 0 }}><NoChanges plan={plan} /></div>
+        <SectionCard title={t('pages.changes.planChangesTitle')}>
+          <NoChanges plan={plan} />
+        </SectionCard>
       ) : (
         <>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <SummaryPill count={plan.summary.add}     action="create"  />
-            <SummaryPill count={plan.summary.change}  action="update"  />
-            <SummaryPill count={plan.summary.replace} action="replace" />
-            <SummaryPill count={plan.summary.destroy} action="delete"  />
-            {plan.summary.no_op > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0.5rem 0.75rem', borderRadius: '10px', background: 'var(--bg)', border: '1px solid var(--border)', fontSize: '0.72rem', color: 'var(--muted)' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{plan.summary.no_op}</span><span>{t('pages.changes.unchanged')}</span>
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <input placeholder={t('pages.changes.searchAddressOrType')} value={search} onChange={e => setSearch(e.target.value)} style={{ ...selectStyle, flex: '1', minWidth: '200px' }} />
-            <select value={actionFilter} onChange={e => setActionFilter(e.target.value)} style={selectStyle}>
-              <option value="">{t('pages.changes.allActions')}</option>
-              <option value="create">Add</option>
-              <option value="update">Change</option>
-              <option value="replace">Replace</option>
-              <option value="delete">Destroy</option>
-            </select>
-            {providers.length > 1 && (
-              <select value={providerFilter} onChange={e => setProviderFilter(e.target.value)} style={selectStyle}>
-                <option value="">{t('pages.changes.allProviders')}</option>
-                {providers.map(p => <option key={p}>{p}</option>)}
+          <SectionCard title={t('pages.changes.planChangesTitle')} subtitle={`${filtered.length} / ${plan.changes.length}`}>
+            <div className="changes-toolbar">
+              <input
+                className="changes-input"
+                placeholder={t('pages.changes.searchAddressOrType')}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ flex: 1, minWidth: '200px' }}
+              />
+              <select className="scc-select" value={actionFilter} onChange={e => setActionFilter(e.target.value)}>
+                <option value="">{t('pages.changes.allActions')}</option>
+                <option value="create">Add</option>
+                <option value="update">Change</option>
+                <option value="replace">Replace</option>
+                <option value="delete">Destroy</option>
               </select>
-            )}
-            <span style={{ fontSize: '0.75rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{filtered.length} / {plan.changes.length}</span>
-          </div>
-
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              {providers.length > 1 && (
+                <select className="scc-select" value={providerFilter} onChange={e => setProviderFilter(e.target.value)}>
+                  <option value="">{t('pages.changes.allProviders')}</option>
+                  {providers.map(p => <option key={p}>{p}</option>)}
+                </select>
+              )}
+            </div>
+            <div className="changes-table-wrap" style={{ marginTop: '0.75rem' }}>
+              <table className="changes-table">
                 <thead>
-                  <tr style={{ background: 'var(--bg)' }}>
-                    <th style={{ padding: '0.6rem 0.75rem', width: '2.25rem' }} />
-                    {(['Address', 'Type', 'Provider', 'Action'] as const).map(h => (
-                      <th key={h} style={{ padding: '0.6rem 0.5rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                    ))}
+                  <tr>
+                    <th style={{ width: '2.25rem' }} />
+                    <th>{t('pages.changes.colResource')}</th>
+                    <th>{t('pages.changes.colType')}</th>
+                    <th>{t('pages.changes.colProvider')}</th>
+                    <th>{t('pages.changes.colAction')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -689,8 +653,8 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
                 </tbody>
               </table>
             </div>
-            {filtered.length > 0 && <div style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.changes.clickForDetail')}</div>}
-          </div>
+            {filtered.length > 0 && <div className="changes-table-hint">{t('pages.changes.clickForDetail')}</div>}
+          </SectionCard>
 
           {plan.changes.length > 0 && (() => {
             const byType = plan.changes.reduce<Record<string, { add: number; update: number; delete: number; replace: number }>>((acc, c) => {
@@ -708,26 +672,25 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
             })
             if (!rows.length) return null
             return (
-              <div className="card">
-                <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.875rem' }}>{t('pages.changes.byResourceType')}</h2>
+              <SectionCard title={t('pages.changes.byResourceType')}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   {rows.map(([type, counts]) => {
                     const total = counts.add + counts.update + counts.delete + counts.replace
                     return (
-                      <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8rem' }}>
-                        <span style={{ fontFamily: 'monospace', color: 'var(--text)', flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{type}</span>
-                        <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
-                          {counts.add > 0     && <span style={{ padding: '0.1rem 0.4rem', borderRadius: '5px', background: 'rgba(22,163,74,.1)',   color: '#16a34a', fontSize: '0.68rem', fontWeight: 700 }}>+{counts.add}</span>}
-                          {counts.update > 0  && <span style={{ padding: '0.1rem 0.4rem', borderRadius: '5px', background: 'rgba(217,119,6,.1)',  color: '#d97706', fontSize: '0.68rem', fontWeight: 700 }}>~{counts.update}</span>}
-                          {counts.replace > 0 && <span style={{ padding: '0.1rem 0.4rem', borderRadius: '5px', background: 'rgba(124,58,237,.1)', color: '#7c3aed', fontSize: '0.68rem', fontWeight: 700 }}>⟳{counts.replace}</span>}
-                          {counts.delete > 0  && <span style={{ padding: '0.1rem 0.4rem', borderRadius: '5px', background: 'rgba(220,38,38,.1)',  color: '#dc2626', fontSize: '0.68rem', fontWeight: 700 }}>−{counts.delete}</span>}
+                      <div key={type} className="changes-breakdown-row">
+                        <span className="changes-breakdown-row__type">{type}</span>
+                        <div className="changes-breakdown-row__badges">
+                          {counts.add > 0     && <span className="changes-breakdown-row__badge changes-breakdown-row__badge--add">+{counts.add}</span>}
+                          {counts.update > 0  && <span className="changes-breakdown-row__badge changes-breakdown-row__badge--change">~{counts.update}</span>}
+                          {counts.replace > 0 && <span className="changes-breakdown-row__badge changes-breakdown-row__badge--replace">⟳{counts.replace}</span>}
+                          {counts.delete > 0  && <span className="changes-breakdown-row__badge changes-breakdown-row__badge--delete">−{counts.delete}</span>}
                         </div>
-                        <span style={{ color: 'var(--muted)', fontSize: '0.7rem', flexShrink: 0, minWidth: '1.5rem', textAlign: 'right' }}>{total}</span>
+                        <span className="changes-breakdown-row__total">{total}</span>
                       </div>
                     )
                   })}
                 </div>
-              </div>
+              </SectionCard>
             )
           })()}
         </>
@@ -751,14 +714,18 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
     (!pillarFilter || i.pillar === pillarFilter) && (!sevFilter || i.severity?.toLowerCase() === sevFilter)
   ), [items, pillarFilter, sevFilter])
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 14 }}>{t('pages.changes.loadingBaseline')}</div>
+  const title = direction === 'regressed' ? t('pages.changes.regressed') : t('pages.changes.recovered')
+
+  if (loading) return <SectionCard title={title}><div className="scc-empty">{t('pages.changes.loadingBaseline')}</div></SectionCard>
 
   if (!prevRun) return (
-    <div style={{ textAlign: 'center', padding: '40px 20px', border: '1px dashed var(--card-border)', borderRadius: 10, color: 'var(--text-muted)', fontSize: 14 }}>
-      <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
-      <strong>{t('pages.changes.noPreviousRun')}</strong>
-      <div style={{ marginTop: 6, fontSize: 12 }}>{t('pages.changes.needAtLeastTwo')}</div>
-    </div>
+    <SectionCard title={title}>
+      <div className="changes-empty" style={{ padding: '2.5rem 1rem' }}>
+        <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
+        <strong>{t('pages.changes.noPreviousRun')}</strong>
+        <div style={{ marginTop: 6, fontSize: 12 }}>{t('pages.changes.needAtLeastTwo')}</div>
+      </div>
+    </SectionCard>
   )
 
   const emptyMsg = direction === 'regressed'
@@ -766,22 +733,23 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
     : t('pages.changes.noRecovered')
 
   return (
-    <div>
+    <SectionCard title={title} subtitle={items.length > 0
+      ? (direction === 'regressed'
+          ? t('pages.changes.driftSummaryRegressed', { count: String(filtered.length), s: filtered.length !== 1 ? 's' : '' })
+          : t('pages.changes.driftSummaryRecovered', { count: String(filtered.length), s: filtered.length !== 1 ? 's' : '' }))
+      : undefined}>
       {items.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-          <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)}
-            style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: 12 }}>
+        <div className="changes-toolbar">
+          <select className="scc-select" value={pillarFilter} onChange={e => setPillarFilter(e.target.value)}>
             <option value="">{t('pages.changes.allPillars')}</option>
             {pillars.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
-          <select value={sevFilter} onChange={e => setSevFilter(e.target.value)}
-            style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: 12 }}>
+          <select className="scc-select" value={sevFilter} onChange={e => setSevFilter(e.target.value)}>
             <option value="">{t('pages.changes.allSeverities')}</option>
             {['critical', 'high', 'medium', 'low', 'info'].map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           {(pillarFilter || sevFilter) && (
-            <button onClick={() => { setPillarFilter(''); setSevFilter('') }}
-              style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>
+            <button className="scc-btn-ghost" onClick={() => { setPillarFilter(''); setSevFilter('') }}>
               {t('pages.changes.clear')}
             </button>
           )}
@@ -789,20 +757,15 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
       )}
 
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 32, border: '1px dashed var(--card-border)', borderRadius: 10, color: direction === 'regressed' ? '#059669' : 'var(--text-muted)', fontSize: 14 }}>
+        <div className="changes-empty" style={{ border: '1px dashed var(--border)', borderRadius: 12, padding: '2rem 1rem' }}>
           {emptyMsg}
         </div>
       ) : (
-        <>
-          <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
-            {direction === 'regressed'
-              ? t('pages.changes.driftSummaryRegressed', { count: String(filtered.length), s: filtered.length !== 1 ? 's' : '' })
-              : t('pages.changes.driftSummaryRecovered', { count: String(filtered.length), s: filtered.length !== 1 ? 's' : '' })}
-          </div>
+        <div style={{ marginTop: '0.5rem' }}>
           {filtered.map((item, i) => <DriftCard key={i} item={item} direction={direction} />)}
-        </>
+        </div>
       )}
-    </div>
+    </SectionCard>
   )
 }
 
@@ -814,7 +777,6 @@ export default function ChangesPage({ run, runs }: Props) {
   const [prevRun, setPrevRun] = useState<RunDetail | null>(null)
   const [prevLoading, setPrevLoading] = useState(false)
 
-  // Previous run for same project
   const prevRunSummary = useMemo(() => {
     const curTime = new Date(run.created_at).getTime()
     return runs
@@ -834,78 +796,519 @@ export default function ChangesPage({ run, runs }: Props) {
     return computeDrift(prevRun, run)
   }, [prevRun, run])
 
-  const planTotal = run.plan_changes
-    ? (run.plan_changes.summary.add ?? 0) + (run.plan_changes.summary.change ?? 0)
-      + (run.plan_changes.summary.destroy ?? 0) + (run.plan_changes.summary.replace ?? 0)
-    : 0
+  const plan = run.plan_changes
+  const add = plan?.summary.add ?? 0
+  const change = plan?.summary.change ?? 0
+  const replace = plan?.summary.replace ?? 0
+  const destroy = plan?.summary.destroy ?? 0
+  const noOp = plan?.summary.no_op ?? 0
 
-  const scoreDelta = prevRun ? run.score - prevRun.score : null
-
-  const tabs: [typeof tab, string, string][] = [
-    ['plan',       t('pages.changes.tabPlanChanges', { count: String(planTotal) }),       '#2563eb'],
-    ['regressed',  t('pages.changes.tabRegressed',   { count: String(regressed.length) }), '#dc2626'],
-    ['recovered',  t('pages.changes.tabRecovered',   { count: String(recovered.length) }), '#059669'],
+  const tabs = [
+    { key: 'plan' as const, label: t('pages.changes.tabPlanChanges', { count: String(add + change + replace + destroy) }) },
+    { key: 'regressed' as const, label: t('pages.changes.tabRegressed', { count: String(regressed.length) }) },
+    { key: 'recovered' as const, label: t('pages.changes.tabRecovered', { count: String(recovered.length) }) },
   ]
 
   return (
-    <div style={{ padding: '0 0 24px', maxWidth: 1280, margin: '0 auto' }}>
+    <div className="changes-root">
+      <SocStyles />
+      <style>{changesPageCss}</style>
 
-      {/* Summary strip */}
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        {scoreDelta !== null && (
-          <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--card-bg)', border: '1px solid var(--card-border)', textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: scoreDelta > 0 ? '#059669' : scoreDelta < 0 ? '#dc2626' : 'var(--text-muted)' }}>
-              {scoreDelta > 0 ? '+' : ''}{scoreDelta}
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{t('pages.changes.scoreDelta')}</div>
-          </div>
-        )}
-        {planTotal > 0 && (
-          <div style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--card-bg)', border: '1px solid var(--card-border)', textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#d97706' }}>{planTotal}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{t('pages.changes.infraChanges')}</div>
-          </div>
-        )}
-        {regressed.length > 0 && (
-          <div style={{ padding: '10px 16px', borderRadius: 8, background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.2)', textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#dc2626' }}>{regressed.length}</div>
-            <div style={{ fontSize: 10, color: '#dc2626' }}>{t('pages.changes.regressionsLabel')}</div>
-          </div>
-        )}
-        {recovered.length > 0 && (
-          <div style={{ padding: '10px 16px', borderRadius: 8, background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.2)', textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#059669' }}>{recovered.length}</div>
-            <div style={{ fontSize: 10, color: '#059669' }}>{t('pages.changes.recoveredLabel')}</div>
-          </div>
-        )}
+      <div className="changes-hero">
+        <div className="changes-hero__main">
+          <div className="changes-hero__badge"><ListIcon /> Changes & Drift</div>
+          <h1 className="changes-hero__title">{t('pages.changes.title')}</h1>
+          <p className="changes-hero__subtitle">{t('pages.changes.subtitle')}</p>
+        </div>
       </div>
 
-      {/* Layout */}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+      <div className="scc-kpi-grid" style={{ marginBottom: '1.25rem' }}>
+        <KpiTile label={t('pages.changes.kpiAdd')} value={add} color={actionMeta('create').color} />
+        <KpiTile label={t('pages.changes.kpiChange')} value={change} color={actionMeta('update').color} />
+        <KpiTile label={t('pages.changes.kpiReplace')} value={replace} color={actionMeta('replace').color} />
+        <KpiTile label={t('pages.changes.kpiDestroy')} value={destroy} color={actionMeta('delete').color} />
+        <KpiTile label={t('pages.changes.kpiUnchanged')} value={noOp} color={actionMeta('no-op').color} />
+      </div>
 
-        {/* Main area */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: 2, marginBottom: 18, borderBottom: '1px solid var(--card-border)' }}>
-            {tabs.map(([key, label, color]) => (
-              <button key={key} onClick={() => setTab(key as typeof tab)} style={{
-                padding: '8px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: 'none',
-                borderBottom: tab === key ? `2px solid ${color}` : '2px solid transparent',
-                color: tab === key ? color : 'var(--text-muted)', marginBottom: -1,
-              }}>
-                {label}
-              </button>
-            ))}
+      <div className="changes-layout">
+        <div className="changes-main">
+          <SegmentedTabs options={tabs} value={tab} onChange={setTab} />
+
+          <div style={{ marginTop: '1rem' }}>
+            {tab === 'plan'       && <PlanChangesTab run={run} />}
+            {tab === 'regressed'  && <ComplianceDriftTab items={regressed} direction="regressed" loading={prevLoading} prevRun={prevRun} />}
+            {tab === 'recovered'  && <ComplianceDriftTab items={recovered} direction="recovered" loading={prevLoading} prevRun={prevRun} />}
           </div>
-
-          {tab === 'plan'       && <PlanChangesTab run={run} />}
-          {tab === 'regressed'  && <ComplianceDriftTab items={regressed} direction="regressed" loading={prevLoading} prevRun={prevRun} />}
-          {tab === 'recovered'  && <ComplianceDriftTab items={recovered} direction="recovered" loading={prevLoading} prevRun={prevRun} />}
         </div>
 
-        {/* Sidebar */}
         <Sidebar run={run} runs={runs} prevRun={prevRun} />
       </div>
     </div>
   )
 }
+
+const changesPageCss = `
+.changes-root {
+  padding: 0 0 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.changes-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+.changes-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--waf-brand);
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  margin-bottom: 0.5rem;
+}
+.changes-hero__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+.changes-hero__subtitle {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0.35rem 0 0;
+  max-width: 680px;
+}
+
+.changes-layout {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+.changes-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.changes-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.changes-tab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.changes-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.changes-input {
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.8rem;
+  outline: none;
+}
+.changes-input:focus {
+  border-color: color-mix(in srgb, var(--waf-brand) 40%, transparent);
+}
+.changes-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.changes-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.changes-banner--brand {
+  background: color-mix(in srgb, var(--waf-brand) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
+}
+.changes-banner--info {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.changes-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.changes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.changes-table th {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--bg);
+  white-space: nowrap;
+}
+.changes-table td {
+  padding: 0.65rem 0.75rem;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+.changes-row {
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.changes-row:hover {
+  background: var(--bg);
+}
+.changes-table-hint {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.changes-attr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+.changes-attr-table th {
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  width: 22%;
+  background: var(--bg);
+}
+.changes-attr-table th:nth-child(2) { width: 39%; }
+.changes-attr-table th:nth-child(3) { width: 39%; }
+.changes-attr-table td {
+  padding: 0.35rem 0.6rem;
+  font-family: monospace;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.changes-alert {
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.77rem;
+  line-height: 1.55;
+}
+.changes-alert--success { background: rgba(22,163,74,.07); border: 1px solid rgba(22,163,74,.2); color: #14532d; }
+.changes-alert--warn    { background: rgba(217,119,6,.07); border: 1px solid rgba(217,119,6,.2); color: #78350f; }
+.changes-alert--danger  { background: rgba(220,38,38,.06); border: 1px solid rgba(220,38,38,.22); color: #7f1d1d; }
+.changes-alert--info    { background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.2); color: #4c1d95; }
+.changes-alert__title { font-weight: 700; margin-bottom: 0.35rem; }
+.changes-alert ul { margin: 0; padding-left: 1.25rem; }
+.changes-alert li { font-size: 0.76rem; line-height: 1.55; }
+
+.changes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 0.75rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.changes-empty__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(22,163,74,.1);
+  border: 2px solid rgba(22,163,74,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.changes-empty__title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #16a34a;
+}
+.changes-empty__desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+.changes-code {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.875rem 3rem 0.875rem 0.875rem;
+  font-size: 0.78rem;
+  overflow-x: auto;
+  line-height: 1.8;
+  margin: 0;
+}
+.changes-copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 5px;
+  color: #94a3b8;
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+.changes-copy-btn:hover { color: #e2e8f0; }
+
+.changes-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+.changes-badge--muted {
+  background: var(--bg);
+  color: var(--muted);
+  text-transform: none;
+  font-weight: 600;
+}
+.changes-badge--brand {
+  background: rgba(0,148,255,.08);
+  color: var(--waf-brand);
+}
+
+.changes-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.changes-breakdown-row:last-child { border-bottom: none; }
+.changes-breakdown-row__type {
+  font-family: monospace;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.changes-breakdown-row__badges {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.changes-breakdown-row__badge {
+  padding: 0.1rem 0.4rem;
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.changes-breakdown-row__badge--add    { background: rgba(22,163,74,.1);   color: #16a34a; }
+.changes-breakdown-row__badge--change { background: rgba(217,119,6,.1);  color: #d97706; }
+.changes-breakdown-row__badge--replace{ background: rgba(124,58,237,.1); color: #7c3aed; }
+.changes-breakdown-row__badge--delete { background: rgba(220,38,38,.1);  color: #dc2626; }
+.changes-breakdown-row__total {
+  color: var(--muted);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.changes-drift-card {
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease;
+}
+.changes-drift-card:hover { border-color: color-mix(in srgb, var(--waf-brand) 25%, transparent); }
+.changes-drift-card__header {
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+.changes-drift-card__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.1rem;
+}
+.changes-drift-card__resource {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: monospace;
+}
+.changes-drift-card__chevron {
+  font-size: 0.75rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.changes-drift-card__body {
+  padding: 0 0.85rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.changes-drift-card__message {
+  margin-top: 0.65rem;
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.changes-drift-card__remediation {
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.changes-drift-card__tags {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+}
+.changes-drift-card__tags span {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+}
+.changes-sev-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 5px;
+  padding: 0.15rem 0.45rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.changes-modal-portal { position: fixed; inset: 0; z-index: 99; }
+.changes-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); }
+.changes-modal {
+  position: fixed;
+  top: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1080px, 95vw);
+  max-height: min(80vh, calc(100vh - 6rem));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.4);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+}
+.changes-modal__header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.changes-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 7px;
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+.changes-modal__title-block {
+  flex: 1;
+  min-width: 0;
+}
+.changes-modal__address {
+  font-family: monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.35;
+}
+.changes-modal__meta {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.changes-modal__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 1.4rem;
+  padding: 0 0.15rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.changes-modal__body {
+  flex: 1;
+  overflow: auto;
+  padding: 1.25rem;
+}
+.changes-modal__footer {
+  padding: 0.65rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1100px) {
+  .changes-layout { flex-direction: column; }
+  .changes-sidebar { width: 100%; }
+}
+`

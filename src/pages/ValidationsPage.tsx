@@ -716,9 +716,14 @@ function linkBtnStyle(): React.CSSProperties {
   }
 }
 
-export default function ValidationsPage() {
+export interface ValidationsPageProps {
+  mode?: 'page' | 'panel'
+}
+
+export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps) {
   const { t } = useI18n()
   const { role } = useAuth()
+  const panel = mode === 'panel'
   const [ids, setIds] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('wafpass_validations') ?? '[]') as string[]
@@ -789,22 +794,24 @@ export default function ValidationsPage() {
   const canSubmit = hasMinRole(role ?? 'clevel', 'clevel')
 
   return (
-    <div style={{ padding: '1.25rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={panel ? undefined : { padding: '1.25rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
       <ConnectionBanner />
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', color: 'var(--text)' }}>
-            {t('pages.validations.title')}
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
-            {t('pages.validations.subtitle')}
-          </p>
+      {!panel && (
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', color: 'var(--text)' }}>
+              {t('pages.validations.title')}
+            </h1>
+            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
+              {t('pages.validations.subtitle')}
+            </p>
+          </div>
+          <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
+            Download WAF++ Root CA
+          </a>
         </div>
-        <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
-          Download WAF++ Root CA
-        </a>
-      </div>
+      )}
 
       {canSubmit && (
         <div style={{ marginBottom: '1.5rem' }}>
