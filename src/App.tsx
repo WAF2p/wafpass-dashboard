@@ -70,6 +70,7 @@ const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
 const PipelineOperationsCenter = lazy(() => import('./pages/PipelineOperationsCenter'))
 const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
 const ValidationCenterPage   = lazy(() => import('./pages/ValidationCenterPage'))
+const AboutPage              = lazy(() => import('./pages/AboutPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -435,6 +436,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <AutoFixPage run={run} onBack={() => navigate('dashboard')} />
           ) : page === 'validations' || page === 'shiprun' ? (
             <ValidationCenterPage initialTab={page === 'shiprun' ? 'ship' : 'registry'} />
+          ) : page === 'about' ? (
+            <AboutPage />
           ) : null}
         </Suspense>
         </main>

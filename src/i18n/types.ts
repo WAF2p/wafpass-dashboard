@@ -128,6 +128,7 @@ export interface Translations {
       'compliance-readiness': string
       validations: string
       shiprun: string
+      about: string
     }
     // Phase 3.3 / 6a / 6b — the TopNavigation mandate scope indicator (see
     // components/TopNavigation.tsx's MandateIndicator). A real switcher
@@ -2314,6 +2315,38 @@ export interface Translations {
       hideFull: string
     }
 
+  }
+
+  about: {
+    title: string
+    subtitle: string
+    projectTitle: string
+    projectP1: string
+    projectP2: string
+    missionTitle: string
+    missionP1: string
+    missionP2: string
+    teamTitle: string
+    teamP1: string
+    supportTitle: string
+    supportP1: string
+    supportEmail: string
+    openSourceTitle: string
+    openSourceP1: string
+    openSourceP2: string
+    debugTitle: string
+    debugSubtitle: string
+    componentServer: string
+    componentCore: string
+    componentDashboard: string
+    healthCheck: string
+    apiVersion: string
+    dashboardHealth: string
+    loadingVersion: string
+    versionError: string
+    refresh: string
+    copyDebug: string
+    copiedDebug: string
   }
 
   welcome: {

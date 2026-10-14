@@ -8,6 +8,7 @@ export const ALL_PAGES = [
   'compliance-readiness', 'autofix', 'engineering', 'architecture', 'maturity',
   'validations',
   'shiprun',
+  'about',
   'framework-detail',
 ] as const
 
@@ -69,6 +70,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   maturity: 'Maturity Operations Center',
   validations: 'Validation Center',
   shiprun: 'Validation Center',
+  about: 'About WAF++',
   'framework-detail': 'Framework Detail',
 }
 
@@ -126,6 +128,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   maturity: 'Company and project maturity journey, stage progression, and next milestones',
   validations: 'Unified cryptographic validation center — registry, run submission, and certificate artifacts.',
   shiprun: 'Unified cryptographic validation center — registry, run submission, and certificate artifacts.',
+  about: 'Version, team, and project information about WAF++.',
   'framework-detail': 'Detailed regulatory framework coverage — every mapped WAF++ control and its run status.',
 }
 
