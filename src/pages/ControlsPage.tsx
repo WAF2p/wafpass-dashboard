@@ -76,7 +76,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
   const [activeTab, setActiveTab] = useState<TabId>('overview')
 
   // Waiver tab state
-  const WAIVER_KEY = 'wafpass_waivers'
+  const WAIVER_KEY = 'wombat_waivers'
   const [wReason, setWReason] = useState('')
   const [wOwner, setWOwner] = useState('')
   const [wExpires, setWExpires] = useState('')
@@ -394,7 +394,7 @@ export default function ControlsPage({ controls, findings }: Props) {
           <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isLive ? 'var(--waf-brand)' : '#94a3b8', flexShrink: 0 }} />
           {isLive
             ? <><strong>{source.length} controls</strong> loaded from the active run</>
-            : <>Showing reference set — run <code style={{ fontSize: '0.75rem' }}>wafpass check --output json --push …</code> to see your actual loaded controls</>
+            : <>Showing reference set — run <code style={{ fontSize: '0.75rem' }}>wombat check --output json --push …</code> to see your actual loaded controls</>
           }
         </div>
 

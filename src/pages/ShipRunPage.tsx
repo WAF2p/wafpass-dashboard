@@ -1,5 +1,5 @@
 /**
- * Ship Run for Validation — pick a recent scan run and submit it to the WAF++
+ * Ship Run for Validation — pick a recent scan run and submit it to the Wombat
  * validation gateway for official countersignature.
  */
 import { useEffect, useMemo, useState } from 'react'
@@ -165,9 +165,9 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
 
       // Persist the new validation ID so it appears on ValidationsPage.
       try {
-        const known = JSON.parse(localStorage.getItem('wafpass_validations') ?? '[]') as string[]
+        const known = JSON.parse(localStorage.getItem('wombat_validations') ?? '[]') as string[]
         if (!known.includes(record.validation_id)) {
-          localStorage.setItem('wafpass_validations', JSON.stringify([record.validation_id, ...known]))
+          localStorage.setItem('wombat_validations', JSON.stringify([record.validation_id, ...known]))
         }
       } catch {
         // localStorage failures are non-fatal.
@@ -235,7 +235,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
             <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>Validation gateway URL not configured</span>
           </div>
           <p style={{ margin: '0 0 0.75rem', fontSize: '0.82rem', color: 'var(--muted)' }}>
-            Set the base URL of the WAF++ validation gateway. It is stored locally in this browser and is used when submitting runs for countersignature.
+            Set the base URL of the WOMBATpass validation gateway. It is stored locally in this browser and is used when submitting runs for countersignature.
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <input

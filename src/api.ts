@@ -1,8 +1,8 @@
 const ENV_API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 const ENV_VALIDATION_BASE = (import.meta.env.VITE_VALIDATION_URL as string | undefined) ?? ''
 
-export const SERVER_URL_KEY = 'wafpass_server_url'
-export const VALIDATION_URL_KEY = 'wafpass_validation_url'
+export const SERVER_URL_KEY = 'wombat_server_url'
+export const VALIDATION_URL_KEY = 'wombat_validation_url'
 
 export function getApiBase(): string {
   try {
@@ -20,7 +20,7 @@ export function getValidationGatewayBase(): string {
   return ENV_VALIDATION_BASE
 }
 
-/** Probe whether the configured wafpass-server API base is reachable.
+/** Probe whether the configured wombat-server API base is reachable.
  *  Returns true/false; never throws. */
 export async function checkApiReachable(): Promise<boolean> {
   const base = getApiBase()
@@ -56,7 +56,7 @@ export function getServerUrl(): string {
 // ── Auth token helpers ────────────────────────────────────────────────────────
 
 export function getAccessToken(): string | null {
-  try { return localStorage.getItem('wafpass_access_token') } catch { return null }
+  try { return localStorage.getItem('wombat_access_token') } catch { return null }
 }
 
 // ── Global Context Switcher (Phase 6a) ────────────────────────────────────────
@@ -64,18 +64,18 @@ export function getAccessToken(): string | null {
 // localStorage (same pattern as the access token) so it survives a reload;
 // read fresh on every request via _authHeaders() rather than threaded
 // through every call site, same reasoning as the access token itself.
-// Server-side: wafpass_server/auth/deps.py's get_auth_context() /
+// Server-side: wombat_server/auth/deps.py's get_auth_context() /
 // require_ingest() validate this against the caller's actual role on every
 // request — a non-holding user (or a stale/bogus id) is a no-op, not a
 // privilege escalation, so there's nothing for the frontend to validate
 // beyond "is this a real mandate the caller could pick from the dropdown."
-const MANDANT_CONTEXT_KEY = 'wafpass_mandant_context'
+const MANDANT_CONTEXT_KEY = 'wombat_mandant_context'
 // Display name/logo only — never trusted for access control (the server
 // always re-validates the id itself), just so the impersonation banner /
 // switcher / top-bar logo can show them without an extra round trip after
 // a reload.
-const MANDANT_CONTEXT_NAME_KEY = 'wafpass_mandant_context_name'
-const MANDANT_CONTEXT_LOGO_KEY = 'wafpass_mandant_context_logo'
+const MANDANT_CONTEXT_NAME_KEY = 'wombat_mandant_context_name'
+const MANDANT_CONTEXT_LOGO_KEY = 'wombat_mandant_context_logo'
 
 export function getMandantContext(): string | null {
   try { return localStorage.getItem(MANDANT_CONTEXT_KEY) } catch { return null }
@@ -404,7 +404,7 @@ export async function fetchFindings(
   return json.data
 }
 
-// ── Controls catalogue (wafpass-server /api/v1/controls) ─────────────────────────────
+// ── Controls catalogue (wombat-server /api/v1/controls) ─────────────────────────────
 
 export interface CatalogueCheck {
   id: string
@@ -1426,7 +1426,7 @@ export interface LocalAttestation {
   signed_at: string
   signer_kind: string
   run: Record<string, unknown>
-  // Phase 4 — not part of the signed payload; see wafpass_server's
+  // Phase 4 — not part of the signed payload; see wombat_server's
   // LocalAttestationOut.mandant_id for why. Must be forwarded through
   // local_attestation below for the gateway round trip to carry it — and
   // the external validation gateway repo must forward it too; until it
@@ -2406,7 +2406,7 @@ function parseUpdateInfoYaml(text: string): UpdateInfo {
   const parsed = {
     version: result.version || '1.0',
     generated_at: result.generated_at || '',
-    service: result.service || 'wafpass-server',
+    service: result.service || 'wombat-server',
     framework: result.framework || {
       repo_url: '',
       git_branch: '',

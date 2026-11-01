@@ -6,7 +6,7 @@ import { buildHash } from './routing'
 
 // ── Helper functions ──────────────────────────────────────────────────────────
 
-// WAF++ Brand Colors - pastel/lighter versions
+// Wombat Brand Colors - pastel/lighter versions
 const WAF_COLORS = [
   '#93c5fd', // Light Blue
   '#c4b5fd', // Light Violet
@@ -26,7 +26,7 @@ const WAF_COLORS = [
   '#94a3b8', // Light Slate
 ]
 
-// Generate a consistent color for each project using WAF++ brand colors
+// Generate a consistent color for each project using Wombat brand colors
 function getProjectColor(project: string): string {
   // Simple hash function to generate consistent color from project name
   let hash = 0
@@ -275,7 +275,7 @@ export default function PipelinesPage() {
           {t('nav.items.pipelines')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-          Track your WAF++ scan performance across all projects and CI/CD pipelines
+          Track your WOMBATpass scan performance across all projects and CI/CD pipelines
         </p>
       </div>
 

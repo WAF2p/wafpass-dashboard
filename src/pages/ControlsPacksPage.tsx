@@ -1,5 +1,5 @@
 /**
- * Controls Upgrade — versioned WAF++ control pack management.
+ * Controls Upgrade — versioned Wombat control pack management.
  * Sync a new pack from the server's controls directory, view pack history,
  * and roll back to any previously imported version. Admin role required.
  */
@@ -131,7 +131,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
       .catch((e: Error) => {
         console.error('Failed to fetch framework update info:', e)
         setUpdateInfo(null)
-        setUpdateError(t('pages.controlspacks.versionLoadError') ?? 'Could not reach the WAF++ framework repository.')
+        setUpdateError(t('pages.controlspacks.versionLoadError') ?? 'Could not reach the Wombat framework repository.')
       })
       .finally(() => setUpdateLoading(false))
   }, [t])
@@ -505,7 +505,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             }}
               dangerouslySetInnerHTML={{
                 __html: t('pages.controlspacks.syncDesc')
-                  .replace('WAFPASS_CONTROLS_DIR', '<code style="color:var(--text);background:var(--surface);padding:0.1rem 0.35rem;border-radius:4px;font-size:0.72rem">WAFPASS_CONTROLS_DIR</code>'),
+                  .replace('WOMBAT_CONTROLS_DIR', '<code style="color:var(--text);background:var(--surface);padding:0.1rem 0.35rem;border-radius:4px;font-size:0.72rem">WOMBAT_CONTROLS_DIR</code>'),
               }}
             />
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>

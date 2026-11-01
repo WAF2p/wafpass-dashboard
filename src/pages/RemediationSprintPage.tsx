@@ -168,7 +168,7 @@ type SortKey = 'roi' | 'points' | 'effort' | 'severity' | 'frameworks'
 
 export default function RemediationSprintPage({ run }: Props) {
   const { t } = useI18n()
-  const storageKey = `wafpass_sprint_${run.id}`
+  const storageKey = `wombat_sprint_${run.id}`
 
   const [sprintIds, setSprintIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem(storageKey) ?? '[]') as string[]) }

@@ -6,8 +6,12 @@ import { SectionCard, SocStyles } from './shared/SocComponents'
 interface VersionInfo {
   server_version: string
   core_version: string
-  wafpass_server: string
-  wafpass_core: string
+  wombat_server?: string
+  wombat_core?: string
+  /** @deprecated WAFpass-era field names returned by older servers. */
+  wafpass_server?: string
+  /** @deprecated WAFpass-era field names returned by older servers. */
+  wafpass_core?: string
 }
 
 export default function AboutPage() {
@@ -41,13 +45,16 @@ export default function AboutPage() {
   const dashboardVersion = import.meta.env.VITE_APP_VERSION || '1.1.0'
   const serverUrl = (getApiBase() || window.location.origin).replace(/\/$/, '')
   const dashboardUrl = window.location.origin.replace(/\/$/, '')
+  // New servers return wombat_*; accept the deprecated wafpass_* aliases too.
+  const serverVersion = versionInfo?.wombat_server ?? versionInfo?.wafpass_server ?? versionInfo?.server_version
+  const coreVersion = versionInfo?.wombat_core ?? versionInfo?.wafpass_core ?? versionInfo?.core_version
 
   const debugText = [
     `Dashboard UI: ${dashboardVersion}`,
     `Dashboard URL: ${dashboardUrl}`,
     `Server URL: ${serverUrl}`,
-    versionInfo ? `wafpass-server: ${versionInfo.wafpass_server}` : null,
-    versionInfo ? `wafpass-core: ${versionInfo.wafpass_core}` : null,
+    versionInfo ? `wombat-server: ${serverVersion}` : null,
+    versionInfo ? `wombat-core: ${coreVersion}` : null,
     versionInfo ? `server_version: ${versionInfo.server_version}` : null,
     versionInfo ? `core_version: ${versionInfo.core_version}` : null,
   ].filter(Boolean).join('\n')
@@ -58,7 +65,7 @@ export default function AboutPage() {
       <style>{aboutPageCss}</style>
 
       <div className="about-hero">
-        <div className="about-hero__badge">WAF++</div>
+        <div className="about-hero__badge">Wombat</div>
         <h1 className="about-hero__title">{t('about.title')}</h1>
         <p className="about-hero__subtitle">{t('about.subtitle')}</p>
       </div>
@@ -124,14 +131,14 @@ export default function AboutPage() {
               <div className="about-debug-grid">
                 <div className="about-debug-card">
                   <div className="about-debug-card__label">{t('about.componentServer')}</div>
-                  <div className="about-debug-card__value">{versionInfo.wafpass_server}</div>
+                  <div className="about-debug-card__value">{serverVersion}</div>
                   <a className="about-debug-card__link" href={`${serverUrl}/health`} target="_blank" rel="noopener noreferrer">
                     {t('about.healthCheck')}
                   </a>
                 </div>
                 <div className="about-debug-card">
                   <div className="about-debug-card__label">{t('about.componentCore')}</div>
-                  <div className="about-debug-card__value">{versionInfo.wafpass_core}</div>
+                  <div className="about-debug-card__value">{coreVersion}</div>
                   <div className="about-debug-card__mini">
                     <span>server_version:</span> {versionInfo.server_version}
                   </div>

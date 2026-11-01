@@ -209,9 +209,9 @@ function ServerScanPanel() {
             background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.25)',
             fontSize: '0.75rem', color: '#f59e0b',
           }}>
-            {!status.enabled && 'Server-side scanning is disabled (WAFPASS_SCAN_ENABLED=false). '}
-            {status.enabled && !status.engine_available && 'wafpass-core is not installed on the server. Run: pip install wafpass-core. '}
-            {status.enabled && status.engine_available && !status.controls_dir_exists && `Controls directory not found on server: ${status.controls_dir}. Set WAFPASS_CONTROLS_DIR. `}
+            {!status.enabled && 'Server-side scanning is disabled (WOMBAT_SCAN_ENABLED=false). '}
+            {status.enabled && !status.engine_available && 'wombat-core is not installed on the server. Run: pip install wombat-core. '}
+            {status.enabled && status.engine_available && !status.controls_dir_exists && `Controls directory not found on server: ${status.controls_dir}. Set WOMBAT_CONTROLS_DIR. `}
           </div>
         )}
       </div>
@@ -231,7 +231,7 @@ function ServerScanPanel() {
           display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.72rem', color: 'var(--muted)',
         }}>
           {[
-            ['Engine', status.engine_available ? '✓ wafpass-core' : '✗ not installed'],
+            ['Engine', status.engine_available ? '✓ wombat-core' : '✗ not installed'],
             ['Controls dir', status.controls_dir_exists ? '✓ found' : '✗ missing'],
             ...(status.scan_base_dir ? [['Base dir', status.scan_base_dir]] : []),
           ].map(([k, v]) => (
@@ -319,10 +319,10 @@ function ServerScanPanel() {
         background: 'rgba(0,148,255,.05)', border: '1px solid rgba(0,148,255,.15)',
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6,
       }}>
-        The server runs <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>wafpass-core</code> directly against a path on its filesystem.
+        The server runs <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>wombat-core</code> directly against a path on its filesystem.
         {status?.scan_base_dir
           ? <> Paths are restricted to <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>{status.scan_base_dir}</code>.</>
-          : <> Set <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>WAFPASS_SCAN_BASE_DIR</code> on the server to restrict which paths are allowed.</>}
+          : <> Set <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>WOMBAT_SCAN_BASE_DIR</code> on the server to restrict which paths are allowed.</>}
       </div>
     </div>
   )
@@ -340,7 +340,7 @@ function CliPanel() {
   const [planFile, setPlanFile] = useState('')
 
   const pushCmd = [
-    'wafpass check \\\n',
+    'wombat check \\\n',
     '  --output json \\\n',
     `  --push ${serverUrl}/runs \\\n`,
     ...(project ? [`  --project "${project}" \\\n`] : []),
@@ -351,7 +351,7 @@ function CliPanel() {
     `  ${path}`,
   ].join('')
 
-  const quickCmd = `wafpass check --output json --push ${serverUrl}/runs ${path}`
+  const quickCmd = `wombat check --output json --push ${serverUrl}/runs ${path}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -400,7 +400,7 @@ function CliPanel() {
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>Install</div>
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Python 3.10+ required.</div>
-          <CopyBlock code="pip install wafpass-core" lang="sh" />
+          <CopyBlock code="pip install wombat-core" lang="sh" />
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -426,7 +426,7 @@ function CliPanel() {
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>CI/CD</div>
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Add <code style={{ color: 'var(--text)' }}>--fail-on fail</code> to gate merges.</div>
-          <CopyBlock code={`wafpass check --push ${serverUrl}/runs --project "\${{ github.repository }}" --branch "\${{ github.ref_name }}" ./infra`} lang="sh" />
+          <CopyBlock code={`wombat check --push ${serverUrl}/runs --project "\${{ github.repository }}" --branch "\${{ github.ref_name }}" ./infra`} lang="sh" />
         </div>
       </div>
     </div>
@@ -447,7 +447,7 @@ function ApiPanel() {
         POST JSON results directly — generated automatically with <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>--output json --push</code>.
       </div>
 
-      <CopyBlock lang="sh" code={`wafpass check --output json ./infra > results.json
+      <CopyBlock lang="sh" code={`wombat check --output json ./infra > results.json
 
 curl -X POST ${serverUrl}/runs \\
   -H "Content-Type: application/json" \\
@@ -494,7 +494,7 @@ function FlagsShelf({ t }: { t: (key: string) => string }) {
     ['--fail-on fail', 'Exit non-zero on FAIL'],
     ['--fail-on skip', 'Exit on FAIL + SKIP'],
     ['--plan-file PATH', 'Terraform plan JSON'],
-    ['--waiver-file PATH', '.wafpass-skip.yml'],
+    ['--waiver-file PATH', '.wombat-skip.yml'],
   ]
 
   return (

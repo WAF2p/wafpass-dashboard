@@ -12,7 +12,7 @@ interface WelcomeChecklistProps {
   onShowAdvanced?: () => void
 }
 
-const STORAGE_PREFIX = 'wafpass_onboarding_'
+const STORAGE_PREFIX = 'wombat_onboarding_'
 
 function useStepDone(key: string): [boolean, () => void] {
   const fullKey = `${STORAGE_PREFIX}${key}_done`

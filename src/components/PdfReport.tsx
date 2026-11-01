@@ -198,7 +198,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: `3px solid ${colors.accent}`, paddingBottom: '1.75rem', marginBottom: '2rem' }}>
           <div>
             <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: colors.accent, marginBottom: '0.5rem' }}>
-              WAF++ PASS · Compliance Report
+              WOMBATpass · Compliance Report
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: colors.textMain, lineHeight: 1.15, marginBottom: '0.75rem' }}>
               {run.project || 'Unnamed Project'}
@@ -618,13 +618,13 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
 
         {/* ── Footer ── */}
         <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.62rem', color: colors.accent }}>
-          <div style={{ textAlign: 'center', fontWeight: 600 }}>WAF++ PASS · Open Source Compliance Framework</div>
+          <div style={{ textAlign: 'center', fontWeight: 600 }}>WOMBATpass · Open Source Compliance Framework</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', opacity: 0.8 }}>
             <span>Generated: {new Date().toLocaleString()}</span>
             <span>Maturity: {matMeta.label}</span>
             <span>Score: {run.score}/100</span>
           </div>
-          <div style={{ textAlign: 'center', opacity: 0.6 }}>© 2026 WAF++ · waf2p.dev</div>
+          <div style={{ textAlign: 'center', opacity: 0.6 }}>© 2026 Wombat · www.wombat-gov.dev</div>
         </div>
 
       </div>

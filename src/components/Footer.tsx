@@ -1,9 +1,9 @@
 // Footer content - centralized "CMS" style configuration
 const FOOTER_LINKS = [
-  { href: 'https://waf2p.dev', label: 'Main Page' },
-  { href: 'https://waf2p.dev/docs', label: 'Documentation' },
+  { href: 'https://www.wombat-gov.dev', label: 'Main Page' },
+  { href: 'https://www.wombat-gov.dev/docs', label: 'Documentation' },
   { href: 'https://github.com/WAF2p', label: 'GitHub' },
-  { href: 'https://waf2p.dev/blog', label: 'Blog' },
+  { href: 'https://www.wombat-gov.dev/blog', label: 'Blog' },
 ] as const;
 
 const FOOTER_LINKS_WITH_LEGAL = [
@@ -61,7 +61,7 @@ export default function Footer() {
             flexWrap: 'wrap',
             justifyContent: 'center',
           }}>
-            <span>© 2026 WAF++</span>
+            <span>© 2026 Wombat</span>
             <span style={{ opacity: 0.5 }}>•</span>
             <span>Open Source</span>
             <span style={{ opacity: 0.5 }}>•</span>
@@ -74,7 +74,7 @@ export default function Footer() {
             maxWidth: '320px',
             lineHeight: 1.5,
           }}>
-            WAF++ is an open-source framework distributed free of charge. We do not sell the framework or its utilities. Official certification services (hosting/audit) will be available from 2030.
+            Wombat is an open-source framework distributed free of charge. We do not sell the framework or its utilities. Official certification services (hosting/audit) will be available from 2030.
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export default function Footer() {
             </a>
             <span style={{ color: 'var(--footer-muted)' }}>•</span>
             <a
-              href="https://waf2p.dev"
+              href="https://www.wombat-gov.dev"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -160,7 +160,7 @@ export default function Footer() {
             >
               <img
                 src="/logo.png"
-                alt="WAF++"
+                alt="Wombat"
                 style={{
                   height: '32px',
                   width: 'auto',

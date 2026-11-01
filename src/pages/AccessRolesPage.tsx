@@ -24,7 +24,7 @@ const ROLES = [
     ),
     description: 'Strategic leadership. Business risk posture, regulatory status, financial impact, and board-level compliance reporting.',
     pages: [
-      { name: 'Dashboard',         note: 'Overall WAF++ risk posture' },
+      { name: 'Dashboard',         note: 'Overall Wombat risk posture' },
       { name: 'Compliance Matrix',  note: 'Regulatory framework coverage' },
       { name: 'Cost Impact',        note: 'Financial exposure from failing controls' },
       { name: 'Gap Analysis',       note: 'Shortest path to full compliance' },
@@ -172,7 +172,7 @@ const AUTH_PROVIDERS = [
       </svg>
     ),
     protocol: 'OAuth 2.0 · OIDC',
-    notes: ['Authorization Code flow with discovery endpoint', 'JWT claim → WAF++ role mapping (configurable)', 'Auto-provisioning of new users on first login'],
+    notes: ['Authorization Code flow with discovery endpoint', 'JWT claim → WOMBATpass role mapping (configurable)', 'Auto-provisioning of new users on first login'],
   },
   {
     id: 'saml2',
@@ -190,7 +190,7 @@ const AUTH_PROVIDERS = [
       </svg>
     ),
     protocol: 'SAML 2.0',
-    notes: ['HTTP-Redirect binding for AuthnRequests', 'SAML attribute → WAF++ role mapping (configurable)', 'SP metadata endpoint for IdP registration'],
+    notes: ['HTTP-Redirect binding for AuthnRequests', 'SAML attribute → WOMBATpass role mapping (configurable)', 'SP metadata endpoint for IdP registration'],
   },
   {
     id: 'ldap',
@@ -217,12 +217,12 @@ const AUTH_PROVIDERS = [
 
 const IMPL_NOTES = [
   { label: 'Current state',         body: 'Phase 2 live — local JWT auth plus OIDC and SAML2 SSO. SSO providers are configured in the admin SSO Settings page and stored in the database. Local accounts remain available alongside SSO.' },
-  { label: 'SSO token handoff',     body: 'After SSO authentication the server issues a standard WAF++ JWT and redirects to the dashboard with tokens in query params. The frontend stores them in localStorage — the session model is identical to local login.' },
+  { label: 'SSO token handoff',     body: 'After SSO authentication the server issues a standard WOMBATpass JWT and redirects to the dashboard with tokens in query params. The frontend stores them in localStorage — the session model is identical to local login.' },
   { label: 'Role claim source',     body: 'For local accounts, roles are stored in the users table. For OIDC/SAML2, an optional role claim/attribute is mapped server-side via a JSON mapping table configured in SSO Settings.' },
-  { label: 'Enforcement boundary',  body: 'wafpass-server enforces roles via middleware on every request. The dashboard reflects roles returned by the server after token exchange — no role logic lives in the frontend.' },
+  { label: 'Enforcement boundary',  body: 'wombat-server enforces roles via middleware on every request. The dashboard reflects roles returned by the server after token exchange — no role logic lives in the frontend.' },
   { label: 'Session model',         body: 'Short-lived JWT access tokens (60 min default) with silent refresh via a long-lived refresh token. Both stored in localStorage for session persistence across page reloads.' },
   { label: 'Multi-provider',        body: 'OIDC and SAML2 can be enabled simultaneously alongside local accounts. LDAP federation is planned for a future release.' },
-  { label: 'Service accounts',      body: 'CI/CD pipelines use the X-Api-Key header. Admin users can generate per-service keys in the API Keys page. A legacy global key can also be set via WAFPASS_API_KEY on the server.' },
+  { label: 'Service accounts',      body: 'CI/CD pipelines use the X-Api-Key header. Admin users can generate per-service keys in the API Keys page. A legacy global key can also be set via WOMBAT_API_KEY on the server.' },
 ]
 
 // ── Page ──────────────────────────────────────────────────────────────────────

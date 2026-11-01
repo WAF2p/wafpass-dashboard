@@ -1,11 +1,11 @@
 # Software Bill of Materials and License Overview
 
-This document summarizes the software components used by **wafpass-dashboard**
+This document summarizes the software components used by **wombat-dashboard**
 and their licenses. It is generated for CNCF submission readiness.
 
 ## Project metadata
 
-- **Project:** wafpass-dashboard
+- **Project:** wombat-dashboard
 - **Own license:** Apache-2.0
 - **License file present:** yes
 
@@ -162,7 +162,7 @@ Release builds also attach the CycloneDX and SPDX files to the GitHub release.
 | typewise-core | 1.2.0 | MIT |
 | union-value | 1.0.1 | MIT |
 | victory-vendor | 36.9.2 | MIT AND ISC |
-| wafpass-dashboard | 1.1.0 | Apache-2.0 |
+| wombat-dashboard | 1.1.0 | Apache-2.0 |
 
 ---
 

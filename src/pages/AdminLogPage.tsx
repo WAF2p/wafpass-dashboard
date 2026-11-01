@@ -239,7 +239,7 @@ export default function AdminLogPage() {
             </button>
             <button
               className="adminlog-btn adminlog-btn--export"
-              onClick={() => download(logsToCSV(filtered), `wafpass-admin-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
+              onClick={() => download(logsToCSV(filtered), `wombat-admin-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
             >
               <DownloadIcon /> {t('pages.adminLogs.exportCsv')}
             </button>

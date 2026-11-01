@@ -1,5 +1,5 @@
-/** Static WAF++ controls reference data. 73 framework controls + custom controls across 8 pillars.
- * Note: Agentic controls (8th pillar) are coming soon - watch waf2p.dev for updates. */
+/** Static Wombat controls reference data. 73 framework controls + custom controls across 8 pillars.
+ * Note: Agentic controls (8th pillar) are coming soon - watch www.wombat-gov.dev for updates. */
 
 export interface AutomatedCheck {
   id: string

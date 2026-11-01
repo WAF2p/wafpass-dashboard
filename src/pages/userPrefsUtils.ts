@@ -22,7 +22,7 @@ export const DEFAULT_USER_PREFS: UserPreferences = {
   hasSeenOnboarding: false,
 }
 
-const PREFS_KEY = 'wafpass_user_prefs'
+const PREFS_KEY = 'wombat_user_prefs'
 
 export function loadUserPrefs(): UserPreferences {
   try {

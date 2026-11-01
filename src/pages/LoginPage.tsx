@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { fetchSsoProviders, getSsoAuthorizeUrl, type SsoProviderInfo } from '../api'
 import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
+import BrandLogo from '../components/BrandLogo'
 
 // ADR-005: a per-viewer convenience only (not a source of truth) — the
 // company ID typed here just gets re-sent on the next visit so returning
 // users of a dedicated per-mandant IdP don't have to retype it.
-const MANDANT_STORAGE_KEY = 'wafpass_login_mandant'
+const MANDANT_STORAGE_KEY = 'wombat_login_mandant'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -69,7 +70,9 @@ export default function LoginPage() {
 
         {/* Logo + product name */}
         <div style={{ textAlign: 'center' }}>
-          <img src="/logo.png" alt="WAF++ PASS" style={{ height: '40px', objectFit: 'contain', marginBottom: '0.75rem' }} />
+          <div style={{ marginBottom: '0.75rem' }}>
+            <BrandLogo height={40} />
+          </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
             {t('pages.login.productLabel')}
           </div>

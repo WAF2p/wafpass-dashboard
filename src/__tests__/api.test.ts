@@ -11,8 +11,8 @@ import {
   upsertMandantSsoConfig,
 } from '../api'
 
-const SERVER_URL_KEY = 'wafpass_server_url'
-const ACCESS_TOKEN_KEY = 'wafpass_access_token'
+const SERVER_URL_KEY = 'wombat_server_url'
+const ACCESS_TOKEN_KEY = 'wombat_access_token'
 
 // ── getApiBase ────────────────────────────────────────────────────────────────
 
@@ -223,8 +223,8 @@ describe('fetchComplianceReadiness', () => {
   afterEach(() => vi.restoreAllMocks())
 
   it('fetches the run-scoped endpoint and returns data', async () => {
-    localStorage.setItem('wafpass_server_url', 'http://server:8000')
-    localStorage.setItem('wafpass_access_token', 'tok')
+    localStorage.setItem('wombat_server_url', 'http://server:8000')
+    localStorage.setItem('wombat_access_token', 'tok')
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ data: mockData }), { status: 200, headers: { 'Content-Type': 'application/json' } })
@@ -235,8 +235,8 @@ describe('fetchComplianceReadiness', () => {
   })
 
   it('uses the configured API base and sends auth headers', async () => {
-    localStorage.setItem('wafpass_server_url', 'http://server:8000')
-    localStorage.setItem('wafpass_access_token', 'tok')
+    localStorage.setItem('wombat_server_url', 'http://server:8000')
+    localStorage.setItem('wombat_access_token', 'tok')
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ data: mockData }), { status: 200, headers: { 'Content-Type': 'application/json' } })
@@ -249,7 +249,7 @@ describe('fetchComplianceReadiness', () => {
   })
 
   it('throws on non-ok response', async () => {
-    localStorage.setItem('wafpass_server_url', 'http://server:8000')
+    localStorage.setItem('wombat_server_url', 'http://server:8000')
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('Not found', { status: 404 }))
     await expect(fetchComplianceReadiness('run-123')).rejects.toThrow('Failed to fetch compliance readiness')
   })

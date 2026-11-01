@@ -165,12 +165,12 @@ export default function FeedbackPage() {
       message,
       '',
       '---',
-      `WAF++ PASS Dashboard`,
+      `WOMBATpass Dashboard`,
       `Submitted: ${new Date().toLocaleString()}`,
       `Follow-up allowed: ${allowContact ? 'Yes' : 'No'}`,
     ].join('\n')
 
-    window.location.href = `mailto:feedback@waf2p.dev?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(body)}`
+    window.location.href = `mailto:page@wombat-gov.dev?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(body)}`
     setSubmitted(true)
   }
 

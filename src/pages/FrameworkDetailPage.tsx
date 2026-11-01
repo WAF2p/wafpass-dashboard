@@ -202,7 +202,7 @@ export default function FrameworkDetailPage({ run, navigate, frameworkId }: Prop
     )
   }, [mappedControls, search])
 
-  // Every requirement ID known for this framework across the whole WAF++ catalogue
+  // Every requirement ID known for this framework across the whole Wombat catalogue
   const allRequirements = useMemo(() => {
     const ids = new Set<string>()
     controlsCatalogue.forEach(c => {

@@ -67,10 +67,10 @@ const STATUS_META: Record<ControlStatus, { label: string; color: string; bg: str
 }
 
 function loadWaivers(): Record<string, { owner?: string }> {
-  try { return JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}') } catch { return {} }
+  try { return JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}') } catch { return {} }
 }
 function loadRisks(): Record<string, { approver?: string }> {
-  try { return JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}') } catch { return {} }
+  try { return JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}') } catch { return {} }
 }
 
 function downloadCSV(content: string, filename: string) {

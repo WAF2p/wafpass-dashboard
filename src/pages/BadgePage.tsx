@@ -84,7 +84,7 @@ function CodeBlock({ code, lang = '', t }: { code: string; lang?: string; t: (ke
 }
 
 function InlineBadgeSvg({ tierLevel, tierLabel, color }: { tierLevel: number; tierLabel: string; color: string }) {
-  const label = 'WAF++ PASS'
+  const label = 'WOMBATpass'
   const value = tierLevel > 0 ? `L${tierLevel} · ${tierLabel}` : 'No Data'
   const charW = 6.2
   const pad = 10
@@ -179,36 +179,36 @@ export default function BadgePage({ runs }: Props) {
   function snippets(fmt: SnippetFormat): string {
     const img  = badgeUrl
     const link = `${verifyBase}${badgePath}/${encodeURIComponent(project)}/json`
-    const alt  = `WAF++ PASS – ${project}`
+    const alt  = `WOMBATpass – ${project}`
 
     switch (fmt) {
       case 'markdown':
         return mode === 'offline'
-          ? `<!-- Download the badge SVG and commit it to your repo: -->\n<!-- ${apiBase}${badgePath}/${encodeURIComponent(project)}/download -->\n\n![WAF++ PASS](./badge/wafpass-badge.svg)`
-          : `[![WAF++ PASS](${img})](${verifyBase})\n\n<!-- Or link to a verified achievement: -->\n<!-- [![WAF++ PASS](${img})](${verifyBase}/api/v1/public/achievements/{token}) -->`
+          ? `<!-- Download the badge SVG and commit it to your repo: -->\n<!-- ${apiBase}${badgePath}/${encodeURIComponent(project)}/download -->\n\n![WOMBATpass](./badge/wombat-badge.svg)`
+          : `[![WOMBATpass](${img})](${verifyBase})\n\n<!-- Or link to a verified achievement: -->\n<!-- [![WOMBATpass](${img})](${verifyBase}/api/v1/public/achievements/{token}) -->`
 
       case 'html':
         return mode === 'offline'
-          ? `<!-- Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download -->\n<img src="./badge/wafpass-badge.svg"\n     alt="${alt}"\n     title="${alt}"\n     style="height: 20px;" />`
+          ? `<!-- Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download -->\n<img src="./badge/wombat-badge.svg"\n     alt="${alt}"\n     title="${alt}"\n     style="height: 20px;" />`
           : `<a href="${verifyBase}" target="_blank" rel="noopener">\n  <img src="${img}"\n       alt="${alt}"\n       title="${alt}"\n       style="height: 20px;" />\n</a>`
 
       case 'asciidoc':
         return mode === 'offline'
-          ? `// Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\nimage::./badge/wafpass-badge.svg[${alt}]`
+          ? `// Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\nimage::./badge/wombat-badge.svg[${alt}]`
           : `image:${img}[${alt},link=${verifyBase}]`
 
       case 'rst':
         return mode === 'offline'
-          ? `.. Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\n\n.. image:: ./badge/wafpass-badge.svg\n   :alt: ${alt}`
+          ? `.. Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\n\n.. image:: ./badge/wombat-badge.svg\n   :alt: ${alt}`
           : `.. image:: ${img}\n   :target: ${verifyBase}\n   :alt: ${alt}`
 
       case 'orgmode':
         return mode === 'offline'
-          ? `# Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\n[[./badge/wafpass-badge.svg]]`
+          ? `# Download: ${apiBase}${badgePath}/${encodeURIComponent(project)}/download\n[[./badge/wombat-badge.svg]]`
           : `[[${verifyBase}][${img}]]`
 
       case 'json':
-        return `# JSON status endpoint — useful for CI scripts and custom badge renderers:\ncurl '${link}'\n\n# Example response:\n{\n  "project": "${project}",\n  "tier_level": ${status?.level ?? 5},\n  "tier_label": "${status?.label ?? 'Excellence'}",\n  "score": ${status?.score ?? 95},\n  "color": "${status?.color ?? '#059669'}",\n  "badge_url": "${badgePath}/${encodeURIComponent(project)}.svg",\n  "updated_at": "2026-04-23T10:00:00+00:00"\n}\n\n# GitHub Actions — fail if below L3:\nSCORE=$(curl -s '${link}' | jq '.tier_level')\nif [ "$SCORE" -lt 3 ]; then\n  echo "WAF++ maturity gate failed (L$SCORE < L3)" && exit 1\nfi`
+        return `# JSON status endpoint — useful for CI scripts and custom badge renderers:\ncurl '${link}'\n\n# Example response:\n{\n  "project": "${project}",\n  "tier_level": ${status?.level ?? 5},\n  "tier_label": "${status?.label ?? 'Excellence'}",\n  "score": ${status?.score ?? 95},\n  "color": "${status?.color ?? '#059669'}",\n  "badge_url": "${badgePath}/${encodeURIComponent(project)}.svg",\n  "updated_at": "2026-04-23T10:00:00+00:00"\n}\n\n# GitHub Actions — fail if below L3:\nSCORE=$(curl -s '${link}' | jq '.tier_level')\nif [ "$SCORE" -lt 3 ]; then\n  echo "Wombat maturity gate failed (L$SCORE < L3)" && exit 1\nfi`
 
       default: return ''
     }
@@ -294,7 +294,7 @@ export default function BadgePage({ runs }: Props) {
               {t('pages.badgePage.offlineModeTitle')}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-              Your WAF++ server is not publicly accessible. Download the current badge SVG and commit it to your repository alongside your README. Re-download after each significant milestone to keep it fresh. Use the <strong style={{ color: 'var(--text)' }}>static tier badges</strong> below to always show a fixed level.
+              Your WOMBATpass server is not publicly accessible. Download the current badge SVG and commit it to your repository alongside your README. Re-download after each significant milestone to keep it fresh. Use the <strong style={{ color: 'var(--text)' }}>static tier badges</strong> below to always show a fixed level.
             </div>
           </div>
         </div>
@@ -335,7 +335,7 @@ export default function BadgePage({ runs }: Props) {
                 <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.liveFromServer')}</div>
                 <img
                   src={badgeUrl}
-                  alt={`WAF++ PASS – ${project}`}
+                  alt={`WOMBATpass – ${project}`}
                   style={{ height: '20px' }}
                   onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                 />
@@ -471,7 +471,7 @@ export default function BadgePage({ runs }: Props) {
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.githubActionsDesc')}</div>
         </div>
         <div style={{ padding: '1.25rem' }}>
-          <CodeBlock lang="yaml" code={`name: WAF++ Maturity Gate
+          <CodeBlock lang="yaml" code={`name: Wombat Maturity Gate
 
 on: [pull_request]
 
@@ -479,17 +479,17 @@ jobs:
   maturity-gate:
     runs-on: ubuntu-latest
     steps:
-      - name: Check WAF++ maturity tier
+      - name: Check Wombat maturity tier
         run: |
           TIER=$(curl -sf '${apiBase}${badgePath}/${encodeURIComponent(project)}/json' | jq '.tier_level')
           echo "Current tier: L$TIER"
           if [ "$TIER" -lt 3 ]; then
-            echo "::error::WAF++ maturity gate failed — current tier L$TIER is below required L3 (Governed)"
+            echo "::error::Wombat maturity gate failed — current tier L$TIER is below required L3 (Governed)"
             exit 1
           fi
-          echo "::notice::WAF++ maturity gate passed — L$TIER"`} t={t} />
+          echo "::notice::Wombat maturity gate passed — L$TIER"`} t={t} />
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-            Add this workflow to <code style={{ color: 'var(--text)' }}>.github/workflows/wafpass-gate.yml</code>.
+            Add this workflow to <code style={{ color: 'var(--text)' }}>.github/workflows/wombat-gate.yml</code>.
             Adjust the <code style={{ color: 'var(--text)' }}>-lt 3</code> threshold to enforce your team's minimum tier.
           </div>
         </div>
@@ -502,7 +502,7 @@ jobs:
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.gitlabCiDesc')}</div>
         </div>
         <div style={{ padding: '1.25rem' }}>
-          <CodeBlock lang="yaml" code={`wafpass-maturity-gate:
+          <CodeBlock lang="yaml" code={`wombat-maturity-gate:
   stage: quality
   image: alpine:latest
   before_script:
@@ -510,7 +510,7 @@ jobs:
   script:
     - |
       TIER=$(curl -sf '${apiBase}${badgePath}/${encodeURIComponent(project)}/json' | jq '.tier_level')
-      echo "WAF++ maturity tier: L$TIER"
+      echo "Wombat maturity tier: L$TIER"
       [ "$TIER" -ge 3 ] || (echo "Gate failed — tier L$TIER below L3" && exit 1)
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"`} t={t} />
@@ -539,7 +539,7 @@ jobs:
                     href={`${apiBase}/api/v1/public/badge/static/${tier}.svg`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    download={`wafpass-badge-l${tier}.svg`}
+                    download={`wombat-badge-l${tier}.svg`}
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
                       padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 600,
@@ -553,7 +553,7 @@ jobs:
                   </a>
                 </div>
                 <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
-                  {`![badge](./wafpass-badge-l${tier}.svg)`}
+                  {`![badge](./wombat-badge-l${tier}.svg)`}
                 </div>
               </div>
             )
@@ -570,12 +570,12 @@ jobs:
           </div>
         </div>
         <div style={{ padding: '1.25rem' }}>
-          <CodeBlock lang="markdown" code={`<!-- shields.io dynamic badge via the JSON endpoint -->\n![WAF++ PASS](https://img.shields.io/endpoint?url=${encodeURIComponent(`${apiBase}${badgePath}/${encodeURIComponent(project)}/json`)}&style=flat-square&label=WAF%2B%2B+PASS)`} t={t} />
+          <CodeBlock lang="markdown" code={`<!-- shields.io dynamic badge via the JSON endpoint -->\n![WOMBATpass](https://img.shields.io/endpoint?url=${encodeURIComponent(`${apiBase}${badgePath}/${encodeURIComponent(project)}/json`)}&style=flat-square&label=WOMBATpass)`} t={t} />
           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
             The JSON endpoint returns a <code style={{ color: 'var(--text)' }}>schemaVersion=1</code>-compatible payload automatically
             when shields.io's <code style={{ color: 'var(--text)' }}>endpoint</code> badge type is used — shields.io handles rendering,
             caching, and the dark/light theme variants.{' '}
-            <strong style={{ color: 'var(--text)' }}>Best option when the WAF++ server is publicly accessible.</strong>
+            <strong style={{ color: 'var(--text)' }}>Best option when the WOMBATpass server is publicly accessible.</strong>
           </div>
         </div>
       </div>

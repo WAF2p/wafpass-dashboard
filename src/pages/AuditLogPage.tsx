@@ -374,13 +374,13 @@ export default function AuditLogPage() {
             <div className="audit-actions">
               <button
                 className="audit-btn audit-btn--export"
-                onClick={() => download(eventsToCSV(filtered), `wafpass-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
+                onClick={() => download(eventsToCSV(filtered), `wombat-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
               >
                 <DownloadIcon /> {t('pages.audit.exportCsv')}
               </button>
               <button
                 className="audit-btn audit-btn--export"
-                onClick={() => download(JSON.stringify({ exported_at: new Date().toISOString(), events: filtered, first_seen: firstSeenEntries }, null, 2), `wafpass-audit-${new Date().toISOString().slice(0, 10)}.json`, 'application/json')}
+                onClick={() => download(JSON.stringify({ exported_at: new Date().toISOString(), events: filtered, first_seen: firstSeenEntries }, null, 2), `wombat-audit-${new Date().toISOString().slice(0, 10)}.json`, 'application/json')}
               >
                 {t('pages.audit.exportJson')}
               </button>

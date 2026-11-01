@@ -1,5 +1,5 @@
 /**
- * Validation Registry — official WAF++ PASS cryptographic validations.
+ * Validation Registry — official WOMBATpass cryptographic validations.
  *
  * Lists server-side validations, shows envelope details, and provides
  * download links for the badge, certificate PDF, and root trust anchor.
@@ -493,7 +493,7 @@ function SubmitPanel({ onSubmitted }: { onSubmitted: (id: string) => void }) {
         {loading ? t('common.saving') : t('pages.validations.submitBtn')}
       </button>
       <div style={{ marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
-        {t('pages.validations.serverCertLink')} <a href={getServerCertificateUrl()} download style={{ color: 'var(--waf-brand)' }}>wafpass-server.crt</a>
+        {t('pages.validations.serverCertLink')} <a href={getServerCertificateUrl()} download style={{ color: 'var(--waf-brand)' }}>wombat-server.crt</a>
       </div>
     </Card>
   )
@@ -726,7 +726,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
   const panel = mode === 'panel'
   const [ids, setIds] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('wafpass_validations') ?? '[]') as string[]
+      return JSON.parse(localStorage.getItem('wombat_validations') ?? '[]') as string[]
     } catch {
       return []
     }
@@ -740,7 +740,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
 
   // Persist known validation IDs to localStorage so repeat visits show history.
   useEffect(() => {
-    localStorage.setItem('wafpass_validations', JSON.stringify(ids))
+    localStorage.setItem('wombat_validations', JSON.stringify(ids))
   }, [ids])
 
   // Load details for all known IDs.
@@ -808,7 +808,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
             </p>
           </div>
           <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
-            Download WAF++ Root CA
+            Download WOMBATpass Root CA
           </a>
         </div>
       )}

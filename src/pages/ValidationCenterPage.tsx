@@ -1,5 +1,5 @@
 /**
- * Validation Center — unified page for the WAF++ PASS cryptographic validation
+ * Validation Center — unified page for the WOMBATpass cryptographic validation
  * registry and the "ship run" submission flow, plus a 2028 GA teaser banner.
  */
 import { useState } from 'react'

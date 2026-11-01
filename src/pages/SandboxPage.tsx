@@ -323,7 +323,7 @@ export default function SandboxPage() {
           setRealStatusDetail(`${s.controls_dir}`)
         } else if (!s.engine_available) {
           setRealStatus('unavailable')
-          setRealStatusDetail('wafpass-core not installed on server')
+          setRealStatusDetail('wombat-core not installed on server')
         } else {
           setRealStatus('unavailable')
           setRealStatusDetail(`Controls dir not found: ${s.controls_dir}`)
@@ -421,7 +421,7 @@ export default function SandboxPage() {
         {!realAvailable && realStatus !== 'checking' && (
           <span style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>
             {realStatus === 'unavailable'
-              ? 'To enable: install wafpass-core and set WAFPASS_CONTROLS_DIR on the server'
+              ? 'To enable: install wombat-core and set WOMBAT_CONTROLS_DIR on the server'
               : ''}
           </span>
         )}
@@ -506,8 +506,8 @@ export default function SandboxPage() {
               <div style={{ fontWeight: 600 }}>Architect Sandbox</div>
               <div style={{ fontSize: '0.78rem', marginTop: '0.3rem' }}>
                 {engineMode === 'real'
-                  ? 'Runs the full WAF++ engine server-side against your HCL'
-                  : 'Paste HCL and click Analyse for instant WAF++ feedback'
+                  ? 'Runs the full WOMBATpass engine server-side against your HCL'
+                  : 'Paste HCL and click Analyse for instant Wombat feedback'
                 }
               </div>
             </div>
@@ -517,7 +517,7 @@ export default function SandboxPage() {
             <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
               <div className="spinner" style={{ margin: '0 auto 1rem' }} />
               <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
-                {engineMode === 'real' ? 'Running WAF++ engine on server…' : 'Evaluating controls…'}
+                {engineMode === 'real' ? 'Running WOMBATpass engine on server…' : 'Evaluating controls…'}
               </div>
             </div>
           )}
@@ -570,7 +570,7 @@ export default function SandboxPage() {
                   <span>
                     Engine:{' '}
                     <strong style={{ color: output.engine === 'real' ? '#22c55e' : 'var(--text)' }}>
-                      {output.engine === 'real' ? 'Real WAF++ engine' : 'Mock (regex)'}
+                      {output.engine === 'real' ? 'Real WOMBATpass engine' : 'Mock (regex)'}
                     </strong>
                   </span>
                   {output.controls_loaded != null && (

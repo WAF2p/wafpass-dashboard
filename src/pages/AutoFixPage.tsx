@@ -221,7 +221,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
     const controlsFlag = selectedControlIds && selectedControlIds.length > 0 && selectedControlIds.length < controlIds.length
       ? ` --controls "${selectedControlIds.join(',')}"`
       : ''
-    return `wafpass fix${iacFlag}${controlsFlag} --apply "${iacPath}"`
+    return `wombat fix${iacFlag}${controlsFlag} --apply "${iacPath}"`
   }, [run, iacPath, selectedControlIds, controlIds.length])
 
   async function rollback() {
@@ -396,7 +396,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   cursor: 'pointer',
                   fontSize: '0.82rem',
                 }}
-                title={v === 'server' ? 'Call wafpass-server /api/auto-fix (the server must have direct filesystem access to the IaC path)' : 'Build a read-only plan from stored findings and source snapshots (no filesystem access needed)'}
+                title={v === 'server' ? 'Call wombat-server /api/auto-fix (the server must have direct filesystem access to the IaC path)' : 'Build a read-only plan from stored findings and source snapshots (no filesystem access needed)'}
               >
                 {v === 'server' ? 'Server preview' : 'Local preview'}
               </button>
@@ -479,7 +479,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           <div style={{ fontWeight: 700, marginBottom: '0.35rem' }}>Server cannot apply fixes directly</div>
           {error}
           <div style={{ marginTop: '0.75rem', color: 'var(--text)', fontSize: '0.85rem' }}>
-            Server preview requires the wafpass-server container to have direct filesystem access to the IaC path. If it does not, switch to <strong>Local preview</strong> or run the CLI locally from the repository root:
+            Server preview requires the wombat-server container to have direct filesystem access to the IaC path. If it does not, switch to <strong>Local preview</strong> or run the CLI locally from the repository root:
           </div>
           <div style={{ position: 'relative', marginTop: '0.5rem' }}>
             <pre
@@ -519,7 +519,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           <div style={{ marginTop: '0.5rem', color: 'var(--muted)' }}>
             To store snapshots with a local CLI scan, run:{' '}
             <code style={{ background: 'rgba(255,255,255,.1)', padding: '0.15rem 0.35rem', borderRadius: '4px' }}>
-              wafpass check ./infra --output json --push @ --upload-source
+              wombat check ./infra --output json --push @ --upload-source
             </code>
           </div>
         </div>

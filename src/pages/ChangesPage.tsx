@@ -139,7 +139,7 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
 }) {
   if (before == null && after == null) return (
     <div style={{ fontSize: '0.8rem', color: 'var(--muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
-      Attribute data not available — re-run wafpass with a plan file using the latest version to see attribute-level details.
+      Attribute data not available — re-run wombat with a plan file using the latest version to see attribute-level details.
     </div>
   )
 
@@ -356,8 +356,8 @@ function NoPlanData({ run }: { run: RunDetail }) {
   const [copied, setCopied] = useState(false)
   const isTerraform = !run.iac_framework || run.iac_framework === 'terraform'
   const cmd = isTerraform
-    ? `# Generate a Terraform plan JSON and push it with the scan\nterraform plan -out=tfplan\nterraform show -json tfplan > plan.json\nwafpass check --output json --push ${pushUrl}/runs --plan-file plan.json ${iacPath}`
-    : `# Plan-file change overview is currently supported for Terraform runs.\nwafpass check --iac ${run.iac_framework} --output json --push ${pushUrl}/runs ${iacPath}`
+    ? `# Generate a Terraform plan JSON and push it with the scan\nterraform plan -out=tfplan\nterraform show -json tfplan > plan.json\nwombat check --output json --push ${pushUrl}/runs --plan-file plan.json ${iacPath}`
+    : `# Plan-file change overview is currently supported for Terraform runs.\nwombat check --iac ${run.iac_framework} --output json --push ${pushUrl}/runs ${iacPath}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '680px' }}>

@@ -11,7 +11,7 @@ export interface Waiver {
   project?: string
 }
 
-const STORAGE_KEY = 'wafpass_waivers'
+const STORAGE_KEY = 'wombat_waivers'
 
 function loadLocalWaivers(): Record<string, Waiver> {
   try {
@@ -176,7 +176,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = '.wafpass-skip.yml'
+    a.download = '.wombat-skip.yml'
     a.click()
     URL.revokeObjectURL(url)
   }

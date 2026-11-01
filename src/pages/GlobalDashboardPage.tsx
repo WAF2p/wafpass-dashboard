@@ -829,7 +829,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
         <div style={{ textAlign: 'center', maxWidth: 460, padding: '2.5rem', borderRadius: '24px', background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}>
           <div style={{ color: 'var(--waf-brand)', marginBottom: '1rem' }}><EmptyStateIcon /></div>
           <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>No run data available</div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>Run a WAF++ scan first to populate your operational center.</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>Run a WOMBATpass scan first to populate your operational center.</div>
           <button
             onClick={() => navigate('runscan')}
             style={{

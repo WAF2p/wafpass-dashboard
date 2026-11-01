@@ -35,7 +35,7 @@ export default function SyslogConfigModal({ onClose, onSaved }: Props) {
   const [syslogFormat, setSyslogFormat] = useState<'rfc3164' | 'rfc5424'>('rfc5424')
   const [facility, setFacility] = useState(13)
   const [tlsEnabled, setTlsEnabled] = useState(false)
-  const [programTag, setProgramTag] = useState('wafpass-admin')
+  const [programTag, setProgramTag] = useState('wombat-admin')
   const [overrides, setOverrides] = useState<[string, number][]>([])
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function SyslogConfigModal({ onClose, onSaved }: Props) {
       syslog_format: syslogFormat,
       facility,
       tls_enabled: tlsEnabled,
-      program_tag: programTag.trim() || 'wafpass-admin',
+      program_tag: programTag.trim() || 'wombat-admin',
       severity_overrides: Object.fromEntries(overrides.filter(([a]) => a)),
     }
     try {

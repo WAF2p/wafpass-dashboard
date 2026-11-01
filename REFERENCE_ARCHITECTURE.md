@@ -1,6 +1,6 @@
-# WAF++ Reference Architecture
+# Wombat Reference Architecture
 
-This document provides a comprehensive, end-to-end reference architecture for the WAF++ PASS system - showing how the **wafpass-core CLI**, **wafpass-server API**, and **wafpass-dashboard** work together as a unified compliance scanning platform.
+This document provides a comprehensive, end-to-end reference architecture for the WOMBATpass system - showing how the **wombat-core CLI**, **wombat-server API**, and **wombat-dashboard** work together as a unified compliance scanning platform.
 
 ---
 
@@ -8,11 +8,11 @@ This document provides a comprehensive, end-to-end reference architecture for th
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   WAF++ PASS ARCHITECTURE                                    │
+│                                   WOMBATpass ARCHITECTURE                                    │
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                             │
 │  ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────────────┐      │
-│  │   wafpass-core  │         │  wafpass-server  │         │  wafpass-dashboard    │      │
+│  │   wombat-core   │         │  wombat-server   │         │    wombat-dashboard     │      │
 │  │  (CLI / Engine) │◄───────►│   (FastAPI/DB)   │◄───────►│   (React SPA)         │      │
 │  │                 │         │                  │         │                         │      │
 │  │ - IaC Parsing   │  API    │ - RESTful API    │  HTTP   │ - Browser UI            │      │
@@ -40,7 +40,7 @@ This document provides a comprehensive, end-to-end reference architecture for th
 
 ## Component Roles
 
-### wafpass-core (The Scanning Engine)
+### wombat-core (The Scanning Engine)
 
 | Responsibility | Details |
 |----------------|---------|
@@ -52,9 +52,9 @@ This document provides a comprehensive, end-to-end reference architecture for th
 | **Blast Radius** | Calculates failure propagation paths |
 | **Plan Changes** | Analyzes Terraform plan JSON for drift detection |
 
-**Key Point:** wafpass-core is a **command-line tool** - it does NOT store data. It produces scan results that are pushed to wafpass-server.
+**Key Point:** wombat-core is a **command-line tool** - it does NOT store data. It produces scan results that are pushed to wombat-server.
 
-### wafpass-server (The API & Persistence Layer)
+### wombat-server (The API & Persistence Layer)
 
 | Responsibility | Details |
 |----------------|---------|
@@ -67,9 +67,9 @@ This document provides a comprehensive, end-to-end reference architecture for th
 | **Achievements** | Tracks maturity tier milestones |
 | **Control Catalogue** | Manages builtin + custom controls |
 
-**Key Point:** wafpass-server is a **stateless API server** - all state is in PostgreSQL. It can be horizontally scaled.
+**Key Point:** wombat-server is a **stateless API server** - all state is in PostgreSQL. It can be horizontally scaled.
 
-### wafpass-dashboard (The UI Layer)
+### wombat-dashboard (The UI Layer)
 
 | Responsibility | Details |
 |----------------|---------|
@@ -81,7 +81,7 @@ This document provides a comprehensive, end-to-end reference architecture for th
 | **Real-time Sync** | localStorage + server sync for prefs |
 | **i18n Support** | 6 languages with fallback to English |
 
-**Key Point:** wafpass-dashboard is a **static SPA** - no server-side rendering. All data comes from wafpass-server.
+**Key Point:** wombat-dashboard is a **static SPA** - no server-side rendering. All data comes from wombat-server.
 
 ---
 
@@ -94,7 +94,7 @@ Developer/CI System
        │
        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  wafpass check [flags]                                                      │
+│  wombat check [flags]                                                      │
 │  - Parse IaC files (Terraform HCL / CloudFormation YAML / CDK TS / Pulumi Python) │
 │  - Load 73+ controls from controls/ directory                              │
 │  - Evaluate each control against parsed state                              │
@@ -104,14 +104,14 @@ Developer/CI System
        │
        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  POST /runs (wafpass-server API)                                            │
+│  POST /runs (wombat-server API)                                            │
 │  - JSON payload: { project, branch, git_sha, findings, pillar_scores, ...} │
 │  - Auth: Bearer JWT or X-Api-Key header                                    │
 └───────────────────────────────────────────────────────────────────────────────┘
        │
        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  wafpass-server /runs Router                                                │
+│  wombat-server /runs Router                                                │
 │  - Verify authentication                                                   │
 │  - Validate input schema                                                   │
 │  - Evaluate achievements (tier thresholds)                                 │
@@ -149,15 +149,15 @@ Developer/CI System
        │
        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  POST /auth/login (wafpass-server)                                          │
-│  - wafpass_server/routers/auth.py                                          │
+│  POST /auth/login (wombat-server)                                          │
+│  - wombat_server/routers/auth.py                                          │
 │  - auth/providers/local.py validates bcrypt password hash                  │
 └───────────────────────────────────────────────────────────────────────────────┘
        │
        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │  JWT Token Generation                                                       │
-│  - wafpass_server/auth/jwt_utils.py                                        │
+│  - wombat_server/auth/jwt_utils.py                                        │
 │  - create_access_token(): HS256 JWT, 15 min expiry                        │
 │  - secrets.token_urlsafe(): opaque refresh token (stored hashed in DB)    │
 │  - Response includes: access_token, refresh_token, user object            │
@@ -166,9 +166,9 @@ Developer/CI System
        ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │  Browser: AuthContext.loginWithTokens()                                    │
-│  localStorage.setItem('wafpass_access_token', access_token)                │
-│  localStorage.setItem('wafpass_refresh_token', refresh_token)              │
-│  localStorage.setItem('wafpass_auth_user', JSON.stringify(user))          │
+│  localStorage.setItem('wombat_access_token', access_token)                │
+│  localStorage.setItem('wombat_refresh_token', refresh_token)              │
+│  localStorage.setItem('wombat_auth_user', JSON.stringify(user))          │
 └───────────────────────────────────────────────────────────────────────────────┘
        │
        ▼
@@ -184,7 +184,7 @@ Developer/CI System
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │  Browser: AuthProvider on mount                                            │
-│  1. Check localStorage for wafpass_access_token                           │
+│  1. Check localStorage for wombat_access_token                           │
 │  2. Decode JWT payload (base64) and check 'exp' claim                     │
 └───────────────────────────────────────────────────────────────────────────────┘
        │
@@ -192,7 +192,7 @@ Developer/CI System
        │       │
        │       ├─ YES → Restore session immediately (no network round-trip)
        │       │
-       │       └─ NO → Check for wafpass_refresh_token
+       │       └─ NO → Check for wombat_refresh_token
        │               │
        │               ├─ Has Refresh Token?
        │               │       │
@@ -217,13 +217,13 @@ Developer/CI System
 
 ```typescript
 // Dynamic base URL with priority chain:
-// 1. localStorage.wafpass_server_url (runtime override)
+// 1. localStorage.wombat_server_url (runtime override)
 // 2. VITE_API_URL (build-time config)
 // 3. Empty string (same origin, for Docker Compose)
 
 export function getApiBase(): string {
   try {
-    const stored = localStorage.getItem('wafpass_server_url')
+    const stored = localStorage.getItem('wombat_server_url')
     if (stored?.trim()) return stored.trim().replace(/\/$/, '')
   } catch {}
   return ENV_API_BASE
@@ -304,13 +304,13 @@ function selectRun(runId: string) {
          │                   │     │                           │
          ▼                   ▼     ▼                           ▼
 ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────────────────┐
-│  localStorage    │  │   wafpass_server │  │      React Context           │
+│  localStorage    │  │   wombat_server │  │      React Context           │
 │                  │  │                  │  │                              │
-│ - wafpass_auth   │  │ - PostgreSQL     │  │  AuthContext               │
-│ - wafpass_settings│ │ - runs table     │  │  - user, role, accessToken   │
-│ - wafpass_maturity│ │ - users table    │  │  - login(), logout()         │
-│ - wafpass_waivers │ │ - waivers table  │  │                              │
-│ - wafpass_risks   │ │ - risks table    │  │  AuthProvider                │
+│ - wombat_auth   │  │ - PostgreSQL     │  │  AuthContext               │
+│ - wombat_settings│ │ - runs table     │  │  - user, role, accessToken   │
+│ - wombat_maturity│ │ - users table    │  │  - login(), logout()         │
+│ - wombat_waivers │ │ - waivers table  │  │                              │
+│ - wombat_risks   │ │ - risks table    │  │  AuthProvider                │
 └──────────────────┘  └──────────────────┘  └──────────────────────────────┘
 ```
 
@@ -351,7 +351,7 @@ const visibleNavItems = settings.hideDisabledMenuItems
 users                    -- User accounts with role, auth_provider
 refresh_tokens           -- Refresh token rotation + family tracking
 sso_configs              -- OIDC/SAML2 provider config (JSONB)
-group_role_mappings      -- IdP group → WAF++ role mapping
+group_role_mappings      -- IdP group → WOMBATpass role mapping
 api_keys                 -- CI/CD API keys
 user_audit_logs          -- User action audit trail
 
@@ -404,7 +404,7 @@ run_secret_findings      -- Normalized secret findings
                     │
                     ▼
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
-│  GET /auth/oidc/authorize (wafpass-server)                                                   │
+│  GET /auth/oidc/authorize (wombat-server)                                                   │
 │  - Fetch IdP discovery doc                                                                  │
 │  - Generate nonce=random_hex(16), state=HS256_JWT{nonce, exp}                             │
 │  - 302 redirect: {idp_url}?client_id=...&state=...&nonce=...&redirect_uri=...             │
@@ -420,14 +420,14 @@ run_secret_findings      -- Normalized secret findings
                     │
                     ▼
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
-│  GET /auth/oidc/callback (wafpass-server)                                                    │
-│  - Verify state JWT (WAFPASS_JWT_SECRET, 10 min TTL)                                       │
+│  GET /auth/oidc/callback (wombat-server)                                                    │
+│  - Verify state JWT (WOMBAT_JWT_SECRET, 10 min TTL)                                       │
 │  - POST token_endpoint with authorization_code                                             │
 │  - Fetch JWKS from discovery["jwks_uri"]                                                   │
 │  - Verify id_token signature (RS256/EC) using IdP public key                              │
 │  - Validate aud == client_id and nonce matches state nonce                                │
 │  - Provision/update User row (auth_provider="oidc")                                       │
-│  - Issue WAF++ JWT + refresh token                                                         │
+│  - Issue WOMBATpass JWT + refresh token                                                    │
 │  - 302 redirect: {frontend_url}?sso_ok=1&at=...&rt=...&u=BASE64(user)                    │
 └───────────────────────────────────────────────────────────────────────────────────────────────┘
                     │
@@ -453,7 +453,7 @@ run_secret_findings      -- Normalized secret findings
                     │
                     ▼
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
-│  POST /evidence (wafpass-server) - Optional "Lock on Server"                                │
+│  POST /evidence (wombat-server) - Optional "Lock on Server"                                │
 │  - Server computes SHA-256(canonical_json(snapshot))                                       │
 │  - Stores hash in evidence.hash_digest                                                     │
 │  - Generates public_token (32-char URL-safe random)                                       │
@@ -488,7 +488,7 @@ run_secret_findings      -- Normalized secret findings
                     │
                     ▼
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
-│  wafpass-server /findings-comments Router                                                    │
+│  wombat-server /findings-comments Router                                                    │
 │  - auth/deps.py: get_current_user (verify JWT)                                            │
 │  - Insert into findings_comments table:                                                    │
 │    { finding_id, run_id, user_id, message, created_at }                                  │
@@ -581,7 +581,7 @@ The server enforces the same checks via require_role().
 ```
 Priority chain for API base URL:
 
-1. localStorage.wafpass_server_url (highest priority)
+1. localStorage.wombat_server_url (highest priority)
    Set via Settings → Connection & Real Engine
    Takes effect immediately (no reload needed)
 
@@ -591,7 +591,7 @@ Priority chain for API base URL:
 
 3. Empty string (same origin)
    Used in Docker Compose with nginx proxy
-   Resolves to http://localhost:3000 (nginx) → wafpass-server:8000
+   Resolves to http://localhost:3000 (nginx) → wombat-server:8000
 
 Why this works:
 - getApiBase() reads localStorage on every request
@@ -671,7 +671,7 @@ Both systems work together:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│  HTTP Request (Browser → wafpass-dashboard)                                  │
+│  HTTP Request (Browser → wombat-dashboard)                                  │
 │  e.g., GET /runs                                                             │
 └───────────────────────────────────────────────────────────────────────────────┘
                               │
@@ -685,7 +685,7 @@ Both systems work together:
                               │
                               ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  wafpass-server (localhost:8000)                                             │
+│  wombat-server (localhost:8000)                                             │
 │  - FastAPI receives GET /runs                                                │
 │  - CORS middleware checks origin                                             │
 │  - HTTPBearer extracts Bearer token                                          │
@@ -725,11 +725,11 @@ Both systems work together:
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  Docker Network: wafpass_net                                                 │
+│  Docker Network: wombat_net                                                 │
 ├───────────────────────────────────────────────────────────────────────────────┤
 │                                                                               │
 │  ┌──────────────────┐         ┌──────────────────┐        ┌───────────────┐ │
-│  │   nginx:alpine   │◄────────┤ wafpass-server   │◄───────┤ PostgreSQL    │ │
+│  │   nginx:alpine   │◄────────┤ wombat-server   │◄───────┤ PostgreSQL    │ │
 │  │   (Port 3000)    │ HTTP    │   (Port 8000)    │   TCP   │   (Port 5432) │ │
 │  │                  │ Requests│                  │  conn    │               │ │
 │  │ - Serves dist/   │        │ - FastAPI app    │        │ - Data        │ │
@@ -753,40 +753,40 @@ Both systems work together:
 
 ## Environment Configuration
 
-### wafpass-server (.env.example)
+### wombat-server (.env.example)
 
 ```bash
 # Database
-DATABASE_URL=postgresql://postgres:password@postgres:5432/wafpass
+DATABASE_URL=postgresql://postgres:password@postgres:5432/wombat
 
 # Environment
-WAFPASS_ENV=local  # Change to "production" for enforced security
+WOMBAT_ENV=local  # Change to "production" for enforced security
 
 # JWT
-WAFPASS_JWT_SECRET=your-secure-secret-key-here
-WAFPASS_JWT_EXPIRE_MINUTES=15
+WOMBAT_JWT_SECRET=your-secure-secret-key-here
+WOMBAT_JWT_EXPIRE_MINUTES=15
 
 # Encryption (required in non-local envs)
-WAFPASS_ENCRYPTION_KEY=your-32-byte-base64-key
+WOMBAT_ENCRYPTION_KEY=your-32-byte-base64-key
 
 # Admin (seeded on first startup if empty)
-WAFPASS_ADMIN_USERNAME=admin
-WAFPASS_ADMIN_PASSWORD=secure-password
-WAFPASS_ADMIN_ROLE=admin
+WOMBAT_ADMIN_USERNAME=admin
+WOMBAT_ADMIN_PASSWORD=secure-password
+WOMBAT_ADMIN_ROLE=admin
 
 # CORS (comma-separated list)
-WAFPASS_CORS_ORIGINS=http://localhost:3000
+WOMBAT_CORS_ORIGINS=http://localhost:3000
 
 # SSO (optional)
-WAFPASS_OIDC_DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration
-WAFPASS_OIDC_CLIENT_ID=your-client-id
-WAFPASS_OIDC_CLIENT_SECRET=your-client-secret
+WOMBAT_OIDC_DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration
+WOMBAT_OIDC_CLIENT_ID=your-client-id
+WOMBAT_OIDC_CLIENT_SECRET=your-client-secret
 
 # Ports
-WAFPASS_SERVER_PORT=8000
+WOMBAT_SERVER_PORT=8000
 ```
 
-### wafpass-dashboard (.env.local)
+### wombat-dashboard (.env.local)
 
 ```bash
 # API Server URL
@@ -803,7 +803,7 @@ VITE_API_URL=http://localhost:8000
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| **CLI Engine** | wafpass-core | Rust + HCL parsing |
+| **CLI Engine** | wombat-core | Rust + HCL parsing |
 | **API Server** | FastAPI | Python 3.11+ |
 | **Database** | PostgreSQL | 15+ with JSONB |
 | **Authentication** | PyJWT | HS256 + Refresh tokens |
@@ -823,9 +823,9 @@ VITE_API_URL=http://localhost:8000
 ### 1. Separation of Concerns
 
 ```
-wafpass-core:  Scanning engine (no state)
-wafpass-server: Stateful API layer
-wafpass-dashboard: Stateless UI layer
+wombat-core:  Scanning engine (no state)
+wombat-server: Stateful API layer
+wombat-dashboard: Stateless UI layer
 ```
 
 ### 2. Security by Default
@@ -861,7 +861,7 @@ wafpass-dashboard: Stateless UI layer
 ### 6. Zero Configuration for Docker
 
 - Default `VITE_API_URL=""` → same-origin
-- nginx proxies `/runs` → `wafpass-server:8000`
+- nginx proxies `/runs` → `wombat-server:8000`
 - No cross-origin issues in containerized setup
 
 ### 7. Audit Trail
@@ -881,9 +881,9 @@ wafpass-dashboard: Stateless UI layer
    - Dashboard is static files (CDN-friendly)
 
 2. **Clear Ownership Boundaries**
-   - wafpass-core: Produces scan results
-   - wafpass-server: Stores + exposes via API
-   - wafpass-dashboard: Visualizes + interacts
+   - wombat-core: Produces scan results
+   - wombat-server: Stores + exposes via API
+   - wombat-dashboard: Visualizes + interacts
 
 3. **Scalable Data Flow**
    - PostgreSQL handles 10k+ runs efficiently
@@ -912,4 +912,4 @@ wafpass-dashboard: Stateless UI layer
 
 ---
 
-*This reference architecture document was generated for WAF++ PASS v1.0.0*
+*This reference architecture document was generated for WOMBATpass v1.0.0*

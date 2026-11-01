@@ -400,7 +400,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
     [filteredStateDrift]
   )
 
-  // Non-compliant state changes (resource is also failing a WAF++ check)
+  // Non-compliant state changes (resource is also failing a Wombat check)
   const nonCompliantDrift = useMemo(() =>
     filteredStateDrift.filter(c => failingResources.has(c.address)).length,
     [filteredStateDrift, failingResources]

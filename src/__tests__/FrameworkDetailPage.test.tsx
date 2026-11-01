@@ -112,7 +112,7 @@ describe('FrameworkDetailPage', () => {
     expect(screen.getByText('Not run')).toBeInTheDocument()
   })
 
-  it('lists every mapped WAF++ control for the selected framework', () => {
+  it('lists every mapped Wombat control for the selected framework', () => {
     render(<FrameworkDetailPage run={mockRun} navigate={mockNavigate} frameworkId="GDPR" />)
 
     expect(screen.getByText('WAF-SEC-010')).toBeInTheDocument()

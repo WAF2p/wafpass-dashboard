@@ -412,7 +412,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
         <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: '0.15rem' }}>{t('pages.sso.spSection')}</div>
         <Field label={t('pages.sso.spEntityId')} hint={t('pages.sso.spEntityIdHint')}>
-          <input style={inputSx} value={form.entity_id} onChange={e => set('entity_id', e.target.value)} placeholder="https://wafpass.example.com" />
+          <input style={inputSx} value={form.entity_id} onChange={e => set('entity_id', e.target.value)} placeholder="https://wombat.example.com" />
         </Field>
         <Field label={t('pages.sso.acsUrl')} hint={t('pages.sso.acsUrlHint')}>
           <input style={inputSx} value={form.acs_url} onChange={e => set('acs_url', e.target.value)} placeholder="https://api.example.com/auth/saml/acs" />
@@ -585,7 +585,7 @@ export default function SsoSettingsPage() {
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5,
       }}>
         <strong style={{ color: 'var(--text)' }}>{t('pages.sso.overviewTitle')}</strong> — {t('pages.sso.overviewText')}
-        <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>pip install "wafpass-server[saml]"</code>).
+        <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>pip install "wombat-server[saml]"</code>).
       </div>
 
       {mandateOptions.length > 0 && (

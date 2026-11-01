@@ -19,7 +19,7 @@ export interface RiskAcceptance {
   project?: string
 }
 
-const STORAGE_KEY = 'wafpass_risk_acceptances'
+const STORAGE_KEY = 'wombat_risk_acceptances'
 
 function loadLocal(): Record<string, RiskAcceptance> {
   try {

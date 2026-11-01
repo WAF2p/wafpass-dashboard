@@ -6,6 +6,7 @@ import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { scoreColor } from '../routing'
 import { NavEntry, NavSection, buildNavSections } from '../navigation/navModel'
+import BrandLogo from './BrandLogo'
 
 function NavItem({ item, page, navigate, onClose }: { item: NavEntry; page: Page; navigate: (p: Page) => void; onClose: () => void }) {
   return (
@@ -128,7 +129,7 @@ export default function MobileMenu({
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <img src="/logo.png" alt="WAF++ PASS" style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
+          <BrandLogo height={30} />
           <div style={{ fontSize: '0.6rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginTop: '0.2rem' }}>
             Controls Dashboard
           </div>

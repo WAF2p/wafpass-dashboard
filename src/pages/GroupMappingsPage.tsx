@@ -1,5 +1,5 @@
 /**
- * Group → Role Mappings — centralized IdP group-to-WAF++ role resolution table.
+ * Group → Role Mappings — centralized IdP group-to-WOMBATpass role resolution table.
  * Mappings are evaluated during SSO login before per-provider role_mapping config.
  * Higher priority = evaluated first; first match wins.
  * Requires admin role.
@@ -120,7 +120,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.groupNameLabel')}</span>
           <input
-            style={inputStyle} placeholder="e.g. wafpass-admins"
+            style={inputStyle} placeholder="e.g. wombat-admins"
             value={form.group_name}
             onChange={e => setForm(f => ({ ...f, group_name: e.target.value }))}
           />
@@ -169,7 +169,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
       <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.75rem' }}>
         <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.descriptionLabel')}</span>
         <input
-          style={inputStyle} placeholder="e.g. Azure AD group for WAF++ platform admins"
+          style={inputStyle} placeholder="e.g. Azure AD group for WOMBATpass platform admins"
           value={form.description}
           onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
         />

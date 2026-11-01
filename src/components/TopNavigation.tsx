@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Page } from '../routing'
 import { NotificationBell } from './NotificationBell'
 import MandateLogo from './MandateLogo'
+import BrandLogo from './BrandLogo'
 import { hasMinRole, useAuth } from '../AuthContext'
 import { Settings, getMaturityMeta } from '../pages/settingsUtils'
 import { RunDetail, RunSummary, fetchMyMandate, fetchSwitchableMandants, type MandantOut } from '../api'
@@ -49,7 +50,7 @@ const roleIcons: Record<string, string> = {
 }
 
 // Same-session follow-up — the active mandate's own logo, always visible
-// in the top bar right next to the WAF++ logo, not just on the Mandates
+// in the top bar right next to the Wombat logo, not just on the Mandates
 // page. "Active" mirrors MandateIndicator's own notion of it exactly:
 // - An ordinary mandate-scoped user: their one mandate, via
 //   fetchMyMandate() — there's never anything to switch, so it's always
@@ -537,9 +538,9 @@ export default function TopNavigation({
     <header className="app-top-nav">
       {/* Logo */}
       <div className="app-top-nav-logo">
-        <img className="app-top-nav-logo-img" src="/logo.png" alt="WAF++ PASS" style={{ height: '32px', width: 'auto', objectFit: 'contain', filter: 'brightness(1.05)' }} />
+        <BrandLogo className="app-top-nav-logo-brand" height={32} />
         {/* Same-session follow-up — the active mandate's own logo, always
-            visible right next to the WAF++ logo, not just on the Mandates
+            visible right next to the Wombat logo, not just on the Mandates
             page. See ActiveMandateLogo's own docstring for exactly what
             "active" means for each role. */}
         <ActiveMandateLogo />

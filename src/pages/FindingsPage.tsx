@@ -105,7 +105,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
           {status === 'saving' ? '...' : t('pages.findings.commentBtn')}
         </button>
       </div>
-      {!user && <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.25rem' }}>Sign in with your WAF++ account to participate</div>}
+      {!user && <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.25rem' }}>Sign in with your WOMBATpass account to participate</div>}
     </div>
   )
 }
@@ -392,9 +392,9 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
       }
       // keep localStorage in sync
       try {
-        const stored = JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}') as Record<string, unknown>
+        const stored = JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}') as Record<string, unknown>
         for (const id of controlIds) stored[id] = { id, reason: reason.trim(), owner: owner.trim(), expires: expires.trim(), project }
-        localStorage.setItem('wafpass_waivers', JSON.stringify(stored))
+        localStorage.setItem('wombat_waivers', JSON.stringify(stored))
       } catch {}
       setStatus('done')
       setTimeout(onDone, 900)

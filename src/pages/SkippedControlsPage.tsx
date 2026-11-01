@@ -14,8 +14,8 @@ export default function SkippedControlsPage({ run }: Props) {
     )
   }
 
-  const waivers = JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}') as Record<string, any>
-  const risks = JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}') as Record<string, any>
+  const waivers = JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}') as Record<string, any>
+  const risks = JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}') as Record<string, any>
 
   const findingsByControl = new Map<string, string[]>()
   for (const f of run.findings) {

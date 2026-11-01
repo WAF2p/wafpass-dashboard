@@ -673,7 +673,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0 0' }}>
             {([
               ['executiveSummary', 'Executive Summary',    'Score, KPIs, run metadata — always recommended',         1],
-              ['pillarBreakdown',  'Pillar Breakdown',     'Scores per WAF++ pillar',                                2],
+              ['pillarBreakdown',  'Pillar Breakdown',     'Scores per Wombat pillar',                                2],
               ['criticalFindings', 'Critical & High Findings', 'Table of critical and high severity failures',       2],
               ['complianceMatrix', 'Compliance Matrix',    'Regulatory readiness and category pass rates',           3],
               ['architecturalDebt','Architectural Debt',   'Failure heatmap by pillar and severity',                 3],
@@ -801,7 +801,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 </button>
               </div>
               <div style={{ marginTop: '0.35rem', fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                Base URL of the central WAF++ validation gateway. Used by the dashboard to request official countersignatures. Leave empty to use the build-time <code style={{ fontSize: '0.68rem' }}>VITE_VALIDATION_URL</code> value.
+                Base URL of the central WOMBATpass validation gateway. Used by the dashboard to request official countersignatures. Leave empty to use the build-time <code style={{ fontSize: '0.68rem' }}>VITE_VALIDATION_URL</code> value.
               </div>
             </div>
 
@@ -825,7 +825,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             </div>
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-              The gateway must trust the server's sub-CA certificate (see <code style={{ color: 'var(--waf-brand)', fontSize: '0.68rem' }}>WAFPASS_SERVER_SUBCA_CERT</code> on the server).
+              The gateway must trust the server's sub-CA certificate (see <code style={{ color: 'var(--waf-brand)', fontSize: '0.68rem' }}>WOMBAT_SERVER_SUBCA_CERT</code> on the server).
             </div>
           </div>
 
@@ -842,8 +842,8 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
               <strong style={{ color: 'var(--text)' }}>{t('pages.settingsPage.requirements')}:</strong>
               <ul style={{ margin: '0.35rem 0 0 1rem', padding: 0 }}>
-                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>wafpass-core</code> installed on the server</li>
-                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>WAFPASS_CONTROLS_DIR</code> pointing to control YAML files</li>
+                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>wombat-core</code> installed on the server</li>
+                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>WOMBAT_CONTROLS_DIR</code> pointing to control YAML files</li>
               </ul>
             </div>
 
@@ -866,7 +866,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               background: '#0f172a', color: '#e2e8f0', borderRadius: '8px',
               padding: '0.65rem 0.85rem', fontSize: '0.72rem', lineHeight: 1.6, margin: 0, overflowX: 'auto',
             }}>
-              {`# In docker-compose.yml — wafpass-server environment:\nWAFPASS_CONTROLS_DIR: /app/controls\n\n# Or mount a local directory:\nvolumes:\n  - ./my-controls:/app/controls:ro`}
+              {`# In docker-compose.yml — wombat-server environment:\nWOMBAT_CONTROLS_DIR: /app/controls\n\n# Or mount a local directory:\nvolumes:\n  - ./my-controls:/app/controls:ro`}
             </pre>
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>

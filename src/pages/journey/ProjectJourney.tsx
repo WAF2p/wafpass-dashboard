@@ -38,7 +38,7 @@ function fmt(iso: string) { return new Date(iso).toLocaleDateString(undefined, {
 function fmtFull(iso: string) { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }
 
 const ACHIEVEMENTS = [
-  { id: 'first_scan', title: 'First Scan', description: 'Complete your first WAF++ scan', check: (rs: RunSummary[]) => rs.length >= 1 },
+  { id: 'first_scan', title: 'First Scan', description: 'Complete your first WOMBATpass scan', check: (rs: RunSummary[]) => rs.length >= 1 },
   { id: 'score_60', title: 'Above Average', description: 'Achieve a score of 60 or higher', check: (rs: RunSummary[]) => rs.some(r => r.score >= 60) },
   { id: 'score_80', title: 'High Performer', description: 'Achieve a score of 80 or higher', check: (rs: RunSummary[]) => rs.some(r => r.score >= 80) },
   { id: 'score_90', title: 'Security Champion', description: 'Achieve a score of 90 or higher', check: (rs: RunSummary[]) => rs.some(r => r.score >= 90) },

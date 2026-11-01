@@ -147,7 +147,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
           </div>
           <div style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(218,44,56,.07)', border: '1px solid rgba(218,44,56,.20)', fontSize: '0.75rem', color: '#DA2C38', lineHeight: 1.6 }}>
             <strong>Suppress this finding</strong> (use sparingly — add a justification comment):<br />
-            <code style={{ fontSize: '0.7rem' }}>{'  '}{sf.matched_key || 'value'} = "..." <span style={{ opacity: 0.7 }}># wafpass:ignore-secret  reason: &lt;your justification&gt;</span></code>
+            <code style={{ fontSize: '0.7rem' }}>{'  '}{sf.matched_key || 'value'} = "..." <span style={{ opacity: 0.7 }}># wombat:ignore-secret  reason: &lt;your justification&gt;</span></code>
           </div>
         </div>
       )}
@@ -484,7 +484,7 @@ export default function SecretScanPage({ run }: Props) {
         </div>
         <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.7 }}>
           <strong style={{ color: 'var(--text)' }}>Suppress a specific line</strong> (use sparingly — add a justification):<br />
-          <code style={{ fontSize: '0.72rem' }}>{'  password = "..." # wafpass:ignore-secret  reason: non-sensitive test placeholder'}</code>
+          <code style={{ fontSize: '0.72rem' }}>{'  password = "..." # wombat:ignore-secret  reason: non-sensitive test placeholder'}</code>
         </div>
 
       </div>

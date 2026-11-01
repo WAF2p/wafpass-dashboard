@@ -425,10 +425,10 @@ export interface Translations {
       addBtn: string              // "+ Add Waiver"
       copyYaml: string
       copied: string
-      downloadYml: string         // "Download .wafpass-skip.yml"
+      downloadYml: string         // "Download .wombat-skip.yml"
       noWaivers: string           // "No waivers configured"
       noWaiversHint: string
-      previewTitle: string        // ".wafpass-skip.yml Preview"
+      previewTitle: string        // ".wombat-skip.yml Preview"
       previewHint: string
       expired: string             // "EXPIRED"
       expires: string             // "expires {{date}}"
@@ -538,7 +538,7 @@ export interface Translations {
       serverUrlLabel: string      // "Dashboard server"
       serverUrlHint: string       // "Change it in Settings → Connection & Real Engine."
       cliPathTitle: string        // "CLI Push"
-      cliPathDesc: string         // "Run wafpass locally and push results."
+      cliPathDesc: string         // "Run wombat locally and push results."
       serverPathTitle: string      // "Server-side"
       serverPathDesc: string      // "Trigger a scan on the dashboard server."
       apiPathTitle: string        // "Direct API"
@@ -906,7 +906,7 @@ export interface Translations {
       roleMapping: string
       roleMappingHint: string
       autoProvision: string       // "Auto-provision new users"
-      autoProvisionHint: string   // "— create a WAF++ account on first SSO login"
+      autoProvisionHint: string   // "— create a WOMBATpass account on first SSO login"
       removeBtn: string           // "Remove"
       spMetadataLabel: string     // "SP Metadata:"
       spMetadataHint: string      // "Register this URL in your IdP."
@@ -2059,7 +2059,7 @@ export interface Translations {
       runningEngine: string
       evaluatingControls: string
       engineError: string
-      engineValue: string          // "Real WAF++ engine" / "Mock (regex)"
+      engineValue: string          // "Real WOMBATpass engine" / "Mock (regex)"
       controlsEvaluated: string
       withFindings: string
       pass: string

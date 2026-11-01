@@ -1,7 +1,7 @@
 /**
  * Compliance Readiness Index
  *
- * Tracks compliance evidence readiness for decentralized WAF++ audits:
+ * Tracks compliance evidence readiness for decentralized Wombat audits:
  * - % of controls mapped to frameworks (GDPR, ISO, SOC2, etc.)
  * - Evidence collection completeness per audit period
  * - Findings with missing remediation documentation
@@ -83,11 +83,11 @@ export default function ComplianceReadinessPage({ run }: Props) {
       } catch {
         // Use localStorage cache if API fails
         try {
-          const w = JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}')
+          const w = JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}')
           setWaivers(Object.values(w) as WaiverRecord[])
         } catch {}
         try {
-          const r = JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}')
+          const r = JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}')
           setRisks(Object.values(r) as RiskRecord[])
         } catch {}
       }

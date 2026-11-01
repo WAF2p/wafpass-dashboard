@@ -56,7 +56,7 @@ const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_scan',
     title: 'First Scan',
-    description: 'Complete your first WAF++ scan',
+    description: 'Complete your first WOMBATpass scan',
     category: 'coverage',
     iconPath: 'M13 10V3L4 14h7v7l9-11h-7z',
     check: rs => rs.length >= 1,

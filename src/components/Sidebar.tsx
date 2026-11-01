@@ -6,6 +6,7 @@ import { Page, scoreColor } from '../routing'
 import { useI18n } from '../i18n'
 import { loadUserPrefs, saveUserPrefs, UserPreferences } from '../pages/userPrefsUtils'
 import { NavEntry, buildNavSections } from '../navigation/navModel'
+import BrandLogo from './BrandLogo'
 
 export interface SidebarProps {
   run: RunDetail | null
@@ -181,7 +182,7 @@ export default function Sidebar({
   const { t } = useI18n()
 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
-    try { return JSON.parse(localStorage.getItem('wafpass_nav_expanded') ?? '{}') } catch { return {} }
+    try { return JSON.parse(localStorage.getItem('wombat_nav_expanded') ?? '{}') } catch { return {} }
   })
 
   const [controlsCount, setControlsCount] = useState<number>(0)
@@ -218,7 +219,7 @@ export default function Sidebar({
   function toggleSection(id: string) {
     setExpandedSections(prev => {
       const next = { ...prev, [id]: !prev[id] }
-      try { localStorage.setItem('wafpass_nav_expanded', JSON.stringify(next)) } catch {}
+      try { localStorage.setItem('wombat_nav_expanded', JSON.stringify(next)) } catch {}
       return next
     })
   }
@@ -231,7 +232,7 @@ export default function Sidebar({
     }}>
       {/* Logo */}
       <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--sidebar-border)' }}>
-        <img src="/logo.png" alt="WAF++ PASS" style={{ height: '32px', width: 'auto', objectFit: 'contain', filter: 'brightness(1.05)' }} />
+        <BrandLogo height={32} />
         <div style={{ marginTop: '0.375rem', fontSize: '0.62rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
           Controls Dashboard
         </div>
@@ -426,7 +427,7 @@ export default function Sidebar({
       </div>
 
       <div style={{ padding: '0.5rem 1.25rem', borderTop: '1px solid var(--sidebar-border)', fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>
-        WAF++ PASS v1.0.0
+        WOMBATpass v1.0.0
       </div>
     </aside>
   )

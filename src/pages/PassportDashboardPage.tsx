@@ -231,7 +231,7 @@ function MaturitySeal({ level, color, textColor, size = 54 }: { level: number; c
         fontFamily="system-ui,-apple-system,sans-serif">L{level}</text>
       <text x={cx} y={cy + size * 0.12} textAnchor="middle" dominantBaseline="central"
         fill={textColor} fontSize={size * 0.1} fontWeight="700" opacity="0.9"
-        fontFamily="system-ui,-apple-system,sans-serif">WAF++</text>
+        fontFamily="system-ui,-apple-system,sans-serif">Wombat</text>
     </svg>
   )
 }
@@ -317,7 +317,7 @@ function AccessDeniedOverlay({
       <div className="pp-modal pp-modal--access" onClick={e => e.stopPropagation()}>
         <div className="pp-modal-header pp-modal-header--danger">
           <div>
-            <div className="pp-modal-kicker">WAF++ · PROJECT PASSPORT</div>
+            <div className="pp-modal-kicker">Wombat · PROJECT PASSPORT</div>
             <div className="pp-modal-title" style={{ maxWidth: 280 }}>{project}</div>
           </div>
           <button className="pp-modal-close" onClick={onClose}>
@@ -372,7 +372,7 @@ function AchievementsOverlay({
       <div className="pp-modal pp-modal--stamps" onClick={e => e.stopPropagation()}>
         <div className="pp-modal-header pp-modal-header--brand">
           <div>
-            <div className="pp-modal-kicker">WAF++ · STAMP COLLECTION</div>
+            <div className="pp-modal-kicker">Wombat · STAMP COLLECTION</div>
             <div className="pp-modal-title" style={{ maxWidth: 340 }}>{displayName}</div>
           </div>
           <button className="pp-modal-close" onClick={onClose}>
@@ -571,7 +571,7 @@ function PassportRow({
           )}
           <a
             href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
-            download={`wafpass-badge-${project}.svg`}
+            download={`wombat-badge-${project}.svg`}
             onClick={e => e.stopPropagation()}
             title="Download SVG badge"
             className="pp-row-badge"
@@ -630,7 +630,7 @@ function PassportCard({
       <div className="pp-card-doc-header">
         <div>
           <div className="pp-card-doc-title">PROJECT PASSPORT</div>
-          <div className="pp-card-doc-sub">WAF++ SECURITY PLATFORM</div>
+          <div className="pp-card-doc-sub">WOMBATpass SECURITY PLATFORM</div>
         </div>
         <div className="pp-card-doc-fields">
           {[{ label: 'Type', value: 'PP' }, { label: 'Code', value: 'WAF' }, { label: 'No.', value: project.replace(/[^A-Z0-9]/gi, '').slice(0, 7).toUpperCase() || '—' }].map(f => (
@@ -747,7 +747,7 @@ function PassportCard({
         <div className="pp-card-footer-actions">
           <a
             href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
-            download={`wafpass-badge-${project}.svg`}
+            download={`wombat-badge-${project}.svg`}
             onClick={e => e.stopPropagation()}
             title="Download SVG badge"
             className="pp-btn-ghost pp-btn-ghost--sm"
@@ -1027,7 +1027,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
   const [stampsProject, setStampsProject] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const saved = localStorage.getItem('wafpass_passport_view')
+    const saved = localStorage.getItem('wombat_passport_view')
     return (saved === 'grid' || saved === 'wide' || saved === 'list') ? saved : 'grid'
   })
   const [accessDeniedProject, setAccessDeniedProject] = useState<string | null>(null)
@@ -1136,7 +1136,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
             <button
               key={vm.id}
               title={vm.label}
-              onClick={() => { setViewMode(vm.id); localStorage.setItem('wafpass_passport_view', vm.id) }}
+              onClick={() => { setViewMode(vm.id); localStorage.setItem('wombat_passport_view', vm.id) }}
               className={viewMode === vm.id ? 'active' : ''}
             >
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

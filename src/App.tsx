@@ -171,8 +171,8 @@ function AuthenticatedApp({ user, role, onLogout }: {
     Promise.all([fetchWaivers(), fetchRisks()])
       .then(([w, r]) => { setWaiverCount(w.length); setRiskCount(r.length) })
       .catch(() => {
-        try { setWaiverCount(Object.keys(JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}')).length) } catch {}
-        try { setRiskCount(Object.keys(JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}')).length) } catch {}
+        try { setWaiverCount(Object.keys(JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}')).length) } catch {}
+        try { setRiskCount(Object.keys(JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}')).length) } catch {}
       })
   }, [])
 
@@ -445,7 +445,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
 
       {/* PDF report — hidden in normal view, printed only */}
       {run && (
-        <div id="wafpass-pdf-root" style={{ display: 'none' }}>
+        <div id="wombat-pdf-root" style={{ display: 'none' }}>
           <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
         </div>
       )}
