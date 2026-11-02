@@ -62,7 +62,7 @@ const ROLES = [
     subtitle: 'Solutions · Cloud · Platform Architect',
     color: '#8b5cf6',
     bg: 'rgba(139,92,246,0.08)',
-    border: 'rgba(139,92,246,0.28)',
+    border: 'color-mix(in srgb, #8b5cf6 28%, transparent)',
     access: 'Design R/W',
     accessColor: '#8b5cf6',
     icon: (
@@ -113,8 +113,8 @@ const ROLES = [
     label: 'Admin',
     subtitle: 'System Administrator',
     color: '#DA2C38',
-    bg: 'rgba(218,44,56,0.08)',
-    border: 'rgba(218,44,56,0.30)',
+    bg: 'color-mix(in srgb, #da2c38 8%, transparent)',
+    border: 'color-mix(in srgb, #da2c38 30%, transparent)',
     access: 'Full Access',
     accessColor: '#DA2C38',
     icon: (
@@ -183,7 +183,7 @@ const AUTH_PROVIDERS = [
     statusColor: '#22c55e',
     color: '#8b5cf6',
     bg: 'rgba(139,92,246,0.08)',
-    border: 'rgba(139,92,246,0.25)',
+    border: 'color-mix(in srgb, #8b5cf6 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
@@ -201,7 +201,7 @@ const AUTH_PROVIDERS = [
     statusColor: '#64748b',
     color: '#475569',
     bg: 'rgba(71,85,105,0.08)',
-    border: 'rgba(71,85,105,0.25)',
+    border: 'color-mix(in srgb, #475569 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="2" width="20" height="8" rx="2" /><rect x="2" y="14" width="20" height="8" rx="2" />
@@ -254,7 +254,7 @@ export default function AccessRolesPage() {
           <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
             {t('pages.access.bannerTitle')}{' '}
           </span>
-          <span style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
             {t('pages.access.bannerText')}
             {role === 'admin' && <strong>{t('pages.access.bannerAdminText')}</strong>}
           </span>
@@ -299,7 +299,7 @@ export default function AccessRolesPage() {
                     <span style={{
                       display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
                       background: `${role.accessColor}18`, color: role.accessColor,
-                      fontWeight: 600, fontSize: '0.65rem', whiteSpace: 'nowrap',
+                      fontWeight: 600, fontSize: '0.7rem', whiteSpace: 'nowrap',
                     }}>
                       {role.access}
                     </span>
@@ -363,7 +363,7 @@ export default function AccessRolesPage() {
                   display: 'flex', alignItems: 'center', gap: '0.65rem',
                 }}>
                   <div style={{
-                    flexShrink: 0, width: '30px', height: '30px', borderRadius: '7px',
+                    flexShrink: 0, width: '30px', height: '30px', borderRadius: '8px',
                     background: 'rgba(255,255,255,0.65)', border: `1px solid ${p.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: p.color,
                   }}>
@@ -371,11 +371,11 @@ export default function AccessRolesPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.83rem', color: p.color }}>{p.label}</span>
+                      <span style={{ fontWeight: 700, fontSize: '0.85rem', color: p.color }}>{p.label}</span>
                       <span style={{
                         display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
                         background: `${p.statusColor}18`, color: p.statusColor,
-                        fontWeight: 600, fontSize: '0.62rem',
+                        fontWeight: 600, fontSize: '0.7rem',
                       }}>
                         {p.statusLabel}
                       </span>

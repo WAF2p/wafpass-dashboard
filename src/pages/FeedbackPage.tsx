@@ -232,7 +232,7 @@ export default function FeedbackPage() {
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.75rem',
           padding: '0.875rem 1.1rem', borderRadius: '12px',
-          background: 'rgba(5,150,105,0.09)', border: '1px solid rgba(5,150,105,0.3)',
+          background: 'color-mix(in srgb, #059669 9%, transparent)', border: '1px solid color-mix(in srgb, #059669 30%, transparent)',
           color: '#065f46', fontSize: '0.875rem', fontWeight: 600,
         }}>
           <span style={{ fontSize: '1rem' }}>✓</span>
@@ -293,7 +293,7 @@ export default function FeedbackPage() {
             </button>
           ))}
           {displayRating > 0 && (
-            <span style={{ fontSize: '0.82rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
               {ratingLabel[displayRating]}
             </span>
           )}
@@ -317,7 +317,7 @@ export default function FeedbackPage() {
                   background: active ? `${p.color}14` : 'var(--bg)',
                   color: active ? p.color : 'var(--text)',
                   fontWeight: active ? 700 : 500,
-                  fontSize: '0.83rem', cursor: 'pointer',
+                  fontSize: '0.85rem', cursor: 'pointer',
                   transition: 'border-color 0.15s, background 0.15s',
                   fontFamily: 'inherit',
                 }}

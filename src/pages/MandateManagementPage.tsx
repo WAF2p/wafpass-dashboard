@@ -30,7 +30,7 @@ function TypeBadge({ type }: { type: MandateType }) {
   return (
     <span style={{
       display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '6px',
-      background: `${color}18`, color, fontWeight: 700, fontSize: '0.62rem',
+      background: `${color}18`, color, fontWeight: 700, fontSize: '0.7rem',
     }}>
       {t(`pages.mandates.editModal.mandateType.${type}`)}
     </span>
@@ -42,8 +42,8 @@ function StatusBadge({ active }: { active: boolean }) {
   return (
     <span style={{
       display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '6px',
-      background: active ? 'rgba(5,150,105,0.1)' : 'rgba(100,116,139,0.1)',
-      color: active ? '#059669' : 'var(--muted)', fontWeight: 700, fontSize: '0.62rem',
+      background: active ? 'color-mix(in srgb, #059669 10%, transparent)' : 'rgba(100,116,139,0.1)',
+      color: active ? '#059669' : 'var(--muted)', fontWeight: 700, fontSize: '0.7rem',
     }}>
       {active ? t('common.active') : t('common.inactive')}
     </span>
@@ -55,7 +55,7 @@ function PlainBadge({ children }: { children: React.ReactNode }) {
     <span style={{
       display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '6px',
       background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)',
-      fontWeight: 700, fontSize: '0.62rem',
+      fontWeight: 700, fontSize: '0.7rem',
     }}>
       {children}
     </span>
@@ -88,7 +88,7 @@ function MandateNodeCard({ mandant, isRoot, rollup, onEdit, onToggleActive, onVi
         <MandateLogo name={mandant.name} logoUrl={mandant.logo_url} size={logoSize} />
       </button>
       <div style={{ fontSize: isRoot ? '0.92rem' : '0.8rem', fontWeight: 700, color: 'var(--text)' }}>{mandant.name}</div>
-      <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: '0.66rem', color: 'var(--muted)' }}>{mandant.slug}</div>
+      <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: '0.7rem', color: 'var(--muted)' }}>{mandant.slug}</div>
       <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         <TypeBadge type={mandant.mandate_type} />
         <StatusBadge active={mandant.is_active} />
@@ -100,7 +100,7 @@ function MandateNodeCard({ mandant, isRoot, rollup, onEdit, onToggleActive, onVi
         )}
       </div>
       {rollup && (
-        <div style={{ fontSize: '0.64rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.5 }}>
           <div>{t('pages.mandates.rollup.mandateCount', { count: rollup.mandate_count })}</div>
           <div>
             {t('pages.mandates.rollup.runCount', { count: rollup.run_count })}
@@ -236,12 +236,12 @@ export default function MandateManagementPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.75rem',
         padding: '1rem 1.25rem', borderRadius: '10px',
-        background: 'rgba(218,44,56,0.06)', border: '1px solid rgba(218,44,56,0.18)',
+        background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)',
       }}>
         <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.mandates.holdingAdminRequired')}</span>
+        <span style={{ fontSize: '0.85rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.mandates.holdingAdminRequired')}</span>
       </div>
     )
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { RunDetail, RunSummary } from '../api'
 import { useAuth } from '../AuthContext'
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
@@ -6,7 +6,7 @@ import { useI18n } from '../i18n'
 import { buildHash, parseHash, type Page } from '../routing'
 import type { Settings } from './settingsUtils'
 import { BETA_MY_DASHBOARD, type UserPreferences } from './userPrefsUtils'
-import DashboardWidgetBody from '../widgets/DashboardWidgets'
+import DashboardWidgetBody, { type WidgetContext } from '../widgets/DashboardWidgets'
 import { decodeDashboard, buildShareUrl } from '../widgets/share'
 import {
   cloneDashboardWidgets,
@@ -72,6 +72,61 @@ function Icon({ path, size = 15 }: { path: string; size?: number }) {
   )
 }
 
+/**
+ * Focus management for the dashboard dialogs: move focus in on open, keep
+ * Tab inside while open, close on Escape, and restore the trigger on close.
+ */
+function useModalFocus(open: boolean, onClose: () => void) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  useEffect(() => {
+    if (!open) return
+    const previous = document.activeElement as HTMLElement | null
+    const panel = panelRef.current
+    const focusables = () => Array.from(
+      panel?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    )
+
+    const first = focusables()[0]
+    ;(first ?? panel)?.focus()
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const list = focusables()
+      if (list.length === 0) return
+      const firstEl = list[0]
+      const lastEl = list[list.length - 1]
+      if (event.shiftKey && document.activeElement === firstEl) {
+        event.preventDefault()
+        lastEl.focus()
+      } else if (!event.shiftKey && document.activeElement === lastEl) {
+        event.preventDefault()
+        firstEl.focus()
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = previousOverflow
+      previous?.focus?.()
+    }
+  }, [open])
+
+  return panelRef
+}
+
 export default function MyDashboardPage({
   run, runs, waiverCount, riskCount, maturityLevel, settings, prefs, onChange, navigate, onSelectRun,
 }: Props) {
@@ -102,19 +157,24 @@ export default function MyDashboardPage({
 
   const widgets = prefs.dashboardWidgets ?? INITIAL_DASHBOARD_WIDGETS
   const displayName = prefs.dashboardName?.trim() || t('pages.myDashboard.defaultName')
+  const configWidget = configId ? widgets.find(widget => widget.id === configId) ?? null : null
+  const configOpen = configWidget !== null
 
-  useEffect(() => {
-    if (!addOpen && !shareOpen && !configId) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
-      event.preventDefault()
-      setAddOpen(false)
-      setShareOpen(false)
-      setConfigId(null)
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [addOpen, shareOpen, configId])
+  const closeConfig = () => {
+    setConfigId(null)
+    setDraft({})
+    setConfigError('')
+  }
+
+  const addModalRef = useModalFocus(addOpen, () => setAddOpen(false))
+  const configModalRef = useModalFocus(configOpen, closeConfig)
+  const shareModalRef = useModalFocus(shareOpen, () => setShareOpen(false))
+
+  // Stable identity so memoised widget bodies skip work while the editor,
+  // drag state or config draft changes.
+  const widgetCtx = useMemo<WidgetContext>(() => ({
+    run, runs, waiverCount, riskCount, maturityLevel, settings, onSelectRun, navigate, t,
+  }), [run, runs, waiverCount, riskCount, maturityLevel, settings, onSelectRun, navigate, t])
 
   if (!enabled) {
     return (
@@ -136,12 +196,6 @@ export default function MyDashboardPage({
     setDraft({ ...(widget.config ?? {}) })
     setConfigError('')
     setConfigId(widget.id)
-  }
-
-  const closeConfig = () => {
-    setConfigId(null)
-    setDraft({})
-    setConfigError('')
   }
 
   const addWidget = (type: WidgetType) => {
@@ -266,7 +320,6 @@ export default function MyDashboardPage({
   }
 
   const usedTypes = new Set(widgets.map(widget => widget.type))
-  const configWidget = configId ? widgets.find(widget => widget.id === configId) ?? null : null
 
   return (
     <div className="wdg-page">
@@ -409,7 +462,7 @@ export default function MyDashboardPage({
                 </header>
                 <DashboardWidgetBody
                   widget={widget}
-                  ctx={{ run, runs, waiverCount, riskCount, maturityLevel, settings, onSelectRun, navigate, t }}
+                  ctx={widgetCtx}
                 />
               </section>
             )
@@ -419,7 +472,7 @@ export default function MyDashboardPage({
 
       {addOpen && (
         <div className="wdg-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setAddOpen(false) }}>
-          <div className="wdg-modal" role="dialog" aria-modal="true" aria-labelledby="wdg-add-title">
+          <div ref={addModalRef} className="wdg-modal" role="dialog" aria-modal="true" aria-labelledby="wdg-add-title" tabIndex={-1}>
             <div className="wdg-modal-head">
               <div>
                 <h2 id="wdg-add-title">{t('pages.myDashboard.addTitle')}</h2>
@@ -464,9 +517,9 @@ export default function MyDashboardPage({
         </div>
       )}
 
-      {configId && configWidget && (
+      {configOpen && configWidget && (
         <div className="wdg-overlay" onMouseDown={event => { if (event.target === event.currentTarget) closeConfig() }}>
-          <div className="wdg-modal" role="dialog" aria-modal="true" aria-labelledby="wdg-config-title">
+          <div ref={configModalRef} className="wdg-modal" role="dialog" aria-modal="true" aria-labelledby="wdg-config-title" tabIndex={-1}>
             <div className="wdg-modal-head">
               <div>
                 <h2 id="wdg-config-title">{t('pages.myDashboard.config.title', { widget: t(widgetMeta(configWidget.type).titleKey) })}</h2>
@@ -554,7 +607,7 @@ export default function MyDashboardPage({
 
       {shareOpen && (
         <div className="wdg-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setShareOpen(false) }}>
-          <div className="wdg-modal wdg-modal-share" role="dialog" aria-modal="true" aria-labelledby="wdg-share-title">
+          <div ref={shareModalRef} className="wdg-modal wdg-modal-share" role="dialog" aria-modal="true" aria-labelledby="wdg-share-title" tabIndex={-1}>
             <div className="wdg-modal-head">
               <div>
                 <h2 id="wdg-share-title">{t('pages.myDashboard.shareTitle')}</h2>

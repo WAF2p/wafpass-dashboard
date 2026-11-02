@@ -15,10 +15,8 @@ import {
   type RunSummary,
   type ValidationGatewaySubmit,
 } from '../api'
-
-function scoreColor(s: number): string {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
-}
+import { scoreColor } from '../severity';
+import { scoreBg } from '../severity';
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -62,7 +60,7 @@ function ScoreBadge({ score }: { score: number }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       minWidth: '2.75rem', padding: '0.2rem 0.6rem', borderRadius: '999px',
-      background: `${color}18`, color, fontWeight: 700, fontSize: '0.85rem',
+      background: scoreBg(score, 9), color, fontWeight: 700, fontSize: '0.85rem',
     }}>
       {score}
     </span>
@@ -217,10 +215,10 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
     <div style={panel ? undefined : { padding: '1.25rem 1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
       {!panel && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', color: 'var(--text)' }}>
+          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.5rem', color: 'var(--text)' }}>
             {t('pages.shiprun.title')}
           </h1>
-          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
             {t('pages.shiprun.subtitle')}
           </p>
         </div>
@@ -234,7 +232,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
             </svg>
             <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>Validation gateway URL not configured</span>
           </div>
-          <p style={{ margin: '0 0 0.75rem', fontSize: '0.82rem', color: 'var(--muted)' }}>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', color: 'var(--muted)' }}>
             Set the base URL of the WOMBATpass validation gateway. It is stored locally in this browser and is used when submitting runs for countersignature.
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -246,7 +244,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
               placeholder="https://gateway.example.com"
               style={{
                 flex: 1, background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
-                borderRadius: '8px', padding: '0.6rem 0.85rem', fontSize: '0.82rem', outline: 'none',
+                borderRadius: '8px', padding: '0.6rem 0.85rem', fontSize: '0.85rem', outline: 'none',
               }}
             />
             <button
@@ -283,7 +281,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
             </svg>
             <span style={{ fontWeight: 700, color: 'var(--text)' }}>{t('pages.shiprun.successTitle')}</span>
           </div>
-          <p style={{ margin: '0 0 0.75rem', fontSize: '0.82rem', color: 'var(--muted)' }}>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', color: 'var(--muted)' }}>
             {t('pages.shiprun.successMsg', { id: successId })}
           </p>
           <a
@@ -315,7 +313,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
           <div style={{
             display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center',
             padding: '0.75rem', background: 'var(--bg)', borderRadius: '8px',
-            marginBottom: '0.75rem', fontSize: '0.82rem',
+            marginBottom: '0.75rem', fontSize: '0.85rem',
           }}>
             <span style={{ fontWeight: 600, color: 'var(--waf-brand)' }}>{selectedRun.project || '—'}</span>
             <span style={{ color: 'var(--muted)' }}>{selectedRun.branch || '—'}</span>

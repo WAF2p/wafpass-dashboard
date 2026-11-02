@@ -94,7 +94,7 @@ export default function SkippedControlsPage({ run }: Props) {
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <span style={{
                           padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700,
-                          background: info.type === 'Waiver' ? 'rgba(167,139,250,0.15)' : info.type === 'Risk Acceptance' ? 'rgba(249,115,22,0.15)' : 'rgba(148,163,184,0.15)',
+                          background: info.type === 'Waiver' ? 'color-mix(in srgb, #a78bfa 15%, transparent)' : info.type === 'Risk Acceptance' ? 'color-mix(in srgb, #f97316 15%, transparent)' : 'rgba(148,163,184,0.15)',
                           color: info.type === 'Waiver' ? '#a78bfa' : info.type === 'Risk Acceptance' ? '#f97316' : '#64748b',
                         }}>
                           {info.type}

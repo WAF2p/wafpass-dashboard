@@ -40,8 +40,8 @@ export default function AntiPatternMuseumPage() {
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(218,44,56,0.1)' : 'rgba(218,44,56,0.05)',
-              border: '1px solid rgba(218,44,56,0.2)',
+              background: themeName === 'dark' ? 'color-mix(in srgb, #da2c38 10%, transparent)' : 'rgba(218,44,56,0.05)',
+              border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)',
               borderRadius: '8px'
             }}>
               <strong style={{ color: '#DA2C38' }}>Anti-Patterns</strong>
@@ -87,7 +87,7 @@ export default function AntiPatternMuseumPage() {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -160,7 +160,7 @@ resource "aws_iam_account_password_policy" "strict" {
           {/* Anti-Pattern 2 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -244,7 +244,7 @@ data "aws_iam_access_key" "root" {
           {/* Anti-Pattern 3 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -366,7 +366,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -522,7 +522,7 @@ resource "aws_db_instance" "compliant" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -698,7 +698,7 @@ jobs:
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -905,7 +905,7 @@ resource "aws_ecr_repository" "app" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -1079,7 +1079,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -1231,7 +1231,7 @@ resource "aws_cloudwatch_metric_alarm" "root_login" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -1429,8 +1429,8 @@ resource "aws_db_instance" "main" {
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(218,44,56,0.1)' : 'rgba(218,44,56,0.05)',
-              border: '1px solid rgba(218,44,56,0.2)',
+              background: themeName === 'dark' ? 'color-mix(in srgb, #da2c38 10%, transparent)' : 'rgba(218,44,56,0.05)',
+              border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)',
               borderRadius: '8px'
             }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#DA2C38', margin: '0 0 0.5rem' }}>Anti-Patterns</h4>

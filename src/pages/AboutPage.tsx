@@ -192,7 +192,7 @@ const aboutPageCss = `
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--waf-brand);
@@ -295,14 +295,14 @@ const aboutPageCss = `
   gap: 0.25rem;
 }
 .about-debug-card__label {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
 .about-debug-card__value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
   font-family: monospace;

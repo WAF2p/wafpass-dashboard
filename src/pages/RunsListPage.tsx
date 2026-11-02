@@ -9,6 +9,8 @@ import SavedViewsControl from '../components/SavedViewsControl'
 import RunTrendOverlay from '../components/RunTrendOverlay'
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_RUN_BOOKMARKS } from './userPrefsUtils'
+import { scoreColor } from '../severity';
+import { scoreBg } from '../severity';
 
 interface Props {
   runs: RunSummary[]
@@ -36,9 +38,6 @@ function normalizePillarName(pillar: string): string {
   return pillar
 }
 
-function scoreColor(s: number) {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
-}
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
@@ -67,7 +66,7 @@ function ScoreTooltip({ active, payload, label }: any) {
           )}
         </div>
       ))}
-      <div style={{ marginTop: '0.4rem', fontSize: '0.65rem', color: 'var(--muted)' }}>Click dot to open run</div>
+      <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--muted)' }}>Click dot to open run</div>
     </div>
   )
 }
@@ -181,12 +180,12 @@ function TrendView({ runs, onSelect }: Props) {
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.35rem' }}>runs</span>
         </div>
         <div style={{ width: '1px', height: '28px', background: 'var(--border)' }} />
-        <div style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>{dateRange}</div>
+        <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{dateRange}</div>
         <div style={{ width: '1px', height: '28px', background: 'var(--border)' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: scoreColor(firstRun.score), lineHeight: 1 }}>{firstRun.score}</div>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.first')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.first')}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
             <svg width="28" height="12" viewBox="0 0 28 12">
@@ -202,7 +201,7 @@ function TrendView({ runs, onSelect }: Props) {
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: scoreColor(lastRun.score), lineHeight: 1 }}>{lastRun.score}</div>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.latest')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pages.runs.latest')}</div>
           </div>
         </div>
         <div style={{ width: '1px', height: '28px', background: 'var(--border)' }} />
@@ -307,7 +306,7 @@ function TrendView({ runs, onSelect }: Props) {
                       <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
                       {delta !== null && (
                         <span style={{
-                          marginLeft: '0.4rem', fontSize: '0.65rem', fontWeight: 700,
+                          marginLeft: '0.4rem', fontSize: '0.7rem', fontWeight: 700,
                           color: delta > 0 ? '#059669' : delta < 0 ? '#DC2626' : 'var(--muted)',
                         }}>
                           {delta > 0 ? '↑' : delta < 0 ? '↓' : '—'}{delta !== 0 ? Math.abs(delta) : ''}
@@ -360,7 +359,7 @@ function ScoreBadge({ score }: { score: number }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       minWidth: '2.75rem', padding: '0.2rem 0.6rem', borderRadius: '999px',
-      background: `${color}18`, color, fontWeight: 700, fontSize: '0.85rem',
+      background: scoreBg(score, 9), color, fontWeight: 700, fontSize: '0.85rem',
     }}>
       {score}
     </span>

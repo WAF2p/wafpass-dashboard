@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useI18n } from '../i18n'
 import { fetchProjectPassports, fetchProjectPassport, getApiBase, upsertProjectPassport, deleteProject, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
 import { MATURITY_META } from './settingsUtils'
+import { scoreColor } from '../severity';
 
 interface Props {
   runs: RunSummary[]
@@ -15,9 +16,9 @@ interface Props {
 const MATURITY_THRESHOLDS: Record<number, number> = { 1: 0, 2: 40, 3: 60, 4: 75, 5: 90 }
 
 const CRITICALITY_META: Record<string, { label: string; color: string; bg: string; code: string }> = {
-  critical: { label: 'Critical', color: '#DA2C38', bg: 'rgba(218,44,56,0.12)',  code: 'C' },
-  high:     { label: 'High',     color: '#f97316', bg: 'rgba(249,115,22,0.12)', code: 'H' },
-  medium:   { label: 'Medium',   color: '#eab308', bg: 'rgba(234,179,8,0.12)',  code: 'M' },
+  critical: { label: 'Critical', color: '#DA2C38', bg: 'color-mix(in srgb, #da2c38 12%, transparent)',  code: 'C' },
+  high:     { label: 'High',     color: '#f97316', bg: 'color-mix(in srgb, #f97316 12%, transparent)', code: 'H' },
+  medium:   { label: 'Medium',   color: '#eab308', bg: 'color-mix(in srgb, #eab308 12%, transparent)',  code: 'M' },
   low:      { label: 'Low',      color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  code: 'L' },
 }
 
@@ -50,7 +51,6 @@ const EMPTY_PASSPORT: ProjectPassportUpsert = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function scoreColor(s: number) { return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38' }
 
 function getMaturityForScore(score: number) {
   return [...MATURITY_META].reverse().find(m => score >= MATURITY_THRESHOLDS[m.level]) ?? MATURITY_META[0]
@@ -978,7 +978,7 @@ const labelStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: '100%', background: 'var(--bg)', color: 'var(--text)',
   border: '1px solid var(--border)', borderRadius: '8px',
-  padding: '0.45rem 0.65rem', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box',
+  padding: '0.45rem 0.65rem', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box',
 }
 
 function FormField({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
@@ -1472,7 +1472,7 @@ const passportCss = `
 /* Field */
 .pp-field { min-width: 0; overflow: hidden; }
 .pp-field-label {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   color: var(--muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1491,17 +1491,17 @@ const passportCss = `
 
 /* Score tokens */
 .pp-score-big {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 900;
   line-height: 1;
 }
 .pp-score-mid {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 800;
   line-height: 1;
 }
 .pp-score-label {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1509,7 +1509,7 @@ const passportCss = `
 
 /* Pills */
 .pp-pill {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   padding: 0.18rem 0.55rem;
   border-radius: 999px;
@@ -1564,7 +1564,7 @@ const passportCss = `
 .pp-action-delete {
   width: 28px;
   height: 28px;
-  border-radius: 7px;
+  border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.25);
   display: flex;
   align-items: center;
@@ -1578,7 +1578,7 @@ const passportCss = `
   background: rgba(15,23,42,0.45);
 }
 .pp-action-delete {
-  background: rgba(218,44,56,0.5);
+  background: color-mix(in srgb, #da2c38 50%, transparent);
 }
 .pp-action-edit:hover,
 .pp-action-delete:hover {
@@ -1616,7 +1616,7 @@ const passportCss = `
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
   text-align: left;
@@ -1654,13 +1654,13 @@ const passportCss = `
   object-fit: cover;
   border: 3px solid var(--surface);
   background: var(--surface);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 14px color-mix(in srgb, #000000 12%, transparent);
 }
 .pp-card-maturity {
   position: absolute;
   bottom: 0.5rem;
   left: 0.7rem;
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   padding: 0.15rem 0.55rem;
@@ -1673,7 +1673,7 @@ const passportCss = `
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   padding: 0.2rem 0.55rem;
@@ -1692,14 +1692,14 @@ const passportCss = `
   gap: 0.75rem;
 }
 .pp-card-doc-title {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--muted);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .pp-card-doc-sub {
-  font-size: 0.48rem;
+  font-size: 0.7rem;
   color: var(--muted);
   letter-spacing: 0.04em;
   margin-top: 0.08rem;
@@ -1711,7 +1711,7 @@ const passportCss = `
   flex-shrink: 0;
 }
 .pp-card-doc-label {
-  font-size: 0.45rem;
+  font-size: 0.7rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1757,7 +1757,7 @@ const passportCss = `
   font-weight: 800;
 }
 .pp-card-photo-placeholder small {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 700;
   margin-top: 0.2rem;
 }
@@ -1830,7 +1830,7 @@ const passportCss = `
   line-height: 1;
 }
 .pp-mini-stat-label {
-  font-size: 0.48rem;
+  font-size: 0.7rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1846,14 +1846,14 @@ const passportCss = `
   align-items: center;
 }
 .pp-card-tags-label {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-right: 0.15rem;
 }
 .pp-tag {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   padding: 0.12rem 0.45rem;
   border-radius: 999px;
   background: rgba(0,148,255,0.08);
@@ -1862,7 +1862,7 @@ const passportCss = `
   font-weight: 600;
 }
 .pp-card-tags-more {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--muted);
 }
 
@@ -1879,7 +1879,7 @@ const passportCss = `
   flex: 1;
   min-width: 0;
   font-family: ui-monospace, 'Courier New', monospace;
-  font-size: 0.54rem;
+  font-size: 0.7rem;
   color: rgba(255,255,255,0.65);
   letter-spacing: 0.06em;
   line-height: 1.7;
@@ -1908,7 +1908,7 @@ const passportCss = `
   cursor: pointer;
   text-decoration: none;
   color: rgba(255,255,255,0.8);
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1926,7 +1926,7 @@ const passportCss = `
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   text-align: left;
@@ -1982,7 +1982,7 @@ const passportCss = `
   white-space: nowrap;
 }
 .pp-row-id {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2028,11 +2028,11 @@ const passportCss = `
   padding-left: 0.75rem;
 }
 .pp-row-meta {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--muted);
 }
 .pp-row-achievements {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--muted);
   display: flex;
   align-items: center;
@@ -2063,7 +2063,7 @@ const passportCss = `
   cursor: pointer;
   text-decoration: none;
   color: var(--muted);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2078,7 +2078,7 @@ const passportCss = `
   padding: 0.22rem 0.85rem;
   background: #0b1220;
   font-family: ui-monospace, 'Courier New', monospace;
-  font-size: 0.54rem;
+  font-size: 0.7rem;
   color: rgba(255,255,255,0.55);
   letter-spacing: 0.05em;
   overflow: hidden;
@@ -2119,7 +2119,7 @@ const passportCss = `
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px color-mix(in srgb, #000000 20%, transparent);
 }
 .pp-stamp-text { text-align: center; }
 .pp-stamp-title {
@@ -2128,7 +2128,7 @@ const passportCss = `
   line-height: 1.2;
 }
 .pp-stamp-sub {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   color: var(--muted);
   margin-top: 0.1rem;
   line-height: 1.2;
@@ -2140,7 +2140,7 @@ const passportCss = `
   position: fixed;
   inset: 0;
   z-index: 1499;
-  background: rgba(0,0,0,0.45);
+  background: color-mix(in srgb, #000000 45%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2156,7 +2156,7 @@ const passportCss = `
   background: var(--surface);
   border-radius: 20px;
   border: 1px solid var(--border);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  box-shadow: 0 20px 60px color-mix(in srgb, #000000 35%, transparent);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -2190,10 +2190,10 @@ const passportCss = `
   background: linear-gradient(135deg, rgba(0,148,255,0.12) 0%, rgba(0,148,255,0.04) 100%);
 }
 .pp-modal-header--danger {
-  background: linear-gradient(135deg, rgba(218,44,56,0.12) 0%, rgba(218,44,56,0.04) 100%);
+  background: linear-gradient(135deg, color-mix(in srgb, #da2c38 12%, transparent) 0%, rgba(218,44,56,0.04) 100%);
 }
 .pp-modal-kicker {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--muted);
   letter-spacing: 0.08em;
@@ -2260,7 +2260,7 @@ const passportCss = `
   color: var(--text);
 }
 .pp-modal-tab-sub {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   color: var(--muted);
   margin-top: 0.1rem;
 }
@@ -2290,7 +2290,7 @@ const passportCss = `
   padding: 0.3rem 0.85rem;
   background: #0b1220;
   font-family: ui-monospace, 'Courier New', monospace;
-  font-size: 0.52rem;
+  font-size: 0.7rem;
   color: rgba(255,255,255,0.55);
   letter-spacing: 0.05em;
   overflow: hidden;
@@ -2305,20 +2305,20 @@ const passportCss = `
   height: 64px;
   margin: 0 auto 1rem;
   border-radius: 50%;
-  background: rgba(218,44,56,0.1);
+  background: color-mix(in srgb, #da2c38 10%, transparent);
   color: var(--waf-danger);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .pp-access-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 0.5rem;
 }
 .pp-access-text {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--muted);
   line-height: 1.5;
   max-width: 360px;
@@ -2366,8 +2366,8 @@ const passportCss = `
 }
 .pp-image-clear {
   margin-left: auto;
-  border: 1px solid rgba(218,44,56,0.35);
-  background: rgba(218,44,56,0.07);
+  border: 1px solid color-mix(in srgb, #da2c38 35%, transparent);
+  background: color-mix(in srgb, #da2c38 7%, transparent);
   color: #f87171;
 }
 .pp-file-upload {
@@ -2443,9 +2443,9 @@ const passportCss = `
   font-size: 0.78rem;
   color: #f87171;
   padding: 0.5rem 0.75rem;
-  background: rgba(218,44,56,0.08);
+  background: color-mix(in srgb, #da2c38 8%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(218,44,56,0.25);
+  border: 1px solid color-mix(in srgb, #da2c38 25%, transparent);
 }
 .pp-btn-secondary {
   border: 1px solid var(--border);
@@ -2489,13 +2489,13 @@ const passportCss = `
   margin-bottom: 1rem;
 }
 .pp-empty-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 0.4rem;
 }
 .pp-empty-text {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--muted);
 }
 
@@ -2508,7 +2508,7 @@ const passportCss = `
 }
 .pp-skeleton {
   height: 380px;
-  border-radius: 18px;
+  border-radius: 20px;
   background: linear-gradient(90deg, var(--surface) 25%, var(--bg) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: ppShimmer 1.4s infinite;

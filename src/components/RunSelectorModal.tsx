@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { RunSummary } from '../api'
+import { scoreColor } from '../severity';
+import { scoreBg, scoreBorder } from '../severity';
 
 interface Props {
   runs: RunSummary[]
@@ -9,9 +11,6 @@ interface Props {
   role: string
 }
 
-function scoreColor(s: number) {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
-}
 
 // Get accessible projects from runs (filtered by backend)
 function getAccessibleProjects(runs: RunSummary[], role: string): Set<string> {
@@ -57,7 +56,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)',
+          position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 60%, transparent)',
           zIndex: 9999, backdropFilter: 'blur(4px)',
         }}
       />
@@ -68,7 +67,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
         transform: 'translate(-50%, -50%)',
         zIndex: 10000, width: '660px', maxWidth: '95vw',
         background: 'var(--surface)', borderRadius: '16px',
-        border: '1px solid var(--border)', boxShadow: '0 24px 80px rgba(0,0,0,.22)',
+        border: '1px solid var(--border)', boxShadow: '0 24px 80px color-mix(in srgb, #000000 22%, transparent)',
         display: 'flex', flexDirection: 'column', maxHeight: '80vh',
       }}>
 
@@ -115,14 +114,14 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
                 width: '100%', paddingLeft: '2.1rem', paddingRight: '0.75rem',
                 paddingTop: '0.45rem', paddingBottom: '0.45rem',
                 background: 'var(--bg)', border: '1px solid var(--border)',
-                borderRadius: '8px', fontSize: '0.83rem', color: 'var(--text)', outline: 'none',
+                borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)', outline: 'none',
               }}
             />
           </div>
 
           {/* Date from */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <label style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>From</label>
+            <label style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>From</label>
             <input
               type="date"
               value={dateFrom}
@@ -130,14 +129,14 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
               style={{
                 background: 'var(--bg)', border: '1px solid var(--border)',
                 borderRadius: '8px', padding: '0.4rem 0.6rem',
-                fontSize: '0.82rem', color: 'var(--text)', outline: 'none', cursor: 'pointer',
+                fontSize: '0.85rem', color: 'var(--text)', outline: 'none', cursor: 'pointer',
               }}
             />
           </div>
 
           {/* Date to */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            <label style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>To</label>
+            <label style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>To</label>
             <input
               type="date"
               value={dateTo}
@@ -145,7 +144,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
               style={{
                 background: 'var(--bg)', border: '1px solid var(--border)',
                 borderRadius: '8px', padding: '0.4rem 0.6rem',
-                fontSize: '0.82rem', color: 'var(--text)', outline: 'none', cursor: 'pointer',
+                fontSize: '0.85rem', color: 'var(--text)', outline: 'none', cursor: 'pointer',
               }}
             />
           </div>
@@ -189,8 +188,8 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
                 {/* Score badge */}
                 <div style={{
                   width: '2.75rem', height: '2.75rem', borderRadius: '10px', flexShrink: 0,
-                  background: `${scoreColor(r.score)}18`,
-                  border: `2px solid ${scoreColor(r.score)}${isActive ? 'cc' : '40'}`,
+                  background: scoreBg(r.score, 9),
+                  border: `2px solid ${scoreBorder(r.score, isActive ? 80 : 25)}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '0.85rem', fontWeight: 800, color: scoreColor(r.score),
                 }}>
@@ -208,7 +207,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
                     </span>
                     {isActive && (
                       <span style={{
-                        fontSize: '0.62rem', fontWeight: 700, flexShrink: 0,
+                        fontSize: '0.7rem', fontWeight: 700, flexShrink: 0,
                         background: 'rgba(0,148,255,.15)', color: '#0094FF',
                         borderRadius: '999px', padding: '0.1rem 0.5rem',
                       }}>Active</span>
@@ -249,7 +248,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
             style={{
               padding: '0.45rem 1.1rem', borderRadius: '8px',
               border: '1px solid var(--border)', background: 'var(--bg)',
-              color: 'var(--text)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer',
+              color: 'var(--text)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
             }}
           >Cancel</button>
         </div>

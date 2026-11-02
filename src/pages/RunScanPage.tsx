@@ -24,7 +24,7 @@ function CopyBlock({ code, lang = '' }: { code: string; lang?: string }) {
         whiteSpace: 'pre', border: '1px solid rgba(148,163,184,.15)',
         boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.2)',
       }}>
-        {lang && <span style={{ position: 'absolute', top: '0.55rem', left: '0.9rem', fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</span>}
+        {lang && <span style={{ position: 'absolute', top: '0.55rem', left: '0.9rem', fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</span>}
         {code}
       </pre>
       <button onClick={copy} style={{
@@ -56,7 +56,7 @@ function FrameworkSelect({ value, onChange, disabled = false }: { value: string;
       disabled={disabled}
       style={{
         background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-        borderRadius: '10px', padding: '0.5rem 0.75rem', fontSize: '0.82rem', outline: 'none',
+        borderRadius: '10px', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none',
       }}
     >
       {FRAMEWORKS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -112,7 +112,7 @@ function PathCard({
         </svg>
         {badge && (
           <span style={{
-            fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+            fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
             padding: '0.15rem 0.45rem', borderRadius: '999px',
             background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
           }}>{badge}</span>
@@ -146,7 +146,7 @@ function Input({
         disabled={disabled}
         style={{
           background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-          borderRadius: '10px', padding: '0.55rem 0.75rem', fontSize: '0.82rem', outline: 'none',
+          borderRadius: '10px', padding: '0.55rem 0.75rem', fontSize: '0.85rem', outline: 'none',
           opacity: disabled ? 0.6 : 1,
         }}
       />
@@ -219,7 +219,7 @@ function ServerScanPanel() {
       {statusError && (
         <div style={{
           padding: '0.6rem 0.85rem', borderRadius: '8px',
-          background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)',
+          background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
           fontSize: '0.78rem', color: '#ef4444',
         }}>
           Could not reach server: {statusError}
@@ -246,7 +246,7 @@ function ServerScanPanel() {
       )}
 
       <div style={{
-        padding: '1.25rem', borderRadius: '14px',
+        padding: '1.25rem', borderRadius: '12px',
         background: 'var(--bg)', border: '1px solid var(--border)',
       }}>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -287,14 +287,14 @@ function ServerScanPanel() {
       {runError && (
         <div style={{
           padding: '0.75rem 1rem', borderRadius: '8px',
-          background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)',
+          background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
           fontSize: '0.78rem', color: '#ef4444',
         }}>{runError}</div>
       )}
 
       {result && (
         <div style={{
-          padding: '1rem 1.25rem', borderRadius: '14px',
+          padding: '1rem 1.25rem', borderRadius: '12px',
           background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.25)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -356,7 +356,7 @@ function CliPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div style={{
-        padding: '1.25rem', borderRadius: '14px',
+        padding: '1.25rem', borderRadius: '12px',
         background: 'var(--bg)', border: '1px solid var(--border)',
       }}>
         <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem' }}>
@@ -467,7 +467,7 @@ curl -X POST ${serverUrl}/runs \\
           ].map(([method, p, desc]) => (
             <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem' }}>
               <span style={{
-                padding: '0.15rem 0.5rem', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 800, flexShrink: 0,
+                padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0,
                 background: method === 'POST' ? 'rgba(0,148,255,.12)' : 'rgba(34,197,94,.1)',
                 color: method === 'POST' ? 'var(--waf-brand)' : '#22c55e',
               }}>{method}</span>
@@ -533,7 +533,7 @@ export default function RunScanPage() {
       {/* Hero */}
       <div style={{
         padding: '2rem 2.25rem', borderRadius: '20px',
-        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, rgba(124,58,237,.06) 100%)',
+        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, color-mix(in srgb, #7c3aed 6%, transparent) 100%)',
         border: '1px solid rgba(0,148,255,.2)',
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
         position: 'relative', overflow: 'hidden',
@@ -544,7 +544,7 @@ export default function RunScanPage() {
         }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div style={{
-            width: 46, height: 46, borderRadius: '14px',
+            width: 46, height: 46, borderRadius: '12px',
             background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-brand)',
           }}>
@@ -553,8 +553,8 @@ export default function RunScanPage() {
             </svg>
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: 'var(--text)' }}>{t('pages.scan.title')}</h1>
-            <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.scan.subtitle')}</div>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>{t('pages.scan.title')}</h1>
+            <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.scan.subtitle')}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>

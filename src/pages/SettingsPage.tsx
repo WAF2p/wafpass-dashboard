@@ -50,13 +50,13 @@ const PILLAR_ICONS: Record<string, string> = {
 
 const selectStyle: React.CSSProperties = {
   background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-  borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.82rem', outline: 'none',
+  borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.85rem', outline: 'none',
   width: '100%',
 }
 
 const inputStyle: React.CSSProperties = {
   background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-  borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.82rem', outline: 'none',
+  borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.85rem', outline: 'none',
   width: '100%', boxSizing: 'border-box',
 }
 
@@ -263,7 +263,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
       onClick={() => applyMaturity(level)}
       style={{
         background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)',
-        borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.82rem', fontWeight: 600,
+        borderRadius: '8px', padding: '0.6rem 1.25rem', fontSize: '0.85rem', fontWeight: 600,
         cursor: 'pointer', whiteSpace: 'nowrap',
       }}
     >
@@ -283,7 +283,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.35rem' }}>
             {t('pages.settingsPage.pageTitle')}
           </h1>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
             {t('pages.settingsPage.pageSubtitle')}
           </div>
         </div>
@@ -325,7 +325,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     L{m.level}
                   </div>
                   {active && (
-                    <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#ffffff', background: 'rgba(255,255,255,0.25)', padding: '0.15rem 0.5rem', borderRadius: '999px' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#ffffff', background: 'rgba(255,255,255,0.25)', padding: '0.15rem 0.5rem', borderRadius: '999px' }}>
                       {t('pages.settingsPage.activeLabel')}
                     </span>
                   )}
@@ -352,7 +352,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {t('pages.settingsPage.activeAtLevel')}
             </div>
-            <div style={{ fontSize: '0.84rem', color: 'var(--text)', fontWeight: 600, lineHeight: 1.4 }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, lineHeight: 1.4 }}>
               {meta.tagline}
             </div>
             <div>
@@ -383,7 +383,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                       {PILLAR_ICONS[p]} {p.charAt(0).toUpperCase() + p.slice(1)}
                     </span>
                     {active && (
-                      <span style={{ fontSize: '0.65rem', color: 'var(--muted)', marginLeft: 'auto' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: 'auto' }}>
                         {PILLAR_COUNTS[p]}
                       </span>
                     )}
@@ -409,7 +409,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 .filter(([key]) => (MATURITY_PRESETS[level] as Settings)[key as keyof Settings] === true)
                 .map(([key, label]) => (
                   <span key={key} style={{
-                    padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.66rem', fontWeight: 600,
+                    padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600,
                     background: `${meta.color}20`, color: meta.color,
                     border: `1px solid ${meta.color}44`,
                   }}>{label}</span>
@@ -479,7 +479,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <Toggle checked={active} onChange={() => togglePillar(p)} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text)' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>
                       {PILLAR_ICONS[p]} {p.charAt(0).toUpperCase() + p.slice(1)}
                     </span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.5rem' }}>
@@ -487,7 +487,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     </span>
                   </div>
                   {!active && (
-                    <span style={{ fontSize: '0.65rem', color: '#dc2626', fontWeight: 600 }}>{t('pages.settingsPage.offLabel')}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#dc2626', fontWeight: 600 }}>{t('pages.settingsPage.offLabel')}</span>
                   )}
                 </div>
               )
@@ -515,7 +515,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             onChange={e => setS(prev => ({ ...prev, defaultLanguage: e.target.value }))}
             style={{
               background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-              borderRadius: 8, padding: '0.45rem 0.75rem', fontSize: '0.82rem', outline: 'none', cursor: 'pointer',
+              borderRadius: 8, padding: '0.45rem 0.75rem', fontSize: '0.85rem', outline: 'none', cursor: 'pointer',
               width: '100%',
             }}
           >
@@ -553,7 +553,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     gap: '0.75rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)',
                   }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)' }}>{label}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>{label}</div>
                       <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.45, marginTop: '0.1rem' }}>{desc}</div>
                     </div>
                     <Toggle
@@ -588,7 +588,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   onClick={() => setS({ ...s, regulatoryRegions: preset.regions })}
                   style={{
                     padding: '0.4rem 0.9rem', borderRadius: 8, cursor: 'pointer',
-                    fontSize: '0.82rem', fontWeight: 600,
+                    fontSize: '0.85rem', fontWeight: 600,
                     border: `1px solid ${isActive ? 'var(--waf-brand)' : 'var(--border)'}`,
                     background: isActive ? 'rgba(0,148,255,0.12)' : 'var(--bg)',
                     color: isActive ? 'var(--waf-brand)' : 'var(--text)',
@@ -605,7 +605,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               onClick={() => setS({ ...s, regulatoryRegions: allRegions.map(r => r.region) })}
               style={{
                 padding: '0.4rem 0.9rem', borderRadius: 8, cursor: 'pointer',
-                fontSize: '0.82rem', fontWeight: 600,
+                fontSize: '0.85rem', fontWeight: 600,
                 border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--muted)',
               }}>
               {t('pages.settingsPage.allRegionsBtn')}
@@ -630,7 +630,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   }}>
                   <span style={{ fontSize: '1rem', lineHeight: 1 }}>{flag}</span>
                   {country}
-                  {active && <span style={{ fontSize: '0.65rem', color: 'var(--waf-brand)' }}>✓</span>}
+                  {active && <span style={{ fontSize: '0.7rem', color: 'var(--waf-brand)' }}>✓</span>}
                 </button>
               )
             })}
@@ -665,8 +665,8 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <div key={key} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)' }}>{label}</span>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 700, padding: '0.05rem 0.35rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>{label}</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.05rem 0.35rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
                       L{minLevel}+
                     </span>
                   </div>
@@ -706,7 +706,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   placeholder="http://localhost:8000"
                   style={{
                     flex: 1, background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-                    borderRadius: '8px', padding: '0.45rem 0.7rem', fontSize: '0.82rem', outline: 'none',
+                    borderRadius: '8px', padding: '0.45rem 0.7rem', fontSize: '0.85rem', outline: 'none',
                   }}
                 />
                 <button
@@ -728,11 +728,11 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem',
-                background: serverStatus === 'ok' ? 'rgba(34,197,94,.08)' : serverStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'rgba(218,44,56,.08)',
-                border: `1px solid ${serverStatus === 'ok' ? 'rgba(34,197,94,.3)' : serverStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'rgba(218,44,56,.3)'}`,
+                background: serverStatus === 'ok' ? 'rgba(34,197,94,.08)' : serverStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'color-mix(in srgb, #da2c38 8%, transparent)',
+                border: `1px solid ${serverStatus === 'ok' ? 'rgba(34,197,94,.3)' : serverStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'color-mix(in srgb, #da2c38 30%, transparent)'}`,
                 color: serverStatus === 'ok' ? '#15803d' : serverStatus === 'checking' ? '#0369a1' : '#DA2C38',
               }}>
-                <span style={{ fontSize: '0.6rem' }}>
+                <span style={{ fontSize: '0.7rem' }}>
                   {serverStatus === 'ok' ? '●' : serverStatus === 'checking' ? '○' : '✕'}
                 </span>
                 {serverStatus === 'checking' ? t('pages.settingsPage.checking') : serverStatusMsg}
@@ -767,7 +767,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   placeholder="https://gateway.example.com"
                   style={{
                     flex: 1, background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-                    borderRadius: '8px', padding: '0.45rem 0.7rem', fontSize: '0.82rem', outline: 'none',
+                    borderRadius: '8px', padding: '0.45rem 0.7rem', fontSize: '0.85rem', outline: 'none',
                   }}
                 />
                 <button
@@ -789,11 +789,11 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem',
-                background: validationStatus === 'ok' ? 'rgba(34,197,94,.08)' : validationStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'rgba(218,44,56,.08)',
-                border: `1px solid ${validationStatus === 'ok' ? 'rgba(34,197,94,.3)' : validationStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'rgba(218,44,56,.3)'}`,
+                background: validationStatus === 'ok' ? 'rgba(34,197,94,.08)' : validationStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'color-mix(in srgb, #da2c38 8%, transparent)',
+                border: `1px solid ${validationStatus === 'ok' ? 'rgba(34,197,94,.3)' : validationStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'color-mix(in srgb, #da2c38 30%, transparent)'}`,
                 color: validationStatus === 'ok' ? '#15803d' : validationStatus === 'checking' ? '#0369a1' : '#DA2C38',
               }}>
-                <span style={{ fontSize: '0.6rem' }}>
+                <span style={{ fontSize: '0.7rem' }}>
                   {validationStatus === 'ok' ? '●' : validationStatus === 'checking' ? '○' : '✕'}
                 </span>
                 {validationStatus === 'checking' ? t('pages.settingsPage.checking') : validationStatusMsg}

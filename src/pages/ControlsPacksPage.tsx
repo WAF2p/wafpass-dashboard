@@ -30,10 +30,10 @@ function StatusBadge({ active }: { active: boolean }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '0.2rem 0.55rem', borderRadius: 999,
-      background: active ? 'rgba(5,150,105,0.10)' : 'var(--bg)',
+      background: active ? 'color-mix(in srgb, #059669 10%, transparent)' : 'var(--bg)',
       color: active ? '#059669' : 'var(--muted)',
-      border: active ? '1px solid rgba(5,150,105,.2)' : '1px solid var(--border)',
-      fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.04em', textTransform: 'uppercase',
+      border: active ? '1px solid color-mix(in srgb, #059669 20%, transparent)' : '1px solid var(--border)',
+      fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.04em', textTransform: 'uppercase',
     }}>
       {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669', display: 'inline-block' }} />}
       {active ? 'Active' : 'Inactive'}
@@ -73,7 +73,7 @@ function Input({
         required={required}
         style={{
           background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-          borderRadius: '10px', padding: '0.55rem 0.75rem', fontSize: '0.82rem', outline: 'none',
+          borderRadius: '10px', padding: '0.55rem 0.75rem', fontSize: '0.85rem', outline: 'none',
         }}
       />
       {hint && <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{hint}</div>}
@@ -196,7 +196,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
       {/* ── Hero header ──────────────────────────────────────────────── */}
       <div style={{
         padding: '1.75rem 2rem', borderRadius: '20px',
-        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, rgba(124,58,237,.06) 100%)',
+        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, color-mix(in srgb, #7c3aed 6%, transparent) 100%)',
         border: '1px solid rgba(0,148,255,.2)',
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
         position: 'relative', overflow: 'hidden',
@@ -207,17 +207,17 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
         }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{
-            width: 46, height: 46, borderRadius: '14px',
+            width: 46, height: 46, borderRadius: '12px',
             background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-brand)',
           }}>
             <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={22} />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: 'var(--text)' }}>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>
               {t('pages.controlspacks.title')}
             </h1>
-            <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
               {t('pages.controlspacks.subtitle')}
             </div>
           </div>
@@ -247,7 +247,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             {activePack ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
+                  <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
                     {activePack.version}
                   </span>
                   <StatusBadge active />
@@ -280,12 +280,12 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
               {t('pages.controlspacks.frameworkReference')}
             </div>
             {updateLoading ? (
-              <div style={{ fontSize: '0.82rem', color: 'var(--text)' }}>{t('common.loading')}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text)' }}>{t('common.loading')}</div>
             ) : updateError ? (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.5rem 0.75rem', borderRadius: 8,
-                background: 'rgba(249, 115, 22, 0.08)', border: '1px solid rgba(249, 115, 22, 0.18)',
+                background: 'color-mix(in srgb, #f97316 8%, transparent)', border: '1px solid color-mix(in srgb, #f97316 18%, transparent)',
                 color: '#c2410c', fontSize: '0.78rem',
               }}>
                 <Icon d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={16} />
@@ -294,10 +294,10 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             ) : updateInfo ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--text)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
+                  <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
                     {updateInfo.framework.version.display || updateInfo.version}
                   </span>
-                  <span style={{ padding: '0.15rem 0.55rem', borderRadius: '999px', background: 'rgba(0,148,255,.12)', color: '#0094FF', fontSize: '0.65rem', fontWeight: 700 }}>
+                  <span style={{ padding: '0.15rem 0.55rem', borderRadius: '999px', background: 'rgba(0,148,255,.12)', color: '#0094FF', fontSize: '0.7rem', fontWeight: 700 }}>
                     {updateInfo.generated_at ? `Updated ${new Date(updateInfo.generated_at).toLocaleDateString()}` : ''}
                   </span>
                 </div>
@@ -311,7 +311,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                 </div>
               </>
             ) : (
-              <div style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>No framework version information available.</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>No framework version information available.</div>
             )}
           </div>
         </div>
@@ -328,7 +328,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
           { n: 4, body: t('pages.controlspacks.rollBack') },
         ].map((step, i, arr) => (
           <div key={step.n} style={{
-            position: 'relative', padding: '1rem 1.1rem', borderRadius: '14px',
+            position: 'relative', padding: '1rem 1.1rem', borderRadius: '12px',
             background: 'var(--bg)', border: '1px solid var(--border)',
             display: 'flex', flexDirection: 'column', gap: '0.4rem',
           }}>
@@ -374,7 +374,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             <button
               onClick={() => setMode('upload')}
               style={{
-                padding: '1.25rem', borderRadius: '14px', textAlign: 'left', cursor: 'pointer',
+                padding: '1.25rem', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
                 background: 'var(--bg)', border: '1px solid var(--border)',
                 display: 'flex', flexDirection: 'column', gap: '0.75rem', transition: 'all .15s',
               }}
@@ -398,7 +398,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             <button
               onClick={() => setMode('sync')}
               style={{
-                padding: '1.25rem', borderRadius: '14px', textAlign: 'left', cursor: 'pointer',
+                padding: '1.25rem', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
                 background: 'var(--bg)', border: '1px solid var(--border)',
                 display: 'flex', flexDirection: 'column', gap: '0.75rem', transition: 'all .15s',
               }}
@@ -423,7 +423,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
         {mode === 'upload' && (
           <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{
-              padding: '1.25rem', borderRadius: '14px', border: `2px dashed ${uploadFile ? 'var(--waf-brand)' : 'var(--border)'}`,
+              padding: '1.25rem', borderRadius: '12px', border: `2px dashed ${uploadFile ? 'var(--waf-brand)' : 'var(--border)'}`,
               background: uploadFile ? 'rgba(0,148,255,.04)' : 'var(--bg)', transition: 'all .15s',
             }}>
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '1rem' }}>
@@ -664,7 +664,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                   ) : (
                     <div style={{
                       padding: '0.45rem 1rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700,
-                      color: '#059669', background: 'rgba(5,150,105,.08)', border: '1px solid rgba(5,150,105,.2)',
+                      color: '#059669', background: 'color-mix(in srgb, #059669 8%, transparent)', border: '1px solid color-mix(in srgb, #059669 20%, transparent)',
                     }}>
                       {t('pages.controlspacks.currentActive')}
                     </div>

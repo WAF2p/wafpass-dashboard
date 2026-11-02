@@ -125,7 +125,7 @@ function StepRow({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>{title}</div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
             {done ? t('welcome.stepDone') : loading ? t('welcome.stepInProgress') : t('welcome.stepPending')}
           </div>
         </div>
@@ -264,8 +264,8 @@ export default function WelcomeChecklist({
       <div
         style={{
           padding: '1.5rem 1.75rem',
-          borderRadius: '14px',
-          background: 'linear-gradient(135deg, rgba(0,148,255,.1) 0%, rgba(124,58,237,.08) 100%)',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, rgba(0,148,255,.1) 0%, color-mix(in srgb, #7c3aed 8%, transparent) 100%)',
           border: '1px solid rgba(0,148,255,.25)',
         }}
       >
@@ -288,7 +288,7 @@ export default function WelcomeChecklist({
             </svg>
           </div>
           <div style={{ flex: 1, minWidth: '260px' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.35rem' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.35rem' }}>
               {t('welcome.title')}
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -302,8 +302,8 @@ export default function WelcomeChecklist({
               gap: '0.4rem',
               padding: '0.35rem 0.65rem',
               borderRadius: '999px',
-              background: serverOnline === true ? 'rgba(34,197,94,.1)' : serverOnline === false ? 'rgba(239,68,68,.1)' : 'rgba(148,163,184,.1)',
-              border: `1px solid ${serverOnline === true ? 'rgba(34,197,94,.3)' : serverOnline === false ? 'rgba(239,68,68,.3)' : 'rgba(148,163,184,.3)'}`,
+              background: serverOnline === true ? 'rgba(34,197,94,.1)' : serverOnline === false ? 'color-mix(in srgb, #ef4444 10%, transparent)' : 'rgba(148,163,184,.1)',
+              border: `1px solid ${serverOnline === true ? 'rgba(34,197,94,.3)' : serverOnline === false ? 'color-mix(in srgb, #ef4444 30%, transparent)' : 'rgba(148,163,184,.3)'}`,
               fontSize: '0.72rem',
               color: serverOnline === true ? '#22c55e' : serverOnline === false ? '#ef4444' : 'var(--muted)',
               whiteSpace: 'nowrap',
@@ -363,7 +363,7 @@ export default function WelcomeChecklist({
               {t('welcome.pathTryTitle')}
             </div>
           </div>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.6, flex: 1 }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.6, flex: 1 }}>
             {t('welcome.pathTryDesc')}
           </div>
           <button
@@ -422,7 +422,7 @@ export default function WelcomeChecklist({
               {t('welcome.pathCliTitle')}
             </div>
           </div>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.6, flex: 1 }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.6, flex: 1 }}>
             {t('welcome.pathCliDesc')}
           </div>
           <div
@@ -534,9 +534,9 @@ export default function WelcomeChecklist({
           style={{
             padding: '0.75rem 1rem',
             borderRadius: '8px',
-            background: 'rgba(239,68,68,.08)',
-            border: '1px solid rgba(239,68,68,.2)',
-            fontSize: '0.82rem',
+            background: 'color-mix(in srgb, #ef4444 8%, transparent)',
+            border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
+            fontSize: '0.85rem',
             color: '#ef4444',
           }}
         >
@@ -551,7 +551,7 @@ export default function WelcomeChecklist({
             borderRadius: '8px',
             background: 'rgba(34,197,94,.08)',
             border: '1px solid rgba(34,197,94,.25)',
-            fontSize: '0.82rem',
+            fontSize: '0.85rem',
             color: '#22c55e',
           }}
         >

@@ -12,12 +12,10 @@
 import { useState, useMemo, useRef } from 'react'
 import { RunDetail, Finding } from '../api'
 import { useI18n } from '../i18n'
+import { severityColor } from '../severity'
 
 interface Props { run: RunDetail }
 
-const SEV_COLOR: Record<string, string> = {
-  CRITICAL: '#DA2C38', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e',
-}
 const SEV_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -143,7 +141,7 @@ function nodeColor(n: DepNode): string {
   if (n.status === 'pass')  return '#059669'
   if (n.status === 'skip')  return '#94a3b8'
   if (n.status === 'mixed') return '#d97706'
-  return SEV_COLOR[n.worstSev] ?? '#DA2C38'
+  return severityColor(n.worstSev)
 }
 
 // ── Resource card ─────────────────────────────────────────────────────────────
@@ -180,7 +178,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.1rem', fontWeight: 500 }}>
             {node.rtypeLabel}
             {node.modulePath !== '(root)' && (
-              <span style={{ marginLeft: '0.4rem', fontFamily: 'monospace', fontSize: '0.62rem', opacity: 0.7 }}>{node.modulePath}</span>
+              <span style={{ marginLeft: '0.4rem', fontFamily: 'monospace', fontSize: '0.7rem', opacity: 0.7 }}>{node.modulePath}</span>
             )}
           </div>
           <div style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: col, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -191,8 +189,8 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
         {/* Pass ratio bar + counts */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
           {/* Mini ratio bar */}
-          <div style={{ width: '60px', height: '5px', borderRadius: '3px', background: 'var(--border)', overflow: 'hidden' }}>
-            {passRatio > 0 && <div style={{ width: `${passRatio * 100}%`, height: '100%', background: '#059669', borderRadius: '3px', opacity: 0.8 }} />}
+          <div style={{ width: '60px', height: '5px', borderRadius: '4px', background: 'var(--border)', overflow: 'hidden' }}>
+            {passRatio > 0 && <div style={{ width: `${passRatio * 100}%`, height: '100%', background: '#059669', borderRadius: '4px', opacity: 0.8 }} />}
           </div>
           {/* Counts */}
           <div style={{ display: 'flex', gap: '0.4rem', fontSize: '0.72rem', fontWeight: 700 }}>
@@ -230,8 +228,8 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
               { label: t('pages.dependencyGraph.skippedLabel'), value: node.skipCount, color: '#94a3b8' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ borderRadius: '8px', padding: '0.4rem 0.6rem', background: `${color}0d`, border: `1px solid ${color}20`, textAlign: 'center' }}>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', color, letterSpacing: '.05em' }}>{label}</div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 800, color }}>{value}</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color, letterSpacing: '.05em' }}>{label}</div>
+                <div style={{ fontSize: '1rem', fontWeight: 800, color }}>{value}</div>
               </div>
             ))}
           </div>
@@ -239,17 +237,17 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {/* Failing checks */}
           {failFindings.length > 0 && (
             <div style={{ width: '100%' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#DA2C38', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#DA2C38', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
                 {t('pages.dependencyGraph.failingChecks', { count: String(failFindings.length) })}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 {failFindings.slice(0, 6).map((f, i) => {
                   const sev = (f.severity ?? 'LOW').toUpperCase()
-                  const sc = SEV_COLOR[sev] ?? '#888'
+                  const sc = severityColor(sev)
                   return (
-                    <div key={i} style={{ padding: '0.4rem 0.6rem', borderRadius: '7px', background: 'rgba(218,44,56,.06)', border: '1px solid rgba(218,44,56,.16)' }}>
+                    <div key={i} style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 16%, transparent)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: f.check_title ? '0.12rem' : 0 }}>
-                        <span style={{ fontSize: '0.6rem', fontWeight: 800, borderRadius: '3px', padding: '0.05rem 0.3rem', background: `${sc}20`, color: sc, flexShrink: 0 }}>{sev[0]}</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 800, borderRadius: '4px', padding: '0.05rem 0.3rem', background: `${sc}20`, color: sc, flexShrink: 0 }}>{sev[0]}</span>
                         <span style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.control_id}</span>
                       </div>
                       {f.check_title && <div style={{ fontSize: '0.73rem', color: 'var(--text)', lineHeight: 1.35 }}>{f.check_title}</div>}
@@ -266,12 +264,12 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {/* Sample passing (only when mixed) */}
           {node.status === 'mixed' && passFindings.length > 0 && (
             <div style={{ width: '100%' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#059669', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#059669', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
                 {t('pages.dependencyGraph.passingSample')}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                 {passFindings.slice(0, 5).map((f, i) => (
-                  <span key={i} style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: 'rgba(5,150,105,.08)', border: '1px solid rgba(5,150,105,.2)', color: '#059669', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span key={i} style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: 'color-mix(in srgb, #059669 8%, transparent)', border: '1px solid color-mix(in srgb, #059669 20%, transparent)', color: '#059669', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <span style={{ fontWeight: 700 }}>✓</span>
                     {f.check_title || f.control_id}
                   </span>
@@ -284,7 +282,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {/* Connections */}
           {hasLinks && (
             <div style={{ width: '100%' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
                 {t('pages.dependencyGraph.connections')}
               </div>
               {upstream.length > 0 && (
@@ -390,7 +388,7 @@ export default function DependencyGraphPage({ run }: Props) {
 
   const inputStyle: React.CSSProperties = {
     background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px',
-    padding: '0.375rem 0.75rem', fontSize: '0.82rem', color: 'var(--text)', outline: 'none',
+    padding: '0.375rem 0.75rem', fontSize: '0.85rem', color: 'var(--text)', outline: 'none',
   }
 
   return (

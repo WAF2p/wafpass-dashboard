@@ -11,12 +11,10 @@
 import { useState, useMemo, useRef } from 'react'
 import { RunDetail, Finding } from '../api'
 import { useI18n } from '../i18n'
+import { severityBg, severityBorder, severityColor } from '../severity'
 
 interface Props { run: RunDetail }
 
-const SEV_COLOR: Record<string, string> = {
-  CRITICAL: '#DA2C38', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e',
-}
 const SEV_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -114,7 +112,7 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
   onNavigate: (id: string) => void
 }) {
   const W = 320, H = 220, CX = 160, CY = 110, R = 80
-  const col = SEV_COLOR[center.severity] ?? '#64748b'
+  const col = severityColor(center.severity)
 
   const all: MiniNode[] = [
     ...upstream.slice(0, 4).map(n => ({ ...n, dir: 'up' as const, x: 0, y: 0 })),
@@ -164,7 +162,7 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
 
       {/* Neighbor nodes */}
       {all.map((n, i) => {
-        const nc = SEV_COLOR[n.severity] ?? '#64748b'
+        const nc = severityColor(n.severity)
         return (
           <g key={`nb${i}`} style={{ cursor: 'pointer' }} onClick={() => onNavigate(n.id)}>
             <circle cx={n.x} cy={n.y} r={20} fill={`${nc}18`} stroke={nc} strokeWidth="1.5" />
@@ -264,8 +262,8 @@ export default function BlastRadiusPage({ run }: Props) {
           {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).filter(s => sevCounts[s]).map(s => (
             <button key={s} onClick={() => setSevFilter(sevFilter === s ? '' : s)} style={{
               fontSize: '0.7rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: '999px', cursor: 'pointer',
-              background: sevFilter === s ? SEV_COLOR[s] : `${SEV_COLOR[s]}20`,
-              color: sevFilter === s ? '#fff' : SEV_COLOR[s], border: `1px solid ${SEV_COLOR[s]}50`,
+              background: sevFilter === s ? severityBg(s, 20) : 'transparent',
+              color: severityColor(s), border: `1px solid ${severityBorder(s, 40)}`,
             }}>
               {sevCounts[s]} {s}
             </button>
@@ -279,7 +277,7 @@ export default function BlastRadiusPage({ run }: Props) {
       {/* ── Filter bar ── */}
       <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <input type="text" placeholder={t('pages.blastRadius.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)}
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.375rem 0.75rem', fontSize: '0.82rem', color: 'var(--text)', outline: 'none', width: '240px' }} />
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.375rem 0.75rem', fontSize: '0.85rem', color: 'var(--text)', outline: 'none', width: '240px' }} />
         <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} className="filter-select">
           <option value="">{t('pages.blastRadius.allSeverities')}</option>
           {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map(s => <option key={s} value={s}>{s}</option>)}
@@ -299,19 +297,19 @@ export default function BlastRadiusPage({ run }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {nodes.map(n => {
           const isOpen = expandedId === n.id
-          const col = SEV_COLOR[n.severity] ?? '#64748b'
+          const col = severityColor(n.severity)
           const upstream   = edges.filter(e => e.tgt === n.id).map(e => nodeMap.get(e.src)).filter((x): x is GNode => !!x)
           const downstream = edges.filter(e => e.src === n.id).map(e => nodeMap.get(e.tgt)).filter((x): x is GNode => !!x)
           const hasLinks = upstream.length > 0 || downstream.length > 0
 
           return (
             <div key={n.id} ref={el => { cardRefs.current[n.id] = el }}
-              className="card" style={{ padding: 0, overflow: 'hidden', borderLeft: `4px solid ${col}`, transition: 'box-shadow 0.2s', boxShadow: isOpen ? `0 0 0 1px ${col}40` : undefined }}>
+              className="card" style={{ padding: 0, overflow: 'hidden', borderColor: severityBorder(n.severity, 35), transition: 'box-shadow 0.2s', boxShadow: isOpen ? `0 0 0 1px ${severityBorder(n.severity, 25)}` : undefined }}>
 
               {/* ── Card header (always visible) ── */}
               <div onClick={() => toggle(n.id)} style={{ cursor: 'pointer', padding: '0.875rem 1rem', display: 'flex', alignItems: 'center', gap: '0.875rem', userSelect: 'none' }}>
                 {/* Severity badge */}
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '0.22rem 0.6rem', borderRadius: '999px', background: `${col}20`, color: col, flexShrink: 0, letterSpacing: '.04em' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '0.22rem 0.6rem', borderRadius: '999px', background: `${col}20`, color: col, flexShrink: 0, letterSpacing: '.04em' }}>
                   {n.severity}
                 </span>
 
@@ -320,7 +318,7 @@ export default function BlastRadiusPage({ run }: Props) {
                   <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: '0.12rem', fontWeight: 500 }}>
                     {n.rtypeLabel}
                     {n.provider !== 'aws' && (
-                      <span style={{ marginLeft: '0.4rem', fontSize: '0.62rem', fontWeight: 700, opacity: 0.6 }}>{n.provider.toUpperCase()}</span>
+                      <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', fontWeight: 700, opacity: 0.6 }}>{n.provider.toUpperCase()}</span>
                     )}
                   </div>
                   <div style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: 'var(--text)', fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -339,7 +337,7 @@ export default function BlastRadiusPage({ run }: Props) {
                     </span>
                   )}
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '1.05rem', fontWeight: 800, color: col }}>{n.failCount}</span>
+                    <span style={{ fontSize: '1rem', fontWeight: 800, color: col }}>{n.failCount}</span>
                     <span style={{ fontSize: '0.68rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
                       {n.failCount === 1 ? 'control' : 'controls'}
                     </span>
@@ -362,19 +360,19 @@ export default function BlastRadiusPage({ run }: Props) {
                   {/* Left: details */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Failing controls */}
-                    <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
                       {t('pages.blastRadius.failingControls', { count: String(n.controlIds.length) })}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
                       {n.controlIds.map(cid => {
                         const ff = n.findings.filter(f => f.control_id === cid)
                         const sev = ff[0]?.severity?.toUpperCase() ?? 'LOW'
-                        const sc = SEV_COLOR[sev] ?? '#888'
+                        const sc = severityColor(sev)
                         return (
                           <div key={cid} style={{ padding: '0.5rem 0.625rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: ff[0]?.check_title ? '0.18rem' : 0 }}>
                               <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)' }}>{cid}</span>
-                              <span style={{ marginLeft: 'auto', fontSize: '0.6rem', fontWeight: 700, padding: '0.1rem 0.35rem', borderRadius: '999px', background: `${sc}22`, color: sc, flexShrink: 0 }}>{sev}</span>
+                              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.35rem', borderRadius: '999px', background: `${sc}22`, color: sc, flexShrink: 0 }}>{sev}</span>
                             </div>
                             {ff[0]?.check_title && <div style={{ fontSize: '0.73rem', color: 'var(--muted)', lineHeight: 1.4 }}>{ff[0].check_title}</div>}
                             {ff[0]?.message && <div style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '0.15rem', lineHeight: 1.35 }}>{ff[0].message}</div>}
@@ -386,7 +384,7 @@ export default function BlastRadiusPage({ run }: Props) {
                     {/* Connections list */}
                     {hasLinks && (
                       <div>
-                        <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
                           {t('pages.blastRadius.structuralConnections')}
                         </div>
                         {upstream.length > 0 && (
@@ -395,7 +393,7 @@ export default function BlastRadiusPage({ run }: Props) {
                             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                               {upstream.map(dep => (
                                 <button key={dep.id} onClick={e => { e.stopPropagation(); navigateTo(dep.id) }}
-                                  style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: `${SEV_COLOR[dep.severity] ?? '#888'}18`, border: `1px solid ${SEV_COLOR[dep.severity] ?? '#888'}40`, color: SEV_COLOR[dep.severity] ?? '#888', cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
+                                  style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: severityBg(dep.severity, 9), border: `1px solid ${severityBorder(dep.severity, 25)}`, color: severityColor(dep.severity), cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
                                   {dep.name || dep.rtypeLabel}
                                 </button>
                               ))}
@@ -408,7 +406,7 @@ export default function BlastRadiusPage({ run }: Props) {
                             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                               {downstream.map(dep => (
                                 <button key={dep.id} onClick={e => { e.stopPropagation(); navigateTo(dep.id) }}
-                                  style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: `${SEV_COLOR[dep.severity] ?? '#888'}18`, border: `1px solid ${SEV_COLOR[dep.severity] ?? '#888'}40`, color: SEV_COLOR[dep.severity] ?? '#888', cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
+                                  style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: severityBg(dep.severity, 9), border: `1px solid ${severityBorder(dep.severity, 25)}`, color: severityColor(dep.severity), cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
                                   {dep.name || dep.rtypeLabel}
                                 </button>
                               ))}
@@ -422,7 +420,7 @@ export default function BlastRadiusPage({ run }: Props) {
                   {/* Right: mini dependency graph (only when there are connections) */}
                   {hasLinks && (
                     <div style={{ width: '240px', flexShrink: 0 }}>
-                      <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '.06em', marginBottom: '0.5rem' }}>
                         {t('pages.blastRadius.dependencyMap')}
                       </div>
                       <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg)' }}>
@@ -433,7 +431,7 @@ export default function BlastRadiusPage({ run }: Props) {
                           onNavigate={navigateTo}
                         />
                       </div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.35rem', lineHeight: 1.4, textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.35rem', lineHeight: 1.4, textAlign: 'center' }}>
                         {t('pages.blastRadius.clickNode')}
                       </div>
                     </div>

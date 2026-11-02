@@ -25,7 +25,7 @@ export default function LegalPage() {
 
       {/* ── Open Source Nature ──────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Open Source Framework - No Commercial Sale
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
@@ -43,7 +43,7 @@ export default function LegalPage() {
 
       {/* ── Future Certification Service ──────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Future Certification Service
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
@@ -66,7 +66,7 @@ export default function LegalPage() {
 
       {/* ── Liability Disclaimer ──────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Liability Disclaimer
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
@@ -87,7 +87,7 @@ export default function LegalPage() {
 
       {/* ── External Links ──────────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           External Links
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
@@ -99,7 +99,7 @@ export default function LegalPage() {
 
       {/* ── Contact ─────────────────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Questions or Concerns?
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>

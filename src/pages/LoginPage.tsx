@@ -80,7 +80,7 @@ export default function LoginPage() {
 
         {/* Login card */}
         <div className="card" style={{ padding: '1.75rem' }}>
-          <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', margin: '0 0 1.25rem' }}>
+          <h1 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', margin: '0 0 1.25rem' }}>
             {t('pages.login.title')}
           </h1>
 
@@ -118,7 +118,7 @@ export default function LoginPage() {
             {error && (
               <div style={{
                 padding: '0.5rem 0.75rem', borderRadius: '6px',
-                background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.25)',
+                background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)',
                 fontSize: '0.78rem', color: '#ef4444',
               }}>
                 {error}
@@ -169,7 +169,7 @@ export default function LoginPage() {
                 </svg>
                 {p.label}
                 {p.scope === 'mandant' && (
-                  <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 500 }}>({mandant.trim()})</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 500 }}>({mandant.trim()})</span>
                 )}
               </a>
             ))}
@@ -196,7 +196,7 @@ export default function LoginPage() {
             }}
             disabled={loading}
           />
-          <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
             {t('pages.login.mandantHint')}
           </div>
         </div>

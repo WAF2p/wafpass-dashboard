@@ -53,7 +53,7 @@ function CodeBlock({ code, lang = '', t }: { code: string; lang?: string; t: (ke
         {lang && (
           <span style={{
             position: 'absolute', top: '0.4rem', left: '0.6rem',
-            fontSize: '0.55rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700,
+            fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700,
           }}>{lang}</span>
         )}
         <code>{code}</code>
@@ -65,9 +65,9 @@ function CodeBlock({ code, lang = '', t }: { code: string; lang?: string; t: (ke
           position: 'absolute', top: '0.4rem', right: '0.4rem',
           background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)',
           border: `1px solid ${copied ? 'rgba(34,197,94,0.35)' : '#1e293b'}`,
-          borderRadius: '5px', cursor: 'pointer', padding: '0.25rem 0.45rem',
+          borderRadius: '6px', cursor: 'pointer', padding: '0.25rem 0.45rem',
           color: copied ? '#22c55e' : '#64748b',
-          fontSize: '0.65rem', fontWeight: 700, transition: 'all 0.15s',
+          fontSize: '0.7rem', fontWeight: 700, transition: 'all 0.15s',
           display: 'flex', alignItems: 'center', gap: '0.25rem',
         }}
       >
@@ -240,14 +240,14 @@ export default function BadgePage({ runs }: Props) {
       {/* ── Project selector + live/offline toggle ───────────────────────────── */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.badgePage.project')}</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.badgePage.project')}</div>
           <select
             value={project}
             onChange={e => setProject(e.target.value)}
             style={{
               background: 'var(--surface)', border: '1px solid var(--border)',
               borderRadius: '8px', color: 'var(--text)', padding: '0.4rem 0.75rem',
-              fontSize: '0.82rem', cursor: 'pointer',
+              fontSize: '0.85rem', cursor: 'pointer',
             }}
           >
             {projects.map(p => <option key={p} value={p}>{p}</option>)}
@@ -255,7 +255,7 @@ export default function BadgePage({ runs }: Props) {
         </div>
 
         <div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.badgePage.deployMode')}</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>{t('pages.badgePage.deployMode')}</div>
           <div style={{ display: 'flex', gap: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
             {(['live', 'offline'] as const).map(m => (
               <button
@@ -290,7 +290,7 @@ export default function BadgePage({ runs }: Props) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#d97706', marginBottom: '0.2rem' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#d97706', marginBottom: '0.2rem' }}>
               {t('pages.badgePage.offlineModeTitle')}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -321,9 +321,9 @@ export default function BadgePage({ runs }: Props) {
         }}>
           {/* Rendered */}
           <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-            <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.rendered')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.rendered')}</div>
             <InlineBadgeSvg tierLevel={currentLevel} tierLabel={currentLabel} color={currentColor} />
-            <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.inBrowserPreview')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.inBrowserPreview')}</div>
           </div>
 
           <div style={{ background: 'var(--border)' }} />
@@ -332,21 +332,21 @@ export default function BadgePage({ runs }: Props) {
             <>
               {/* Live from server */}
               <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.liveFromServer')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.liveFromServer')}</div>
                 <img
                   src={badgeUrl}
                   alt={`WOMBATpass – ${project}`}
                   style={{ height: '20px' }}
                   onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                 />
-                <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.liveFromServerDesc')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.liveFromServerDesc')}</div>
               </div>
 
               <div style={{ background: 'var(--border)' }} />
 
               {/* Action */}
               <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.directLink')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.directLink')}</div>
                 <a
                   href={badgeUrl}
                   target="_blank"
@@ -363,13 +363,13 @@ export default function BadgePage({ runs }: Props) {
                   </svg>
                   {t('pages.badgePage.openLiveBadge')}
                 </a>
-                <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.openLiveBadgeDesc')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.openLiveBadgeDesc')}</div>
               </div>
             </>
           ) : (
             /* Offline: download action */
             <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-              <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.download')}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>{t('pages.badgePage.download')}</div>
               <a
                 href={`${apiBase}${badgePath}/${encodeURIComponent(project)}/download`}
                 download
@@ -385,7 +385,7 @@ export default function BadgePage({ runs }: Props) {
                 </svg>
                 {t('pages.badgePage.downloadDesc')}
               </a>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.badgePage.downloadHint')}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.badgePage.downloadHint')}</div>
             </div>
           )}
         </div>
@@ -552,7 +552,7 @@ jobs:
                     Download
                   </a>
                 </div>
-                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
                   {`![badge](./wombat-badge-l${tier}.svg)`}
                 </div>
               </div>

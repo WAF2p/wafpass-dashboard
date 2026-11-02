@@ -187,7 +187,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
 
   const inputStyle = {
     background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-    borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem',
+    borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.85rem',
     outline: 'none', width: '100%', boxSizing: 'border-box' as const,
   }
 
@@ -211,7 +211,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
           style={{
             background: syncStatus === 'offline' ? '#94a3b8' : 'var(--waf-brand)',
             color: '#fff', border: 'none', borderRadius: '8px',
-            padding: '0.5rem 1.1rem', fontSize: '0.82rem', fontWeight: 700,
+            padding: '0.5rem 1.1rem', fontSize: '0.85rem', fontWeight: 700,
             cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer',
           }}
         >
@@ -236,7 +236,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
       {/* Sync error banner */}
       {syncError && !showModal && (
         <div style={{
-          background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+          background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
           borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: '#DA2C38',
         }}>
           {syncError}
@@ -265,31 +265,31 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
                       <code style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--waf-brand)' }}>{r.id}</code>
                       <span style={{
-                        padding: '0.08rem 0.45rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
+                        padding: '0.08rem 0.45rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
                         background: `${LEVEL_COLOR[r.risk_level]}22`, color: LEVEL_COLOR[r.risk_level],
                       }}>
                         {r.risk_level}
                       </span>
                       <span style={{
-                        padding: '0.08rem 0.45rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
+                        padding: '0.08rem 0.45rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
                         background: `${RESIDUAL_COLOR[r.residual_risk]}22`, color: RESIDUAL_COLOR[r.residual_risk],
                       }}>
                         {t('pages.risk.residual')}: {r.residual_risk}
                       </span>
                       {expired && (
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#DA2C38', background: 'rgba(218,44,56,.15)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DA2C38', background: 'color-mix(in srgb, #da2c38 15%, transparent)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
                           {t('pages.risk.expired')}
                         </span>
                       )}
                       {r.project && (
-                        <span style={{ fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
                           {r.project}
                         </span>
                       )}
                     </div>
 
                     {r.reason && (
-                      <div style={{ fontSize: '0.82rem', color: 'var(--text)', marginBottom: '0.35rem', lineHeight: 1.5 }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text)', marginBottom: '0.35rem', lineHeight: 1.5 }}>
                         {r.reason}
                       </div>
                     )}
@@ -335,7 +335,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                     <button
                       onClick={() => void remove(r.id)}
                       disabled={syncStatus === 'offline'}
-                      style={{ background: 'none', border: '1px solid rgba(218,44,56,.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
+                      style={{ background: 'none', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Delete
                     </button>
@@ -350,10 +350,10 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
       {/* Modal */}
       {showModal && (
         <>
-          <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 99 }} />
+          <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 25%, transparent)', zIndex: 99 }} />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px color-mix(in srgb, #000000 20%, transparent)',
             padding: '1.5rem', width: '520px', maxWidth: '92vw', maxHeight: '90vh', overflowY: 'auto',
             zIndex: 100, display: 'flex', flexDirection: 'column', gap: '0.875rem',
           }}>
@@ -437,7 +437,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
 
             {syncError && (
               <div style={{
-                background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+                background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
                 borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: '#DA2C38',
               }}>
                 {syncError}
@@ -445,7 +445,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
             )}
 
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.45rem 1rem', fontSize: '0.82rem', cursor: 'pointer', color: 'var(--muted)' }}>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.45rem 1rem', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--muted)' }}>
                 Cancel
               </button>
               <button
@@ -454,7 +454,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                 style={{
                   background: idInput.trim() && syncStatus !== 'saving' ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
                   border: 'none', borderRadius: '8px', padding: '0.45rem 1rem',
-                  fontSize: '0.82rem', fontWeight: 700,
+                  fontSize: '0.85rem', fontWeight: 700,
                   cursor: idInput.trim() && syncStatus !== 'saving' ? 'pointer' : 'not-allowed',
                 }}
               >

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Finding } from '../api'
+import { severityColor } from '../severity'
 
 interface FindingsTriageProps {
   findings: Finding[]
@@ -10,9 +11,6 @@ interface FindingsTriageProps {
   onFix: (finding: Finding) => void
 }
 
-const SEV_COLOR: Record<string, string> = {
-  CRITICAL: 'var(--fail)', HIGH: 'var(--orange, #f97316)', MEDIUM: 'var(--score-mid)', LOW: 'var(--pass)',
-}
 const STATUS_COLOR: Record<string, string> = {
   FAIL: 'var(--fail)', PASS: 'var(--pass)', SKIP: 'var(--waived)', WAIVED: 'var(--waf-brand)',
 }
@@ -89,7 +87,7 @@ export default function FindingsTriage({ findings, startIndex = 0, onClose, onWa
             <div className="triage-body">
               <div className="triage-main">
                 <div className="triage-badges">
-                  <span className="triage-pill" style={{ color: SEV_COLOR[current.severity?.toUpperCase()] ?? 'var(--muted)', background: `color-mix(in srgb, ${SEV_COLOR[current.severity?.toUpperCase()] ?? 'var(--muted)'} 12%, transparent)` }}>
+                  <span className="triage-pill" style={{ color: severityColor(current.severity), background: `color-mix(in srgb, ${severityColor(current.severity)} 12%, transparent)` }}>
                     {current.severity?.toUpperCase()}
                   </span>
                   <span className="triage-pill" style={{ color: STATUS_COLOR[current.status?.toUpperCase()] ?? 'var(--muted)', background: `color-mix(in srgb, ${STATUS_COLOR[current.status?.toUpperCase()] ?? 'var(--muted)'} 12%, transparent)` }}>

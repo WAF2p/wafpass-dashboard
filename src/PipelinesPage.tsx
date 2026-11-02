@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { RunSummary, fetchRuns } from './api'
 import { useI18n } from './i18n'
 import { buildHash } from './routing'
+import { scoreBg, scoreColor as scoreColorToken } from './severity';
 
 
 // ── Helper functions ──────────────────────────────────────────────────────────
@@ -39,11 +40,6 @@ function getProjectColor(project: string): string {
   const color = WAF_COLORS[colorIndex]
   console.log(`Project: ${project} -> color: ${color}, index: ${colorIndex}`)
   return color
-}
-
-function scoreColor(s: number, opacity = 0.8) {
-  const color = s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
-  return `${color}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`
 }
 
 function scoreLabel(s: number) {
@@ -84,25 +80,25 @@ function MetricCard({ title, value, subtitle, color = 'var(--waf-brand)' }: { ti
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '1rem 1.5rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
       <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{title}</div>
       <div style={{ fontSize: '2rem', fontWeight: 800, color }}>{value}</div>
-      {subtitle && <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{subtitle}</div>}
+      {subtitle && <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{subtitle}</div>}
     </div>
   )
 }
 
 function StatusBadge({ score }: { score: number }) {
-  const color = scoreColor(score)
+  const color = scoreColorToken(score)
   const label = scoreLabel(score)
   return (
-    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: `${color}1a`, color, fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '999px', background: scoreBg(score, 10), color, fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
       {label}
     </span>
   )
 }
 
 function CICDBadge({ isCICD }: { isCICD: boolean }) {
-  if (!isCICD) return <span style={{ fontSize: '0.62rem', fontWeight: 400, color: 'var(--muted)' }}>manual</span>
+  if (!isCICD) return <span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--muted)' }}>manual</span>
   return (
-    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '4px', background: '#10b9811a', color: '#10b981', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '4px', background: 'color-mix(in srgb, #10b981 10.2%, transparent)', color: '#10b981', fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
       CI/CD
     </span>
   )
@@ -291,13 +287,13 @@ export default function PipelinesPage() {
           title={t('pages.pipelines.passRate')}
           value={`${metrics.passRate}%`}
           subtitle={`${metrics.totalRuns - Math.round((metrics.passRate / 100) * metrics.totalRuns)} ${t('pages.pipelines.scansNeedingAttention')}`}
-          color={metrics.passRate >= 80 ? '#059669' : '#d97706'}
+          color={scoreColorToken(metrics.passRate)}
         />
         <MetricCard
           title={t('pages.pipelines.averageScore')}
           value={metrics.avgScore}
           subtitle={scoreLabel(metrics.avgScore)}
-          color={scoreColor(metrics.avgScore)}
+          color={scoreColorToken(metrics.avgScore)}
         />
         <MetricCard
           title={t('pages.pipelines.activeProjects')}
@@ -340,7 +336,7 @@ export default function PipelinesPage() {
                               width: '100%',
                               height: '14px',
                               background: getProjectColor(run.project),
-                              borderRadius: '2px',
+                              borderRadius: '4px',
                               cursor: 'pointer'
                             }}
                             title={`Project: ${run.project}, Score: ${run.score} (click to view details)`}
@@ -350,7 +346,7 @@ export default function PipelinesPage() {
                       {day.count > 0 && (
                         <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{day.count}</span>
                       )}
-                      <span style={{ fontSize: '0.55rem', color: 'var(--muted)' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                         {new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                       </span>
                     </div>
@@ -384,17 +380,17 @@ export default function PipelinesPage() {
                         <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={{ padding: '0.75rem 1rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <div style={{ width: '12px', height: '12px', borderRadius: '2px', background: projectColor, flex: 'none' }} />
+                              <div style={{ width: '12px', height: '12px', borderRadius: '4px', background: projectColor, flex: 'none' }} />
                               <span style={{ fontWeight: 600, color: 'var(--text)' }}>{proj.project}</span>
                             </div>
                           </td>
                           <td style={{ padding: '0.75rem 1rem' }}>
-                            <span style={{ display: 'inline-block', width: '40px', padding: '0.25rem 0.5rem', borderRadius: '4px', background: `${scoreColor(proj.avgScore)}20`, color: scoreColor(proj.avgScore), textAlign: 'center', fontWeight: 700 }}>
+                            <span style={{ display: 'inline-block', width: '40px', padding: '0.25rem 0.5rem', borderRadius: '4px', background: scoreBg(proj.avgScore, 13), color: scoreColorToken(proj.avgScore), textAlign: 'center', fontWeight: 700 }}>
                               {proj.avgScore}
                             </span>
                           </td>
                           <td style={{ padding: '0.75rem 1rem' }}>
-                            <span style={{ display: 'inline-block', width: '40px', padding: '0.25rem 0.5rem', borderRadius: '4px', background: `${scoreColor(proj.latestScore)}20`, color: scoreColor(proj.latestScore), textAlign: 'center', fontWeight: 700 }}>
+                            <span style={{ display: 'inline-block', width: '40px', padding: '0.25rem 0.5rem', borderRadius: '4px', background: scoreBg(proj.latestScore, 13), color: scoreColorToken(proj.latestScore), textAlign: 'center', fontWeight: 700 }}>
                               {proj.latestScore}
                             </span>
                           </td>
@@ -449,7 +445,7 @@ export default function PipelinesPage() {
                     <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text)' }}>{run.project}</td>
                     <td style={{ padding: '0.75rem 1rem', color: 'var(--text)' }}>{run.branch}</td>
                     <td style={{ padding: '0.75rem 1rem' }}>
-                      <span style={{ display: 'inline-block', width: '45px', padding: '0.25rem 0.5rem', borderRadius: '4px', background: `${scoreColor(run.score)}20`, color: scoreColor(run.score), textAlign: 'center', fontWeight: 700 }}>
+                      <span style={{ display: 'inline-block', width: '45px', padding: '0.25rem 0.5rem', borderRadius: '4px', background: scoreBg(run.score, 13), color: scoreColorToken(run.score), textAlign: 'center', fontWeight: 700 }}>
                         {run.score}
                       </span>
                     </td>

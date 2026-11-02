@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import type { RunDetail } from '../api'
 import { PILLARS, pillarScore } from '../pillars'
 import NineDotIcon from './NineDotIcon'
+import { scoreColor as scoreColorToken } from '../severity';
 
 interface BriefingModeProps {
   run: RunDetail
@@ -68,7 +69,7 @@ export default function BriefingMode({ run, onClose }: BriefingModeProps) {
   }, [total])
 
   const scoreLabel = run.score >= 80 ? 'Strong posture' : run.score >= 60 ? 'Needs focused work' : 'High risk'
-  const scoreColor = run.score >= 80 ? '#22c55e' : run.score >= 60 ? '#eab308' : '#ef4444'
+  const scoreColor = scoreColorToken(run.score)
 
   return createPortal(
     <div className="briefing-root" role="dialog" aria-modal="true" aria-label="Briefing mode">

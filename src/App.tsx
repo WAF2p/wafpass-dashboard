@@ -179,14 +179,13 @@ function AuthenticatedApp({ user, role, onLogout }: {
     return () => window.removeEventListener('popstate', onPopState)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch counts from server on mount; fall back to localStorage cache if unreachable
+  // Fetch counts from the server on mount. Never fall back to a local cache:
+  // those keys are not user-scoped, so a shared browser could otherwise show
+  // another user's waiver/risk counts. On failure the counts stay at zero.
   useEffect(() => {
     Promise.all([fetchWaivers(), fetchRisks()])
       .then(([w, r]) => { setWaiverCount(w.length); setRiskCount(r.length) })
-      .catch(() => {
-        try { setWaiverCount(Object.keys(JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}')).length) } catch {}
-        try { setRiskCount(Object.keys(JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}')).length) } catch {}
-      })
+      .catch(() => { /* scoped fetch failed — do not read cross-user local caches */ })
   }, [])
 
   const initialMaturity = loadMaturityState()

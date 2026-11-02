@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import type { RunDetail, RunSummary } from '../api'
 import { PILLARS, pillarScore } from '../pillars'
 import NineDotIcon from './NineDotIcon'
+import { scoreColor as scoreColorToken } from '../severity';
 
 interface WidgetWallProps {
   run: RunDetail
@@ -85,7 +86,7 @@ export default function WidgetWall({ run, runs, onClose }: WidgetWallProps) {
     return () => window.clearInterval(timer)
   }, [])
 
-  const scoreColor = run.score >= 80 ? '#22c55e' : run.score >= 60 ? '#eab308' : '#ef4444'
+  const scoreColor = scoreColorToken(run.score)
 
   return createPortal(
     <div className={`wall-root${playing ? ' is-playing' : ''}`} role="dialog" aria-modal="true" aria-label="Widget wall">

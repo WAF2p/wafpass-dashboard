@@ -1,7 +1,9 @@
+import { memo, type CSSProperties } from 'react'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { RunDetail, RunSummary } from '../api'
 import { PILLARS, pillarScore } from '../pillars'
 import { MATURITY_META, type Settings } from '../pages/settingsUtils'
+import { severityColor, scoreColor } from '../severity'
 import type { Page } from '../routing'
 import { widgetMeta, type DashboardWidget, type WidgetType } from './types'
 
@@ -19,13 +21,6 @@ export interface WidgetContext {
 
 const SEVERITIES = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
 const SEV_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 }
-const SEV_COLOR: Record<string, string> = {
-  CRITICAL: '#dc2626',
-  HIGH: '#ea580c',
-  MEDIUM: '#d97706',
-  LOW: '#64748b',
-}
-
 const INTELLIGENCE_KEYS = [
   'secretScanner', 'autoFix', 'blastRadius', 'driftDetection', 'complianceGating',
   'riskScoring', 'dependencyGraph', 'carbonTracking', 'evidenceCollection', 'multiCloudNormalization',
@@ -34,10 +29,6 @@ const INTELLIGENCE_KEYS = [
 function fmtShortDate(value: string): string {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
-function scoreColor(score: number): string {
-  return score >= 80 ? 'var(--score-high)' : score >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
 }
 
 function Empty({ label }: { label: string }) {
@@ -54,7 +45,7 @@ function Stat({ value, label, color }: { value: string | number; label: string; 
 }
 
 function BarRow({ label, value, max, color, suffix }: { label: string; value: number; max: number; color: string; suffix?: string }) {
-  const width = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0
+  const width = max > 0 && value > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0
   return (
     <div className="wdg-bar-row">
       <span className="wdg-bar-label" title={label}>{label}</span>
@@ -95,8 +86,8 @@ function ScoreGauge({ ctx }: { ctx: WidgetContext }) {
       <div className="wdg-gauge-meta">
         <span>{score >= 80 ? t('pages.myDashboard.states.strong') : score >= 60 ? t('pages.myDashboard.states.focused') : t('pages.myDashboard.states.highRisk')}</span>
         {delta !== null && (
-          <span className={delta >= 0 ? 'is-up' : 'is-down'}>
-            {delta >= 0 ? '+' : ''}{delta} {t('pages.myDashboard.states.previous')}
+          <span className={delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : 'is-flat'}>
+            {delta > 0 ? '+' : ''}{delta} {t('pages.myDashboard.states.previous')}
           </span>
         )}
       </div>
@@ -119,13 +110,13 @@ function SeverityBreakdown({ ctx }: { ctx: WidgetContext }) {
     <div className="wdg-severity">
       <div className="wdg-stack" role="img" aria-label={t('pages.myDashboard.widgets.severityBreakdown.title')}>
         {counts.map(entry => entry.count > 0 && (
-          <span key={entry.severity} style={{ flexGrow: entry.count, background: SEV_COLOR[entry.severity] }} title={`${entry.severity}: ${entry.count}`} />
+          <span key={entry.severity} style={{ flexGrow: entry.count, background: severityColor(entry.severity) }} title={`${entry.severity}: ${entry.count}`} />
         ))}
       </div>
       <div className="wdg-legend">
         {counts.map(entry => (
           <div className="wdg-legend-row" key={entry.severity}>
-            <span className="wdg-dot" style={{ background: SEV_COLOR[entry.severity] }} />
+            <span className="wdg-dot" style={{ background: severityColor(entry.severity) }} />
             <span>{entry.severity}</span>
             <strong>{entry.count}</strong>
           </div>
@@ -180,7 +171,7 @@ function TopControls({ ctx }: { ctx: WidgetContext }) {
     <ul className="wdg-list">
       {rows.map(([id, entry]) => (
         <li key={id}>
-          <span className="wdg-dot" style={{ background: SEV_COLOR[entry.severity] ?? SEV_COLOR.LOW }} />
+          <span className="wdg-dot" style={{ background: severityColor(entry.severity) ?? severityColor('LOW') }} />
           <span className="wdg-list-text" title={`${entry.title} · ${id}`}>{entry.title}</span>
           <span className="wdg-chip">{entry.count}</span>
         </li>
@@ -283,9 +274,9 @@ function ControlCoverage({ ctx }: { ctx: WidgetContext }) {
         {skip > 0 && <span style={{ flexGrow: skip, background: 'var(--skip)' }} title={`SKIP: ${skip}`} />}
       </div>
       <div className="wdg-stats wdg-stats-3">
-        <Stat value={pass} label={t('pages.myDashboard.states.pass')} color="var(--pass)" />
-        <Stat value={fail} label={t('pages.myDashboard.states.fail')} color="var(--fail)" />
-        <Stat value={skip} label={t('pages.myDashboard.states.skip')} color="var(--skip)" />
+        <Stat value={pass} label={t('pages.myDashboard.states.pass')} color="var(--pass-ink)" />
+        <Stat value={fail} label={t('pages.myDashboard.states.fail')} color="var(--fail-ink)" />
+        <Stat value={skip} label={t('pages.myDashboard.states.skip')} color="var(--skip-ink)" />
       </div>
       <p className="wdg-note">
         {run.controls_loaded > 0
@@ -306,8 +297,8 @@ function SecretsRisk({ ctx }: { ctx: WidgetContext }) {
 
   return (
     <div className="wdg-stats">
-      <Stat value={secrets} label={t('pages.myDashboard.states.secrets')} color={secrets > 0 ? 'var(--fail)' : undefined} />
-      <Stat value={resources} label={t('pages.myDashboard.states.resources')} color={resources > 0 ? 'var(--waf-warn)' : undefined} />
+      <Stat value={secrets} label={t('pages.myDashboard.states.secrets')} color={secrets > 0 ? 'var(--fail-ink)' : undefined} />
+      <Stat value={resources} label={t('pages.myDashboard.states.resources')} color={resources > 0 ? 'var(--score-mid-ink)' : undefined} />
     </div>
   )
 }
@@ -321,7 +312,7 @@ function MaturitySnapshot({ ctx }: { ctx: WidgetContext }) {
   return (
     <div className="wdg-maturity">
       <div className="wdg-maturity-head">
-        <span className="wdg-maturity-badge" style={{ background: maturity.color }}>L{maturity.level}</span>
+        <span className="wdg-maturity-badge" style={{ '--maturity-color': maturity.color } as CSSProperties}>L{maturity.level}</span>
         <div>
           <strong>{maturity.short}</strong>
           <span>{maturity.desc}</span>
@@ -433,7 +424,7 @@ function RiskHotspots({ ctx }: { ctx: WidgetContext }) {
     <ul className="wdg-list">
       {rows.map(([resource, entry]) => (
         <li key={resource}>
-          <span className="wdg-dot" style={{ background: SEV_COLOR[entry.severity] ?? SEV_COLOR.LOW }} />
+          <span className="wdg-dot" style={{ background: severityColor(entry.severity) ?? severityColor('LOW') }} />
           <span className="wdg-list-text" title={resource}>{resource}</span>
           <span className="wdg-chip">{entry.count}</span>
         </li>
@@ -501,7 +492,7 @@ const BODIES: Record<WidgetType, (props: { ctx: WidgetContext; widget: Dashboard
   logo: LogoWidget,
 }
 
-export default function DashboardWidgetBody({ widget, ctx }: { widget: DashboardWidget; ctx: WidgetContext }) {
+function DashboardWidgetBody({ widget, ctx }: { widget: DashboardWidget; ctx: WidgetContext }) {
   const meta = widgetMeta(widget.type)
   const Body = BODIES[widget.type]
   return (
@@ -510,3 +501,6 @@ export default function DashboardWidgetBody({ widget, ctx }: { widget: Dashboard
     </div>
   )
 }
+
+/** Widgets only re-render when their own data or the stable widget context changes. */
+export default memo(DashboardWidgetBody)

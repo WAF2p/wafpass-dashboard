@@ -30,7 +30,7 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
         {desc && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{desc}</div>}
       </div>
       <div style={{ flexShrink: 0 }}>{children}</div>
@@ -42,7 +42,7 @@ function SelectRow({ label, desc, children }: { label: string; desc?: string; ch
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
       <div>
-        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
         {desc && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{desc}</div>}
       </div>
       <div>{children}</div>
@@ -102,7 +102,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
           width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
           background: 'rgba(0,148,255,.15)', border: '2px solid rgba(0,148,255,.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.1rem', fontWeight: 800, color: 'var(--waf-brand)',
+          fontSize: '1.2rem', fontWeight: 800, color: 'var(--waf-brand)',
         }}>{initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>
@@ -116,7 +116,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
           <div style={{ fontSize: '0.72rem', fontWeight: 600, color: sync.color }}>
             {sync.text}
           </div>
-          <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '0.15rem' }}>
+          <div style={{ fontSize: '0.7rem', color: '#475569', marginTop: '0.15rem' }}>
             {t('prefs.changesInstant')}
           </div>
         </div>

@@ -9,6 +9,7 @@ import {
   fetchApiKeys, createApiKey, revokeApiKey, fetchApiKeyLogs, fetchMandants, fetchMyMandate,
   type ApiKeyOut, type ApiKeyCreateResponse, type ApiKeyUsageLogEntry, type MandantOut,
 } from '../api'
+import { scoreBg, scoreColor as scoreColorToken } from '../severity';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -28,10 +29,8 @@ function fmtDate(iso: string): string {
 }
 
 function scoreColor(s: number | null): { color: string; bg: string } {
-  if (s === null) return { color: '#64748b', bg: 'rgba(100,116,139,0.09)' }
-  if (s >= 80) return { color: '#059669', bg: 'rgba(5,150,105,0.09)' }
-  if (s >= 60) return { color: '#b45309', bg: 'rgba(180,83,9,0.09)' }
-  return { color: '#DA2C38', bg: 'rgba(218,44,56,0.09)' }
+  if (s === null) return { color: 'var(--skip-ink)', bg: 'color-mix(in srgb, var(--skip) 9%, transparent)' }
+  return { color: scoreColorToken(s), bg: scoreBg(s, 9) }
 }
 
 // ── Usage log panel ───────────────────────────────────────────────────────────
@@ -59,7 +58,6 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
           border: '1px solid var(--border)',
           boxShadow: '0 2px 8px rgba(15,23,42,0.06)',
           overflow: 'hidden',
-          borderLeft: '3px solid #7c3aed',
         }}>
           {/* Header */}
           <div style={{
@@ -68,7 +66,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
             borderBottom: '1px solid var(--border)',
             background: 'var(--bg)',
           }}>
-            <svg width="13" height="13" fill="none" stroke="var(--muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="var(--waf-info)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
               <line x1="16" y1="13" x2="8" y2="13" />
@@ -82,7 +80,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
               <span style={{
                 marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)',
                 background: 'var(--surface)', border: '1px solid var(--border)',
-                padding: '0.1rem 0.5rem', borderRadius: '5px', fontWeight: 600,
+                padding: '0.1rem 0.5rem', borderRadius: '6px', fontWeight: 600,
               }}>
                 {logs.length} {logs.length === 1 ? t('pages.apikeys.entrySingular') : t('pages.apikeys.entryPlural')}
               </span>
@@ -105,7 +103,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
                   {[t('pages.apikeys.colTimestamp'), t('pages.apikeys.colEndpoint'), t('pages.apikeys.colProject'), t('pages.apikeys.colBranch'), t('pages.apikeys.colScore'), t('pages.apikeys.colRunId'), t('pages.apikeys.colIp')].map(h => (
                     <th key={h} style={{
                       padding: '0.45rem 1.25rem', textAlign: 'left',
-                      fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
+                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
                       textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
                     }}>{h}</th>
                   ))}
@@ -122,8 +120,8 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
                       </td>
                       <td style={{ padding: '0.5rem 1.25rem' }}>
                         <code style={{
-                          background: 'rgba(124,58,237,0.08)', color: '#7c3aed',
-                          padding: '0.12rem 0.4rem', borderRadius: '5px', fontSize: '0.71rem', fontWeight: 600,
+                          background: 'color-mix(in srgb, #7c3aed 8%, transparent)', color: '#7c3aed',
+                          padding: '0.12rem 0.4rem', borderRadius: '6px', fontSize: '0.71rem', fontWeight: 600,
                         }}>
                           {log.endpoint}
                         </code>
@@ -137,7 +135,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
                       <td style={{ padding: '0.5rem 1.25rem' }}>
                         {log.score !== null ? (
                           <span style={{
-                            display: 'inline-flex', padding: '0.12rem 0.45rem', borderRadius: '5px',
+                            display: 'inline-flex', padding: '0.12rem 0.45rem', borderRadius: '6px',
                             background: sc.bg, color: sc.color,
                             fontWeight: 700, fontSize: '0.71rem',
                           }}>
@@ -268,12 +266,12 @@ export default function ApiManagementPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.75rem',
         padding: '1rem 1.25rem', borderRadius: '10px',
-        background: 'rgba(218,44,56,0.06)', border: '1px solid rgba(218,44,56,0.18)',
+        background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)',
       }}>
         <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.apikeys.adminRequired')}</span>
+        <span style={{ fontSize: '0.85rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.apikeys.adminRequired')}</span>
       </div>
     )
   }
@@ -302,13 +300,13 @@ export default function ApiManagementPage() {
       {newKey && (
         <div style={{
           padding: '1rem 1.25rem', borderRadius: '12px',
-          background: 'rgba(5,150,105,0.05)', border: '1px solid rgba(5,150,105,0.2)',
+          background: 'rgba(5,150,105,0.05)', border: '1px solid color-mix(in srgb, #059669 20%, transparent)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
             <svg width="14" height="14" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
             </svg>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#059669' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669' }}>
               {t('pages.apikeys.keyCreatedMsg', { name: newKey.name })}
             </span>
           </div>
@@ -319,7 +317,7 @@ export default function ApiManagementPage() {
               value={newKey.raw_key}
               style={{
                 flex: 1, padding: '0.45rem 0.75rem', borderRadius: '8px',
-                border: '1px solid rgba(5,150,105,0.25)', background: 'var(--surface)',
+                border: '1px solid color-mix(in srgb, #059669 25%, transparent)', background: 'var(--surface)',
                 color: 'var(--text)', fontSize: '0.79rem', fontFamily: 'ui-monospace,monospace',
                 outline: 'none',
               }}
@@ -327,8 +325,8 @@ export default function ApiManagementPage() {
             />
             <button onClick={copyKey} style={{
               padding: '0.42rem 0.875rem', borderRadius: '8px', flexShrink: 0,
-              background: copied ? 'rgba(5,150,105,0.18)' : 'rgba(5,150,105,0.1)',
-              color: '#059669', border: '1px solid rgba(5,150,105,0.25)',
+              background: copied ? 'color-mix(in srgb, #059669 18%, transparent)' : 'color-mix(in srgb, #059669 10%, transparent)',
+              color: '#059669', border: '1px solid color-mix(in srgb, #059669 25%, transparent)',
               cursor: 'pointer', fontSize: '0.79rem', fontWeight: 600,
             }}>
               {copied ? t('common.copied') : t('common.copy')}
@@ -341,7 +339,7 @@ export default function ApiManagementPage() {
               {t('pages.apikeys.dismiss')}
             </button>
           </div>
-          <div style={{ marginTop: '0.65rem', padding: '0.5rem 0.75rem', borderRadius: '7px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+          <div style={{ marginTop: '0.65rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
             <div style={{ fontSize: '0.69rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.apikeys.quickStart')}</div>
             <code style={{ fontSize: '0.74rem', color: 'var(--text)' }}>
               WOMBAT_API_KEY={newKey.raw_key.slice(0, 20)}… wombat check ./iac --push https://your-server/api/v1/runs
@@ -369,7 +367,7 @@ export default function ApiManagementPage() {
                 style={{
                   width: '100%', padding: '0.42rem 0.65rem', borderRadius: '8px',
                   border: '1px solid var(--border)', background: 'var(--bg)',
-                  color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box', outline: 'none',
+                  color: 'var(--text)', fontSize: '0.85rem', boxSizing: 'border-box', outline: 'none',
                 }}
               />
             </div>
@@ -385,7 +383,7 @@ export default function ApiManagementPage() {
                   style={{
                     width: '100%', padding: '0.42rem 0.65rem', borderRadius: '8px',
                     border: '1px solid var(--border)', background: 'var(--bg)',
-                    color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box', outline: 'none',
+                    color: 'var(--text)', fontSize: '0.85rem', boxSizing: 'border-box', outline: 'none',
                     cursor: 'pointer',
                   }}
                 >
@@ -414,7 +412,7 @@ export default function ApiManagementPage() {
             </button>
           </div>
           {createErr && (
-            <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#DA2C38', padding: '0.4rem 0.65rem', background: 'rgba(218,44,56,0.06)', borderRadius: '7px', border: '1px solid rgba(218,44,56,0.15)' }}>
+            <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#DA2C38', padding: '0.4rem 0.65rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', borderRadius: '8px', border: '1px solid color-mix(in srgb, #da2c38 15%, transparent)' }}>
               {createErr}
             </div>
           )}
@@ -431,19 +429,19 @@ export default function ApiManagementPage() {
           {loading ? (
             <div style={{ padding: '2.5rem', textAlign: 'center' }}><div className="spinner" /></div>
           ) : error ? (
-            <div style={{ padding: '1rem', color: '#DA2C38', fontSize: '0.82rem' }}>{error}</div>
+            <div style={{ padding: '1rem', color: '#DA2C38', fontSize: '0.85rem' }}>{error}</div>
           ) : activeKeys.length === 0 ? (
-            <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.82rem', textAlign: 'center' }}>
+            <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem', textAlign: 'center' }}>
               {t('pages.apikeys.noActiveKeys')}
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
                   {[t('pages.apikeys.colKey'), t('pages.apikeys.colMandate'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated'), t('pages.apikeys.colLastUsed'), ''].map(h => (
                     <th key={h} style={{
                       padding: '0.55rem 0.875rem', textAlign: 'left',
-                      fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
+                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
                       textTransform: 'uppercase', letterSpacing: '0.06em',
                     }}>{h}</th>
                   ))}
@@ -468,7 +466,7 @@ export default function ApiManagementPage() {
                         <td style={{ padding: '0.6rem 0.875rem', fontWeight: 600, color: 'var(--text)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <div style={{ width: '3px', height: '22px', borderRadius: '2px', background: isExpanded ? '#7c3aed' : 'var(--border)', flexShrink: 0, transition: 'background 0.15s' }} />
+                              <div style={{ width: '3px', height: '22px', borderRadius: '4px', background: isExpanded ? '#7c3aed' : 'var(--border)', flexShrink: 0, transition: 'background 0.15s' }} />
                               <svg
                                 width="11" height="11" fill="none" stroke="var(--muted)" strokeWidth="2.5"
                                 strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
@@ -478,8 +476,8 @@ export default function ApiManagementPage() {
                               </svg>
                             </div>
                             <div style={{
-                              width: '26px', height: '26px', borderRadius: '7px', flexShrink: 0,
-                              background: 'rgba(124,58,237,0.08)',
+                              width: '26px', height: '26px', borderRadius: '8px', flexShrink: 0,
+                              background: 'color-mix(in srgb, #7c3aed 8%, transparent)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed',
                             }}>
                               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -495,7 +493,7 @@ export default function ApiManagementPage() {
                         <td style={{ padding: '0.6rem 0.875rem' }}>
                           <code style={{
                             background: 'var(--bg)', border: '1px solid var(--border)',
-                            padding: '0.1rem 0.4rem', borderRadius: '5px',
+                            padding: '0.1rem 0.4rem', borderRadius: '6px',
                             fontSize: '0.72rem', color: 'var(--muted)',
                           }}>
                             {k.key_prefix}…
@@ -521,7 +519,7 @@ export default function ApiManagementPage() {
                             style={{
                               padding: '0.22rem 0.55rem', borderRadius: '6px',
                               background: 'var(--bg)', color: '#DA2C38',
-                              border: '1px solid rgba(218,44,56,0.25)',
+                              border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)',
                               cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
                             }}
                           >
@@ -547,11 +545,11 @@ export default function ApiManagementPage() {
             {t('pages.apikeys.revokedKeysHeader', { count: revokedKeys.length })}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden', opacity: 0.55 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
                   {[t('pages.apikeys.colName'), t('pages.apikeys.colMandate'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated')].map(h => (
-                    <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+                    <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -561,7 +559,7 @@ export default function ApiManagementPage() {
                     <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', textDecoration: 'line-through' }}>{k.name}</td>
                     <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', fontSize: '0.78rem' }}>{mandateNameFor(k)}</td>
                     <td style={{ padding: '0.55rem 0.875rem' }}>
-                      <code style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '0.1rem 0.4rem', borderRadius: '5px', fontSize: '0.72rem', color: 'var(--muted)' }}>
+                      <code style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '0.1rem 0.4rem', borderRadius: '6px', fontSize: '0.72rem', color: 'var(--muted)' }}>
                         {k.key_prefix}…
                       </code>
                     </td>

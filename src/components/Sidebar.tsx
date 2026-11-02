@@ -6,7 +6,7 @@ import { Page, scoreColor } from '../routing'
 import { useI18n } from '../i18n'
 import { loadUserPrefs, saveUserPrefs, UserPreferences } from '../pages/userPrefsUtils'
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
-import { NavEntry, buildNavSections } from '../navigation/navModel'
+import { NavEntry, buildNavSections, sectionRequiredRole } from '../navigation/navModel'
 import BrandLogo from './BrandLogo'
 
 export interface SidebarProps {
@@ -42,15 +42,15 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
       {item.label}
       {item.badge && (
         <span style={{
-          marginLeft: 'auto', fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem',
-          background: item.badge.variant === 'fail' ? 'rgba(218,44,56,.25)' : 'rgba(255,255,255,.08)',
+          marginLeft: 'auto', fontSize: '0.7rem', borderRadius: '999px', padding: '0.1rem 0.45rem',
+          background: item.badge.variant === 'fail' ? 'color-mix(in srgb, #da2c38 25%, transparent)' : 'rgba(255,255,255,.08)',
           color: item.badge.variant === 'fail' ? '#fca5a5' : 'var(--sidebar-text)',
         }}>
           {item.badge.label}
         </span>
       )}
       {!item.badge && item.count != null && item.count > 0 && (
-        <span style={{ marginLeft: 'auto', fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'rgba(255,255,255,.08)', color: 'var(--sidebar-text)' }}>
+        <span style={{ marginLeft: 'auto', fontSize: '0.7rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'rgba(255,255,255,.08)', color: 'var(--sidebar-text)' }}>
           {item.count}
         </span>
       )}
@@ -163,7 +163,7 @@ function LanguageSwitcher() {
                 <span>{l.flag}</span>
                 <span>{l.label}</span>
                 {lang === l.code && (
-                  <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--waf-brand)' }}>✓</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--waf-brand)' }}>✓</span>
                 )}
               </button>
             ))}
@@ -194,7 +194,10 @@ export default function Sidebar({
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
   const effectiveRole = isHoldingAdmin ? 'admin' : role
   const visibleSections = allSections
-    .filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+    .filter(s => {
+      const required = sectionRequiredRole(s)
+      return required === null || hasMinRole(effectiveRole, required)
+    })
     .map(section => ({
       ...section,
       items: section.items.filter(item => !item.beta || isEnabled(item.beta)),
@@ -240,14 +243,14 @@ export default function Sidebar({
       {/* Logo */}
       <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--sidebar-border)' }}>
         <BrandLogo height={32} />
-        <div style={{ marginTop: '0.375rem', fontSize: '0.62rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+        <div style={{ marginTop: '0.375rem', fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
           Controls Dashboard
         </div>
       </div>
 
       {/* Run selector */}
       <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--sidebar-border)' }}>
-        <div style={{ fontSize: '0.62rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem', fontWeight: 600 }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem', fontWeight: 600 }}>
           Active Run
         </div>
         {runsError ? (
@@ -277,20 +280,20 @@ export default function Sidebar({
       {/* Score badge */}
       {run && (
         <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--sidebar-border)' }}>
-          <div style={{ fontSize: '0.62rem', color: 'var(--sidebar-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Overall Score</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Overall Score</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
             <span style={{ fontSize: '1.75rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
             <span style={{ fontSize: '0.8rem', color: 'var(--sidebar-muted)' }}>/100</span>
           </div>
           {run.path && (
-            <div style={{ fontSize: '0.62rem', color: 'var(--sidebar-muted)', marginTop: '0.2rem', wordBreak: 'break-all' }}>{run.path}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', marginTop: '0.2rem', wordBreak: 'break-all' }}>{run.path}</div>
           )}
         </div>
       )}
 
       {/* Maturity level */}
       <div style={{ padding: '0.625rem 1.25rem', borderBottom: '1px solid var(--sidebar-border)' }}>
-        <div style={{ fontSize: '0.62rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem', fontWeight: 600 }}>Maturity</div>
+        <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem', fontWeight: 600 }}>Maturity</div>
         <button
           onClick={() => navigate('settings')}
           style={{
@@ -323,7 +326,7 @@ export default function Sidebar({
             <div key={section.id}>
               {si > 0 && <div style={{ borderTop: '1px solid var(--sidebar-border)', margin: '0.35rem 0' }} />}
               <div style={{
-                fontSize: '0.58rem', color: section.color,
+                fontSize: '0.7rem', color: section.color,
                 textTransform: 'uppercase', letterSpacing: '0.08em',
                 fontWeight: 700, padding: '0.25rem 0.5rem 0.15rem',
                 display: 'flex', alignItems: 'center', gap: '0.35rem',
@@ -344,7 +347,7 @@ export default function Sidebar({
                       display: 'flex', alignItems: 'center', gap: '0.3rem',
                       width: '100%', background: 'none', border: 'none', cursor: 'pointer',
                       padding: '0.22rem 0.5rem', borderRadius: '6px',
-                      fontSize: '0.65rem', fontWeight: 600,
+                      fontSize: '0.7rem', fontWeight: 600,
                       color: activeInHidden ? section.color : 'var(--sidebar-muted)',
                       opacity: 0.8, transition: 'opacity 0.15s',
                     }}
@@ -372,7 +375,7 @@ export default function Sidebar({
       {/* Policy version footer */}
       {run && (
         <div style={{ padding: '0.625rem 1.25rem', borderTop: '1px solid var(--sidebar-border)' }}>
-          <div style={{ fontSize: '0.62rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Policy Version</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Policy Version</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
@@ -383,7 +386,7 @@ export default function Sidebar({
               v1.0.0
             </span>
             {controlsCount > 0 && (
-              <span style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>{controlsCount} controls</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)' }}>{controlsCount} controls</span>
             )}
           </div>
         </div>
@@ -395,7 +398,7 @@ export default function Sidebar({
           width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
           background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.65rem', fontWeight: 700, color: 'var(--waf-brand)',
+          fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand)',
           overflow: 'hidden',
         }}>
           {user.image_url ? (
@@ -410,7 +413,7 @@ export default function Sidebar({
           <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--sidebar-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {user.display_name || user.username}
           </div>
-          <div style={{ fontSize: '0.6rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{role}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{role}</div>
         </div>
         <button
           onClick={onOpenUserPrefs}
@@ -433,7 +436,7 @@ export default function Sidebar({
         </button>
       </div>
 
-      <div style={{ padding: '0.5rem 1.25rem', borderTop: '1px solid var(--sidebar-border)', fontSize: '0.65rem', color: 'var(--sidebar-muted)' }}>
+      <div style={{ padding: '0.5rem 1.25rem', borderTop: '1px solid var(--sidebar-border)', fontSize: '0.7rem', color: 'var(--sidebar-muted)' }}>
         WOMBATpass v1.0.0
       </div>
     </aside>

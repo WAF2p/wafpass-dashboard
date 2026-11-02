@@ -172,9 +172,7 @@ export function buildHash(page: Page, runId: string | null, filters: FilterState
   return query ? `#/${page}?${query}` : `#/${page}`
 }
 
-export function scoreColor(s: number): string {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
+export { scoreColor } from './severity'
 
 export function buildJourneyHash(filters: FilterState = {}): string {
   return buildHash('journey', null, filters)

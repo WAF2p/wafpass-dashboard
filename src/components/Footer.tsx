@@ -40,13 +40,13 @@ export default function Footer() {
             display: 'flex',
             alignItems: 'center',
             gap: '1rem',
-            fontSize: '1.05rem',
+            fontSize: '1rem',
             fontWeight: 600,
             color: 'var(--footer-light)',
             padding: '1.25rem 2.6rem',
             background: 'var(--footer-gradient)',
             borderRadius: '16px',
-            border: '1px solid rgba(34,211,238,0.2)',
+            border: '1px solid color-mix(in srgb, #22d3ee 20%, transparent)',
           }}>
             <span style={{ fontSize: '1.5rem' }}>❤️</span>
             <span>Created <span style={{ color: '#22d3ee' }}>with</span> the community, <span style={{ color: '#a78bfa' }}>for</span> the community</span>

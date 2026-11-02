@@ -395,7 +395,7 @@ export default function NotificationsPage() {
                     </span>
                     <span
                       style={{
-                        fontSize: '0.65rem',
+                        fontSize: '0.7rem',
                         padding: '0.15rem 0.5rem',
                         borderRadius: '999px',
                         background: 'var(--bg)',
@@ -410,7 +410,7 @@ export default function NotificationsPage() {
                     {!note.is_read && (
                       <span
                         style={{
-                          fontSize: '0.6rem',
+                          fontSize: '0.7rem',
                           width: '6px',
                           height: '6px',
                           borderRadius: '50%',

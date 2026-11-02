@@ -15,6 +15,7 @@ import {
   scoreColor, scoreGlow, statusColor,
 } from './shared/SocComponents'
 import type { Page } from '../routing'
+import { severityColor } from '../severity'
 
 // All 8 pillars including agentic
 const PILLAR_META: { key: string; label: string; color: string; icon: () => JSX.Element }[] = [
@@ -125,12 +126,6 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
   const overallCritCount = useMemo(() => findings.filter(f => f.status?.toUpperCase() === 'FAIL' && f.severity?.toUpperCase() === 'CRITICAL').length, [findings])
 
   const severities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-  const sevColor: Record<string, string> = {
-    CRITICAL: 'var(--fail)',
-    HIGH: 'var(--score-mid)',
-    MEDIUM: 'var(--waf-brand)',
-    LOW: 'var(--pass)',
-  }
   const sevLabel: Record<string, string> = { CRITICAL: 'CRIT', HIGH: 'HIGH', MEDIUM: 'MED', LOW: 'LOW' }
 
   // ── Frameworks tab stats ─────────────────────────────────────────────────
@@ -306,7 +301,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
                             <div
                               key={sev}
                               className={`scc-sev-chip ${count > 0 ? 'scc-sev-chip--active' : ''}`}
-                              style={{ '--sev-color': sevColor[sev] } as React.CSSProperties}
+                              style={{ '--sev-color': severityColor(sev) } as React.CSSProperties}
                             >
                               <span className="scc-sev-chip__label">{sevLabel[sev]}</span>
                               <span className="scc-sev-chip__count">{count > 0 ? count : '—'}</span>
@@ -553,7 +548,7 @@ const securityCommandCenterCss = `
   border: 1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent);
   border-radius: 4px;
   padding: 0.35rem 0.75rem;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--waf-brand);
   text-transform: uppercase;
@@ -573,7 +568,7 @@ const securityCommandCenterCss = `
 }
 .scc-hero__subtitle {
   margin: 0.45rem 0 0;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--muted);
   max-width: 520px;
 }
@@ -597,7 +592,7 @@ const securityCommandCenterCss = `
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .scc-hero__score-unit {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -676,7 +671,7 @@ const securityCommandCenterCss = `
   gap: 0.1rem;
 }
 .scc-statusbar__label {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -702,7 +697,7 @@ const securityCommandCenterCss = `
   background: var(--surface);
   border: 1px solid var(--border);
   border-top: 2px solid var(--pillar-color);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
@@ -752,7 +747,7 @@ const securityCommandCenterCss = `
   gap: 0.25rem;
   padding: 0.22rem 0.5rem;
   border-radius: 4px;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -845,7 +840,7 @@ const securityCommandCenterCss = `
   border-radius: 4px;
   background: var(--bg);
   border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent);
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -907,7 +902,7 @@ const securityCommandCenterCss = `
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   outline: none;
   min-width: 0;
 }
@@ -927,8 +922,7 @@ const securityCommandCenterCss = `
 .scc-framework-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--fw-color);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
@@ -960,7 +954,7 @@ const securityCommandCenterCss = `
   gap: 0.85rem;
 }
 .scc-framework-card__flag {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -988,7 +982,7 @@ const securityCommandCenterCss = `
   background: var(--bg);
   border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent);
   color: var(--muted);
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1004,7 +998,7 @@ const securityCommandCenterCss = `
   align-items: center;
   gap: 0.25rem;
   color: var(--muted);
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 .scc-framework-card__progress {
@@ -1028,7 +1022,7 @@ const securityCommandCenterCss = `
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
 }
 .scc-fw-stat {
   display: inline-flex;
@@ -1070,11 +1064,11 @@ const securityCommandCenterCss = `
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .scc-control-chip__mapping {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   color: var(--muted);
 }
 .scc-control-chip__status {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;

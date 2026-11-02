@@ -60,7 +60,7 @@ function ImpactDisclosure({ defaultOpen }: { defaultOpen: boolean }) {
           display: 'flex', flexDirection: 'column', gap: '0.9rem',
         }}>
           <div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.35rem' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.35rem' }}>
               {t('pages.mandateAdmin.impact.title')}
             </div>
             <div style={{ fontSize: '0.76rem', color: 'var(--muted)', lineHeight: 1.55 }}>
@@ -129,12 +129,12 @@ export default function MandateAdministrationPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.75rem',
         padding: '1rem 1.25rem', borderRadius: '10px',
-        background: 'rgba(218,44,56,0.06)', border: '1px solid rgba(218,44,56,0.18)',
+        background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)',
       }}>
         <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.mandateAdmin.accessDenied')}</span>
+        <span style={{ fontSize: '0.85rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.mandateAdmin.accessDenied')}</span>
       </div>
     )
   }
@@ -152,7 +152,7 @@ export default function MandateAdministrationPage() {
               <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{t('pages.mandateAdmin.currentMode')}</span>
               <span style={{
                 display: 'inline-flex', padding: '0.2rem 0.65rem', borderRadius: '999px',
-                background: info.instance_mode === 'multi_mandant' ? 'rgba(124,58,237,0.1)' : 'rgba(100,116,139,0.1)',
+                background: info.instance_mode === 'multi_mandant' ? 'color-mix(in srgb, #7c3aed 10%, transparent)' : 'rgba(100,116,139,0.1)',
                 color: info.instance_mode === 'multi_mandant' ? '#7c3aed' : 'var(--muted)',
                 fontWeight: 700, fontSize: '0.72rem', letterSpacing: '0.02em',
               }}>
@@ -171,7 +171,7 @@ export default function MandateAdministrationPage() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.6rem 0.85rem', borderRadius: '8px',
-                background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)',
+                background: 'color-mix(in srgb, #7c3aed 6%, transparent)', border: '1px solid color-mix(in srgb, #7c3aed 20%, transparent)',
               }}>
                 <svg width="14" height="14" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                   <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
@@ -208,7 +208,7 @@ export default function MandateAdministrationPage() {
             ) : (
               <div style={{
                 padding: '0.85rem', borderRadius: '8px',
-                background: 'rgba(218,44,56,0.05)', border: '1px solid rgba(218,44,56,0.2)',
+                background: 'rgba(218,44,56,0.05)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)',
               }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.4rem' }}>
                   {t('pages.mandateAdmin.confirmTitle')}

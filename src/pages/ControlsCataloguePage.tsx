@@ -3,12 +3,10 @@ import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, 
 import { useAuth, hasMinRole } from '../AuthContext'
 import SavedViewsControl from '../components/SavedViewsControl'
 import { parseHash } from '../routing'
+import { severityColor } from '../severity'
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
-const SEV_COLOR: Record<string, string> = {
-  critical: '#DA2C38', high: '#f97316', medium: '#eab308', low: '#3b82f6',
-}
 const PILLAR_COLOR: Record<string, string> = {
   security: '#DA2C38', cost: '#f97316', reliability: '#0094FF',
   operational: '#8b5cf6', operations: '#8b5cf6',
@@ -45,7 +43,7 @@ const TYPE_COLOR: Record<string, string> = {
   network: '#06b6d4', identity: '#eab308', data: '#22c55e', cost: '#f97316',
 }
 
-function sevColor(s: string)    { return SEV_COLOR[s?.toLowerCase()]    ?? '#94a3b8' }
+const sevColor = severityColor
 function pillarColor(p: string) { return PILLAR_COLOR[p?.toLowerCase()] ?? '#94a3b8' }
 function typeColor(t: string)   { return TYPE_COLOR[t?.toLowerCase()]   ?? '#94a3b8' }
 function engineColor(e: string) { return ENGINE_COLOR[e?.toLowerCase()] ?? '#94a3b8' }
@@ -67,7 +65,7 @@ function Tag({ label }: { label: string }) {
   return (
     <span style={{
       display: 'inline-flex', padding: '0.1rem 0.4rem', borderRadius: '4px',
-      fontSize: '0.65rem', fontWeight: 600,
+      fontSize: '0.7rem', fontWeight: 600,
       background: 'rgba(15,23,42,.07)', color: 'var(--muted)',
     }}>{label}</span>
   )
@@ -91,8 +89,8 @@ function TogglePill({ label, color, active, onClick }: { label: string; color: s
 
 function sourceBadge(isCustom: boolean) {
   return isCustom
-    ? <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'rgba(124,58,237,.15)', color: '#7c3aed', border: '1px solid rgba(124,58,237,.25)', whiteSpace: 'nowrap' }}>custom</span>
-    : <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'rgba(0,148,255,.12)', color: '#0094FF', border: '1px solid rgba(0,148,255,.25)', whiteSpace: 'nowrap' }}>wombat</span>
+    ? <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'color-mix(in srgb, #7c3aed 15%, transparent)', color: '#7c3aed', border: '1px solid color-mix(in srgb, #7c3aed 25%, transparent)', whiteSpace: 'nowrap' }}>custom</span>
+    : <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'rgba(0,148,255,.12)', color: '#0094FF', border: '1px solid rgba(0,148,255,.25)', whiteSpace: 'nowrap' }}>wombat</span>
 }
 
 // ── Unified row shape ─────────────────────────────────────────────────────────
@@ -410,8 +408,8 @@ function StepStream({ step }: { step: number }) {
               }}>
                 {done ? '✓' : i + 1}
               </div>
-              <span style={{ fontSize: '0.58rem', fontWeight: 700, color: clr, textAlign: 'center', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{s.label}</span>
-              <span style={{ fontSize: '0.55rem', color: active ? clr : '#94a3b8', textAlign: 'center', lineHeight: 1.1, whiteSpace: 'nowrap' }}>{s.sub}</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: clr, textAlign: 'center', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{s.label}</span>
+              <span style={{ fontSize: '0.7rem', color: active ? clr : '#94a3b8', textAlign: 'center', lineHeight: 1.1, whiteSpace: 'nowrap' }}>{s.sub}</span>
             </div>
           </Fragment>
         )
@@ -424,7 +422,7 @@ function StepStream({ step }: { step: number }) {
 
 const inputStyle = {
   width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px',
-  border: '1px solid var(--border)', fontSize: '0.82rem',
+  border: '1px solid var(--border)', fontSize: '0.85rem',
   background: 'var(--bg)', color: 'var(--text)', outline: 'none',
   boxSizing: 'border-box' as const,
 }
@@ -467,12 +465,12 @@ function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: 
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
           <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
-          <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
             Custom controls use <strong>CUS-</strong> prefix (e.g., CUS-001)
           </span>
         </div>
         {isFocused && isShort && (
-          <div style={{ marginTop: '0.25rem', fontSize: '0.68rem', color: '#f97316', background: 'rgba(249,115,22,.08)', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
+          <div style={{ marginTop: '0.25rem', fontSize: '0.68rem', color: '#f97316', background: 'color-mix(in srgb, #f97316 8%, transparent)', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
             Tip: Aim for 30-100 characters for clear control descriptions
           </div>
         )}
@@ -547,7 +545,7 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
       <div>
         <label style={labelStyle}>Control ID</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <code style={{ fontSize: '0.82rem', color: '#0094FF', padding: '0.45rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontFamily: 'monospace' }}>
+          <code style={{ fontSize: '0.85rem', color: '#0094FF', padding: '0.45rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontFamily: 'monospace' }}>
             CUS-
           </code>
           <input
@@ -565,7 +563,7 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
           <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
-          <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
             Custom controls use <strong>CUS-</strong> prefix (fixed - only the number changes)
           </span>
         </div>
@@ -585,14 +583,14 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
                   border: `2px solid ${active ? color : 'var(--border)'}`,
                   background: active ? `${color}15` : 'var(--bg)',
                   color: active ? color : 'var(--muted)',
-                  fontWeight: 700, fontSize: '0.82rem', textTransform: 'capitalize',
+                  fontWeight: 700, fontSize: '0.85rem', textTransform: 'capitalize',
                   transition: 'all 0.15s',
                 }}
               >{s}</button>
             )
           })}
         </div>
-        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
           <span style={{ fontWeight: 600 }}>Tip:</span> Critical & High block CI/CD, Medium & Low are advisory-only
         </div>
       </div>
@@ -630,7 +628,7 @@ function Step4Types({ state, onChange }: { state: WizardState; onChange: (p: Par
                 background: active ? '#0094FF' : 'transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                {active && <span style={{ color: '#fff', fontSize: '0.65rem', lineHeight: 1 }}>✓</span>}
+                {active && <span style={{ color: '#fff', fontSize: '0.7rem', lineHeight: 1 }}>✓</span>}
               </div>
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: active ? '#0094FF' : 'var(--text)', textTransform: 'capitalize' }}>{t}</span>
             </button>
@@ -681,7 +679,7 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
               {state.checks.length > 1 && (
                 <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA2C38', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
               )}
-              <span style={{ fontSize: '0.62rem', color: allOk ? '#059669' : '#f97316', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.7rem', color: allOk ? '#059669' : '#f97316', fontWeight: 700 }}>
                 {allOk ? '✓' : '✏'}
               </span>
             </div>
@@ -694,11 +692,11 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
                   style={{ ...inputStyle, outline: ch.id && !idOk ? '2px solid #f97316' : 'none' }}
                 />
                 {ch.id && !idOk && (
-                  <div style={{ position: 'absolute', bottom: '-1.15rem', left: 0, right: 0, fontSize: '0.62rem', color: '#f97316' }}>
+                  <div style={{ position: 'absolute', bottom: '-1.15rem', left: 0, right: 0, fontSize: '0.7rem', color: '#f97316' }}>
                     Use format: engine.resource_type (e.g., tf.s3_encryption)
                   </div>
                 )}
-                <div style={{ fontSize: '0.58rem', color: '#64748b', marginTop: '0.2rem' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.2rem' }}>
                   {ch.id ? (idOk ? 'Valid ✓' : 'Invalid format') : 'Auto-suggested: tf.'}
                 </div>
               </div>
@@ -708,7 +706,7 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
                 ))}
               </select>
               {ch.engine && !engineOk && (
-                <div style={{ position: 'absolute', bottom: '-1.2rem', left: 0, right: 0, fontSize: '0.62rem', color: '#f97316' }}>
+                <div style={{ position: 'absolute', bottom: '-1.2rem', left: 0, right: 0, fontSize: '0.7rem', color: '#f97316' }}>
                   Select a valid engine
                 </div>
               )}
@@ -719,7 +717,7 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
               placeholder="What this check verifies"
               style={{ ...inputStyle, marginBottom: '0.5rem', outline: ch.description && !descOk ? '2px solid #f97316' : 'none' }}
             />
-            <div style={{ fontSize: '0.62rem', color: '#64748b', marginBottom: '0.2rem' }}>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.2rem' }}>
               {ch.description ? (descOk ? 'Good length ✓' : 'Too short') : 'Describe the check requirement'}
             </div>
             <input
@@ -728,12 +726,12 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
               placeholder="Expected — what a passing configuration looks like"
               style={{ ...inputStyle, outline: ch.expected && !expectedOk ? '2px solid #f97316' : 'none' }}
             />
-            <div style={{ fontSize: '0.62rem', color: '#64748b' }}>
+            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
               {ch.expected ? (expectedOk ? 'Valid ✓' : 'Too short') : 'Describe expected state'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
               <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Schema hint:</span>
-              <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+              <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
                 engine: {ALL_ENGINES.join(' | ')}
               </span>
             </div>
@@ -741,7 +739,7 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
         )
       })}
       {state.checks.length === 0 && (
-        <div style={{ fontSize: '0.7rem', color: '#f97316', padding: '0.5rem', background: 'rgba(249,115,22,.08)', borderRadius: '8px', textAlign: 'center' }}>
+        <div style={{ fontSize: '0.7rem', color: '#f97316', padding: '0.5rem', background: 'color-mix(in srgb, #f97316 8%, transparent)', borderRadius: '8px', textAlign: 'center' }}>
           Add at least one check to define how this control is verified
         </div>
       )}
@@ -816,8 +814,8 @@ function Step7Save({
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* Success */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(5,150,105,.08)', border: '1px solid rgba(5,150,105,.25)', borderRadius: '10px', padding: '0.875rem 1rem' }}>
-          <span style={{ fontSize: '1.4rem', color: '#059669' }}>✓</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'color-mix(in srgb, #059669 8%, transparent)', border: '1px solid color-mix(in srgb, #059669 25%, transparent)', borderRadius: '10px', padding: '0.875rem 1rem' }}>
+          <span style={{ fontSize: '1.5rem', color: '#059669' }}>✓</span>
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#059669' }}>Control saved successfully</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
@@ -836,7 +834,7 @@ function Step7Save({
             >↓ Download YAML</button>
             <button
               onClick={() => downloadText(`${savedControl.id}.py`, ckv, 'text/x-python')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'rgba(124,58,237,.1)', color: '#7c3aed', border: '1px solid rgba(124,58,237,.3)' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, #7c3aed 10%, transparent)', color: '#7c3aed', border: '1px solid color-mix(in srgb, #7c3aed 30%, transparent)' }}
             >↓ Download Checkov stub</button>
           </div>
         </div>
@@ -874,7 +872,7 @@ function Step7Save({
         ))}
       </div>
 
-      {error && <div style={{ background: '#DA2C3812', border: '1px solid #DA2C3840', borderRadius: '8px', padding: '0.65rem 0.875rem', fontSize: '0.8rem', color: '#DA2C38' }}>{error}</div>}
+      {error && <div style={{ background: 'color-mix(in srgb, #da2c38 7.1%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 25.1%, transparent)', borderRadius: '8px', padding: '0.65rem 0.875rem', fontSize: '0.8rem', color: '#DA2C38' }}>{error}</div>}
 
       <button
         onClick={onSave}
@@ -911,7 +909,7 @@ function CliUsage({ controlId, isCustom }: { controlId: string; isCustom: boolea
 
   const codeBlock = (key: string, title: string, code: string) => (
     <div key={key} style={{ marginBottom: '0.75rem' }}>
-      <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{title}</div>
+      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{title}</div>
       <div style={{ position: 'relative' }}>
         <pre style={{
           margin: 0, background: '#0f172a', borderRadius: '8px', padding: '0.7rem 2.5rem 0.7rem 0.875rem',
@@ -919,7 +917,7 @@ function CliUsage({ controlId, isCustom }: { controlId: string; isCustom: boolea
         }}>{code}</pre>
         <button
           onClick={() => copy(code, key)}
-          style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '5px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: '#94a3b8', fontSize: '0.65rem' }}
+          style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '6px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: '#94a3b8', fontSize: '0.7rem' }}
         >{copied === key ? '✓' : 'copy'}</button>
       </div>
     </div>
@@ -1005,14 +1003,14 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
   const p: React.CSSProperties = { margin: '0 0 0.6rem', fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.65 }
 
   const num = (n: number | string) => (
-    <span style={{ background: '#0094FF', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.63rem', fontWeight: 800, flexShrink: 0 }}>{n}</span>
+    <span style={{ background: '#0094FF', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0 }}>{n}</span>
   )
 
   function CB({ id, code }: { id: string; code: string }) {
     return (
       <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
         <pre style={dark}>{code}</pre>
-        <button onClick={() => copy(code, id)} style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '5px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: '#94a3b8', fontSize: '0.65rem' }}>
+        <button onClick={() => copy(code, id)} style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '6px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: '#94a3b8', fontSize: '0.7rem' }}>
           {copied === id ? '✓' : 'copy'}
         </button>
       </div>
@@ -1026,7 +1024,7 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 99 }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 40%, transparent)', zIndex: 99 }} />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '740px', maxWidth: '96vw', maxHeight: '92vh',
@@ -1054,7 +1052,7 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
                 padding: '0.4rem 1rem', borderRadius: '8px', cursor: 'pointer',
                 fontWeight: 700, fontSize: '0.8rem',
                 border: `2px solid ${mode === m ? (m === 'wombat' ? '#0094FF' : '#7c3aed') : 'var(--border)'}`,
-                background: mode === m ? (m === 'wombat' ? 'rgba(0,148,255,.1)' : 'rgba(124,58,237,.1)') : 'transparent',
+                background: mode === m ? (m === 'wombat' ? 'rgba(0,148,255,.1)' : 'color-mix(in srgb, #7c3aed 10%, transparent)') : 'transparent',
                 color: mode === m ? (m === 'wombat' ? '#0094FF' : '#7c3aed') : 'var(--muted)',
                 transition: 'all 0.15s',
               }}
@@ -1313,7 +1311,7 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 99 }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 40%, transparent)', zIndex: 99 }} />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '660px', maxWidth: '95vw', maxHeight: '90vh',
@@ -1392,11 +1390,11 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
 function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => void }) {
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 99 }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 20%, transparent)', zIndex: 99 }} />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '700px', maxWidth: '95vw', maxHeight: '90vh',
-        background: '#fff', borderRadius: '14px', boxShadow: '0 24px 64px rgba(15,23,42,.18)',
+        background: '#fff', borderRadius: '12px', boxShadow: '0 24px 64px rgba(15,23,42,.18)',
         display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden',
       }}>
         {/* Header */}
@@ -1429,7 +1427,7 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
           {ctrl.core?.rationale && (
             <div>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Why it matters</div>
-              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.6 }}>{ctrl.core.rationale}</p>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>{ctrl.core.rationale}</p>
             </div>
           )}
 
@@ -1513,7 +1511,7 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
                   const content = ctrl.custom ? toCheckov(ctrl.custom) : toCheckovFromCore(ctrl.core!)
                   downloadText(`${ctrl.id}.py`, content, 'text/x-python')
                 }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'rgba(124,58,237,.1)', color: '#7c3aed', border: '1px solid rgba(124,58,237,.3)' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, #7c3aed 10%, transparent)', color: '#7c3aed', border: '1px solid color-mix(in srgb, #7c3aed 30%, transparent)' }}
               >↓ Checkov stub</button>
             </div>
           </div>
@@ -1555,7 +1553,7 @@ function DeleteControlButton({ ctrl }: { ctrl: UnifiedControl }) {
 
   if (deleted) {
     return (
-      <div style={{ fontSize: '0.68rem', color: '#059669', padding: '0.5rem', background: '#05966912', borderRadius: '8px', textAlign: 'center' }}>
+      <div style={{ fontSize: '0.68rem', color: '#059669', padding: '0.5rem', background: 'color-mix(in srgb, #059669 7.1%, transparent)', borderRadius: '8px', textAlign: 'center' }}>
         ✓ Deleted
       </div>
     )
@@ -1569,7 +1567,7 @@ function DeleteControlButton({ ctrl }: { ctrl: UnifiedControl }) {
         disabled={deleting}
         style={{
           padding: '0.5rem 0.9rem', borderRadius: '8px', border: '1px solid #DA2C38',
-          background: '#DA2C3812', color: '#DA2C38', fontWeight: 700, fontSize: '0.78rem',
+          background: 'color-mix(in srgb, #da2c38 7.1%, transparent)', color: '#DA2C38', fontWeight: 700, fontSize: '0.78rem',
           cursor: deleting ? 'default' : 'pointer', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.4rem'
         }}
       >
@@ -1738,11 +1736,11 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
               Active Control Pack
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--waf-brand)', fontFamily: 'monospace' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--waf-brand)', fontFamily: 'monospace' }}>
                 {packInfo.version}
               </span>
               {packInfo.description && (
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   {packInfo.description}
                 </span>
               )}
@@ -1807,11 +1805,11 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           {/* Checkov Pack */}
           <button
             onClick={downloadPack}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid rgba(124,58,237,.35)', background: 'rgba(124,58,237,.08)', color: '#7c3aed', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid color-mix(in srgb, #7c3aed 35%, transparent)', background: 'color-mix(in srgb, #7c3aed 8%, transparent)', color: '#7c3aed', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
           >
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             Checkov Pack
-            <span style={{ background: 'rgba(124,58,237,.15)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.68rem' }}>{packCount}</span>
+            <span style={{ background: 'color-mix(in srgb, #7c3aed 15%, transparent)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.68rem' }}>{packCount}</span>
           </button>
           <button
             onClick={() => setShowGuide(true)}
@@ -1859,19 +1857,19 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           />
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }} data-debug="pillar-filter">
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Pillar</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Pillar</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
             {(() => ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />))()}
           </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Severity</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Severity</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
             {(() => ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />))()}
           </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Type</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Type</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
             {(() => ALL_TYPES.map(t => <TogglePill key={t} label={t} color={typeColor(t)} active={typeFilter.includes(t)} onClick={() => toggleType(t)} />))()}
           </div>

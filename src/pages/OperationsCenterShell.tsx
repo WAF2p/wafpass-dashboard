@@ -26,7 +26,7 @@ export function SectionCard({
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: '14px',
+        borderRadius: '12px',
         padding: '1.1rem',
         display: 'flex',
         flexDirection: 'column',
@@ -36,7 +36,7 @@ export function SectionCard({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>
           <Icon path={icon} size={16} />
           {title}
         </div>
@@ -75,7 +75,7 @@ export function PriorityRow({
       <div style={{ height: '6px', background: 'var(--track)', borderRadius: '999px', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '999px' }} />
       </div>
-      {meta && <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{meta}</div>}
+      {meta && <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{meta}</div>}
     </div>
   )
 }
@@ -84,7 +84,7 @@ export function MiniBadge({ children, color }: { children: ReactNode; color: str
   return (
     <span
       style={{
-        fontSize: '0.58rem',
+        fontSize: '0.7rem',
         fontWeight: 800,
         padding: '0.12rem 0.4rem',
         borderRadius: '4px',
@@ -154,7 +154,7 @@ export function CenterHero({
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: accent, boxShadow: `0 0 8px ${accent}` }} />
           <span
             style={{
-              fontSize: '0.62rem',
+              fontSize: '0.7rem',
               fontWeight: 800,
               color: accent,
               letterSpacing: '0.1em',
@@ -164,10 +164,10 @@ export function CenterHero({
             {eyebrow}
           </span>
         </div>
-        <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 0.35rem', lineHeight: 1.2 }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 0.35rem', lineHeight: 1.2 }}>
           {title}
         </h1>
-        <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, maxWidth: '640px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0, maxWidth: '640px', lineHeight: 1.5 }}>
           {subtitle}
         </p>
       </div>
@@ -273,7 +273,7 @@ export function KpiCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
           <span
             style={{
-              fontSize: '0.6rem',
+              fontSize: '0.7rem',
               fontWeight: 800,
               color: 'var(--muted)',
               letterSpacing: '0.08em',
@@ -285,7 +285,7 @@ export function KpiCard({
           {demo && (
             <span
               style={{
-                fontSize: '0.55rem',
+                fontSize: '0.7rem',
                 fontWeight: 700,
                 padding: '0.08rem 0.35rem',
                 borderRadius: '999px',
@@ -323,13 +323,13 @@ export function StubBanner({ title, description, badge = 'RFC' }: { title: strin
         <Icon path="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" size={18} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--waf-warn)', marginBottom: '0.15rem' }}>{title}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--waf-warn)', marginBottom: '0.15rem' }}>{title}</div>
         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5 }}>{description}</div>
       </div>
       <div
         style={{
           flexShrink: 0,
-          fontSize: '0.62rem',
+          fontSize: '0.7rem',
           fontWeight: 800,
           padding: '0.25rem 0.55rem',
           borderRadius: '6px',

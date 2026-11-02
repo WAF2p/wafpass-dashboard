@@ -259,7 +259,7 @@ const syslogModalCss = `
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: rgba(0,0,0,0.45);
+  background: color-mix(in srgb, #000000 45%, transparent);
   padding: 4rem 1rem 1rem;
 }
 .syslog-modal {
@@ -270,7 +270,7 @@ const syslogModalCss = `
   max-height: min(80vh, calc(100vh - 5rem));
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  box-shadow: 0 20px 60px color-mix(in srgb, #000000 25%, transparent);
 }
 .syslog-modal__header {
   display: flex;
@@ -337,7 +337,7 @@ const syslogModalCss = `
   font-size: 0.78rem;
   font-weight: 600;
 }
-.syslog-modal__test--ok { color: #059669; background: rgba(5,150,105,.08); }
+.syslog-modal__test--ok { color: #059669; background: color-mix(in srgb, #059669 8%, transparent); }
 .syslog-modal__test--err { color: #dc2626; background: rgba(220,38,38,.08); }
 
 .syslog-grid {
@@ -365,7 +365,7 @@ const syslogModalCss = `
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   outline: none;
 }
 .syslog-field input:focus, .syslog-field select:focus { border-color: var(--waf-brand); }

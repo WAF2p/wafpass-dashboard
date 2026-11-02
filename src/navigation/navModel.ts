@@ -5,6 +5,7 @@
  * buildNavSections() from here so section/item definitions never drift again.
  */
 import type { RunDetail, RunSummary } from '../api'
+import { ROLE_HIERARCHY } from '../AuthContext'
 import type { Settings } from '../pages/settingsUtils'
 import { BETA_MY_DASHBOARD, type BetaFeatureId } from '../pages/userPrefsUtils'
 import type { Page } from '../routing'
@@ -34,6 +35,22 @@ export interface NavSection {
   description: string
   items: NavEntry[]
   minRole?: string
+}
+
+/**
+ * Resolve the minimum role for a navigation section.
+ *
+ * - An explicit `minRole` always wins.
+ * - Sections named after a role (ciso / architect / engineer) inherit it,
+ *   matching the pre-navModel behaviour.
+ * - Sections with neither (overview) are visible to every authenticated role.
+ *
+ * Callers must not fall back to `'admin'`: that hid the CISO, Architect and
+ * Engineer categories — and the per-user My Dashboard — from those roles.
+ */
+export function sectionRequiredRole(section: NavSection): string | null {
+  if (section.minRole) return section.minRole
+  return (ROLE_HIERARCHY as readonly string[]).includes(section.id) ? section.id : null
 }
 
 export const categoryDescriptions: Record<string, string> = {

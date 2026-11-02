@@ -114,9 +114,9 @@ function getTimeAgo(iso: string): string {
 }
 
 function CICDBadge({ isCICD }: { isCICD: boolean }) {
-  if (!isCICD) return <span style={{ fontSize: '0.62rem', fontWeight: 400, color: 'var(--muted)' }}>manual</span>
+  if (!isCICD) return <span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--muted)' }}>manual</span>
   return (
-    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '4px', background: 'color-mix(in srgb, var(--pass) 10%, transparent)', color: 'var(--pass)', fontSize: '0.62rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+    <span style={{ padding: '0.1rem 0.45rem', borderRadius: '4px', background: 'color-mix(in srgb, var(--pass) 10%, transparent)', color: 'var(--pass)', fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
       CI/CD
     </span>
   )
@@ -226,7 +226,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
     >
       <div style={{ color, flexShrink: 0 }}><Icon path={icon} size={20} /></div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('common.view')} →</div>
       </div>
     </button>
@@ -242,11 +242,11 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
       >
         {!loading && metrics && (
           <div style={{ textAlign: 'right', minWidth: '140px' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.pipelines.averageScore')}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: scoreColor(metrics.avgScore) }}>{metrics.avgScore}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: scoreColor(metrics.avgScore) }}>{metrics.avgScore}</span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
             </div>
           </div>
@@ -368,7 +368,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                                 borderRadius: '50%',
                                 border: '1.5px solid var(--card-bg)',
                                 background: getProjectColor(run.project),
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.12)',
+                                boxShadow: '0 1px 2px color-mix(in srgb, #000000 12%, transparent)',
                                 cursor: 'pointer',
                                 padding: 0,
                                 transition: 'transform 0.15s ease',
@@ -379,16 +379,16 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                           ))}
                         </div>
                         {day.count > 0 && (
-                          <span style={{ fontSize: '0.6rem', color: 'var(--muted)', fontWeight: 700 }}>{day.count}</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700 }}>{day.count}</span>
                         )}
-                        <span style={{ fontSize: '0.55rem', color: 'var(--muted)' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                           {new Date(day.day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                         </span>
                       </div>
                     )
                   })}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.65rem', color: 'var(--muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--waf-brand)' }} /> run by project</span>
                   <span style={{ marginLeft: 'auto' }}>{t('pages.pipelines.last30Days')}</span>
                 </div>
@@ -415,7 +415,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                       color={scoreColor(proj.avgScore)}
                       meta={`${proj.runCount} runs · latest ${proj.latestScore}`}
                       badge={
-                        <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: getProjectColor(proj.project), flexShrink: 0 }} />
+                        <div style={{ width: '10px', height: '10px', borderRadius: '4px', background: getProjectColor(proj.project), flexShrink: 0 }} />
                       }
                     />
                   ))}
@@ -441,7 +441,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                         <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{run.project}</span>
                         <CICDBadge isCICD={run.is_cicd} />
                       </div>
-                      <span style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>{getTimeAgo(run.created_at)}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{getTimeAgo(run.created_at)}</span>
                     </div>
                     <MiniBadge color={scoreColor(run.score)}>{run.score}</MiniBadge>
                   </div>
@@ -484,8 +484,8 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                       meta={t('pages.pipelineOps.flakySwitches', { count: fp.switches, window: fp.recentRuns })}
                       badge={
                         <div style={{ display: 'flex', gap: '2px' }}>
-                          <span style={{ fontSize: '0.6rem', color: 'var(--pass)', fontWeight: 700 }}>{fp.passCount}P</span>
-                          <span style={{ fontSize: '0.6rem', color: 'var(--fail)', fontWeight: 700 }}>{fp.failCount}F</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--pass)', fontWeight: 700 }}>{fp.passCount}P</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--fail)', fontWeight: 700 }}>{fp.failCount}F</span>
                         </div>
                       }
                     />
@@ -498,7 +498,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.pipelineOps.predictedDuration')}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.pipelineOps.predictedDuration')}</div>
                     <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text)' }}>{durationForecast.predicted}</div>
                   </div>
                   <MiniBadge color={durationForecast.trend === 'up' ? 'var(--waf-warn)' : durationForecast.trend === 'down' ? 'var(--pass)' : 'var(--waf-info)'}>
@@ -510,7 +510,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                     {t('pages.pipelineOps.durationConfidence', { range: durationForecast.confidence })}
                   </div>
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.65rem', color: 'var(--muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pass)' }} /> faster</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-warn)' }} /> slower</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-info)' }} /> stable</span>

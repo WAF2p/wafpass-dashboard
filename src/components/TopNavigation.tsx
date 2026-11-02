@@ -8,7 +8,7 @@ import { Settings, getMaturityMeta } from '../pages/settingsUtils'
 import { RunDetail, RunSummary, fetchMyMandate, fetchSwitchableMandants, type MandantOut } from '../api'
 import { useI18n } from '../i18n'
 import { loadUserPrefs, saveUserPrefs, MAX_PINNED_PAGES, BETA_CATEGORY_LAUNCHER, BETA_PINNED_PAGES, BETA_COMMAND_PALETTE, BETA_BRIEFING_MODE, BETA_WIDGET_WALL } from '../pages/userPrefsUtils'
-import { NavEntry, NavSection, buildNavSections, categoryDescriptions } from '../navigation/navModel'
+import { NavEntry, NavSection, buildNavSections, categoryDescriptions, sectionRequiredRole } from '../navigation/navModel'
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { useTheme } from '../theme'
 import CategoryLauncher from './CategoryLauncher'
@@ -207,7 +207,7 @@ export function MandateIndicator() {
       background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)',
       fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap',
     }}>
-      {myMandate.logo_url && <img src={myMandate.logo_url} alt="" style={{ width: '14px', height: '14px', borderRadius: '3px' }} />}
+      {myMandate.logo_url && <img src={myMandate.logo_url} alt="" style={{ width: '14px', height: '14px', borderRadius: '4px' }} />}
       {myMandate.name}
     </div>
   )
@@ -254,7 +254,7 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
       <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap' }}>
         {item.label}
         {item.count != null && item.count > 0 && (
-          <span style={{ fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', marginLeft: '0.4rem', background: 'var(--nav-surf)', color: 'var(--nav-text)' }}>
+          <span style={{ fontSize: '0.7rem', borderRadius: '999px', padding: '0.1rem 0.45rem', marginLeft: '0.4rem', background: 'var(--nav-surf)', color: 'var(--nav-text)' }}>
             {item.count}
           </span>
         )}
@@ -348,7 +348,7 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
             maxWidth: 'min(1200px, calc(100vw - 2rem))',
             background: 'var(--nav-bg-opaque)',
             border: '1px solid var(--nav-border)',
-            borderRadius: '14px',
+            borderRadius: '12px',
             boxShadow: '0 12px 40px rgba(0,0,0,0.28)',
             padding: '1.5rem 1.75rem',
             zIndex: 100,
@@ -506,7 +506,7 @@ function LanguageSwitcher({ currentLang, onChange }: { currentLang: string; onCh
               <span>{l.flag}</span>
               <span>{l.label}</span>
               {currentLang === l.code && (
-                <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--waf-brand)' }}>✓</span>
+                <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--waf-brand)' }}>✓</span>
               )}
             </button>
           ))}
@@ -534,7 +534,10 @@ export default function TopNavigation({
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
   const effectiveRole = isHoldingAdmin ? 'admin' : role
   const visibleSections = allSections
-    .filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+    .filter(s => {
+      const required = sectionRequiredRole(s)
+      return required === null || hasMinRole(effectiveRole, required)
+    })
     .map(section => ({
       ...section,
       items: section.items.filter(item => !item.beta || isEnabled(item.beta)),
@@ -933,7 +936,7 @@ export default function TopNavigation({
             background: 'var(--card-bg)',
             border: '1px solid var(--nav-border)',
             borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+            boxShadow: '0 12px 40px color-mix(in srgb, #000000 25%, transparent)',
             zIndex: 100,
             display: 'none',
           }}>
@@ -945,7 +948,7 @@ export default function TopNavigation({
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nav-text)' }}>
                 {user.display_name || user.username}
               </div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--nav-muted)' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--nav-muted)' }}>
                 {role.charAt(0).toUpperCase() + role.slice(1)}
               </div>
             </div>
@@ -988,7 +991,7 @@ export default function TopNavigation({
                 transition: 'all 0.15s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(218,44,56,0.1)'
+                e.currentTarget.style.background = 'color-mix(in srgb, #da2c38 10%, transparent)'
                 e.currentTarget.style.color = 'var(--waf-danger)'
               }}
               onMouseLeave={(e) => {

@@ -369,7 +369,6 @@ export default function CostImpactPage({ run }: Props) {
 
       {/* Hero */}
       <div className="coc-hero">
-        <div className="coc-hero__grid" />
         <div className="coc-hero__content">
           <div className="coc-hero__badge"><EuroIcon /> COST OPERATIONS CENTER</div>
           <h1 className="coc-hero__title">{t('pages.costImpact.title')}</h1>
@@ -487,7 +486,8 @@ export default function CostImpactPage({ run }: Props) {
             ))}
           </div>
           <div className="coc-stub-note">
-            <GitHubIcon /> Vote on the GitHub RFC to replace <code>fetchHistoricalSpendStub</code> and <code>fetchBudgetAlertsStub</code> with live APIs.
+            <GitHubIcon />
+            <span>Vote on the GitHub RFC to replace <code>fetchHistoricalSpendStub</code> and <code>fetchBudgetAlertsStub</code> with live APIs.</span>
           </div>
         </div>
       </div>
@@ -635,15 +635,6 @@ const costOperationsCenterCss = `
   position: relative;
   overflow: hidden;
 }
-.coc-hero__grid {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--waf-brand) 4%, transparent) 1px, transparent 1px),
-    linear-gradient(0deg, color-mix(in srgb, var(--waf-brand) 4%, transparent) 1px, transparent 1px);
-  background-size: 24px 24px;
-  pointer-events: none;
-}
 .coc-hero__content {
   flex: 1;
   min-width: 0;
@@ -658,7 +649,7 @@ const costOperationsCenterCss = `
   border: 1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent);
   border-radius: 4px;
   padding: 0.35rem 0.75rem;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--waf-brand);
   text-transform: uppercase;
@@ -678,7 +669,7 @@ const costOperationsCenterCss = `
 }
 .coc-hero__subtitle {
   margin: 0.45rem 0 0;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--muted);
   max-width: 520px;
 }
@@ -692,13 +683,13 @@ const costOperationsCenterCss = `
   text-align: right;
 }
 .coc-hero__kpi-label {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.1em;
 }
 .coc-hero__kpi-value {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 800;
   line-height: 1;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -717,7 +708,7 @@ const costOperationsCenterCss = `
 .coc-kpi {
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--waf-brand) 12%, transparent);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 1.1rem;
   display: flex;
   gap: 0.85rem;
@@ -764,13 +755,13 @@ const costOperationsCenterCss = `
   gap: 0.15rem;
 }
 .coc-kpi__label {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.1em;
 }
 .coc-kpi__value {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   line-height: 1;
@@ -781,7 +772,7 @@ const costOperationsCenterCss = `
   margin-left: 0.15rem;
 }
 .coc-kpi__desc {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--muted);
   line-height: 1.4;
 }
@@ -846,23 +837,27 @@ const costOperationsCenterCss = `
 .coc-alert__label { font-weight: 600; }
 .coc-alert__value { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700; }
 .coc-stub-note {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
   gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   background: var(--bg);
   border: 1px dashed color-mix(in srgb, var(--muted) 22%, transparent);
   color: var(--muted);
   font-size: 0.7rem;
+  line-height: 1.45;
 }
+.coc-stub-note > span { flex: 1; min-width: 0; }
 
 .coc-stub-banner {
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.9rem 1.25rem;
-  border-radius: 14px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--waf-warn) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-warn) 26%, transparent);
   box-shadow: 0 0 24px color-mix(in srgb, var(--waf-warn) 10%, transparent);
@@ -901,7 +896,7 @@ const costOperationsCenterCss = `
   background: color-mix(in srgb, var(--waf-warn) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-warn) 30%, transparent);
   color: var(--waf-warn);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -912,7 +907,7 @@ const costOperationsCenterCss = `
   background: color-mix(in srgb, var(--waf-warn) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-warn) 26%, transparent);
   color: var(--waf-warn);
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -922,7 +917,7 @@ const costOperationsCenterCss = `
 .coc-filter-bar {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 0.85rem 1.1rem;
   display: flex;
   gap: 0.85rem;
@@ -948,7 +943,7 @@ const costOperationsCenterCss = `
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   outline: none;
   min-width: 0;
 }
@@ -1048,7 +1043,7 @@ const costOperationsCenterCss = `
   gap: 0.75rem;
 }
 .coc-control-icon {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   line-height: 1;
   flex-shrink: 0;
   margin-top: 0.1rem;
@@ -1071,7 +1066,7 @@ const costOperationsCenterCss = `
   color: var(--muted);
 }
 .coc-control-title {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -1087,7 +1082,7 @@ const costOperationsCenterCss = `
   gap: 0.25rem;
   padding: 0.18rem 0.5rem;
   border-radius: 4px;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 700;
   border: 1px solid transparent;
 }
@@ -1111,11 +1106,11 @@ const costOperationsCenterCss = `
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .coc-control-period {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--muted);
 }
 .coc-control-range {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--muted);
   margin-top: 0.1rem;
 }
@@ -1127,7 +1122,7 @@ const costOperationsCenterCss = `
 }
 .coc-control-toggle {
   color: var(--muted);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   margin-top: 0.35rem;
   user-select: none;
 }
@@ -1149,7 +1144,7 @@ const costOperationsCenterCss = `
 .coc-resource-table th {
   padding: 0.5rem 0.6rem;
   text-align: left;
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -1179,7 +1174,7 @@ const costOperationsCenterCss = `
   max-width: 280px;
 }
 .coc-resource-range {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 400;
   color: var(--muted);
 }

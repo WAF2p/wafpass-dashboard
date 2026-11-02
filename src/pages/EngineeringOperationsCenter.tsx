@@ -6,16 +6,10 @@ import { CenterHero, Icon, KpiCard, KpiSlot, MiniBadge, PriorityRow, RightRail, 
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_PERSONA_HOME } from './userPrefsUtils'
 import { getPersonaPreset } from './personaHome'
+import { severityBg, severityBorder, severityColor } from '../severity'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 const SEV_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-const SEV_COLORS: Record<string, string> = { CRITICAL: 'var(--fail)', HIGH: 'var(--waf-warn)', MEDIUM: 'var(--score-mid)', LOW: 'var(--pass)' }
-const SEV_BG: Record<string, string> = {
-  CRITICAL: 'color-mix(in srgb, var(--fail) 13%, transparent)',
-  HIGH: 'color-mix(in srgb, var(--waf-warn) 13%, transparent)',
-  MEDIUM: 'color-mix(in srgb, var(--score-mid) 13%, transparent)',
-  LOW: 'color-mix(in srgb, var(--pass) 13%, transparent)',
-}
 
 function extractModulePath(resource: string): string {
   if (!resource?.trim()) return '(root)'
@@ -166,7 +160,7 @@ export default function EngineeringOperationsCenter({
     >
       <div style={{ color, flexShrink: 0 }}><Icon path={icon} size={20} /></div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{disabled ? t('pages.costImpact.noRun') : `${t('common.view')} →`}</div>
       </div>
     </button>
@@ -182,11 +176,11 @@ export default function EngineeringOperationsCenter({
       >
         {run && (
           <div style={{ textAlign: 'right', minWidth: '160px' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.dashboard.infrastructureScan')}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
             </div>
             {scoreDelta !== null && (
@@ -270,16 +264,16 @@ export default function EngineeringOperationsCenter({
                     style={{
                       padding: '0.75rem',
                       borderRadius: '10px',
-                      background: SEV_BG[sev],
-                      border: `1px solid ${SEV_COLORS[sev]}30`,
+                      background: severityBg(sev),
+                      border: `1px solid ${severityBorder(sev, 19)}`,
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '0.2rem',
                     }}
                   >
-                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: SEV_COLORS[sev], textTransform: 'uppercase' }}>{sev}</span>
-                    <span style={{ fontSize: '1.35rem', fontWeight: 800, color: SEV_COLORS[sev] }}>{bySeverity[sev]}</span>
-                    <span style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: severityColor(sev), textTransform: 'uppercase' }}>{sev}</span>
+                    <span style={{ fontSize: '1.35rem', fontWeight: 800, color: severityColor(sev) }}>{bySeverity[sev]}</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                       {failed.length ? Math.round((bySeverity[sev] / failed.length) * 100) : 0}%
                     </span>
                   </div>
@@ -307,9 +301,9 @@ export default function EngineeringOperationsCenter({
                       label={c.title || c.control}
                       count={c.count}
                       total={failed.length}
-                      color={SEV_COLORS[c.severity]}
+                      color={severityColor(c.severity)}
                       meta={`${c.resources} res · ${c.severity}`}
-                      badge={<MiniBadge color={SEV_COLORS[c.severity]}>{c.severity}</MiniBadge>}
+                      badge={<MiniBadge color={severityColor(c.severity)}>{c.severity}</MiniBadge>}
                     />
                   ))}
                 </div>
