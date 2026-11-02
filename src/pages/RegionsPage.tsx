@@ -259,13 +259,13 @@ function KPI({ label, value, sub, color }: { label: string; value: string | numb
       display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0,
     }}
     >
-      <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {label}
       </div>
       <div style={{ fontSize: typeof value === 'number' ? '1.75rem' : '1.1rem', fontWeight: 800, color: accent, lineHeight: 1.1, wordBreak: 'break-word' }}>
         {value}
       </div>
-      {sub && <div style={{ fontSize: '0.64rem', color: 'var(--muted)' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{sub}</div>}
     </div>
   )
 }
@@ -296,7 +296,7 @@ function ProviderCard({
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: data.color, flexShrink: 0 }} />
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: active ? data.color : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: active ? data.color : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {data.label}
         </div>
       </div>
@@ -304,7 +304,7 @@ function ProviderCard({
         <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text)' }}>{data.regions.length}</span>
         <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.regions.regionsLabel')}</span>
         <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--muted)', marginLeft: '0.25rem' }}>·</span>
-        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: data.color }}>{azCount}</span>
+        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: data.color }}>{azCount}</span>
         <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.regions.azsLabel')}</span>
       </div>
     </button>
@@ -404,7 +404,7 @@ export default function RegionsPage({ run }: Props) {
           <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.35rem' }}>
             {t('pages.regions.pageTitle')}
           </h1>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
             {t('pages.regions.pageSubtitle')}
           </div>
         </div>

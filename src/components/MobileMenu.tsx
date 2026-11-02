@@ -5,7 +5,9 @@ import { Settings } from '../pages/settingsUtils'
 import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { scoreColor } from '../routing'
-import { NavEntry, NavSection, buildNavSections } from '../navigation/navModel'
+import { NavEntry, NavSection, buildNavSections, sectionRequiredRole } from '../navigation/navModel'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import BrandLogo from './BrandLogo'
 
 function NavItem({ item, page, navigate, onClose }: { item: NavEntry; page: Page; navigate: (p: Page) => void; onClose: () => void }) {
   return (
@@ -26,7 +28,7 @@ function NavItem({ item, page, navigate, onClose }: { item: NavEntry; page: Page
       </svg>
       <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
       {item.count != null && item.count > 0 && (
-        <span style={{ fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'rgba(255,255,255,.15)', color: '#fff' }}>
+        <span style={{ fontSize: '0.7rem', borderRadius: '999px', padding: '0.1rem 0.45rem', background: 'rgba(255,255,255,.15)', color: '#fff' }}>
           {item.count}
         </span>
       )}
@@ -95,6 +97,7 @@ export default function MobileMenu({
   onShowRunModal,
 }: MobileMenuProps) {
   const { t } = useI18n()
+  const { isEnabled } = useBetaFeatures()
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
   if (!mobileMenuOpen) return null
@@ -102,7 +105,16 @@ export default function MobileMenu({
   const { isHoldingAdmin } = useAuth()
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
   const effectiveRole = isHoldingAdmin ? 'admin' : role
-  const visibleSections = allSections.filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+  const visibleSections = allSections
+    .filter(s => {
+      const required = sectionRequiredRole(s)
+      return required === null || hasMinRole(effectiveRole, required)
+    })
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.beta || isEnabled(item.beta)),
+    }))
+    .filter(section => section.items.length > 0)
 
   // Only show on mobile devices - use matchMedia for reliable detection
   if (typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches) {
@@ -128,8 +140,8 @@ export default function MobileMenu({
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div>
-          <img src="/logo.png" alt="WAF++ PASS" style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
-          <div style={{ fontSize: '0.6rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginTop: '0.2rem' }}>
+          <BrandLogo height={30} />
+          <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginTop: '0.2rem' }}>
             Controls Dashboard
           </div>
         </div>
@@ -177,20 +189,20 @@ export default function MobileMenu({
       {/* Score (if available) */}
       {run && (
         <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--sidebar-border)' }}>
-          <div style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Overall Score</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Overall Score</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
             <span style={{ fontSize: '1.5rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
             <span style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)' }}>/100</span>
           </div>
           {run.path && (
-            <div style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)', marginTop: '0.25rem', wordBreak: 'break-all' }}>{run.path}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', marginTop: '0.25rem', wordBreak: 'break-all' }}>{run.path}</div>
           )}
         </div>
       )}
 
       {/* Maturity level */}
       <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--sidebar-border)' }}>
-        <div style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Maturity</div>
+        <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Maturity</div>
         <button
           onClick={() => {
             navigate('settings')
@@ -227,7 +239,7 @@ export default function MobileMenu({
       {expandedSection && (
         <div style={{ padding: '0.5rem' }}>
           <div style={{
-            fontSize: '0.58rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em',
+            fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.06em',
             fontWeight: 700, padding: '0.5rem 0.75rem 0.25rem', marginBottom: '0.25rem',
           }}>
             {allSections.find(s => s.id === expandedSection)?.label}
@@ -272,7 +284,7 @@ export default function MobileMenu({
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {role}
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {runs.length > 0 ? `${runs.length} run${runs.length !== 1 ? 's' : ''}` : 'No runs'}
             </div>
           </div>

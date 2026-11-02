@@ -1,6 +1,6 @@
 # Maintainers
 
-The WAF++ project and WAFpass tool stack are maintained by the following core contributors in accordance with CNCF governance guidelines.
+The Wombat project and WOMBATpass tool stack are maintained by the following core contributors in accordance with CNCF governance guidelines.
 
 | Name | GitHub Handle | Organization / Affiliation | Country |
 | :--- | :--- | :--- | :--- |

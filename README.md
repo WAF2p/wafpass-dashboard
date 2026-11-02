@@ -1,16 +1,16 @@
-# wafpass-dashboard
+# wombat-dashboard
 
-React SPA for visualising WAF++ PASS compliance scan results. Part of the [WAF++ framework](https://waf2p.dev) monorepo.
+React SPA for visualising WOMBATpass compliance scan results. Part of the [Wombat framework](https://www.wombat-gov.dev) monorepo.
 
 | Component | Role |
 |-----------|------|
-| `pass/` · `wafpass-core` | Compliance engine, CLI, IaC parsers |
-| `wafpass-server/` · FastAPI | REST API · PostgreSQL persistence |
-| `wafpass-dashboard/` · **this package** | Browser dashboard · fetches from server |
+| `pass/` · `wombat-core` | Compliance engine, CLI, IaC parsers |
+| `wombat-server/` · FastAPI | REST API · PostgreSQL persistence |
+| `wombat-dashboard/` · **this package** | Browser dashboard · fetches from server |
 
-No Python dependency. No local scan access. All data comes from `wafpass-server`.
+No Python dependency. No local scan access. All data comes from `wombat-server`.
 
-> **BREAKING CHANGE:** The dashboard now calls `wafpass-server` endpoints under `/api/v1`. Make sure the server is on a version that serves `/api/v1/*`, and update any custom reverse proxy or CORS setup to forward `/api` instead of individual paths like `/runs` or `/controls`.
+> **BREAKING CHANGE:** The dashboard now calls `wombat-server` endpoints under `/api/v1`. Make sure the server is on a version that serves `/api/v1/*`, and update any custom reverse proxy or CORS setup to forward `/api` instead of individual paths like `/runs` or `/controls`.
 
 ---
 
@@ -32,7 +32,7 @@ Dashboard at `http://localhost:3000`, API at `http://localhost:8000`.
 ```bash
 # Copy and edit the environment file (Vite reads .env.local automatically)
 cp .env.example .env.local
-# Edit .env.local — set VITE_API_URL=http://localhost:8000 to point at a local wafpass-server
+# Edit .env.local — set VITE_API_URL=http://localhost:8000 to point at a local wombat-server
 
 npm install
 npm run dev
@@ -46,7 +46,7 @@ Opens at `http://localhost:5173`. In dev mode, Vite proxies `/api` (all versione
 
 The dashboard requires login. On first visit you will be shown a sign-in form.
 
-The **admin** account is seeded automatically by `wafpass-server` on its first startup — set `WAFPASS_ADMIN_PASSWORD` in the server's `.env` to enable this.
+The **admin** account is seeded automatically by `wombat-server` on its first startup — set `WOMBAT_ADMIN_PASSWORD` in the server's `.env` to enable this.
 
 ### Roles
 
@@ -67,9 +67,9 @@ Copy `.env.example` to `.env.local` for local development — Vite reads `.env.l
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_API_URL` | `""` (same origin) | Base URL of wafpass-server — no trailing slash, no `/api/v1/runs` suffix, e.g. `http://localhost:8000` |
+| `VITE_API_URL` | `""` (same origin) | Base URL of wombat-server — no trailing slash, no `/api/v1/runs` suffix, e.g. `http://localhost:8000` |
 
-In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:8000` automatically, so `VITE_API_URL` is only needed for cross-origin or local dev setups.
+In Docker Compose the nginx reverse proxy routes API paths to `wombat-server:8000` automatically, so `VITE_API_URL` is only needed for cross-origin or local dev setups.
 
 **Runtime override:** You can also set the server URL at runtime in **Settings → Connection & Real Engine** without rebuilding the image. This is stored in `localStorage`, takes effect immediately, and takes precedence over `VITE_API_URL`. The default when nothing is configured is `http://localhost:8000`.
 
@@ -109,12 +109,12 @@ In Docker Compose the nginx reverse proxy routes API paths to `wafpass-server:80
 | Risk Acceptance | `#/risk` | ciso | Formally accept risks with approver sign-off |
 | Access Roles | `#/roles` | engineer | View role hierarchy and permissions |
 | SSO Settings | `#/sso` | admin | Configure OIDC / SAML2 providers and group mappings |
-| Group Mappings | `#/groupmappings` | admin | Map IdP groups to WAF++ roles |
+| Group Mappings | `#/groupmappings` | admin | Map IdP groups to WOMBATpass roles |
 | API Management | `#/apikeys` | admin | Manage API keys for CI/CD pipelines |
 | User Management | `#/users` | engineer | Create, update, and deactivate user accounts |
 | Settings | `#/settings` | clevel | Maturity level, feature toggles, PDF config, server URL |
 | My Preferences | `#/userprefs` | clevel | Appearance, navigation defaults, date formats, report behaviour |
-| Feedback | `#/feedback` | clevel | Send feedback to the WAF++ team |
+| Feedback | `#/feedback` | clevel | Send feedback to the Wombat team |
 
 ### Deep links
 
@@ -181,9 +181,9 @@ A per-filtered-view CSV export button is always available in the filter bar.
 
 ### Architect Sandbox
 
-The Sandbox page lets you paste IaC snippets (currently Terraform HCL) and evaluate them against WAF++ controls instantly. Two modes:
+The Sandbox page lets you paste IaC snippets (currently Terraform HCL) and evaluate them against Wombat controls instantly. Two modes:
 - **Mock engine** — browser-side regex evaluation, no server needed
-- **Real engine** — POSTs to `/api/v1/sandbox`, runs the actual wafpass-core evaluation pipeline
+- **Real engine** — POSTs to `/api/v1/sandbox`, runs the actual wombat-core evaluation pipeline
 
 See Settings → Connection & Real Engine to enable and configure the real engine.
 
@@ -207,7 +207,7 @@ The **User Management** page (engineer+) supports creating, editing, and deactiv
 
 ### SSO and group mapping
 
-The **SSO Settings** page (admin) configures OIDC and SAML2 providers without restarting the server. The **Group Mappings** page maps IdP group names to WAF++ roles, applied at login time.
+The **SSO Settings** page (admin) configures OIDC and SAML2 providers without restarting the server. The **Group Mappings** page maps IdP group names to WOMBATpass roles, applied at login time.
 
 **OIDC security:** The server verifies the `id_token` signature using the IdP's public JWKS (fetched from `jwks_uri` in the discovery document) and validates the `aud` claim and a per-request nonce before provisioning the user. Ensure your IdP exposes a `jwks_uri` in its OpenID Connect discovery document — all major providers (Keycloak, Entra ID, Okta, Auth0) do by default.
 
@@ -250,11 +250,11 @@ npm run build   # TypeScript check + Vite build → dist/
 ## Docker
 
 ```bash
-docker build -t wafpass-dashboard .
-docker run -p 3000:80 wafpass-dashboard
+docker build -t wombat-dashboard .
+docker run -p 3000:80 wombat-dashboard
 ```
 
-The image is nginx serving the static build. The nginx config proxies `/api` (all versioned endpoints under `/api/v1`), `/health`, `/version`, and `/framework-update-info.yml` to `wafpass-server:8000`.
+The image is nginx serving the static build. The nginx config proxies `/api` (all versioned endpoints under `/api/v1`), `/health`, `/version`, and `/framework-update-info.yml` to `wombat-server:8000`.
 
 ---
 

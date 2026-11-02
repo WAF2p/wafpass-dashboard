@@ -44,7 +44,7 @@ vi.mock('../api', () => ({
   getAccessToken: vi.fn().mockReturnValue(null),
 }))
 
-const CACHE_KEY = 'wafpass_controls_cache'
+const CACHE_KEY = 'wombat_controls_cache'
 
 // Import after mocks are established
 const { useControlsCatalogue } = await import('../useControlsCatalogue')
@@ -58,8 +58,8 @@ function freshServer(overrides = {}) {
     severity: 'CRITICAL',          // should win over static 'LOW'
     type: ['kms'],
     description: 'server description',
-    checks: [{ id: 'chk1', engine: 'wafpass', description: 'd', expected: 'true' }],
-    source: 'wafpass',
+    checks: [{ id: 'chk1', engine: 'wombat', description: 'd', expected: 'true' }],
+    source: 'wombat',
     created_at: '',
     updated_at: '',
     regulatory_mapping: [],

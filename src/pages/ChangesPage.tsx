@@ -5,6 +5,7 @@ import {
   SocStyles, SectionCard, KpiTile, SegmentedTabs,
   ListIcon,
 } from './shared/SocComponents'
+import { severityColor } from '../severity'
 
 interface Props { run: RunDetail; runs: RunSummary[] }
 
@@ -13,10 +14,10 @@ type Attrs = Record<string, unknown>
 // ─── Shared constants ─────────────────────────────────────────────────────────
 
 const ACTION_META: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  create:  { label: 'Add',     color: '#16a34a', bg: 'rgba(22,163,74,.08)',   icon: '+' },
+  create:  { label: 'Add',     color: '#16a34a', bg: 'color-mix(in srgb, #16a34a 8%, transparent)',   icon: '+' },
   update:  { label: 'Change',  color: '#d97706', bg: 'rgba(217,119,6,.08)',   icon: '~' },
   delete:  { label: 'Destroy', color: '#dc2626', bg: 'rgba(220,38,38,.08)',   icon: '−' },
-  replace: { label: 'Replace', color: '#7c3aed', bg: 'rgba(124,58,237,.08)', icon: '⟳' },
+  replace: { label: 'Replace', color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 8%, transparent)', icon: '⟳' },
   'no-op': { label: 'No-op',   color: '#94a3b8', bg: 'transparent',           icon: '·' },
 }
 
@@ -139,7 +140,7 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
 }) {
   if (before == null && after == null) return (
     <div style={{ fontSize: '0.8rem', color: 'var(--muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
-      Attribute data not available — re-run wafpass with a plan file using the latest version to see attribute-level details.
+      Attribute data not available — re-run wombat with a plan file using the latest version to see attribute-level details.
     </div>
   )
 
@@ -314,7 +315,7 @@ function ChangeRow({ change, onClick }: { change: PlanChange; onClick: () => voi
   return (
     <tr onClick={onClick} className="changes-row">
       <td style={{ width: '2.25rem', textAlign: 'center' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5rem', height: '1.5rem', borderRadius: '5px', background: bg, color, fontFamily: 'monospace', fontWeight: 800, fontSize: '0.8rem' }}>{icon}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5rem', height: '1.5rem', borderRadius: '6px', background: bg, color, fontFamily: 'monospace', fontWeight: 800, fontSize: '0.8rem' }}>{icon}</span>
       </td>
       <td>
         <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text)', fontWeight: 600 }}>{change.address}</div>
@@ -356,8 +357,8 @@ function NoPlanData({ run }: { run: RunDetail }) {
   const [copied, setCopied] = useState(false)
   const isTerraform = !run.iac_framework || run.iac_framework === 'terraform'
   const cmd = isTerraform
-    ? `# Generate a Terraform plan JSON and push it with the scan\nterraform plan -out=tfplan\nterraform show -json tfplan > plan.json\nwafpass check --output json --push ${pushUrl}/runs --plan-file plan.json ${iacPath}`
-    : `# Plan-file change overview is currently supported for Terraform runs.\nwafpass check --iac ${run.iac_framework} --output json --push ${pushUrl}/runs ${iacPath}`
+    ? `# Generate a Terraform plan JSON and push it with the scan\nterraform plan -out=tfplan\nterraform show -json tfplan > plan.json\nwombat check --output json --push ${pushUrl}/runs --plan-file plan.json ${iacPath}`
+    : `# Plan-file change overview is currently supported for Terraform runs.\nwombat check --iac ${run.iac_framework} --output json --push ${pushUrl}/runs ${iacPath}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '680px' }}>
@@ -392,7 +393,6 @@ interface DriftItem {
 }
 
 const SEV_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
-const SEV_COLOR: Record<string, string> = { critical: '#dc2626', high: '#d97706', medium: '#2563eb', low: '#059669', info: '#94a3b8' }
 
 function findingKey(f: Finding) { return `${f.control_id}||${f.check_id}||${f.resource}` }
 
@@ -419,7 +419,7 @@ function computeDrift(base: RunDetail, head: RunDetail) {
 function DriftCard({ item, direction }: { item: DriftItem; direction: 'regressed' | 'recovered' }) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
-  const color = direction === 'regressed' ? (SEV_COLOR[item.severity?.toLowerCase()] ?? '#94a3b8') : '#059669'
+  const color = direction === 'regressed' ? severityColor(item.severity) : 'var(--score-high-ink)'
   return (
     <div className="changes-drift-card" style={{ borderColor: `${color}33`, background: `${color}08` }}>
       <div className="changes-drift-card__header" onClick={() => setOpen(o => !o)}>
@@ -475,7 +475,7 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
 
   return (
     <svg width={W} height={H} style={{ overflow: 'visible', display: 'block', margin: '0 auto' }}>
-      <polygon points={fill} fill="rgba(37,99,235,.10)" />
+      <polygon points={fill} fill="color-mix(in srgb, #2563eb 10%, transparent)" />
       <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" />
       {sorted.map((r, i) => {
         const isCur = r.id === currentId
@@ -543,7 +543,7 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
                 <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', background: meta.bg, border: `1px solid ${meta.color}33` }}>
                   <span style={{ fontWeight: 700, color: meta.color, fontSize: '0.75rem', fontFamily: 'monospace' }}>{meta.icon}</span>
                   <span style={{ fontWeight: 700, color: meta.color, fontSize: '0.75rem' }}>{val}</span>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'capitalize' }}>{key}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'capitalize' }}>{key}</span>
                 </div>
               )
             })}
@@ -864,7 +864,7 @@ const changesPageCss = `
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--waf-brand);
@@ -965,7 +965,7 @@ const changesPageCss = `
 .changes-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 .changes-table th {
   padding: 0.6rem 0.75rem;
@@ -1006,7 +1006,7 @@ const changesPageCss = `
   padding: 0.3rem 0.6rem;
   text-align: left;
   color: var(--muted);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 700;
@@ -1029,10 +1029,10 @@ const changesPageCss = `
   font-size: 0.77rem;
   line-height: 1.55;
 }
-.changes-alert--success { background: rgba(22,163,74,.07); border: 1px solid rgba(22,163,74,.2); color: #14532d; }
+.changes-alert--success { background: color-mix(in srgb, #16a34a 7%, transparent); border: 1px solid color-mix(in srgb, #16a34a 20%, transparent); color: #14532d; }
 .changes-alert--warn    { background: rgba(217,119,6,.07); border: 1px solid rgba(217,119,6,.2); color: #78350f; }
 .changes-alert--danger  { background: rgba(220,38,38,.06); border: 1px solid rgba(220,38,38,.22); color: #7f1d1d; }
-.changes-alert--info    { background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.2); color: #4c1d95; }
+.changes-alert--info    { background: color-mix(in srgb, #7c3aed 7%, transparent); border: 1px solid color-mix(in srgb, #7c3aed 20%, transparent); color: #4c1d95; }
 .changes-alert__title { font-weight: 700; margin-bottom: 0.35rem; }
 .changes-alert ul { margin: 0; padding-left: 1.25rem; }
 .changes-alert li { font-size: 0.76rem; line-height: 1.55; }
@@ -1052,19 +1052,19 @@ const changesPageCss = `
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  background: rgba(22,163,74,.1);
-  border: 2px solid rgba(22,163,74,.3);
+  background: color-mix(in srgb, #16a34a 10%, transparent);
+  border: 2px solid color-mix(in srgb, #16a34a 30%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .changes-empty__title {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: #16a34a;
 }
 .changes-empty__desc {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--muted);
   margin-top: 0.35rem;
 }
@@ -1085,9 +1085,9 @@ const changesPageCss = `
   right: 0.5rem;
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.12);
-  border-radius: 5px;
+  border-radius: 6px;
   color: #94a3b8;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   padding: 0.2rem 0.5rem;
   cursor: pointer;
 }
@@ -1098,7 +1098,7 @@ const changesPageCss = `
   align-items: center;
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
-  font-size: 0.64rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   line-height: 1.4;
@@ -1139,13 +1139,13 @@ const changesPageCss = `
 }
 .changes-breakdown-row__badge {
   padding: 0.1rem 0.4rem;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 0.68rem;
   font-weight: 700;
 }
-.changes-breakdown-row__badge--add    { background: rgba(22,163,74,.1);   color: #16a34a; }
+.changes-breakdown-row__badge--add    { background: color-mix(in srgb, #16a34a 10%, transparent);   color: #16a34a; }
 .changes-breakdown-row__badge--change { background: rgba(217,119,6,.1);  color: #d97706; }
-.changes-breakdown-row__badge--replace{ background: rgba(124,58,237,.1); color: #7c3aed; }
+.changes-breakdown-row__badge--replace{ background: color-mix(in srgb, #7c3aed 10%, transparent); color: #7c3aed; }
 .changes-breakdown-row__badge--delete { background: rgba(220,38,38,.1);  color: #dc2626; }
 .changes-breakdown-row__total {
   color: var(--muted);
@@ -1172,7 +1172,7 @@ const changesPageCss = `
   gap: 0.65rem;
 }
 .changes-drift-card__title {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 0.1rem;
@@ -1219,18 +1219,18 @@ const changesPageCss = `
   padding: 0.15rem 0.5rem;
 }
 .changes-sev-badge {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   border: 1px solid;
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 0.15rem 0.45rem;
   flex-shrink: 0;
   margin-top: 0.1rem;
 }
 
 .changes-modal-portal { position: fixed; inset: 0; z-index: 99; }
-.changes-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); }
+.changes-modal-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, #000000 40%, transparent); }
 .changes-modal {
   position: fixed;
   top: 4rem;
@@ -1240,8 +1240,8 @@ const changesPageCss = `
   max-height: min(80vh, calc(100vh - 6rem));
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 24px 64px rgba(0,0,0,.4);
+  border-radius: 12px;
+  box-shadow: 0 24px 64px color-mix(in srgb, #000000 40%, transparent);
   display: flex;
   flex-direction: column;
   z-index: 100;
@@ -1260,10 +1260,10 @@ const changesPageCss = `
   justify-content: center;
   width: 2.1rem;
   height: 2.1rem;
-  border-radius: 7px;
+  border-radius: 8px;
   font-family: monospace;
   font-weight: 800;
-  font-size: 1.05rem;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 .changes-modal__title-block {
@@ -1290,7 +1290,7 @@ const changesPageCss = `
   border: none;
   cursor: pointer;
   color: var(--muted);
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   padding: 0 0.15rem;
   line-height: 1;
   flex-shrink: 0;

@@ -5,7 +5,9 @@
  * buildNavSections() from here so section/item definitions never drift again.
  */
 import type { RunDetail, RunSummary } from '../api'
+import { ROLE_HIERARCHY } from '../AuthContext'
 import type { Settings } from '../pages/settingsUtils'
+import { BETA_MY_DASHBOARD, type BetaFeatureId } from '../pages/userPrefsUtils'
 import type { Page } from '../routing'
 
 export interface NavEntry {
@@ -22,6 +24,8 @@ export interface NavEntry {
   // have at any role. Filtered out by buildNavSections() itself (not by
   // each consumer) so Sidebar/TopNavigation/MobileMenu can't drift.
   holdingAdminOnly?: boolean
+  /** When set, the entry is only shown while this beta feature is enabled. */
+  beta?: BetaFeatureId
 }
 
 export interface NavSection {
@@ -31,6 +35,22 @@ export interface NavSection {
   description: string
   items: NavEntry[]
   minRole?: string
+}
+
+/**
+ * Resolve the minimum role for a navigation section.
+ *
+ * - An explicit `minRole` always wins.
+ * - Sections named after a role (ciso / architect / engineer) inherit it,
+ *   matching the pre-navModel behaviour.
+ * - Sections with neither (overview) are visible to every authenticated role.
+ *
+ * Callers must not fall back to `'admin'`: that hid the CISO, Architect and
+ * Engineer categories — and the per-user My Dashboard — from those roles.
+ */
+export function sectionRequiredRole(section: NavSection): string | null {
+  if (section.minRole) return section.minRole
+  return (ROLE_HIERARCHY as readonly string[]).includes(section.id) ? section.id : null
 }
 
 export const categoryDescriptions: Record<string, string> = {
@@ -63,6 +83,11 @@ export function buildNavSections(
       description: categoryDescriptions['overview'],
       items: [
         { page: 'globaldashboard', label: t('nav.items.globaldashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+        {
+          page: 'mydashboard', label: t('nav.items.mydashboard'),
+          icon: 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',
+          beta: BETA_MY_DASHBOARD,
+        },
         { page: 'compliance', label: t('nav.items.compliance'), icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
         {
           page: 'cost', label: t('nav.items.cost'),
@@ -262,6 +287,7 @@ export function buildNavSections(
       items: [
         { page: 'access', label: t('nav.items.access'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
         { page: 'settings', label: t('nav.items.settings'), icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+        { page: 'betafeatures', label: t('nav.items.betafeatures'), icon: 'M10 2v7.527a2 2 0 01-.211.896L4.72 20.55a1 1 0 00.9 1.45h12.76a1 1 0 00.9-1.45l-5.069-10.127A2 2 0 0114 9.527V2 M8.5 2h7 M7 16h10' },
         {
           page: 'mandateadmin', label: t('nav.items.mandateadmin'),
           icon: 'M3 11h18v11H3zM7 11V7a5 5 0 0110 0v4',

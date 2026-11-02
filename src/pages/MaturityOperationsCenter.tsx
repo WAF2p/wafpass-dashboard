@@ -155,7 +155,7 @@ export default function MaturityOperationsCenter({
     >
       <div style={{ color, flexShrink: 0 }}><Icon path={icon} size={20} /></div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('common.view')} →</div>
       </div>
     </button>
@@ -171,11 +171,11 @@ export default function MaturityOperationsCenter({
       >
         {runs.length > 0 && (
           <div style={{ textAlign: 'right', minWidth: '180px' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.journey.companyAverage')}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: scoreColor(companyScore) }}>{companyScore}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: scoreColor(companyScore) }}>{companyScore}</span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
             </div>
             <div style={{ marginTop: '0.25rem' }}>
@@ -241,7 +241,7 @@ export default function MaturityOperationsCenter({
                           <span style={{ fontSize: '1rem' }}>{s.icon}</span>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)' }}>{s.shortLabel}</span>
-                            <span style={{ fontSize: '0.58rem', color: 'var(--muted)' }}>{s.range}</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{s.range}</span>
                           </div>
                         </div>
                       </div>
@@ -250,7 +250,7 @@ export default function MaturityOperationsCenter({
                       </div>
                       <div style={{ width: '50px', textAlign: 'right', flexShrink: 0 }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>{s.count}</span>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--muted)', marginLeft: '0.15rem' }}>{pct >= 10 ? `${Math.round(pct)}%` : ''}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.15rem' }}>{pct >= 10 ? `${Math.round(pct)}%` : ''}</span>
                       </div>
                     </div>
                   )

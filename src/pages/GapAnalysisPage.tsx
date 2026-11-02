@@ -15,6 +15,7 @@ import {
   CheckIcon, DownloadIcon, ArrowRightIcon, TargetIcon, MapIcon,
   statusColor,
 } from './shared/SocComponents'
+import { severityBg, severityBorder, severityColor } from '../severity'
 
 // Group FRAMEWORKS by country, preserving declaration order
 const FRAMEWORK_GROUPS: { country: string; flag: string; frameworks: typeof FRAMEWORKS }[] = []
@@ -54,23 +55,20 @@ interface GapItem {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const SEV_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
-const SEV_COLOR: Record<string, string> = {
-  critical: '#dc2626', high: '#d97706', medium: '#2563eb', low: '#059669', info: '#94a3b8',
-}
 
 const STATUS_META: Record<ControlStatus, { label: string; color: string; bg: string }> = {
-  PASS:    { label: 'Passing',  color: '#059669', bg: 'rgba(5,150,105,.08)'   },
+  PASS:    { label: 'Passing',  color: '#059669', bg: 'color-mix(in srgb, #059669 8%, transparent)'   },
   FAIL:    { label: 'Failing',  color: '#dc2626', bg: 'rgba(220,38,38,.08)'   },
   PARTIAL: { label: 'Partial',  color: '#d97706', bg: 'rgba(217,119,6,.08)'   },
-  WAIVED:  { label: 'Waived',   color: '#7c3aed', bg: 'rgba(124,58,237,.08)'  },
+  WAIVED:  { label: 'Waived',   color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 8%, transparent)'  },
   UNKNOWN: { label: 'No data',  color: '#94a3b8', bg: 'rgba(148,163,184,.08)' },
 }
 
 function loadWaivers(): Record<string, { owner?: string }> {
-  try { return JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}') } catch { return {} }
+  try { return JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}') } catch { return {} }
 }
 function loadRisks(): Record<string, { approver?: string }> {
-  try { return JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}') } catch { return {} }
+  try { return JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}') } catch { return {} }
 }
 
 function downloadCSV(content: string, filename: string) {
@@ -163,7 +161,7 @@ function RoadmapItem({ item, rank, cumulativeReqs, totalReqs }: {
   const { t } = useI18n()
   const { ctrl, status } = item
   const sm = STATUS_META[status]
-  const sevColor = SEV_COLOR[ctrl.severity?.toLowerCase()] ?? '#94a3b8'
+  const sevColor = severityColor(ctrl.severity)
   const isActionable = status === 'FAIL' || status === 'PARTIAL'
 
   const topFinding = item.failFindings.sort((a, b) =>
@@ -188,10 +186,10 @@ function RoadmapItem({ item, rank, cumulativeReqs, totalReqs }: {
           </div>
           <div className="gap-item__badges">
             <span className="gap-item__badge gap-item__badge--status" style={{ color: sm.color, background: sm.bg, borderColor: `${sm.color}33` }}>{sm.label}</span>
-            <span className="gap-item__badge gap-item__badge--severity" style={{ color: sevColor, background: `${sevColor}18`, borderColor: `${sevColor}33` }}>{ctrl.severity}</span>
+            <span className="gap-item__badge gap-item__badge--severity" style={{ color: sevColor, background: severityBg(ctrl.severity, 9), borderColor: severityBorder(ctrl.severity, 20) }}>{ctrl.severity}</span>
             <span className="gap-item__badge gap-item__badge--pillar">{ctrl.pillar}</span>
             {item.requirements.map(req => (
-              <span key={req} className="gap-item__badge gap-item__badge--req" style={{ color: isActionable ? sm.color : '#059669', background: isActionable ? `${sm.color}10` : 'rgba(5,150,105,.08)', borderColor: isActionable ? `${sm.color}22` : 'rgba(5,150,105,.15)' }}>{req}</span>
+              <span key={req} className="gap-item__badge gap-item__badge--req" style={{ color: isActionable ? sm.color : '#059669', background: isActionable ? `${sm.color}10` : 'color-mix(in srgb, #059669 8%, transparent)', borderColor: isActionable ? `${sm.color}22` : 'color-mix(in srgb, #059669 15%, transparent)' }}>{req}</span>
             ))}
             {item.hasWaiver && <span className="gap-item__badge gap-item__badge--waiver">{t('pages.gapanalysis.waivedLabel', { owner: item.waiverOwner ?? '' })}</span>}
             {item.hasRisk && <span className="gap-item__badge gap-item__badge--risk">{t('pages.gapanalysis.riskAcceptedLabel', { approver: item.riskApprover ?? '' })}</span>}
@@ -661,7 +659,7 @@ const gapAnalysisCss = `
   border-radius: 6px;
   background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
   color: var(--waf-brand);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   width: fit-content;
@@ -709,7 +707,7 @@ const gapAnalysisCss = `
   gap: 0.5rem;
 }
 .gap-selector__label {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -746,7 +744,7 @@ const gapAnalysisCss = `
 .gap-hero__logo {
   width: 60px;
   height: 60px;
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   padding: 6px;
@@ -759,7 +757,7 @@ const gapAnalysisCss = `
   line-height: 1;
 }
 .gap-summary__name {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
 }
@@ -772,7 +770,7 @@ const gapAnalysisCss = `
 .gap-summary__country {
   display: inline-block;
   margin-top: 0.4rem;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -800,7 +798,7 @@ const gapAnalysisCss = `
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .gap-summary__score-unit {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -887,7 +885,7 @@ const gapAnalysisCss = `
 .gap-all-passing {
   text-align: center;
   padding: 2rem;
-  border: 1px dashed rgba(5,150,105,.3);
+  border: 1px dashed color-mix(in srgb, #059669 30%, transparent);
   border-radius: 10px;
   color: var(--pass);
   font-size: 0.9rem;
@@ -962,7 +960,7 @@ const gapAnalysisCss = `
   align-items: center;
 }
 .gap-item__badge {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -977,8 +975,8 @@ const gapAnalysisCss = `
 }
 .gap-item__badge--waiver {
   color: #7c3aed;
-  background: rgba(124,58,237,.08);
-  border-color: rgba(124,58,237,.2);
+  background: color-mix(in srgb, #7c3aed 8%, transparent);
+  border-color: color-mix(in srgb, #7c3aed 20%, transparent);
 }
 .gap-item__badge--risk {
   color: #d97706;
@@ -999,7 +997,7 @@ const gapAnalysisCss = `
 }
 .gap-item__after {
   color: var(--muted);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   margin-top: 0.15rem;
 }
 .gap-item__chevron {
@@ -1055,7 +1053,7 @@ const gapAnalysisCss = `
 .gap-item__check {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--muted);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
 }
 .gap-item__check--more {
   color: var(--muted);
@@ -1065,7 +1063,7 @@ const gapAnalysisCss = `
   margin-top: 0.75rem;
 }
 .gap-item__resources-title {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -1078,7 +1076,7 @@ const gapAnalysisCss = `
   gap: 0.3rem;
 }
 .gap-item__resource {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--muted);
   background: var(--bg);
@@ -1115,7 +1113,7 @@ const gapAnalysisCss = `
 }
 .gap-req--met {
   background: rgba(5,150,105,.04);
-  border-color: rgba(5,150,105,.25);
+  border-color: color-mix(in srgb, #059669 25%, transparent);
 }
 .gap-req--gap {
   background: rgba(220,38,38,.04);
@@ -1128,13 +1126,13 @@ const gapAnalysisCss = `
   margin-bottom: 0.5rem;
 }
 .gap-req__state {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   line-height: 1;
 }
 .gap-req__id {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 .gap-req--met .gap-req__id { color: #059669; }
 .gap-req--gap .gap-req__id { color: #dc2626; }
@@ -1144,7 +1142,7 @@ const gapAnalysisCss = `
   gap: 0.3rem;
 }
 .gap-req__control {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
@@ -1173,10 +1171,10 @@ const gapAnalysisCss = `
   border-radius: 10px;
 }
 .gap-root .scc-kpi__value {
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 .gap-root .scc-kpi__label {
-  font-size: 0.52rem;
+  font-size: 0.7rem;
 }
 .gap-root .scc-kpi:hover {
   transform: none;
@@ -1205,7 +1203,7 @@ const gapAnalysisCss = `
   border-color: color-mix(in srgb, var(--waf-brand) 8%, transparent);
 }
 [data-theme="light"] .gap-all-passing {
-  border-color: rgba(5,150,105,.18);
+  border-color: color-mix(in srgb, #059669 18%, transparent);
   background: rgba(5,150,105,.03);
 }
 [data-theme="light"] .gap-sort__btn--active {
@@ -1219,7 +1217,7 @@ const gapAnalysisCss = `
 }
 [data-theme="light"] .gap-req--met {
   background: rgba(5,150,105,.03);
-  border-color: rgba(5,150,105,.18);
+  border-color: color-mix(in srgb, #059669 18%, transparent);
 }
 [data-theme="light"] .gap-req--gap {
   background: rgba(220,38,38,.03);

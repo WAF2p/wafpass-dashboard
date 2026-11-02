@@ -30,7 +30,7 @@ const AUTH_MODES: AuthMode[] = ['inherit', 'sso_optional', 'local_only']
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '0.5rem 0.7rem', borderRadius: '8px',
   border: '1px solid var(--border)', background: 'var(--bg)',
-  color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box', outline: 'none',
+  color: 'var(--text)', fontSize: '0.85rem', boxSizing: 'border-box', outline: 'none',
 }
 
 const labelStyle: React.CSSProperties = {
@@ -133,13 +133,13 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 9999, backdropFilter: 'blur(4px)' }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 60%, transparent)', zIndex: 9999, backdropFilter: 'blur(4px)' }} />
 
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         zIndex: 10000, width: '740px', maxWidth: '95vw',
         background: 'var(--surface)', borderRadius: '16px',
-        border: '1px solid var(--border)', boxShadow: '0 24px 80px rgba(0,0,0,.22)',
+        border: '1px solid var(--border)', boxShadow: '0 24px 80px color-mix(in srgb, #000000 22%, transparent)',
         display: 'flex', flexDirection: 'column', maxHeight: '88vh',
       }}>
         {/* Header */}
@@ -304,7 +304,7 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}>
                 <input type="checkbox" checked={inheritParentPolicies} onChange={e => setInheritParentPolicies(e.target.checked)} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-                <span style={{ fontSize: '0.82rem', color: 'var(--text)' }}>{t('pages.mandates.editModal.inheritPoliciesLabel')}</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>{t('pages.mandates.editModal.inheritPoliciesLabel')}</span>
               </label>
               <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.mandates.editModal.inheritPoliciesHint')}</div>
             </div>

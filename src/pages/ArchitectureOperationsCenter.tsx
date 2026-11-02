@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { Finding, RunDetail, fetchRuns } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
-import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, TwoColumnGrid } from './OperationsCenterShell'
+import { CenterHero, Icon, KpiCard, KpiSlot, MiniBadge, PriorityRow, RightRail, SectionCard, TwoColumnGrid } from './OperationsCenterShell'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { BETA_PERSONA_HOME } from './userPrefsUtils'
+import { getPersonaPreset } from './personaHome'
+import { severityColor } from '../severity'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 
@@ -18,7 +22,6 @@ function extractModulePath(resource: string): string {
   return segs.length > 0 ? segs.join('.') : '(root)'
 }
 const SEV_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-const SEV_COLORS: Record<string, string> = { CRITICAL: 'var(--fail)', HIGH: 'var(--waf-warn)', MEDIUM: 'var(--score-mid)', LOW: 'var(--pass)' }
 
 type PillarStat = { pillar: string; fail: number; pass: number; score: number }
 
@@ -34,6 +37,11 @@ export default function ArchitectureOperationsCenter({
   navigate?: (page: Page) => void
 }) {
   const { t } = useI18n()
+  const { prefs, isEnabled } = useBetaFeatures()
+  const persona = isEnabled(BETA_PERSONA_HOME) ? getPersonaPreset(prefs.personaHome) : null
+  const kpiOrder = persona?.id === 'architect' ? persona.kpiOrder : null
+  const orderOf = (id: string) => (kpiOrder ? Math.max(0, kpiOrder.indexOf(id)) : 0)
+  const isHidden = (id: string) => !!kpiOrder && !kpiOrder.includes(id)
 
   const failed = useMemo(() => run?.findings.filter(f => f.status?.toUpperCase() === 'FAIL') ?? [], [run])
   const controlsLoaded = run?.controls_meta?.length ?? 0
@@ -140,7 +148,7 @@ export default function ArchitectureOperationsCenter({
     >
       <div style={{ color, flexShrink: 0 }}><Icon path={icon} size={20} /></div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{disabled ? t('pages.costImpact.noRun') : `${t('common.view')} →`}</div>
       </div>
     </button>
@@ -156,11 +164,11 @@ export default function ArchitectureOperationsCenter({
       >
         {run && (
           <div style={{ textAlign: 'right', minWidth: '160px' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.dashboard.infrastructureScan')}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
             </div>
           </div>
@@ -168,41 +176,51 @@ export default function ArchitectureOperationsCenter({
       </CenterHero>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-        <KpiCard
-          label={t('pages.architectureOps.controlsLoaded')}
-          value={controlsLoaded}
-          sub={t('pages.dashboard.controlsLoaded', { count: controlsRun })}
-          color="var(--waf-brand)"
-          icon="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
-        />
-        <KpiCard
-          label={t('pages.architectureOps.failingModules')}
-          value={failingModules}
-          sub={t('pages.moduleScore.modulesWithFailures')}
-          color="var(--fail)"
-          icon="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-        />
-        <KpiCard
-          label={t('pages.architectureOps.criticalFindings')}
-          value={criticalCount}
-          sub={t('pages.dashboard.critHigh')}
-          color="var(--waf-warn)"
-          icon="M13 10V3L4 14h7v7l9-11h-7z"
-        />
-        <KpiCard
-          label={t('pages.architectureOps.attackPaths')}
-          value={attackPaths}
-          sub={t('pages.exploitPaths.criticalPathsSub')}
-          color="var(--waf-info)"
-          icon="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-        />
-        <KpiCard
-          label={t('pages.architectureOps.sandboxDrafts')}
-          value={sandboxDrafts}
-          sub={t('pages.architectureOps.sandboxDraftsSub')}
-          color="var(--waf-warn)"
-          icon="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-        />
+        <KpiSlot order={orderOf('controls')} hidden={isHidden('controls')}>
+          <KpiCard
+            label={t('pages.architectureOps.controlsLoaded')}
+            value={controlsLoaded}
+            sub={t('pages.dashboard.controlsLoaded', { count: controlsRun })}
+            color="var(--waf-brand)"
+            icon="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('failingModules')} hidden={isHidden('failingModules')}>
+          <KpiCard
+            label={t('pages.architectureOps.failingModules')}
+            value={failingModules}
+            sub={t('pages.moduleScore.modulesWithFailures')}
+            color="var(--fail)"
+            icon="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('criticalFindings')} hidden={isHidden('criticalFindings')}>
+          <KpiCard
+            label={t('pages.architectureOps.criticalFindings')}
+            value={criticalCount}
+            sub={t('pages.dashboard.critHigh')}
+            color="var(--waf-warn)"
+            icon="M13 10V3L4 14h7v7l9-11h-7z"
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('attackPaths')} hidden={isHidden('attackPaths')}>
+          <KpiCard
+            label={t('pages.architectureOps.attackPaths')}
+            value={attackPaths}
+            sub={t('pages.exploitPaths.criticalPathsSub')}
+            color="var(--waf-info)"
+            icon="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('sandboxDrafts')} hidden={isHidden('sandboxDrafts')}>
+          <KpiCard
+            label={t('pages.architectureOps.sandboxDrafts')}
+            value={sandboxDrafts}
+            sub={t('pages.architectureOps.sandboxDraftsSub')}
+            color="var(--waf-warn)"
+            icon="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+          />
+        </KpiSlot>
       </div>
 
       {!run ? (
@@ -238,13 +256,13 @@ export default function ArchitectureOperationsCenter({
                           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.pillar}</span>
                           <span style={{ fontSize: '0.75rem', fontWeight: 800, color: scoreColor(p.score) }}>{p.score}%</span>
                         </div>
-                        <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                           {p.pass} pass · {p.fail} fail
                         </div>
                         <div style={{ height: '6px', background: 'var(--bg)', borderRadius: '999px', overflow: 'hidden' }}>
                           <div style={{ width: `${p.score}%`, height: '100%', background: scoreColor(p.score), borderRadius: '999px' }} />
                         </div>
-                        <div style={{ fontSize: '0.6rem', color: isHealthy ? 'var(--score-high)' : 'var(--waf-warn)', fontWeight: 700 }}>
+                        <div style={{ fontSize: '0.7rem', color: isHealthy ? 'var(--score-high)' : 'var(--waf-warn)', fontWeight: 700 }}>
                           {isHealthy ? t('common.health') : t('common.needsAttention')}
                         </div>
                       </div>
@@ -274,9 +292,9 @@ export default function ArchitectureOperationsCenter({
                       label={c.title || c.control}
                       count={c.count}
                       total={failed.length}
-                      color={SEV_COLORS[c.severity]}
+                      color={severityColor(c.severity)}
                       meta={`${c.resources} res · ${c.severity}`}
-                      badge={<MiniBadge color={SEV_COLORS[c.severity]}>{c.severity}</MiniBadge>}
+                      badge={<MiniBadge color={severityColor(c.severity)}>{c.severity}</MiniBadge>}
                     />
                   ))}
                 </div>

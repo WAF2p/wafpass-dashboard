@@ -24,7 +24,7 @@ function CopyBlock({ code, lang = '' }: { code: string; lang?: string }) {
         whiteSpace: 'pre', border: '1px solid rgba(148,163,184,.15)',
         boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.2)',
       }}>
-        {lang && <span style={{ position: 'absolute', top: '0.55rem', left: '0.9rem', fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</span>}
+        {lang && <span style={{ position: 'absolute', top: '0.55rem', left: '0.9rem', fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</span>}
         {code}
       </pre>
       <button onClick={copy} style={{
@@ -56,7 +56,7 @@ function FrameworkSelect({ value, onChange, disabled = false }: { value: string;
       disabled={disabled}
       style={{
         background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-        borderRadius: '10px', padding: '0.5rem 0.75rem', fontSize: '0.82rem', outline: 'none',
+        borderRadius: '10px', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none',
       }}
     >
       {FRAMEWORKS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -112,7 +112,7 @@ function PathCard({
         </svg>
         {badge && (
           <span style={{
-            fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+            fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
             padding: '0.15rem 0.45rem', borderRadius: '999px',
             background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
           }}>{badge}</span>
@@ -146,7 +146,7 @@ function Input({
         disabled={disabled}
         style={{
           background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-          borderRadius: '10px', padding: '0.55rem 0.75rem', fontSize: '0.82rem', outline: 'none',
+          borderRadius: '10px', padding: '0.55rem 0.75rem', fontSize: '0.85rem', outline: 'none',
           opacity: disabled ? 0.6 : 1,
         }}
       />
@@ -209,9 +209,9 @@ function ServerScanPanel() {
             background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.25)',
             fontSize: '0.75rem', color: '#f59e0b',
           }}>
-            {!status.enabled && 'Server-side scanning is disabled (WAFPASS_SCAN_ENABLED=false). '}
-            {status.enabled && !status.engine_available && 'wafpass-core is not installed on the server. Run: pip install wafpass-core. '}
-            {status.enabled && status.engine_available && !status.controls_dir_exists && `Controls directory not found on server: ${status.controls_dir}. Set WAFPASS_CONTROLS_DIR. `}
+            {!status.enabled && 'Server-side scanning is disabled (WOMBAT_SCAN_ENABLED=false). '}
+            {status.enabled && !status.engine_available && 'wombat-core is not installed on the server. Run: pip install wombat-core. '}
+            {status.enabled && status.engine_available && !status.controls_dir_exists && `Controls directory not found on server: ${status.controls_dir}. Set WOMBAT_CONTROLS_DIR. `}
           </div>
         )}
       </div>
@@ -219,7 +219,7 @@ function ServerScanPanel() {
       {statusError && (
         <div style={{
           padding: '0.6rem 0.85rem', borderRadius: '8px',
-          background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)',
+          background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
           fontSize: '0.78rem', color: '#ef4444',
         }}>
           Could not reach server: {statusError}
@@ -231,7 +231,7 @@ function ServerScanPanel() {
           display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.72rem', color: 'var(--muted)',
         }}>
           {[
-            ['Engine', status.engine_available ? '✓ wafpass-core' : '✗ not installed'],
+            ['Engine', status.engine_available ? '✓ wombat-core' : '✗ not installed'],
             ['Controls dir', status.controls_dir_exists ? '✓ found' : '✗ missing'],
             ...(status.scan_base_dir ? [['Base dir', status.scan_base_dir]] : []),
           ].map(([k, v]) => (
@@ -246,7 +246,7 @@ function ServerScanPanel() {
       )}
 
       <div style={{
-        padding: '1.25rem', borderRadius: '14px',
+        padding: '1.25rem', borderRadius: '12px',
         background: 'var(--bg)', border: '1px solid var(--border)',
       }}>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -287,14 +287,14 @@ function ServerScanPanel() {
       {runError && (
         <div style={{
           padding: '0.75rem 1rem', borderRadius: '8px',
-          background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)',
+          background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
           fontSize: '0.78rem', color: '#ef4444',
         }}>{runError}</div>
       )}
 
       {result && (
         <div style={{
-          padding: '1rem 1.25rem', borderRadius: '14px',
+          padding: '1rem 1.25rem', borderRadius: '12px',
           background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.25)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -319,10 +319,10 @@ function ServerScanPanel() {
         background: 'rgba(0,148,255,.05)', border: '1px solid rgba(0,148,255,.15)',
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6,
       }}>
-        The server runs <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>wafpass-core</code> directly against a path on its filesystem.
+        The server runs <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>wombat-core</code> directly against a path on its filesystem.
         {status?.scan_base_dir
           ? <> Paths are restricted to <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>{status.scan_base_dir}</code>.</>
-          : <> Set <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>WAFPASS_SCAN_BASE_DIR</code> on the server to restrict which paths are allowed.</>}
+          : <> Set <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>WOMBAT_SCAN_BASE_DIR</code> on the server to restrict which paths are allowed.</>}
       </div>
     </div>
   )
@@ -340,7 +340,7 @@ function CliPanel() {
   const [planFile, setPlanFile] = useState('')
 
   const pushCmd = [
-    'wafpass check \\\n',
+    'wombat check \\\n',
     '  --output json \\\n',
     `  --push ${serverUrl}/runs \\\n`,
     ...(project ? [`  --project "${project}" \\\n`] : []),
@@ -351,12 +351,12 @@ function CliPanel() {
     `  ${path}`,
   ].join('')
 
-  const quickCmd = `wafpass check --output json --push ${serverUrl}/runs ${path}`
+  const quickCmd = `wombat check --output json --push ${serverUrl}/runs ${path}`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div style={{
-        padding: '1.25rem', borderRadius: '14px',
+        padding: '1.25rem', borderRadius: '12px',
         background: 'var(--bg)', border: '1px solid var(--border)',
       }}>
         <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem' }}>
@@ -400,7 +400,7 @@ function CliPanel() {
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>Install</div>
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Python 3.10+ required.</div>
-          <CopyBlock code="pip install wafpass-core" lang="sh" />
+          <CopyBlock code="pip install wombat-core" lang="sh" />
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -426,7 +426,7 @@ function CliPanel() {
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>CI/CD</div>
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Add <code style={{ color: 'var(--text)' }}>--fail-on fail</code> to gate merges.</div>
-          <CopyBlock code={`wafpass check --push ${serverUrl}/runs --project "\${{ github.repository }}" --branch "\${{ github.ref_name }}" ./infra`} lang="sh" />
+          <CopyBlock code={`wombat check --push ${serverUrl}/runs --project "\${{ github.repository }}" --branch "\${{ github.ref_name }}" ./infra`} lang="sh" />
         </div>
       </div>
     </div>
@@ -447,7 +447,7 @@ function ApiPanel() {
         POST JSON results directly — generated automatically with <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>--output json --push</code>.
       </div>
 
-      <CopyBlock lang="sh" code={`wafpass check --output json ./infra > results.json
+      <CopyBlock lang="sh" code={`wombat check --output json ./infra > results.json
 
 curl -X POST ${serverUrl}/runs \\
   -H "Content-Type: application/json" \\
@@ -467,7 +467,7 @@ curl -X POST ${serverUrl}/runs \\
           ].map(([method, p, desc]) => (
             <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem' }}>
               <span style={{
-                padding: '0.15rem 0.5rem', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 800, flexShrink: 0,
+                padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0,
                 background: method === 'POST' ? 'rgba(0,148,255,.12)' : 'rgba(34,197,94,.1)',
                 color: method === 'POST' ? 'var(--waf-brand)' : '#22c55e',
               }}>{method}</span>
@@ -494,7 +494,7 @@ function FlagsShelf({ t }: { t: (key: string) => string }) {
     ['--fail-on fail', 'Exit non-zero on FAIL'],
     ['--fail-on skip', 'Exit on FAIL + SKIP'],
     ['--plan-file PATH', 'Terraform plan JSON'],
-    ['--waiver-file PATH', '.wafpass-skip.yml'],
+    ['--waiver-file PATH', '.wombat-skip.yml'],
   ]
 
   return (
@@ -533,7 +533,7 @@ export default function RunScanPage() {
       {/* Hero */}
       <div style={{
         padding: '2rem 2.25rem', borderRadius: '20px',
-        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, rgba(124,58,237,.06) 100%)',
+        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, color-mix(in srgb, #7c3aed 6%, transparent) 100%)',
         border: '1px solid rgba(0,148,255,.2)',
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
         position: 'relative', overflow: 'hidden',
@@ -544,7 +544,7 @@ export default function RunScanPage() {
         }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div style={{
-            width: 46, height: 46, borderRadius: '14px',
+            width: 46, height: 46, borderRadius: '12px',
             background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-brand)',
           }}>
@@ -553,8 +553,8 @@ export default function RunScanPage() {
             </svg>
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.45rem', fontWeight: 800, color: 'var(--text)' }}>{t('pages.scan.title')}</h1>
-            <div style={{ fontSize: '0.82rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.scan.subtitle')}</div>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>{t('pages.scan.title')}</h1>
+            <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.scan.subtitle')}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>

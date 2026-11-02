@@ -1,3 +1,4 @@
+import { scoreColor } from '../../severity';
 /**
  * Shared SOC/Audit-style visual components used by Compliance, Gap Analysis, and similar pages.
  */
@@ -34,9 +35,7 @@ export function SovIcon() { return <IconWrapper><circle cx="12" cy="12" r="10" /
 export function SusIcon() { return <IconWrapper><path d="M12 22c4.97 0 9-4.03 9-9-4.5 0-9-4.5-9-9-4.5 4.5-9 9-9 9 0 4.97 4.03 9 9 9z" /></IconWrapper> }
 export function AgenticIcon() { return <IconWrapper><path d="M12 2a4 4 0 0 1 4 4c0 2.5-2 4-4 7-2-3-4-4.5-4-7a4 4 0 0 1 4-4z" /><circle cx="12" cy="15" r="3" /></IconWrapper> }
 
-export function scoreColor(s: number) {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
+export { scoreColor }
 
 export function scoreGlow(s: number) {
   return scoreColor(s)
@@ -143,13 +142,13 @@ const sharedSocCss = `
   justify-content: center;
 }
 .scc-ring__value {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .scc-ring__unit {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -177,14 +176,14 @@ const sharedSocCss = `
   border-color: color-mix(in srgb, var(--waf-brand) 30%, transparent);
 }
 .scc-kpi__label {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .scc-kpi__value {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 800;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   line-height: 1;
@@ -285,7 +284,7 @@ const sharedSocCss = `
   border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   cursor: pointer;
   outline: none;
 }

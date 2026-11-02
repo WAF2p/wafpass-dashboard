@@ -500,7 +500,7 @@ export default function ProjectGroupsPage() {
                           padding: '0.35rem 0.65rem',
                           borderRadius: '6px',
                           border: 'none',
-                          background: 'rgba(218,44,56,0.08)',
+                          background: 'color-mix(in srgb, #da2c38 8%, transparent)',
                           color: '#DA2C38',
                           fontSize: '0.72rem',
                           fontWeight: 600,
@@ -508,8 +508,8 @@ export default function ProjectGroupsPage() {
                           transition: 'all 0.15s',
                         }}
                         title={t('pages.projectGroups.deleteGroup')}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(218,44,56,0.15)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(218,44,56,0.08)')}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'color-mix(in srgb, #da2c38 15%, transparent)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'color-mix(in srgb, #da2c38 8%, transparent)')}
                       >
                         <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -554,7 +554,7 @@ export default function ProjectGroupsPage() {
                                           padding: '0.25rem 0.5rem',
                                           borderRadius: '4px',
                                           border: 'none',
-                                          background: 'rgba(218,44,56,0.08)',
+                                          background: 'color-mix(in srgb, #da2c38 8%, transparent)',
                                           color: '#DA2C38',
                                           fontSize: '0.68rem',
                                           fontWeight: 600,
@@ -590,7 +590,7 @@ export default function ProjectGroupsPage() {
                                 background: 'var(--surface)',
                                 border: '1px solid var(--border)',
                                 borderRadius: '8px',
-                                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                                boxShadow: '0 20px 60px color-mix(in srgb, #000000 30%, transparent)',
                               }}
                             >
                               {searchedUsers.map(user => {
@@ -736,7 +736,7 @@ export default function ProjectGroupsPage() {
                       border: '1px solid var(--border)',
                       borderRadius: '8px',
                       padding: '0.5rem 0.75rem',
-                      fontSize: '0.82rem',
+                      fontSize: '0.85rem',
                       outline: 'none',
                     }}
                   />

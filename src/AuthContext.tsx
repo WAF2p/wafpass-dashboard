@@ -28,9 +28,9 @@ export function hasMinRole(userRole: string, minimum: string): boolean {
 }
 
 // ── Storage keys ───────────────────────────────────────────────────────────
-const ACCESS_KEY  = 'wafpass_access_token'
-const REFRESH_KEY = 'wafpass_refresh_token'
-const USER_KEY    = 'wafpass_auth_user'
+const ACCESS_KEY  = 'wombat_access_token'
+const REFRESH_KEY = 'wombat_refresh_token'
+const USER_KEY    = 'wombat_auth_user'
 
 function isTokenExpired(token: string): boolean {
   try {

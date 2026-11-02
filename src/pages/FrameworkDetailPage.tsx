@@ -4,6 +4,7 @@ import { FRAMEWORKS, PILLAR_COLOR } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
 import { useI18n } from '../i18n'
 import type { FilterState, Page } from '../routing'
+import { scoreColor } from '../severity';
 
 interface Props {
   run: RunDetail
@@ -11,9 +12,6 @@ interface Props {
   frameworkId?: string
 }
 
-function scoreColor(s: number) {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
 
 function statusColor(role: 'good' | 'warn' | 'bad' | 'info' | 'text' | 'muted') {
   const map: Record<typeof role, string> = {
@@ -48,8 +46,8 @@ function CircularScore({ value, size = 96, stroke = 8, color, track = 'var(--tra
         position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
       }}>
-        <span style={{ fontSize: '1.4rem', fontWeight: 800, lineHeight: 1, color, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>{value}</span>
-        <span style={{ fontSize: '0.55rem', color: 'var(--muted)', fontWeight: 700, letterSpacing: '0.06em' }}>/100</span>
+        <span style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1, color, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>{value}</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, letterSpacing: '0.06em' }}>/100</span>
       </div>
     </div>
   )
@@ -202,7 +200,7 @@ export default function FrameworkDetailPage({ run, navigate, frameworkId }: Prop
     )
   }, [mappedControls, search])
 
-  // Every requirement ID known for this framework across the whole WAF++ catalogue
+  // Every requirement ID known for this framework across the whole Wombat catalogue
   const allRequirements = useMemo(() => {
     const ids = new Set<string>()
     controlsCatalogue.forEach(c => {
@@ -559,13 +557,13 @@ const frameworkDetailCss = `
   gap: 0.15rem;
 }
 .fdg-hero__score-value {
-  font-size: 1.8rem;
+  font-size: 1.75rem;
   font-weight: 800;
   line-height: 1;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .fdg-hero__score-unit {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -579,7 +577,6 @@ const frameworkDetailCss = `
 .fdg-stat {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 3px solid;
   border-radius: 12px;
   padding: 1rem;
   display: flex;
@@ -587,13 +584,13 @@ const frameworkDetailCss = `
   gap: 0.3rem;
 }
 .fdg-stat__value {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 .fdg-stat__label {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -709,8 +706,7 @@ const frameworkDetailCss = `
 }
 .fdg-control {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--ctrl-color);
+  border: 1px solid color-mix(in srgb, var(--ctrl-color) 35%, var(--border));
   border-radius: 10px;
   padding: 0.85rem 1rem;
   display: flex;
@@ -750,7 +746,7 @@ const frameworkDetailCss = `
 .fdg-control__pillar,
 .fdg-control__severity,
 .fdg-control__category {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;

@@ -16,9 +16,9 @@ import {
 import SyslogConfigModal from './SyslogConfigModal'
 
 const ACTION_META: Record<string, { label: string; color: string; bg: string }> = {
-  login:    { label: 'Login',    color: '#059669', bg: 'rgba(5,150,105,.10)' },
-  logout:   { label: 'Logout',   color: '#2563eb', bg: 'rgba(37,99,235,.10)' },
-  'user.create': { label: 'User created', color: '#7c3aed', bg: 'rgba(124,58,237,.10)' },
+  login:    { label: 'Login',    color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)' },
+  logout:   { label: 'Logout',   color: '#2563eb', bg: 'color-mix(in srgb, #2563eb 10%, transparent)' },
+  'user.create': { label: 'User created', color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 10%, transparent)' },
   'user.update': { label: 'User updated', color: '#d97706', bg: 'rgba(217,119,6,.10)' },
   'user.delete': { label: 'User deleted', color: '#dc2626', bg: 'rgba(220,38,38,.10)' },
 }
@@ -239,7 +239,7 @@ export default function AdminLogPage() {
             </button>
             <button
               className="adminlog-btn adminlog-btn--export"
-              onClick={() => download(logsToCSV(filtered), `wafpass-admin-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
+              onClick={() => download(logsToCSV(filtered), `wombat-admin-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
             >
               <DownloadIcon /> {t('pages.adminLogs.exportCsv')}
             </button>
@@ -323,8 +323,8 @@ const adminLogCss = `
   border: 1px solid;
 }
 .adminlog-sync--active {
-  background: rgba(5,150,105,.06);
-  border-color: rgba(5,150,105,.2);
+  background: color-mix(in srgb, #059669 6%, transparent);
+  border-color: color-mix(in srgb, #059669 20%, transparent);
   color: #059669;
 }
 .adminlog-sync--local {
@@ -402,7 +402,7 @@ const adminLogCss = `
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 .adminlog-search input {
   border: none;
@@ -411,7 +411,7 @@ const adminLogCss = `
   outline: none;
   min-width: 0;
   flex: 1;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 .adminlog-search input::placeholder { color: var(--muted); }
 
@@ -421,7 +421,7 @@ const adminLogCss = `
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   cursor: pointer;
   outline: none;
 }
@@ -511,7 +511,7 @@ const adminLogCss = `
   cursor: pointer;
 }
 .adminlog-event__badge {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   border-radius: 4px;
@@ -542,7 +542,7 @@ const adminLogCss = `
   white-space: nowrap;
 }
 .adminlog-event__id {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   margin-top: 0.15rem;
 }
 .adminlog-event__toggle {
@@ -555,7 +555,7 @@ const adminLogCss = `
   border-top: 1px solid var(--border);
 }
 .adminlog-event__detail-label {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--muted);
@@ -576,7 +576,7 @@ const adminLogCss = `
 }
 .adminlog-event__id-line {
   margin-top: 0.5rem;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -594,7 +594,7 @@ const adminLogCss = `
 .adminlog-table th {
   padding: 0.6rem 0.75rem;
   text-align: left;
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -613,7 +613,7 @@ const adminLogCss = `
   color: var(--muted);
 }
 .adminlog-table__badge {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   border-radius: 4px;

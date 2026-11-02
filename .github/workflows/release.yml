@@ -32,7 +32,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Install dependencies
         run: npm install
@@ -58,7 +58,7 @@ jobs:
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wafpass-dashboard-sbom
+          name: wombat-dashboard-sbom
           path: |
             sbom.cyclonedx.json
             sbom.spdx.json
@@ -77,7 +77,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name:              ${{ steps.ver.outputs.tag }}
-          name:                  WAF++ PASS Dashboard ${{ steps.ver.outputs.tag }}
+          name:                  WOMBATpass Dashboard ${{ steps.ver.outputs.tag }}
           generate_release_notes: true
           files: |
             sbom.cyclonedx.json

@@ -126,7 +126,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.55rem',
+              fontSize: '0.7rem',
               fontWeight: 700,
               color: '#fff',
             }}
@@ -151,7 +151,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
             background: 'var(--nav-bg)',
             border: '1px solid var(--nav-border)',
             borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+            boxShadow: '0 8px 32px color-mix(in srgb, #000000 25%, transparent)',
             zIndex: 100,
           }}
         >
@@ -323,7 +323,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                       </div>
                       <div
                         style={{
-                          fontSize: '0.62rem',
+                          fontSize: '0.7rem',
                           color: 'var(--nav-muted)',
                           marginTop: '0.35rem',
                           display: 'flex',

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { RunDetail, Finding } from '../api'
 import { useI18n } from '../i18n'
+import { severityBg, severityBorder, severityColor, scoreColor, scoreBg } from '../severity'
 
 interface Props { run: RunDetail }
 
@@ -40,13 +41,6 @@ function moduleDepth(path: string): number {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 }
-const SEV_COLOR: Record<string, string> = {
-  CRITICAL: '#DA2C38', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e', INFO: '#94a3b8',
-}
-const SEV_BG: Record<string, string> = {
-  CRITICAL: 'rgba(218,44,56,.12)', HIGH: 'rgba(249,115,22,.12)',
-  MEDIUM: 'rgba(234,179,8,.12)', LOW: 'rgba(34,197,94,.12)', INFO: 'rgba(148,163,184,.10)',
-}
 const STATUS_COLOR: Record<string, string> = {
   PASS: '#059669', FAIL: '#DA2C38', SKIP: '#94a3b8', WAIVED: '#a78bfa',
 }
@@ -68,13 +62,7 @@ function normalizePillarName(pillar: string): string {
   return pillar
 }
 
-function scoreColor(s: number) {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
-}
 
-function scoreBg(s: number) {
-  return s >= 80 ? 'rgba(5,150,105,.12)' : s >= 60 ? 'rgba(217,119,6,.12)' : 'rgba(218,44,56,.12)'
-}
 
 // ── Data model ────────────────────────────────────────────────────────────────
 
@@ -189,11 +177,11 @@ function SevBadge({ sev, count, showLabel = true }: { sev: string; count: number
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
-      fontSize: '0.62rem', fontWeight: 800, borderRadius: '6px', padding: '0.15rem 0.45rem',
-      background: SEV_BG[s] ?? SEV_BG.INFO, color: SEV_COLOR[s] ?? '#94a3b8',
+      fontSize: '0.7rem', fontWeight: 800, borderRadius: '6px', padding: '0.15rem 0.45rem',
+      background: severityBg(s), color: severityColor(s),
       letterSpacing: '0.03em', flexShrink: 0,
     }}>
-      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: SEV_COLOR[s] ?? '#94a3b8' }} />
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: severityColor(s) }} />
       {showLabel && <span>{s}</span>}
       <span>{count}</span>
     </span>
@@ -261,7 +249,7 @@ function ModuleRow({
 }: {
   mod: ModuleData; selected: boolean; onClick: () => void
 }) {
-  const accentColor = mod.fail === 0 ? '#059669' : SEV_COLOR[mod.worstSeverity] ?? '#94a3b8'
+  const accentColor = mod.fail === 0 ? 'var(--pass)' : severityColor(mod.worstSeverity)
   const leftPad = 1 + mod.depth * 0.55
 
   return (
@@ -281,7 +269,7 @@ function ModuleRow({
       {/* Depth connector + severity dot */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
         {mod.depth > 0 && (
-          <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontFamily: 'monospace', opacity: 0.5 }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace', opacity: 0.5 }}>
             {'└'}
           </span>
         )}
@@ -291,7 +279,7 @@ function ModuleRow({
       {/* Name + meta */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)',
+          fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {mod.displayName}
@@ -300,7 +288,7 @@ function ModuleRow({
           <div style={{ flex: 1, minWidth: '40px' }}>
             <MiniBar value={mod.pass} total={mod.pass + mod.fail} color={mod.fail === 0 ? '#059669' : '#DA2C38'} />
           </div>
-          <span style={{ fontSize: '0.62rem', color: 'var(--muted)', flexShrink: 0 }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', flexShrink: 0 }}>
             {mod.pass + mod.fail} checks
           </span>
         </div>
@@ -343,10 +331,10 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
 
   const totalChecks = mod.pass + mod.fail + mod.skip
   const severityRows = [
-    { key: 'CRITICAL', count: mod.critFail, color: SEV_COLOR.CRITICAL },
-    { key: 'HIGH',     count: mod.highFail, color: SEV_COLOR.HIGH },
-    { key: 'MEDIUM',   count: mod.medFail,  color: SEV_COLOR.MEDIUM },
-    { key: 'LOW',      count: mod.lowFail,  color: SEV_COLOR.LOW },
+    { key: 'CRITICAL', count: mod.critFail, color: severityColor('CRITICAL') },
+    { key: 'HIGH',     count: mod.highFail, color: severityColor('HIGH') },
+    { key: 'MEDIUM',   count: mod.medFail,  color: severityColor('MEDIUM') },
+    { key: 'LOW',      count: mod.lowFail,  color: severityColor('LOW') },
   ]
   const statusRows = [
     { key: 'PASS', count: mod.pass, color: STATUS_COLOR.PASS, label: t('pages.moduleScore.passes') },
@@ -364,7 +352,7 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
       }}>
         <ScoreRing score={mod.score} size={84} thickness={8} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.2rem' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.2rem' }}>
             {mod.displayName}
           </div>
           <div style={{
@@ -458,7 +446,7 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
                     </span>
                   </div>
                   {hasData && <MiniBar value={p.pass} total={p.pass + p.fail} color={p.score >= 80 ? p.color : '#DA2C38'} height={5} />}
-                  <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                     {p.pass} {t('pages.moduleScore.passes')} · {p.fail} {t('pages.moduleScore.failures')}
                   </div>
                 </div>
@@ -479,14 +467,14 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
                 <div key={c.id} style={{
                   display: 'flex', alignItems: 'center', gap: '0.6rem',
                   padding: '0.55rem 0.75rem', borderRadius: '8px',
-                  background: SEV_BG[s] ?? 'var(--bg)', border: `1px solid ${SEV_COLOR[s] ?? '#94a3b8'}30`,
+                  background: severityBg(s), border: `1px solid ${severityBorder(s, 19)}`,
                 }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: SEV_COLOR[s] ?? '#94a3b8', flexShrink: 0 }} />
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: severityColor(s), flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {c.title || c.id}
                     </div>
-                    <div style={{ fontSize: '0.62rem', color: 'var(--muted)' }}>{c.id}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{c.id}</div>
                   </div>
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#DA2C38', flexShrink: 0 }}>{c.failCount}✗</span>
                 </div>
@@ -524,10 +512,10 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
                 display: 'flex', alignItems: 'center', gap: '0.6rem',
                 padding: '0.45rem 0.6rem', borderRadius: '8px',
                 background: st === 'FAIL' ? 'rgba(218,44,56,.04)' : 'var(--bg)',
-                border: `1px solid ${st === 'FAIL' ? 'rgba(218,44,56,.15)' : 'var(--border)'}`,
+                border: `1px solid ${st === 'FAIL' ? 'color-mix(in srgb, #da2c38 15%, transparent)' : 'var(--border)'}`,
               }}>
                 <div style={{
-                  width: '3px', alignSelf: 'stretch', minHeight: '18px', borderRadius: '2px',
+                  width: '3px', alignSelf: 'stretch', minHeight: '18px', borderRadius: '4px',
                   background: STATUS_COLOR[st] ?? '#94a3b8', flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -539,7 +527,7 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
                   </div>
                   {f.resource && (
                     <div style={{
-                      fontSize: '0.64rem', color: 'var(--muted)', fontFamily: 'monospace',
+                      fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                       {f.resource}
@@ -547,8 +535,8 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
                   )}
                 </div>
                 <span style={{
-                  fontSize: '0.6rem', fontWeight: 700, borderRadius: '4px', padding: '0.1rem 0.35rem',
-                  background: SEV_BG[sv] ?? SEV_BG.INFO, color: SEV_COLOR[sv] ?? '#94a3b8', flexShrink: 0,
+                  fontSize: '0.7rem', fontWeight: 700, borderRadius: '4px', padding: '0.1rem 0.35rem',
+                  background: severityBg(sv), color: severityColor(sv), flexShrink: 0,
                 }}>
                   {sv}
                 </span>
@@ -638,7 +626,7 @@ export default function ModuleScorePage({ run }: Props) {
           <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.35rem' }}>
             {t('pages.moduleScore.pageTitle')}
           </h1>
-          <div style={{ fontSize: '0.82rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
             {t('pages.moduleScore.pageSubtitle')}
           </div>
         </div>
@@ -693,7 +681,7 @@ export default function ModuleScorePage({ run }: Props) {
             display: 'flex', flexDirection: 'column', gap: '0.2rem',
           }}>
             <div style={{
-              fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em',
+              fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em',
               color: color ?? 'var(--muted)',
             }}>
               {label}
@@ -705,7 +693,7 @@ export default function ModuleScorePage({ run }: Props) {
             }}>
               {value}
             </div>
-            {sub && <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{sub}</div>}
+            {sub && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{sub}</div>}
           </div>
         ))}
       </div>
@@ -737,7 +725,7 @@ export default function ModuleScorePage({ run }: Props) {
                   key={k}
                   onClick={() => setSortKey(k)}
                   style={{
-                    fontSize: '0.62rem', fontWeight: 700, padding: '0.2rem 0.45rem',
+                    fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.45rem',
                     borderRadius: '6px', border: '1px solid var(--border)',
                     background: sortKey === k ? 'var(--waf-brand)' : 'var(--surface)',
                     color: sortKey === k ? '#fff' : 'var(--muted)',

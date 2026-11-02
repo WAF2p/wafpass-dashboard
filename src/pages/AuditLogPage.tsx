@@ -17,13 +17,14 @@ import {
   statusColor,
 } from './shared/SocComponents'
 import AdminLogPage from './AdminLogPage'
+import { severityBg, severityBorder, severityColor } from '../severity'
 
 // ─── Category metadata ──────────────────────────────────────────────────────────
 
 const CAT_META: Record<AuditCategory, { label: string; color: string; bg: string }> = {
-  waiver:  { label: 'Waiver',  color: '#2563eb', bg: 'rgba(37,99,235,.10)'  },
-  risk:    { label: 'Risk',    color: '#7c3aed', bg: 'rgba(124,58,237,.10)' },
-  scan:    { label: 'Scan',    color: '#059669', bg: 'rgba(5,150,105,.10)'  },
+  waiver:  { label: 'Waiver',  color: '#2563eb', bg: 'color-mix(in srgb, #2563eb 10%, transparent)'  },
+  risk:    { label: 'Risk',    color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 10%, transparent)' },
+  scan:    { label: 'Scan',    color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)'  },
   finding: { label: 'Finding', color: '#d97706', bg: 'rgba(217,119,6,.10)'  },
 }
 
@@ -36,10 +37,6 @@ const ACTION_LABEL: Record<string, string> = {
   risk_deleted:         'Risk removed',
   scan_received:        'Scan received',
   control_first_failed: 'First seen failing',
-}
-
-const SEV_COLOR: Record<string, string> = {
-  critical: '#dc2626', high: '#d97706', medium: '#2563eb', low: '#059669', info: '#94a3b8',
 }
 
 // ─── Export helpers ───────────────────────────────────────────────────────────
@@ -193,7 +190,7 @@ function FirstSeenTable({ entries, t }: { entries: FirstSeenEntry[]; t: ReturnTy
                   <td className="audit-table__mono audit-table__mono--strong">{e.control_id}</td>
                   <td className="audit-table__mono" title={e.resource}>{e.resource}</td>
                   <td>
-                    <span className="audit-sev" style={{ color: SEV_COLOR[sev] ?? '#94a3b8', background: `${SEV_COLOR[sev] ?? '#94a3b8'}18`, borderColor: `${SEV_COLOR[sev] ?? '#94a3b8'}33` }}>
+                    <span className="audit-sev" style={{ color: severityColor(sev), background: severityBg(sev, 9), borderColor: severityBorder(sev, 20) }}>
                       {e.severity}
                     </span>
                   </td>
@@ -374,13 +371,13 @@ export default function AuditLogPage() {
             <div className="audit-actions">
               <button
                 className="audit-btn audit-btn--export"
-                onClick={() => download(eventsToCSV(filtered), `wafpass-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
+                onClick={() => download(eventsToCSV(filtered), `wombat-audit-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv')}
               >
                 <DownloadIcon /> {t('pages.audit.exportCsv')}
               </button>
               <button
                 className="audit-btn audit-btn--export"
-                onClick={() => download(JSON.stringify({ exported_at: new Date().toISOString(), events: filtered, first_seen: firstSeenEntries }, null, 2), `wafpass-audit-${new Date().toISOString().slice(0, 10)}.json`, 'application/json')}
+                onClick={() => download(JSON.stringify({ exported_at: new Date().toISOString(), events: filtered, first_seen: firstSeenEntries }, null, 2), `wombat-audit-${new Date().toISOString().slice(0, 10)}.json`, 'application/json')}
               >
                 {t('pages.audit.exportJson')}
               </button>
@@ -473,7 +470,7 @@ const auditCss = `
   border-radius: 6px;
   background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
   color: var(--waf-brand);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   width: fit-content;
@@ -503,8 +500,8 @@ const auditCss = `
   border: 1px solid;
 }
 .audit-sync--active {
-  background: rgba(5,150,105,.06);
-  border-color: rgba(5,150,105,.2);
+  background: color-mix(in srgb, #059669 6%, transparent);
+  border-color: color-mix(in srgb, #059669 20%, transparent);
   color: #059669;
 }
 .audit-sync--local {
@@ -552,7 +549,7 @@ const auditCss = `
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 .audit-search input {
   border: none;
@@ -561,7 +558,7 @@ const auditCss = `
   outline: none;
   min-width: 0;
   flex: 1;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
 }
 .audit-search input::placeholder { color: var(--muted); }
 
@@ -571,7 +568,7 @@ const auditCss = `
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   cursor: pointer;
   outline: none;
 }
@@ -667,7 +664,7 @@ const auditCss = `
 }
 .audit-event__header--clickable { cursor: pointer; }
 .audit-event__cat {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   border-radius: 4px;
@@ -728,7 +725,7 @@ const auditCss = `
 }
 .audit-event__id {
   margin-top: 0.5rem;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -740,7 +737,7 @@ const auditCss = `
   margin-top: 0.75rem;
 }
 .audit-diff__label {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   margin-bottom: 0.3rem;
@@ -764,7 +761,7 @@ const auditCss = `
 }
 .audit-diff__code--after {
   background: rgba(5,150,105,.04);
-  border: 1px solid rgba(5,150,105,.15);
+  border: 1px solid color-mix(in srgb, #059669 15%, transparent);
 }
 
 .audit-alert {
@@ -811,7 +808,7 @@ const auditCss = `
 .audit-table th {
   padding: 0.6rem 0.75rem;
   text-align: left;
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -838,7 +835,7 @@ const auditCss = `
   font-weight: 600;
 }
 .audit-sev {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   border-radius: 4px;

@@ -14,14 +14,14 @@ export default function ReferenceArchitecturePage() {
           {t('pages.reference.title')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-          Complete Terraform and Pulumi implementation examples for all WAF++ controls
+          Complete Terraform and Pulumi implementation examples for all Wombat controls
         </p>
       </div>
 
       {/* Executive Summary */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          WAF++ Reference Architecture - Best Practices Implementation
+          Wombat Reference Architecture - Best Practices Implementation
         </h2>
         <div style={{
           background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
@@ -30,9 +30,9 @@ export default function ReferenceArchitecturePage() {
           padding: '1.5rem'
         }}>
           <p style={{ fontSize: '0.9rem', color: 'var(--text)', marginBottom: '1rem', lineHeight: 1.6 }}>
-            This reference architecture demonstrates a complete WAF++-compliant infrastructure implementation
-            using Terraform. Each section shows how to satisfy specific WAF++ controls with production-ready,
-            auditable infrastructure code. This serves as the authoritative example for all WAF++ pillar
+            This reference architecture demonstrates a complete Wombat-compliant infrastructure implementation
+            using Terraform. Each section shows how to satisfy specific Wombat controls with production-ready,
+            auditable infrastructure code. This serves as the authoritative example for all Wombat pillar
             implementations (SEC, SOV, OPS, COST, PERF, REL, SUS).
           </p>
           <div style={{
@@ -48,7 +48,7 @@ export default function ReferenceArchitecturePage() {
               borderRadius: '8px'
             }}>
               <strong style={{ color: '#0094ff' }}>74 Controls</strong>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>WAF++ security, sovereignty, operations, cost, performance, reliability, and sustain controls</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Wombat security, sovereignty, operations, cost, performance, reliability, and sustain controls</p>
             </div>
             <div style={{
               padding: '1rem',
@@ -84,7 +84,7 @@ export default function ReferenceArchitecturePage() {
           padding: '1.5rem'
         }}>
           <p style={{ fontSize: '0.8rem', color: 'var(--text)', marginBottom: '1rem', lineHeight: 1.6 }}>
-            The foundation of WAF++ security is strict IAM baseline with MFA enforcement and least-privilege access.
+            The foundation of Wombat security is strict IAM baseline with MFA enforcement and least-privilege access.
             This configuration satisfies WAF-SEC-010 (Identity Baseline) and WAF-SEC-020 (Least Privilege).
           </p>
 
@@ -96,9 +96,9 @@ export default function ReferenceArchitecturePage() {
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-010.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -107,7 +107,7 @@ export default function ReferenceArchitecturePage() {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-010.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -116,7 +116,7 @@ export default function ReferenceArchitecturePage() {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-020.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -125,7 +125,7 @@ export default function ReferenceArchitecturePage() {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-020.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -337,9 +337,9 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-030.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-030.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -348,7 +348,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-030.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-030.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -357,7 +357,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-060.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-060.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -366,7 +366,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-060.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-060.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -622,9 +622,9 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-010.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -633,7 +633,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-010.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -642,7 +642,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-020.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -651,7 +651,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-020.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -946,9 +946,9 @@ jobs:
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-070.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-070.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -957,7 +957,7 @@ jobs:
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-070.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-070.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1082,9 +1082,9 @@ resource "aws_events_target" "critical_vuln_sns" {
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-sovereignty/controls/WAF-SOV-010.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-sovereignty/controls/WAF-SOV-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1093,7 +1093,7 @@ resource "aws_events_target" "critical_vuln_sns" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-sovereignty/controls/WAF-SOV-010.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-sovereignty/controls/WAF-SOV-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1102,7 +1102,7 @@ resource "aws_events_target" "critical_vuln_sns" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-sovereignty/controls/WAF-SOV-020.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-sovereignty/controls/WAF-SOV-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1111,7 +1111,7 @@ resource "aws_events_target" "critical_vuln_sns" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-sovereignty/controls/WAF-SOV-020.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-sovereignty/controls/WAF-SOV-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1347,9 +1347,9 @@ resource "aws_s3_bucket_policy" "pii_data" {
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-100.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1358,7 +1358,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-100.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1598,9 +1598,9 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-090.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-090.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1609,7 +1609,7 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-090.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-090.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1641,10 +1641,10 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
             }}>{`# EKS Module - Production-Ready Kubernetes Infrastructure
 
 ## Overview
-This module creates a production-ready EKS cluster with all WAF++ controls
+This module creates a production-ready EKS cluster with all Wombat controls
 enforced: encryption at rest, audit logging, private endpoints, and Fargate support.
 
-## WAF++ Controls Enforced
+## Wombat Controls Enforced
 - WAF-SEC-030: EBS volumes encrypted with CMK
 - WAF-SEC-060: Secrets managed via Secrets Manager
 - WAF-SEC-100: Audit logging enabled
@@ -1687,9 +1687,9 @@ See tests/eks folder for test fixtures and validation scripts.
 ## changelog.md
 See CHANGELOG.md for detailed version history.
 
-# WAF++ COMPLIANCE NOTES
-This module is designed to satisfy all WAF++ controls for EKS deployment.
-The module is tested against the WAF++ control framework via automated tests.
+# Wombat COMPLIANCE NOTES
+This module is designed to satisfy all Wombat controls for EKS deployment.
+The module is tested against the Wombat control framework via automated tests.
 
 ## Testing
 Run tests with:
@@ -1768,16 +1768,16 @@ project-root/
 │       └── main.tf
 │
 ├── scripts/                         # Automation scripts
-│   ├── validate-controls.sh         # WAF++ control validation
+│   ├── validate-controls.sh         # Wombat control validation
 │   ├── generate-kubeconfig.sh       # Kubeconfig generation
 │   └── deploy.sh                    # Deployment script
 │
 └── docs/                            # Documentation
     ├── architecture.md
-    ├── controls-mapping.md          # WAF++ control mapping
+    ├── controls-mapping.md          # Wombat control mapping
     └── runbook/                     # Runbooks for each control
 
-# Why this structure works for WAF++:
+# Why this structure works for Wombat:
 # - modules/ are version-controlled and reusable
 # - environments/ provides isolation between dev/staging/prod
 # - scripts/ automate control validation and compliance checks
@@ -1801,7 +1801,7 @@ project-root/
         }}>
           <p style={{ fontSize: '0.8rem', color: 'var(--text)', marginBottom: '1rem', lineHeight: 1.6 }}>
             Automated control validation scripts that verify infrastructure compliance
-            against WAF++ controls before deployment.
+            against Wombat controls before deployment.
           </p>
 
           <div style={{
@@ -1812,9 +1812,9 @@ project-root/
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
-              <strong>WAF++ Reference:</strong>{' '}
+              <strong>Wombat Reference:</strong>{' '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-100.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1823,7 +1823,7 @@ project-root/
               </a>
               {' | '}
               <a
-                href="https://waf2p.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-100.html"
+                href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
@@ -1853,13 +1853,13 @@ project-root/
               padding: '1rem',
               overflowX: 'auto'
             }}>{`#!/bin/bash
-# WAF++ Control Validation Script
-# Validates infrastructure against WAF++ controls before deployment
+# Wombat Control Validation Script
+# Validates infrastructure against Wombat controls before deployment
 
 set -euo pipefail
 
 echo "========================================"
-echo "WAF++ Control Validation"
+echo "Wombat Control Validation"
 echo "========================================"
 
 # Control WAF-SEC-010: IAM Password Policy
@@ -1942,12 +1942,12 @@ echo "========================================"
 echo "Validation Complete"
 echo "========================================"
 echo ""
-echo "All WAF++ controls validated successfully!"
+echo "All Wombat controls validated successfully!"
 
 # Exit with success
 exit 0
 
-# WAF++ VALIDATION CHECKLIST:
+# WOMBATpass VALIDATION CHECKLIST:
 # [✓] WAF-SEC-010: IAM password policy validation
 # [✓] WAF-SEC-030: Encryption at rest validation
 # [✓] WAF-SEC-060: Secrets Manager validation
@@ -1983,7 +1983,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate WAF++ Controls
+      - name: Validate Wombat Controls
         run: |
           chmod +x scripts/validate-controls.sh
           ./scripts/validate-controls.sh
@@ -1993,7 +1993,7 @@ jobs:
       - name: Fail if validation failed
         run: |
           if [ $? -ne 0 ]; then
-            echo "WAF++ control validation failed"
+            echo "Wombat control validation failed"
             exit 1
           fi`
 
@@ -2015,7 +2015,7 @@ jobs:
         }}>
           <p style={{ fontSize: '0.9rem', color: 'var(--text)', marginBottom: '1rem' }}>
             This reference architecture provides a complete, production-ready implementation
-            of WAF++ controls in Terraform. All examples are:
+            of Wombat controls in Terraform. All examples are:
           </p>
           <ul style={{ fontSize: '0.8rem', color: 'var(--text)', marginLeft: '1.5rem', marginTop: '0.5rem', marginBottom: '1rem' }}>
             <li><strong>Production-Ready:</strong> Follows Terraform best practices with remote state, modules, and proper error handling</li>
@@ -2061,7 +2061,7 @@ jobs:
         </div>
       </section>
 
-      {/* Back to WAF++ docs link */}
+      {/* Back to Wombat docs link */}
       <div style={{
         background: themeName === 'dark' ? 'rgba(0,148,255,0.1)' : 'rgba(0,148,255,0.05)',
         border: '1px solid rgba(0,148,255,0.3)',
@@ -2073,12 +2073,12 @@ jobs:
           Need More Details?
         </h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text)', marginBottom: '1rem' }}>
-          This reference architecture is designed to complement the official WAF++ documentation.
+          This reference architecture is designed to complement the official Wombat documentation.
           For complete control definitions, regulatory mappings, and implementation guidance,
-          please refer to the official WAF++ documentation.
+          please refer to the official Wombat documentation.
         </p>
         <a
-          href="https://waf2p.dev/docs/wafpp/1.0/index.html"
+          href="https://www.wombat-gov.dev/docs/wafpp/1.0/index.html"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -2098,7 +2098,7 @@ jobs:
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
-          Open WAF++ 1.0 Documentation (German)
+          Open Wombat 1.0 Documentation (German)
         </a>
       </div>
 

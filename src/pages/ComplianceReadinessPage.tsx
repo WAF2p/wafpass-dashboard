@@ -1,7 +1,7 @@
 /**
  * Compliance Readiness Index
  *
- * Tracks compliance evidence readiness for decentralized WAF++ audits:
+ * Tracks compliance evidence readiness for decentralized Wombat audits:
  * - % of controls mapped to frameworks (GDPR, ISO, SOC2, etc.)
  * - Evidence collection completeness per audit period
  * - Findings with missing remediation documentation
@@ -19,6 +19,7 @@ import {
   fetchRisks,
   fetchWaivers,
 } from '../api'
+import { scoreColor } from '../severity';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -29,9 +30,6 @@ interface Props {
 
 // ─── Helper functions ────────────────────────────────────────────────────────
 
-function scoreHex(s: number): string {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#dc2626'
-}
 
 function isExpiringSoon(dateStr: string | undefined): boolean {
   if (!dateStr) return false
@@ -83,11 +81,11 @@ export default function ComplianceReadinessPage({ run }: Props) {
       } catch {
         // Use localStorage cache if API fails
         try {
-          const w = JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}')
+          const w = JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}')
           setWaivers(Object.values(w) as WaiverRecord[])
         } catch {}
         try {
-          const r = JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}')
+          const r = JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}')
           setRisks(Object.values(r) as RiskRecord[])
         } catch {}
       }
@@ -156,8 +154,8 @@ export default function ComplianceReadinessPage({ run }: Props) {
           label="Controls Mapped"
           value={`${readinessData.totalFrameworkCoverage}%`}
           color="#059669"
-          bg="rgba(5,150,105,.08)"
-          border="rgba(5,150,105,.2)"
+          bg="color-mix(in srgb, #059669 8%, transparent)"
+          border="color-mix(in srgb, #059669 20%, transparent)"
         />
         <StatCard
           label="Frameworks"
@@ -184,8 +182,8 @@ export default function ComplianceReadinessPage({ run }: Props) {
           label="Ready for Audit"
           value={`${readinessData.readinessScore}/100`}
           color="#7c3aed"
-          bg="rgba(124,58,237,.08)"
-          border="rgba(124,58,237,.2)"
+          bg="color-mix(in srgb, #7c3aed 8%, transparent)"
+          border="color-mix(in srgb, #7c3aed 20%, transparent)"
           highlight
         />
       </div>
@@ -201,7 +199,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Audit Readiness Score</h2>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <span style={{ fontSize: '2.5rem', fontWeight: 800, color: scoreHex(readinessData.readinessScore) }}>
+              <span style={{ fontSize: '2.5rem', fontWeight: 800, color: scoreColor(readinessData.readinessScore) }}>
                 {readinessData.readinessScore}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
@@ -212,8 +210,8 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 fontWeight: 700,
                 padding: '0.15rem 0.6rem',
                 borderRadius: '999px',
-                background: readinessData.readinessScore >= 70 ? 'rgba(5,150,105,.15)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.15)' : 'rgba(220,38,38,.15)',
-                border: `1px solid ${readinessData.readinessScore >= 70 ? 'rgba(5,150,105,.3)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
+                background: readinessData.readinessScore >= 70 ? 'color-mix(in srgb, #059669 15%, transparent)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.15)' : 'rgba(220,38,38,.15)',
+                border: `1px solid ${readinessData.readinessScore >= 70 ? 'color-mix(in srgb, #059669 30%, transparent)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
                 color: readinessData.readinessScore >= 70 ? '#059669' : readinessData.readinessScore >= 50 ? '#d97706' : '#dc2626',
               }}>
                 {readinessData.readinessScore >= 70 ? 'Ready for Audit' : readinessData.readinessScore >= 50 ? 'Near Ready' : 'Needs Work'}
@@ -239,7 +237,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
             </svg>
             <div style={{ textAlign: 'center', marginTop: '-90px' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>{readinessData.readinessScore}</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 600 }}>Ready Score</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>Ready Score</div>
             </div>
           </div>
         </div>
@@ -281,7 +279,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     }}>
                       {fw.pct}% complete
                     </div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{fw.controls} controls</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{fw.controls} controls</div>
                   </div>
                 </div>
                 <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '999px', overflow: 'hidden' }}>
@@ -348,13 +346,13 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     {w.id}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#d97706', marginTop: '0.2rem' }}>{w.reason}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                     Expires: {w.expires || 'Not set'}
                   </div>
                 </div>
                 {w.expires && isExpiringSoon(w.expires) && (
                   <span style={{
-                    fontSize: '0.65rem',
+                    fontSize: '0.7rem',
                     fontWeight: 700,
                     padding: '0.2rem 0.6rem',
                     borderRadius: '999px',
@@ -373,8 +371,8 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
-                background: 'rgba(14,165,233,.08)',
-                border: '1px solid rgba(14,165,233,.2)',
+                background: 'color-mix(in srgb, #0ea5e9 8%, transparent)',
+                border: '1px solid color-mix(in srgb, #0ea5e9 20%, transparent)',
                 borderRadius: '8px',
               }}>
                 <div style={{ flex: 1 }}>
@@ -382,17 +380,17 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     {ra.id}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#0094ff', marginTop: '0.2rem' }}>{ra.reason}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                     Expires: {ra.expires || 'Not set'} | Risk: {ra.residual_risk || 'medium'}
                   </div>
                 </div>
                 {ra.expires && isExpiringSoon(ra.expires) && (
                   <span style={{
-                    fontSize: '0.65rem',
+                    fontSize: '0.7rem',
                     fontWeight: 700,
                     padding: '0.2rem 0.6rem',
                     borderRadius: '999px',
-                    background: 'rgba(14,165,233,.2)',
+                    background: 'color-mix(in srgb, #0ea5e9 20%, transparent)',
                     color: '#0094ff',
                   }}>
                     EXPIRING SOON
@@ -427,7 +425,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
             color: 'var(--muted)',
             fontSize: '0.8rem',
             background: 'rgba(5,150,105,.04)',
-            border: '1px solid rgba(5,150,105,.2)',
+            border: '1px solid color-mix(in srgb, #059669 20%, transparent)',
             borderRadius: '8px',
           }}>
             All controls have remediation documentation.
@@ -452,14 +450,14 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     {control.id}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#dc2626' }}>{control.title}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                     {control.category} | severity: {control.severity}
                   </div>
                 </div>
               </div>
             ))}
             {readinessData.controlsWithoutRemediation.length > 10 && (
-              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--muted)' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--muted)' }}>
                 +{readinessData.controlsWithoutRemediation.length - 10} more controls missing remediation
               </div>
             )}
@@ -501,7 +499,7 @@ function StatCard({ label, value, color, bg, border, highlight = false }: {
       </div>
       <div
         style={{
-          fontSize: '0.65rem',
+          fontSize: '0.7rem',
           fontWeight: 700,
           textTransform: 'uppercase',
           letterSpacing: '0.05em',

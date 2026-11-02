@@ -40,7 +40,7 @@ export default function CompanyJourney({ runs, onSetFilters }: CompanyJourneyPro
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.companyAverage')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.companyAverage')}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
               <span style={{ fontSize: '1.75rem', fontWeight: 800, color: scoreColor(score) }}>{score}</span>
               <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>/100</span>
@@ -50,21 +50,21 @@ export default function CompanyJourney({ runs, onSetFilters }: CompanyJourneyPro
 
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.companyStage')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.companyStage')}</div>
             <StageBadge score={score} />
           </div>
         </JourneyCard>
 
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.projectsTracked')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.projectsTracked')}</div>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)' }}>{projects.length}</div>
           </div>
         </JourneyCard>
 
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.totalRuns')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.totalRuns')}</div>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)' }}>{runs.length}</div>
           </div>
         </JourneyCard>

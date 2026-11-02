@@ -25,15 +25,15 @@ export default function LegalPage() {
 
       {/* ── Open Source Nature ──────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Open Source Framework - No Commercial Sale
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '1rem' }}>
-            WAF++ is an open-source project created by and for the community. It is distributed free of charge and no commercial transaction occurs when using this software.
+            Wombat is an open-source project created by and for the community. It is distributed free of charge and no commercial transaction occurs when using this software.
           </p>
           <p style={{ marginBottom: '1rem' }}>
-            <strong>We do not sell the WAF++ framework or any of its utilities.</strong> The framework is provided as-is for self-hosted use by organizations and individuals.
+            <strong>We do not sell the Wombat framework or any of its utilities.</strong> The framework is provided as-is for self-hosted use by organizations and individuals.
           </p>
           <p style={{ marginBottom: '0' }}>
             Any claims or liability related to usage of this software must be directed to the users themselves, as no commercial transaction occurs through the use of this framework.
@@ -43,15 +43,15 @@ export default function LegalPage() {
 
       {/* ── Future Certification Service ──────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Future Certification Service
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '1rem' }}>
-            While the WAF++ framework itself remains free and open source, we plan to offer official certification services in the future.
+            While the Wombat framework itself remains free and open source, we plan to offer official certification services in the future.
           </p>
           <p style={{ marginBottom: '1rem' }}>
-            <strong>2030 Outlook:</strong> Official certification based on the WAF++ framework will be available for purchase. This will include:
+            <strong>2030 Outlook:</strong> Official certification based on the Wombat framework will be available for purchase. This will include:
           </p>
           <ul style={{ margin: '0.5rem 0 0 1.5rem', marginBottom: '1rem', paddingLeft: 0 }}>
             <li style={{ marginBottom: '0.5rem' }}>Certification assessment and validation</li>
@@ -59,14 +59,14 @@ export default function LegalPage() {
             <li style={{ marginBottom: '0' }}>Hosting and management of certification records</li>
           </ul>
           <p style={{ marginBottom: '0' }}>
-            <strong>Note:</strong> Even when certification services are available, the WAF++ framework itself will remain free and open source. You will only be paying for the certification service and hosting, not for the framework or utility tools.
+            <strong>Note:</strong> Even when certification services are available, the Wombat framework itself will remain free and open source. You will only be paying for the certification service and hosting, not for the framework or utility tools.
           </p>
         </div>
       </div>
 
       {/* ── Liability Disclaimer ──────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Liability Disclaimer
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
@@ -74,40 +74,40 @@ export default function LegalPage() {
             The content of this website and framework is prepared with the utmost care. However, no guarantee is given for the completeness, accuracy, or currency of the information provided.
           </p>
           <p style={{ marginBottom: '1rem' }}>
-            WAF++ does not replace individual legal or technical advice. Users are responsible for seeking appropriate professional advice relevant to their specific circumstances.
+            Wombat does not replace individual legal or technical advice. Users are responsible for seeking appropriate professional advice relevant to their specific circumstances.
           </p>
           <p style={{ marginBottom: '1rem' }}>
-            By using WAF++, you acknowledge that you use it at your own risk. The framework is provided "as is" without any warranty, express or implied.
+            By using Wombat, you acknowledge that you use it at your own risk. The framework is provided "as is" without any warranty, express or implied.
           </p>
           <p style={{ marginBottom: '0' }}>
-            The developers and maintainers of WAF++ shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use the framework.
+            The developers and maintainers of Wombat shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use the framework.
           </p>
         </div>
       </div>
 
       {/* ── External Links ──────────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           External Links
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '0' }}>
-            WAF++ may contain links to external websites that are not operated by us. We have no control over the content and practices of these sites and cannot accept responsibility or liability for their respective privacy notices.
+            Wombat may contain links to external websites that are not operated by us. We have no control over the content and practices of these sites and cannot accept responsibility or liability for their respective privacy notices.
           </p>
         </div>
       </div>
 
       {/* ── Contact ─────────────────────────────────────────────────────────── */}
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
           Questions or Concerns?
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '1rem' }}>
-            If you have any questions about this legal notice, please contact the WAF++ team at:
+            If you have any questions about this legal notice, please contact the Wombat team at:
           </p>
           <p style={{ marginBottom: '0', fontWeight: 600, fontFamily: 'monospace', background: 'rgba(0,148,255,0.08)', padding: '0.75rem', borderRadius: '8px' }}>
-            page@waf2p.dev
+            page@wombat-gov.dev
           </p>
         </div>
       </div>

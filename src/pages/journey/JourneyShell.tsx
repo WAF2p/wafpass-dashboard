@@ -77,7 +77,7 @@ export default function JourneyShell({ view, project, run, runs, onSetFilters, o
             />
             <span
               style={{
-                fontSize: '0.6rem',
+                fontSize: '0.7rem',
                 fontWeight: 800,
                 color: '#DA2C38',
                 letterSpacing: '0.1em',
@@ -101,11 +101,11 @@ export default function JourneyShell({ view, project, run, runs, onSetFilters, o
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.journey.currentScore')}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: scoreColor(headlineScore) }}>{headlineScore}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: scoreColor(headlineScore) }}>{headlineScore}</span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
             </div>
           </div>

@@ -1,5 +1,5 @@
 /**
- * Validation Registry — official WAF++ PASS cryptographic validations.
+ * Validation Registry — official WOMBATpass cryptographic validations.
  *
  * Lists server-side validations, shows envelope details, and provides
  * download links for the badge, certificate PDF, and root trust anchor.
@@ -34,9 +34,9 @@ import {
 } from '../api'
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
-  official:  { color: '#059669', bg: 'rgba(5,150,105,0.09)' },
-  active:    { color: '#059669', bg: 'rgba(5,150,105,0.09)' },
-  revoked:   { color: '#DA2C38', bg: 'rgba(218,44,56,0.09)' },
+  official:  { color: '#059669', bg: 'color-mix(in srgb, #059669 9%, transparent)' },
+  active:    { color: '#059669', bg: 'color-mix(in srgb, #059669 9%, transparent)' },
+  revoked:   { color: '#DA2C38', bg: 'color-mix(in srgb, #da2c38 9%, transparent)' },
   offline:   { color: '#b45309', bg: 'rgba(180,83,9,0.09)' },
 }
 
@@ -103,7 +103,7 @@ function MonoRow({ label, value, copy }: { label: string; value: string; copy?: 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
         <code style={{
           fontSize: '0.75rem', color: 'var(--text)', background: 'var(--bg)',
-          padding: '0.2rem 0.45rem', borderRadius: '5px',
+          padding: '0.2rem 0.45rem', borderRadius: '6px',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }} title={value}>{value}</code>
         {copy && (
@@ -115,9 +115,9 @@ function MonoRow({ label, value, copy }: { label: string; value: string; copy?: 
               }).catch(() => {})
             }}
             style={{
-              flexShrink: 0, padding: '0.25rem 0.45rem', borderRadius: '5px',
+              flexShrink: 0, padding: '0.25rem 0.45rem', borderRadius: '6px',
               border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer',
-              fontSize: '0.65rem', fontWeight: 600, color: copied ? '#059669' : 'var(--muted)',
+              fontSize: '0.7rem', fontWeight: 600, color: copied ? '#059669' : 'var(--muted)',
             }}
           >
             {copied ? 'Copied' : 'Copy'}
@@ -136,9 +136,9 @@ const provenanceTagStyle: React.CSSProperties = {
 }
 
 const smallBtnStyle: React.CSSProperties = {
-  padding: '0.25rem 0.5rem', borderRadius: '5px',
+  padding: '0.25rem 0.5rem', borderRadius: '6px',
   border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer',
-  fontSize: '0.65rem', fontWeight: 600, color: 'var(--muted)',
+  fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)',
 }
 
 function CertificateRow({ cert, index, total }: { cert: string; index: number; total: number }) {
@@ -193,7 +193,7 @@ function CertificateRow({ cert, index, total }: { cert: string; index: number; t
       </div>
       <code style={{
         display: 'block', fontSize: '0.75rem', color: 'var(--text)', background: 'var(--bg)',
-        padding: '0.2rem 0.45rem', borderRadius: '5px', overflow: 'hidden',
+        padding: '0.2rem 0.45rem', borderRadius: '6px', overflow: 'hidden',
         textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }} title={cert}>{preview}</code>
       {open && (
@@ -238,8 +238,8 @@ function ConnectionBanner() {
   return (
     <div style={{
       marginBottom: '1.25rem', padding: '1rem 1.25rem', borderRadius: '12px',
-      background: 'rgba(218,44,56,0.08)', border: '1px solid rgba(218,44,56,0.25)',
-      color: 'var(--text)', fontSize: '0.82rem',
+      background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)',
+      color: 'var(--text)', fontSize: '0.85rem',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem', fontWeight: 700 }}>
         <span style={{ color: '#DA2C38' }}>⚠</span>
@@ -426,7 +426,7 @@ function SubmitPanel({ onSubmitted }: { onSubmitted: (id: string) => void }) {
             value={selectedRunId}
             onChange={e => setSelectedRunId(e.target.value)}
             style={{
-              width: '100%', fontSize: '0.82rem',
+              width: '100%', fontSize: '0.85rem',
               background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
               borderRadius: '8px', padding: '0.6rem 0.75rem', boxSizing: 'border-box',
             }}
@@ -493,7 +493,7 @@ function SubmitPanel({ onSubmitted }: { onSubmitted: (id: string) => void }) {
         {loading ? t('common.saving') : t('pages.validations.submitBtn')}
       </button>
       <div style={{ marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
-        {t('pages.validations.serverCertLink')} <a href={getServerCertificateUrl()} download style={{ color: 'var(--waf-brand)' }}>wafpass-server.crt</a>
+        {t('pages.validations.serverCertLink')} <a href={getServerCertificateUrl()} download style={{ color: 'var(--waf-brand)' }}>wombat-server.crt</a>
       </div>
     </Card>
   )
@@ -580,7 +580,7 @@ function DetailPanel({
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--text)' }}>Validation {shortId(id)}</h2>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>Validation {shortId(id)}</h2>
             {record && statusPill(record.status)}
           </div>
           <button onClick={onClose} style={{
@@ -691,7 +691,7 @@ function DetailPanel({
                   disabled={revoking}
                   style={{
                     padding: '0.55rem 1rem', borderRadius: '8px', border: '1px solid #DA2C38',
-                    background: 'rgba(218,44,56,0.08)', color: '#DA2C38', fontWeight: 700,
+                    background: 'color-mix(in srgb, #da2c38 8%, transparent)', color: '#DA2C38', fontWeight: 700,
                     fontSize: '0.8rem', cursor: revoking ? 'not-allowed' : 'pointer',
                   }}
                 >
@@ -726,7 +726,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
   const panel = mode === 'panel'
   const [ids, setIds] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('wafpass_validations') ?? '[]') as string[]
+      return JSON.parse(localStorage.getItem('wombat_validations') ?? '[]') as string[]
     } catch {
       return []
     }
@@ -740,7 +740,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
 
   // Persist known validation IDs to localStorage so repeat visits show history.
   useEffect(() => {
-    localStorage.setItem('wafpass_validations', JSON.stringify(ids))
+    localStorage.setItem('wombat_validations', JSON.stringify(ids))
   }, [ids])
 
   // Load details for all known IDs.
@@ -800,15 +800,15 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
       {!panel && (
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', color: 'var(--text)' }}>
+            <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.5rem', color: 'var(--text)' }}>
               {t('pages.validations.title')}
             </h1>
-            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
               {t('pages.validations.subtitle')}
             </p>
           </div>
           <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
-            Download WAF++ Root CA
+            Download WOMBATpass Root CA
           </a>
         </div>
       )}
@@ -829,7 +829,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
             style={{
               flex: 1, minWidth: '200px', padding: '0.5rem 0.75rem', borderRadius: '8px',
               border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)',
-              fontSize: '0.82rem',
+              fontSize: '0.85rem',
             }}
           />
           <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
@@ -847,7 +847,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
             style={{
               flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px',
               border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)',
-              fontSize: '0.82rem', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontSize: '0.85rem', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
             }}
           />
           <button
@@ -876,7 +876,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {[t('pages.validations.colStatus'), t('pages.validations.colProject'), t('pages.validations.colBranch'), t('pages.validations.colGitSha'), t('pages.validations.colValidated'), t('pages.validations.colAction')].map(h => (

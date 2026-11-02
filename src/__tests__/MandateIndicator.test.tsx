@@ -100,7 +100,7 @@ describe('MandateIndicator', () => {
 })
 
 // Same-session follow-up — the active mandate's own logo, always visible
-// in the top bar right next to the WAF++ logo (TopNavigation.tsx), not
+// in the top bar right next to the Wombat logo (TopNavigation.tsx), not
 // just on the Mandates page.
 
 describe('ActiveMandateLogo', () => {

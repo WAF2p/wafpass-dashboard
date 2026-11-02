@@ -16,8 +16,8 @@ import {
   recordFirstSeenFailures,
 } from '../audit'
 
-const AUDIT_KEY = 'wafpass_audit_log'
-const FIRST_SEEN_KEY = 'wafpass_first_seen_failures'
+const AUDIT_KEY = 'wombat_audit_log'
+const FIRST_SEEN_KEY = 'wombat_first_seen_failures'
 
 const makeRun = (overrides = {}) => ({
   id: 'run-abc',

@@ -1,5 +1,5 @@
 /**
- * Validation Center — unified page for the WAF++ PASS cryptographic validation
+ * Validation Center — unified page for the WOMBATpass cryptographic validation
  * registry and the "ship run" submission flow, plus a 2028 GA teaser banner.
  */
 import { useState } from 'react'
@@ -32,7 +32,7 @@ function TeaserBanner() {
       display: 'flex',
       alignItems: 'center',
       gap: '0.65rem',
-      fontSize: '0.82rem',
+      fontSize: '0.85rem',
     }}>
       <svg width="20" height="20" fill="none" stroke="#d97706" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -63,10 +63,10 @@ export default function ValidationCenterPage({ initialTab = 'registry' }: Valida
     <div style={{ padding: '1.25rem 1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', color: 'var(--text)' }}>
+          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.5rem', color: 'var(--text)' }}>
             {t('pages.validationCenter.title')}
           </h1>
-          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
             {t('pages.validationCenter.subtitle')}
           </p>
         </div>

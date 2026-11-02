@@ -217,11 +217,11 @@ export function loadMaturityState(): MaturityState {
   const settings = { ...DEFAULT_SETTINGS }
   const level = 1
   try {
-    const s = localStorage.getItem('wafpass_settings')
+    const s = localStorage.getItem('wombat_settings')
     if (s) Object.assign(settings, JSON.parse(s))
   } catch {}
   try {
-    const m = localStorage.getItem('wafpass_maturity')
+    const m = localStorage.getItem('wombat_maturity')
     if (m) return { level: parseInt(m) || 1, settings }
   } catch {}
   return { level, settings }
@@ -229,8 +229,8 @@ export function loadMaturityState(): MaturityState {
 
 export function saveMaturityState(level: number, settings: Settings) {
   try {
-    localStorage.setItem('wafpass_settings', JSON.stringify(settings))
-    localStorage.setItem('wafpass_maturity', String(level))
+    localStorage.setItem('wombat_settings', JSON.stringify(settings))
+    localStorage.setItem('wombat_maturity', String(level))
   } catch {}
 }
 

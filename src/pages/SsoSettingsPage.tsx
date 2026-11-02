@@ -29,7 +29,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
       <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--muted)' }}>{label}</label>
       {children}
-      {hint && <div style={{ fontSize: '0.63rem', color: 'var(--muted)', opacity: 0.75 }}>{hint}</div>}
+      {hint && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', opacity: 0.75 }}>{hint}</div>}
     </div>
   )
 }
@@ -227,8 +227,8 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
       {msg && (
         <div style={{
           padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.78rem',
-          background: msg.ok ? 'rgba(34,197,94,.08)' : 'rgba(239,68,68,.08)',
-          border: `1px solid ${msg.ok ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)'}`,
+          background: msg.ok ? 'rgba(34,197,94,.08)' : 'color-mix(in srgb, #ef4444 8%, transparent)',
+          border: `1px solid ${msg.ok ? 'rgba(34,197,94,.25)' : 'color-mix(in srgb, #ef4444 25%, transparent)'}`,
           color: msg.ok ? '#15803d' : '#ef4444',
         }}>
           {msg.text}
@@ -240,7 +240,7 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
           onClick={handleSave}
           disabled={saving}
           style={{
-            padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.825rem',
+            padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
             background: saving ? 'var(--bg)' : 'var(--waf-brand)', color: saving ? 'var(--muted)' : '#fff',
             border: '1px solid var(--waf-brand)', cursor: saving ? 'wait' : 'pointer',
           }}
@@ -252,9 +252,9 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
             onClick={handleDelete}
             disabled={saving}
             style={{
-              padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.825rem',
+              padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
               background: 'transparent', color: '#ef4444',
-              border: '1px solid rgba(239,68,68,.4)', cursor: 'pointer',
+              border: '1px solid color-mix(in srgb, #ef4444 40%, transparent)', cursor: 'pointer',
             }}
           >
             {t('pages.sso.removeBtn')}
@@ -410,9 +410,9 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
-        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: '0.15rem' }}>{t('pages.sso.spSection')}</div>
+        <div style={{ gridColumn: 'span 3', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: '0.15rem' }}>{t('pages.sso.spSection')}</div>
         <Field label={t('pages.sso.spEntityId')} hint={t('pages.sso.spEntityIdHint')}>
-          <input style={inputSx} value={form.entity_id} onChange={e => set('entity_id', e.target.value)} placeholder="https://wafpass.example.com" />
+          <input style={inputSx} value={form.entity_id} onChange={e => set('entity_id', e.target.value)} placeholder="https://wombat.example.com" />
         </Field>
         <Field label={t('pages.sso.acsUrl')} hint={t('pages.sso.acsUrlHint')}>
           <input style={inputSx} value={form.acs_url} onChange={e => set('acs_url', e.target.value)} placeholder="https://api.example.com/auth/saml/acs" />
@@ -430,7 +430,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
         </div>
 
         <div style={{ gridColumn: 'span 3', height: '1px', background: 'var(--border)', margin: '0.1rem 0' }} />
-        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.idpSection')}</div>
+        <div style={{ gridColumn: 'span 3', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.idpSection')}</div>
         <Field label={t('pages.sso.idpEntityId')}>
           <input style={inputSx} value={form.idp_entity_id} onChange={e => set('idp_entity_id', e.target.value)} placeholder="https://idp.example.com" />
         </Field>
@@ -444,7 +444,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
         </div>
 
         <div style={{ gridColumn: 'span 3', height: '1px', background: 'var(--border)', margin: '0.1rem 0' }} />
-        <div style={{ gridColumn: 'span 3', fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.attrMappingSection')}</div>
+        <div style={{ gridColumn: 'span 3', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.attrMappingSection')}</div>
         <Field label={t('pages.sso.usernameAttribute')} hint={t('pages.sso.usernameAttrHint')}>
           <input style={inputSx} value={form.username_attribute} onChange={e => set('username_attribute', e.target.value)} placeholder="…identity/claims/emailaddress" />
         </Field>
@@ -475,8 +475,8 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
       {msg && (
         <div style={{
           padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.78rem',
-          background: msg.ok ? 'rgba(34,197,94,.08)' : 'rgba(239,68,68,.08)',
-          border: `1px solid ${msg.ok ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)'}`,
+          background: msg.ok ? 'rgba(34,197,94,.08)' : 'color-mix(in srgb, #ef4444 8%, transparent)',
+          border: `1px solid ${msg.ok ? 'rgba(34,197,94,.25)' : 'color-mix(in srgb, #ef4444 25%, transparent)'}`,
           color: msg.ok ? '#15803d' : '#ef4444',
         }}>
           {msg.text}
@@ -488,7 +488,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
           onClick={handleSave}
           disabled={saving}
           style={{
-            padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.825rem',
+            padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
             background: saving ? 'var(--bg)' : 'var(--waf-brand)', color: saving ? 'var(--muted)' : '#fff',
             border: '1px solid var(--waf-brand)', cursor: saving ? 'wait' : 'pointer',
           }}
@@ -500,9 +500,9 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
             onClick={handleDelete}
             disabled={saving}
             style={{
-              padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.825rem',
+              padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
               background: 'transparent', color: '#ef4444',
-              border: '1px solid rgba(239,68,68,.4)', cursor: 'pointer',
+              border: '1px solid color-mix(in srgb, #ef4444 40%, transparent)', cursor: 'pointer',
             }}
           >
             {t('pages.sso.removeBtn')}
@@ -585,7 +585,7 @@ export default function SsoSettingsPage() {
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5,
       }}>
         <strong style={{ color: 'var(--text)' }}>{t('pages.sso.overviewTitle')}</strong> — {t('pages.sso.overviewText')}
-        <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'rgba(0,0,0,.06)', padding: '0 0.3rem', borderRadius: '3px' }}>pip install "wafpass-server[saml]"</code>).
+        <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, #000000 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, #000000 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>pip install "wombat-server[saml]"</code>).
       </div>
 
       {mandateOptions.length > 0 && (
