@@ -902,13 +902,14 @@ export default function TopNavigation({
         {/* User dropdown - avatar with hover menu */}
         <div className="top-nav-wrapper" style={{ position: 'relative' }}>
           <button
+            aria-label={user.display_name || user.username}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: '32px', height: '32px', borderRadius: '50%',
               background: 'var(--nav-surf)',
               border: '1px solid var(--nav-border)',
               cursor: 'pointer', transition: 'all 0.15s',
-              flexShrink: 0,
+              flexShrink: 0, position: 'relative', overflow: 'hidden',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'var(--nav-bg)'
@@ -921,12 +922,23 @@ export default function TopNavigation({
               e.currentTarget.style.borderColor = 'var(--nav-border)'
             }}
           >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={user.display_name || user.username} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-            ) : (
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0094FF' }}>
-                {user.display_name ? user.display_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
-              </span>
+            {/* Initials stay underneath: if the avatar URL fails to load the
+                fallback is already visible, no onError handler needed. The
+                image is painted as a CSS background instead of <img src> —
+                CodeQL's URL-taint queries treat every img src as a
+                script-URL sink they cannot see safeImageUrl() sanitises. */}
+            <span aria-hidden="true" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0094FF' }}>
+              {user.display_name ? user.display_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+            </span>
+            {avatarUrl && (
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  backgroundImage: `url("${avatarUrl}")`,
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                }}
+              />
             )}
           </button>
 

@@ -29,7 +29,15 @@ describe('safeImageUrl', () => {
     expect(safeImageUrl('data:image/png;base64,iVBORw0KGgo=')).toBe('data:image/png;base64,iVBORw0KGgo=')
     expect(safeImageUrl('data:image/jpeg;base64,/9j/4AAQ')).toBe('data:image/jpeg;base64,/9j/4AAQ')
     expect(safeImageUrl('data:image/svg+xml,<svg/>')).toBeNull()
-    expect(safeImageUrl('data:image/svg+xml,<svg/>', { allowSvgData: true })).toBe('data:image/svg+xml,<svg/>')
+    expect(safeImageUrl('data:image/svg+xml,<svg/>', { allowSvgData: true })).toBe(
+      'data:image/svg+xml,%3Csvg/%3E',
+    )
+  })
+
+  it('percent-encodes HTML meta-characters in allowed data URLs', () => {
+    expect(
+      safeImageUrl('data:image/svg+xml,<svg viewBox="0 0 1 1"/>', { allowSvgData: true }),
+    ).toBe('data:image/svg+xml,%3Csvg viewBox=%220 0 1 1%22/%3E')
   })
 
   it('rejects script and navigation URLs', () => {
