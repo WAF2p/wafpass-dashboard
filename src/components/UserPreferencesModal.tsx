@@ -31,7 +31,7 @@ function PrefRow({ label, desc, children }: { label: string; desc?: string; chil
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>{label}</div>
         {desc && <div style={{ fontSize: '0.71rem', color: 'var(--muted)', marginTop: '0.1rem', lineHeight: 1.4 }}>{desc}</div>}
       </div>
       {children}
@@ -63,7 +63,7 @@ const PAGE_OPTIONS = [
 
 const selectStyle: React.CSSProperties = {
   background: 'var(--bg)', color: 'var(--text)',
-  border: '1px solid var(--border)', borderRadius: '7px',
+  border: '1px solid var(--border)', borderRadius: '8px',
   padding: '0.3rem 0.55rem', fontSize: '0.78rem', outline: 'none', cursor: 'pointer',
 }
 
@@ -93,7 +93,7 @@ export default function UserPreferencesModal({ prefs, onChange, onClose }: Props
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       {/* Backdrop */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} onClick={onClose} />
+      <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, #000000 45%, transparent)' }} onClick={onClose} />
 
       {/* Panel — anchored bottom-left, beside the sidebar */}
       <div style={{
@@ -101,8 +101,8 @@ export default function UserPreferencesModal({ prefs, onChange, onClose }: Props
         width: '320px', maxHeight: 'calc(100vh - 2rem)',
         marginLeft: '0.75rem', marginBottom: '0.75rem',
         background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: '14px', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
+        borderRadius: '12px', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 24px 48px color-mix(in srgb, #000000 40%, transparent)',
         overflow: 'hidden',
       }}>
         {/* Header */}
@@ -190,7 +190,7 @@ export default function UserPreferencesModal({ prefs, onChange, onClose }: Props
           <button onClick={handleSave} style={{
             flex: 1, background: 'var(--waf-brand)', color: '#fff',
             border: 'none', borderRadius: '8px', padding: '0.5rem 1rem',
-            fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+            fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
           }}>
             {saved ? '✓ Saved' : 'Save'}
           </button>

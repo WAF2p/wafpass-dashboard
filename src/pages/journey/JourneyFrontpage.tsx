@@ -28,10 +28,10 @@ export default function JourneyFrontpage({ run, runs, onSetFilters, onNavigate }
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Hero text */}
       <JourneyCard accent="#DA2C38">
-        <div style={{ padding: '1.75rem 2rem', background: 'linear-gradient(135deg, rgba(218,44,56,0.08) 0%, transparent 60%)' }}>
+        <div style={{ padding: '1.75rem 2rem', background: 'linear-gradient(135deg, color-mix(in srgb, #da2c38 8%, transparent) 0%, transparent 60%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#DA2C38', boxShadow: '0 0 8px #DA2C38' }} />
-            <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#DA2C38', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#DA2C38', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {t('pages.journey.heroEyebrow')}
             </span>
           </div>
@@ -59,7 +59,7 @@ export default function JourneyFrontpage({ run, runs, onSetFilters, onNavigate }
         >
           <div style={{ padding: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#DA2C38', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#DA2C38', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 {t('pages.journey.companyCardLabel')}
               </span>
               <StageBadge score={companyScore} size="sm" />
@@ -80,7 +80,7 @@ export default function JourneyFrontpage({ run, runs, onSetFilters, onNavigate }
         {/* Project count card */}
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1.25rem' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: st.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: st.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
               {t('pages.journey.projectsCardLabel')}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginBottom: '0.5rem' }}>
@@ -97,14 +97,14 @@ export default function JourneyFrontpage({ run, runs, onSetFilters, onNavigate }
         {run && (
           <JourneyCard accent={st.color} onClick={() => onSetFilters({ project: run.project })}>
             <div style={{ padding: '1.25rem' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: st.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 800, color: st.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                 {t('pages.journey.selectedRunLabel')}
               </div>
               <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {run.project || run.path.split('/').pop() || '—'}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
+                <span style={{ fontSize: '1.2rem', fontWeight: 800, color: scoreColor(run.score) }}>{run.score}</span>
                 <StageBadge score={run.score} size="sm" />
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { sandboxScan, sandboxStatus, SandboxResponse, SandboxControlResult } from '../api'
+import { severityBg, severityColor, scoreColor } from '../severity'
 
 // ── Types shared between mock and real engine ─────────────────────────────────
 
@@ -35,9 +36,6 @@ interface SandboxOutput {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SEV_COLOR: Record<string, string> = {
-  critical: '#DA2C38', high: '#f97316', medium: '#eab308', low: '#22c55e',
-}
 const STATUS_COLOR: Record<string, string> = {
   PASS: '#22c55e', FAIL: '#DA2C38', SKIP: '#94a3b8',
 }
@@ -294,9 +292,6 @@ function fromRealEngine(r: SandboxResponse): SandboxOutput {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function scoreColor(s: number) {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
-}
 
 type EngineMode = 'mock' | 'real'
 type RealEngineStatus = 'unknown' | 'checking' | 'available' | 'unavailable'
@@ -323,7 +318,7 @@ export default function SandboxPage() {
           setRealStatusDetail(`${s.controls_dir}`)
         } else if (!s.engine_available) {
           setRealStatus('unavailable')
-          setRealStatusDetail('wafpass-core not installed on server')
+          setRealStatusDetail('wombat-core not installed on server')
         } else {
           setRealStatus('unavailable')
           setRealStatusDetail(`Controls dir not found: ${s.controls_dir}`)
@@ -421,7 +416,7 @@ export default function SandboxPage() {
         {!realAvailable && realStatus !== 'checking' && (
           <span style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>
             {realStatus === 'unavailable'
-              ? 'To enable: install wafpass-core and set WAFPASS_CONTROLS_DIR on the server'
+              ? 'To enable: install wombat-core and set WOMBAT_CONTROLS_DIR on the server'
               : ''}
           </span>
         )}
@@ -506,8 +501,8 @@ export default function SandboxPage() {
               <div style={{ fontWeight: 600 }}>Architect Sandbox</div>
               <div style={{ fontSize: '0.78rem', marginTop: '0.3rem' }}>
                 {engineMode === 'real'
-                  ? 'Runs the full WAF++ engine server-side against your HCL'
-                  : 'Paste HCL and click Analyse for instant WAF++ feedback'
+                  ? 'Runs the full WOMBATpass engine server-side against your HCL'
+                  : 'Paste HCL and click Analyse for instant Wombat feedback'
                 }
               </div>
             </div>
@@ -517,15 +512,15 @@ export default function SandboxPage() {
             <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
               <div className="spinner" style={{ margin: '0 auto 1rem' }} />
               <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
-                {engineMode === 'real' ? 'Running WAF++ engine on server…' : 'Evaluating controls…'}
+                {engineMode === 'real' ? 'Running WOMBATpass engine on server…' : 'Evaluating controls…'}
               </div>
             </div>
           )}
 
           {scanError && (
             <div style={{
-              background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
-              borderRadius: '10px', padding: '1rem 1.25rem', fontSize: '0.82rem', color: '#DA2C38',
+              background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+              borderRadius: '10px', padding: '1rem 1.25rem', fontSize: '0.85rem', color: '#DA2C38',
             }}>
               <div style={{ fontWeight: 700, marginBottom: '0.3rem' }}>Engine error</div>
               <div style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{scanError}</div>
@@ -570,7 +565,7 @@ export default function SandboxPage() {
                   <span>
                     Engine:{' '}
                     <strong style={{ color: output.engine === 'real' ? '#22c55e' : 'var(--text)' }}>
-                      {output.engine === 'real' ? 'Real WAF++ engine' : 'Mock (regex)'}
+                      {output.engine === 'real' ? 'Real WOMBATpass engine' : 'Mock (regex)'}
                     </strong>
                   </span>
                   {output.controls_loaded != null && (
@@ -598,16 +593,16 @@ export default function SandboxPage() {
                       onClick={() => setExpanded(expanded === r.control_id ? null : r.control_id)}
                     >
                       <span style={{
-                        padding: '0.1rem 0.45rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
+                        padding: '0.1rem 0.45rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
                         background: `${STATUS_COLOR[r.status]}22`, color: STATUS_COLOR[r.status],
                       }}>{r.status}</span>
-                      <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', flex: 1 }}>{r.control_title}</span>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
+                      <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)', flex: 1 }}>{r.control_title}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
                         {r.pillar}
                       </span>
                       <span style={{
-                        padding: '0.1rem 0.4rem', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700,
-                        background: `${SEV_COLOR[r.severity]}22`, color: SEV_COLOR[r.severity],
+                        padding: '0.1rem 0.4rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
+                        background: severityBg(r.severity), color: severityColor(r.severity),
                       }}>{r.severity}</span>
                       <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{expanded === r.control_id ? '▲' : '▼'}</span>
                     </div>
@@ -618,7 +613,7 @@ export default function SandboxPage() {
                           <div key={i} style={{ background: 'var(--bg)', borderRadius: '6px', padding: '0.625rem 0.75rem', border: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
                               <span style={{
-                                padding: '0.08rem 0.4rem', borderRadius: '999px', fontSize: '0.62rem', fontWeight: 700,
+                                padding: '0.08rem 0.4rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
                                 background: `${STATUS_COLOR[chk.status]}22`, color: STATUS_COLOR[chk.status], flexShrink: 0,
                               }}>{chk.status}</span>
                               <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>{chk.check_title}</span>

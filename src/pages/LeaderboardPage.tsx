@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { fetchLeaderboard, LeaderboardEntry, LeaderboardOut } from '../api'
 import { useI18n } from '../i18n'
+import { scoreColor } from '../severity';
 
 const TIER_COLORS: Record<number, string> = {
   1: '#d97706', 2: '#0094FF', 3: '#0891b2', 4: '#7c3aed', 5: '#059669',
 }
 
 const MEDAL: Record<number, { color: string; label: string; glow: string }> = {
-  1: { color: '#FFD700', label: '1st', glow: 'rgba(255,215,0,0.35)' },
-  2: { color: '#C0C0C0', label: '2nd', glow: 'rgba(192,192,192,0.35)' },
-  3: { color: '#CD7F32', label: '3rd', glow: 'rgba(205,127,50,0.35)' },
+  1: { color: '#FFD700', label: '1st', glow: 'color-mix(in srgb, #ffd700 35%, transparent)' },
+  2: { color: '#C0C0C0', label: '2nd', glow: 'color-mix(in srgb, #c0c0c0 35%, transparent)' },
+  3: { color: '#CD7F32', label: '3rd', glow: 'color-mix(in srgb, #cd7f32 35%, transparent)' },
 }
 
 const PODIUM_HEIGHT: Record<number, number> = { 1: 130, 2: 100, 3: 80 }
@@ -47,15 +48,15 @@ function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) 
           ? `linear-gradient(135deg, ${medal.color}28 0%, ${medal.color}10 100%)`
           : `linear-gradient(135deg, ${medal.color}18 0%, ${medal.color}08 100%)`,
         border: `1.5px solid ${medal.color}99`,
-        borderRadius: '14px',
+        borderRadius: '12px',
         padding: '1rem 0.875rem',
         textAlign: 'center',
-        boxShadow: isFirst ? `0 0 32px ${medal.glow}, 0 4px 24px rgba(0,0,0,0.2)` : `0 2px 12px rgba(0,0,0,0.15)`,
+        boxShadow: isFirst ? `0 0 32px ${medal.glow}, 0 4px 24px color-mix(in srgb, #000000 20%, transparent)` : `0 2px 12px rgba(0,0,0,0.15)`,
         marginBottom: '0.5rem',
       }}>
         {/* Crown for 1st */}
         {isFirst && (
-          <div style={{ fontSize: '1.4rem', marginBottom: '0.25rem' }}>👑</div>
+          <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>👑</div>
         )}
         {/* Medal circle */}
         <div style={{
@@ -142,7 +143,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
 
       {entries.length === 0 ? (
         <div style={{
-          padding: '2.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.82rem',
+          padding: '2.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.85rem',
           background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px',
         }}>
           {t('pages.leaderboard.noData')}
@@ -199,7 +200,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
                         </span>
                       </td>
                       <td style={tdStyle}>
-                        <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>
                           {entry.display_name || entry.project}
                         </div>
                         {entry.display_name && (
@@ -216,17 +217,17 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
                       </td>
                       <td style={tdStyle}>
                         <span style={{
-                          fontSize: '0.82rem', fontWeight: 700,
-                          color: entry.score >= 80 ? '#059669' : entry.score >= 60 ? '#d97706' : '#DA2C38',
+                          fontSize: '0.85rem', fontWeight: 700,
+                          color: scoreColor(entry.score),
                         }}>
                           {entry.score}
                         </span>
                       </td>
                       <td style={tdStyle}>
                         {entry.tiers_gained != null ? (
-                          <span style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.82rem' }}>+{entry.tiers_gained}</span>
+                          <span style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.85rem' }}>+{entry.tiers_gained}</span>
                         ) : (
-                          <span style={{ fontSize: '0.82rem', color: 'var(--text)', fontWeight: 600 }}>{entry.days_held}d</span>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600 }}>{entry.days_held}d</span>
                         )}
                       </td>
                     </tr>
@@ -243,7 +244,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
 
 const thStyle: React.CSSProperties = {
   padding: '0.6rem 1rem', textAlign: 'left',
-  fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted)',
+  fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
   textTransform: 'uppercase', letterSpacing: '0.06em',
 }
 
@@ -275,8 +276,8 @@ export default function LeaderboardPage() {
   if (error) {
     return (
       <div style={{
-        padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(218,44,56,.3)',
-        background: 'rgba(218,44,56,.08)', color: '#f87171', fontSize: '0.85rem',
+        padding: '1.5rem', borderRadius: '12px', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+        background: 'color-mix(in srgb, #da2c38 8%, transparent)', color: '#f87171', fontSize: '0.85rem',
       }}>
         {t('pages.leaderboard.loadFailed')}: {error}
       </div>
@@ -288,14 +289,14 @@ export default function LeaderboardPage() {
       {/* Header banner */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '1.25rem',
-        padding: '1.25rem 1.5rem', borderRadius: '14px', marginBottom: '2rem',
-        background: 'linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(5,150,105,0.12) 100%)',
-        border: '1px solid rgba(255,215,0,0.4)',
+        padding: '1.25rem 1.5rem', borderRadius: '12px', marginBottom: '2rem',
+        background: 'linear-gradient(135deg, color-mix(in srgb, #ffd700 15%, transparent) 0%, color-mix(in srgb, #059669 12%, transparent) 100%)',
+        border: '1px solid color-mix(in srgb, #ffd700 40%, transparent)',
       }}>
         <div style={{
           flexShrink: 0, width: '44px', height: '44px', borderRadius: '12px',
-          background: 'rgba(255,215,0,0.25)', border: '1px solid rgba(255,215,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem',
+          background: 'color-mix(in srgb, #ffd700 25%, transparent)', border: '1px solid color-mix(in srgb, #ffd700 50%, transparent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem',
         }}>
           🏆
         </div>

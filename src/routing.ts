@@ -2,12 +2,16 @@ export const ALL_PAGES = [
   'dashboard', 'globaldashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
   'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
-  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
+  'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'mandates', 'mandateadmin', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
   'reference', 'antipattern', 'notifications', 'legal', 'projectgroups', 'pipelines',
   'compliance-readiness', 'autofix', 'engineering', 'architecture', 'maturity',
   'validations',
   'shiprun',
+  'betafeatures',
+  'mydashboard',
+  'about',
+  'framework-detail',
 ] as const
 
 export type Page = typeof ALL_PAGES[number]
@@ -43,6 +47,8 @@ export const PAGE_TITLE: Record<Page, string> = {
   skipped:         'Skipped Controls',
   access:          'Access & Roles',
   users:           'User Management',
+  mandates:        'Mandates',
+  mandateadmin:    'Mandate Administration',
   apikeys:         'API Key Management',
   sso:             'SSO Settings',
   groupmappings:   'Group → Role Mappings',
@@ -64,14 +70,18 @@ export const PAGE_TITLE: Record<Page, string> = {
   engineering: 'Engineering Operations Center',
   architecture: 'Architecture Operations Center',
   maturity: 'Maturity Operations Center',
-  validations: 'Validation Registry',
-  shiprun: 'Ship Run for Validation',
+  validations: 'Validation Center',
+  shiprun: 'Validation Center',
+  betafeatures: 'Beta Features',
+  mydashboard: 'My Dashboard',
+  about: 'About Wombat',
+  'framework-detail': 'Framework Detail',
 }
 
 export const PAGE_SUBTITLE: Record<Page, string> = {
-  dashboard:       'Risk posture overview across all WAF++ pillars',
+  dashboard:       'Risk posture overview across all Wombat pillars',
   globaldashboard: 'Global flight operations view: project portfolio, maturity journey, and control matrix',
-  catalogue:       'All WAF++ framework controls and your custom controls — browse, filter, author, and export',
+  catalogue:       'All Wombat framework controls and your custom controls — browse, filter, author, and export',
   findings:        'Detailed results from the selected run',
   compliance:      'Security command center: pillar coverage, pass rates and regulatory framework mapping',
   gapanalysis:     'Shortest path to framework compliance — controls ranked by effort-per-requirement, with remediation steps and evidence export',
@@ -84,23 +94,25 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   secrets:         'Hardcoded credential issues detected in IaC — passwords, API keys, tokens, and private keys that must be migrated to a secrets manager',
   modules:         'Per-module pass rate and score drag — identify which module is pulling the overall score down',
   cost:            'Live cost operations center: financial exposure, burn-down projection, savings opportunities, and governance risk for failing WAF-COST controls',
-  runs:            'All recorded WAF++ scan runs',
+  runs:            'All recorded WOMBATpass scan runs',
   diff:            'Finding-level diff between two runs — newly broken controls, fixed controls, score delta per pillar',
   audit:           'Tamper-evident record of every waiver, risk acceptance, and scan event — export for SOC2/ISO27001 evidence collection',
   evidence:        'Generate a timestamped, auditor-ready evidence package — passing controls, waivers, risk acceptances, and audit trail',
   settings:        'Configure scan defaults, maturity level, and feature toggles',
-  runscan:         'Trigger a WAF++ scan from the UI or generate a CLI command',
-  sandbox:         'Evaluate HCL snippets against WAF++ controls instantly',
-  waivers:         'Suppress controls from failing · export as .wafpass-skip.yml',
+  runscan:         'Trigger a WOMBATpass scan from the UI or generate a CLI command',
+  sandbox:         'Evaluate HCL snippets against Wombat controls instantly',
+  waivers:         'Suppress controls from failing · export as .wombat-skip.yml',
   risk:            'Formally accept or mitigate risks — with approver, expiry and traceability',
-  feedback:        'Share your thoughts with the WAF++ team — we read every message',
+  feedback:        'Share your thoughts with the Wombat team — we read every message',
   skipped:         'Controls skipped by the engine, waived, or risk-accepted — review your coverage gaps',
   access:          'Role definitions and page-level access model',
   users:           'Create, edit, activate/deactivate, and delete user accounts',
+  mandates:        'Create and manage the companies (mandates) inside this holding — holding_admin only',
+  mandateadmin:    'Turn this single-company instance into a multi-mandate holding deployment — a one-way, irreversible switch',
   apikeys:         'Generate and revoke API keys for CI/CD pipelines and service accounts',
   sso:             'Configure OIDC and SAML2 single sign-on for your organisation',
-  groupmappings:   'Map IdP group memberships to WAF++ roles — evaluated first during SSO login',
-  controlspacks:   'Sync and activate versioned WAF++ control packs — import, roll back, and track control catalogue changes',
+  groupmappings:   'Map IdP group memberships to WOMBATpass roles — evaluated first during SSO login',
+  controlspacks:   'Sync and activate versioned Wombat control packs — import, roll back, and track control catalogue changes',
   projectoverview: 'Per-project score trends, maturity progression, and achievement tracking across all scans',
   passports:       'All project passports at a glance — owner, criticality, environment, recent achievements',
   projectgroups:   'Group-based access control — assign teams to projects for run access management',
@@ -108,8 +120,8 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   leaderboard:     'Top sovereign projects by Tier 5 tenure and most improved teams in the last 30 days',
   journey:         'Your flight from ground to cruise altitude — the story of building secure cloud infrastructure',
   userprefs:       'Appearance, navigation defaults, date formats, and report behaviour — stored in this browser',
-  reference:       'Complete system architecture documentation — wafpass-core, wafpass-server, wafpass-dashboard',
-  antipattern:     "Side-by-side 'Bad vs. Good' code comparisons for each WAF++ pillar",
+  reference:       'Complete system architecture documentation — wombat-core, wombat-server, wombat-dashboard',
+  antipattern:     "Side-by-side 'Bad vs. Good' code comparisons for each Wombat pillar",
   notifications:   'System notifications — updates, urgent alerts, and important announcements',
   legal:           'Liability disclaimer, terms of use, and open source notice',
   pipelines:       'CI/CD dashboard: scan volume, pass rate, average score, active projects, and recent pipeline activity.',
@@ -118,8 +130,12 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   engineering: 'Single pane for findings, remediation sprints, secrets, and infrastructure change drift',
   architecture: 'Design intelligence: controls, attack paths, blast radius, dependencies, modules, sandbox, and reference architecture',
   maturity: 'Company and project maturity journey, stage progression, and next milestones',
-  validations: 'Official cryptographic validations of WAF++ PASS runs — certificate chain, badges, and revocation status',
-  shiprun: 'Pick a recent scan run and submit it for official WAF++ validation countersignature.',
+  validations: 'Unified cryptographic validation center — registry, run submission, and certificate artifacts.',
+  shiprun: 'Unified cryptographic validation center — registry, run submission, and certificate artifacts.',
+  betafeatures: 'Opt in to experimental WOMBATpass features and shape what ships next.',
+  mydashboard: 'Build your own per-user widget board — add, resize, reorder, and share layouts.',
+  about: 'Version, team, and project information about Wombat.',
+  'framework-detail': 'Detailed regulatory framework coverage — every mapped Wombat control and its run status.',
 }
 
 export interface FilterState {
@@ -156,9 +172,7 @@ export function buildHash(page: Page, runId: string | null, filters: FilterState
   return query ? `#/${page}?${query}` : `#/${page}`
 }
 
-export function scoreColor(s: number): string {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
+export { scoreColor } from './severity'
 
 export function buildJourneyHash(filters: FilterState = {}): string {
   return buildHash('journey', null, filters)

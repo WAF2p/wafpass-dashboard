@@ -15,14 +15,14 @@ const ThemeContext = createContext<ThemeCtx>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeName, setThemeName] = useState<ThemeName>(() => {
-    const stored = localStorage.getItem('wafpass_theme') as ThemeName | null
+    const stored = localStorage.getItem('wombat_theme') as ThemeName | null
     if (stored && stored in themes) return stored
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeName)
-    localStorage.setItem('wafpass_theme', themeName)
+    localStorage.setItem('wombat_theme', themeName)
   }, [themeName])
 
   function toggleTheme() {

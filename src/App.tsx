@@ -2,7 +2,11 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { ControlMeta, createDemoRun, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, getServerUrl, pushUserPrefsToServer, type UserOut } from './api'
 import { useAuth } from './AuthContext'
 import { I18nProvider } from './i18n'
+import { BetaFeaturesProvider } from './beta/BetaFeaturesContext'
 import LoginPage from './pages/LoginPage'
+import ImpersonationBanner from './components/ImpersonationBanner'
+import BriefingMode from './components/BriefingMode'
+import WidgetWall from './components/WidgetWall'
 import OnboardingTour from './components/OnboardingTour'
 import RunSelectorModal from './components/RunSelectorModal'
 import WelcomeChecklist from './components/WelcomeChecklist'
@@ -13,7 +17,7 @@ import Footer from './components/Footer'
 import PdfReport from './components/PdfReport'
 import { loadMaturityState, saveMaturityState, Settings } from './pages/settingsUtils'
 import { DEFAULT_USER_PREFS, loadUserPrefs, saveUserPrefs, UserPreferences } from './pages/userPrefsUtils'
-import { buildHash, Page, parseHash } from './routing'
+import { buildHash, FilterState, PAGE_SET, Page, parseHash } from './routing'
 import { useControlsCatalogue } from './useControlsCatalogue'
 import { useRunLoader } from './useRunLoader'
 import { NotificationProvider } from './notifications/context'
@@ -23,6 +27,7 @@ const DashboardPage          = lazy(() => import('./pages/DashboardPage'))
 const FindingsPage           = lazy(() => import('./pages/FindingsPage'))
 const CompliancePage         = lazy(() => import('./pages/CompliancePage'))
 const ComplianceReadinessPage = lazy(() => import('./pages/ComplianceReadinessPage'))
+const FrameworkDetailPage     = lazy(() => import('./pages/FrameworkDetailPage'))
 const RegionsPage            = lazy(() => import('./pages/RegionsPage'))
 const ExploitPathsPage       = lazy(() => import('./pages/ExploitPathsPage'))
 const RunsListPage           = lazy(() => import('./pages/RunsListPage'))
@@ -46,6 +51,8 @@ const GapAnalysisPage        = lazy(() => import('./pages/GapAnalysisPage'))
 const CostImpactPage         = lazy(() => import('./pages/CostImpactPage'))
 const AccessRolesPage        = lazy(() => import('./pages/AccessRolesPage'))
 const UserManagementPage     = lazy(() => import('./pages/UserManagementPage'))
+const MandateManagementPage  = lazy(() => import('./pages/MandateManagementPage'))
+const MandateAdministrationPage = lazy(() => import('./pages/MandateAdministrationPage'))
 const ApiManagementPage      = lazy(() => import('./pages/ApiManagementPage'))
 const SsoSettingsPage        = lazy(() => import('./pages/SsoSettingsPage'))
 const GroupMappingsPage      = lazy(() => import('./pages/GroupMappingsPage'))
@@ -65,8 +72,10 @@ const LegalPage              = lazy(() => import('./pages/LegalPage'))
 const ProjectGroupsPage      = lazy(() => import('./pages/ProjectGroupsPage'))
 const PipelineOperationsCenter = lazy(() => import('./pages/PipelineOperationsCenter'))
 const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
-const ValidationsPage        = lazy(() => import('./pages/ValidationsPage'))
-const ShipRunPage            = lazy(() => import('./pages/ShipRunPage'))
+const ValidationCenterPage   = lazy(() => import('./pages/ValidationCenterPage'))
+const AboutPage              = lazy(() => import('./pages/AboutPage'))
+const BetaFeaturesPage       = lazy(() => import('./pages/BetaFeaturesPage'))
+const MyDashboardPage        = lazy(() => import('./pages/MyDashboardPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -96,8 +105,17 @@ function AuthenticatedApp({ user, role, onLogout }: {
 }) {
   // Capture the hash run ID once on mount for deep-link restoration
   const [initialRunId] = useState(() => parseHash().runId)
-  const [page, setPage] = useState<Page>(() => parseHash().page)
+  const [page, setPage] = useState<Page>(() => {
+    const parsed = parseHash()
+    const hash = window.location.hash
+    if (hash && hash !== '#' && hash !== '#/' && parsed.page) return parsed.page
+    const preferred = loadUserPrefs().defaultPage
+    return PAGE_SET.has(preferred) ? preferred as Page : parsed.page
+  })
+  const [filters, setFilters] = useState<FilterState>(() => parseHash().filters)
   const [showRunModal, setShowRunModal] = useState(false)
+  const [showBriefing, setShowBriefing] = useState(false)
+  const [showWidgetWall, setShowWidgetWall] = useState(false)
   const [userPrefs, setUserPrefs] = useState<UserPreferences>(loadUserPrefs)
   const [prefsSyncStatus, setPrefsSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
   const prefsSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -128,45 +146,46 @@ function AuthenticatedApp({ user, role, onLogout }: {
     }
   }
 
-  function navigate(newPage: Page) {
+  function navigate(newPage: Page, nextFilters?: FilterState) {
     setPage(newPage)
-    window.history.pushState(null, '', buildHash(newPage, selectedId))
+    setFilters(nextFilters ?? {})
+    // URL is pushed by the page-change effect below, keeping filters in sync.
   }
 
   // Keep URL in sync with page changes
   useEffect(() => {
     if (!mounted.current) return
-    window.history.pushState(null, '', buildHash(page, selectedId))
+    window.history.pushState(null, '', buildHash(page, selectedId, filters))
   }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reflect run selection in URL without creating a new history entry
   useEffect(() => {
-    window.history.replaceState(null, '', buildHash(page, selectedId))
+    window.history.replaceState(null, '', buildHash(page, selectedId, filters))
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle browser back/forward and initialise URL on bare root
   useEffect(() => {
     function onPopState() {
-      const { page: p, runId } = parseHash()
+      const { page: p, runId, filters: f } = parseHash()
       setPage(p)
+      setFilters(f)
       if (runId) setSelectedId(runId)
     }
     window.addEventListener('popstate', onPopState)
     mounted.current = true
     if (!window.location.hash || window.location.hash === '#') {
-      window.history.replaceState(null, '', buildHash(page, selectedId))
+      window.history.replaceState(null, '', buildHash(page, selectedId, filters))
     }
     return () => window.removeEventListener('popstate', onPopState)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch counts from server on mount; fall back to localStorage cache if unreachable
+  // Fetch counts from the server on mount. Never fall back to a local cache:
+  // those keys are not user-scoped, so a shared browser could otherwise show
+  // another user's waiver/risk counts. On failure the counts stay at zero.
   useEffect(() => {
     Promise.all([fetchWaivers(), fetchRisks()])
       .then(([w, r]) => { setWaiverCount(w.length); setRiskCount(r.length) })
-      .catch(() => {
-        try { setWaiverCount(Object.keys(JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}')).length) } catch {}
-        try { setRiskCount(Object.keys(JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}')).length) } catch {}
-      })
+      .catch(() => { /* scoped fetch failed — do not read cross-user local caches */ })
   }, [])
 
   const initialMaturity = loadMaturityState()
@@ -239,7 +258,10 @@ function AuthenticatedApp({ user, role, onLogout }: {
 
   return (
     <I18nProvider lang={effectiveLang}>
+    <BetaFeaturesProvider prefs={userPrefs} onChange={handleUserPrefsChange}>
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <ImpersonationBanner />
+
       {showRunModal && (
         <RunSelectorModal
           runs={runs}
@@ -275,10 +297,14 @@ function AuthenticatedApp({ user, role, onLogout }: {
           waiverCount={waiverCount}
           riskCount={riskCount}
           failCount={failCount}
+          controls={availableControls}
           navigate={navigate}
+          onSelectRun={id => { setSelectedId(id); navigate('dashboard') }}
           onOpenUserPrefs={() => navigate('userprefs')}
           onLogout={onLogout}
           onShowRunModal={() => setShowRunModal(true)}
+          onStartBriefing={() => setShowBriefing(true)}
+          onStartWidgetWall={() => setShowWidgetWall(true)}
           onOpenOnboarding={() => setShowOnboarding(true)}
         />
 
@@ -291,6 +317,19 @@ function AuthenticatedApp({ user, role, onLogout }: {
         }>
           {page === 'userprefs' ? (
             <UserPreferencesPage prefs={userPrefs} user={user} syncStatus={prefsSyncStatus} onChange={handleUserPrefsChange} />
+          ) : page === 'mydashboard' ? (
+            <MyDashboardPage
+              run={run}
+              runs={runs}
+              waiverCount={waiverCount}
+              riskCount={riskCount}
+              maturityLevel={maturityLevel}
+              settings={settings}
+              prefs={userPrefs}
+              onChange={handleUserPrefsChange}
+              navigate={navigate}
+              onSelectRun={id => { setSelectedId(id); navigate('dashboard') }}
+            />
           ) : page === 'journey' ? (
             <JourneyPage run={run} runs={runs} navigate={navigate} />
           ) : page === 'globaldashboard' ? (
@@ -318,6 +357,10 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <ControlsPacksPage navigate={p => navigate(p as Page)} />
           ) : page === 'users' ? (
             <UserManagementPage />
+          ) : page === 'mandates' ? (
+            <MandateManagementPage />
+          ) : page === 'mandateadmin' ? (
+            <MandateAdministrationPage />
           ) : page === 'groupmappings' ? (
             <GroupMappingsPage />
           ) : page === 'apikeys' ? (
@@ -332,6 +375,16 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <NotificationsPage />
           ) : page === 'settings' ? (
             <SettingsPage maturityLevel={maturityLevel} settings={settings} onChange={handleSettingsChange} />
+          ) : page === 'betafeatures' ? (
+            <BetaFeaturesPage
+              prefs={userPrefs}
+              onChange={handleUserPrefsChange}
+              onOpenSettings={() => navigate('settings')}
+              onNavigate={navigate}
+              hasRun={!!run}
+              onStartBriefing={() => setShowBriefing(true)}
+              onStartWidgetWall={() => setShowWidgetWall(true)}
+            />
           ) : page === 'runscan' ? (
             <RunScanPage />
           ) : page === 'sandbox' ? (
@@ -376,13 +429,15 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'dashboard' ? (
             <DashboardPage run={run} onNav={p => navigate(p as Page)} waiverCount={waiverCount} riskCount={riskCount} runCount={runs.length} />
           ) : page === 'findings' ? (
-            <FindingsPage run={run} />
+            <FindingsPage run={run} onNavigate={navigate} />
           ) : page === 'compliance' ? (
-            <CompliancePage run={run} settings={settings} />
+            <CompliancePage run={run} settings={settings} navigate={navigate} />
           ) : page === 'compliance-readiness' ? (
             <ComplianceReadinessPage run={run} />
+          ) : page === 'framework-detail' ? (
+            <FrameworkDetailPage run={run} navigate={p => navigate(p as Page)} frameworkId={filters.framework} />
           ) : page === 'gapanalysis' ? (
-            <GapAnalysisPage run={run} />
+            <GapAnalysisPage run={run} navigate={p => navigate(p as Page)} frameworkId={filters.framework} />
           ) : page === 'changes' ? (
             <ChangesPage run={run} runs={runs} />
           ) : page === 'regions' ? (
@@ -419,18 +474,21 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <PipelineOperationsCenter navigate={navigate} />
           ) : page === 'autofix' ? (
             <AutoFixPage run={run} onBack={() => navigate('dashboard')} />
-          ) : page === 'validations' ? (
-            <ValidationsPage />
-          ) : page === 'shiprun' ? (
-            <ShipRunPage />
+          ) : page === 'validations' || page === 'shiprun' ? (
+            <ValidationCenterPage initialTab={page === 'shiprun' ? 'ship' : 'registry'} />
+          ) : page === 'about' ? (
+            <AboutPage />
           ) : null}
         </Suspense>
         </main>
       </div>
 
+      {showBriefing && run && <BriefingMode run={run} onClose={() => setShowBriefing(false)} />}
+      {showWidgetWall && run && <WidgetWall run={run} runs={runs} onClose={() => setShowWidgetWall(false)} />}
+
       {/* PDF report — hidden in normal view, printed only */}
       {run && (
-        <div id="wafpass-pdf-root" style={{ display: 'none' }}>
+        <div id="wombat-pdf-root" style={{ display: 'none' }}>
           <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} darkMode={userPrefs.pdfDarkMode} />
         </div>
       )}
@@ -438,7 +496,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
       {/* Footer - at bottom, full width, dark background */}
       <Footer />
     </div>
-
+    </BetaFeaturesProvider>
     </I18nProvider>
   )
 }

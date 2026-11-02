@@ -3,7 +3,7 @@ import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
 import { aggregateScore, companyTrend, JOURNEY_STAGES, latestRunByProject, nextStage, pointsToNextStage, stageFor } from './journeyUtils'
-import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, TwoColumnGrid } from './OperationsCenterShell'
+import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner, TwoColumnGrid } from './OperationsCenterShell'
 import StageBadge from './journey/components/StageBadge'
 import type { JourneyStage } from './journeyUtils'
 
@@ -155,7 +155,7 @@ export default function MaturityOperationsCenter({
     >
       <div style={{ color, flexShrink: 0 }}><Icon path={icon} size={20} /></div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('common.view')} →</div>
       </div>
     </button>
@@ -171,11 +171,11 @@ export default function MaturityOperationsCenter({
       >
         {runs.length > 0 && (
           <div style={{ textAlign: 'right', minWidth: '180px' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.journey.companyAverage')}
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: scoreColor(companyScore) }}>{companyScore}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: scoreColor(companyScore) }}>{companyScore}</span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
             </div>
             <div style={{ marginTop: '0.25rem' }}>
@@ -184,6 +184,11 @@ export default function MaturityOperationsCenter({
           </div>
         )}
       </CenterHero>
+
+      <StubBanner
+        title={t('pages.maturityOps.stubsInProgress')}
+        description={t('pages.maturityOps.stubsVoteRfc')}
+      />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
         <KpiCard
@@ -236,7 +241,7 @@ export default function MaturityOperationsCenter({
                           <span style={{ fontSize: '1rem' }}>{s.icon}</span>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)' }}>{s.shortLabel}</span>
-                            <span style={{ fontSize: '0.58rem', color: 'var(--muted)' }}>{s.range}</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{s.range}</span>
                           </div>
                         </div>
                       </div>
@@ -245,7 +250,7 @@ export default function MaturityOperationsCenter({
                       </div>
                       <div style={{ width: '50px', textAlign: 'right', flexShrink: 0 }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>{s.count}</span>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--muted)', marginLeft: '0.15rem' }}>{pct >= 10 ? `${Math.round(pct)}%` : ''}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.15rem' }}>{pct >= 10 ? `${Math.round(pct)}%` : ''}</span>
                       </div>
                     </div>
                   )
@@ -327,6 +332,30 @@ export default function MaturityOperationsCenter({
                   ))}
                 </div>
               )}
+            </SectionCard>
+
+            {/* Predictive maturity forecasting stub */}
+            <SectionCard title={t('pages.maturityOps.predictiveForecast')} icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '10px', border: '1px dashed var(--border)', background: 'var(--bg)' }}>
+                <Icon path="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" size={20} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--waf-warn)' }}>{t('pages.maturityOps.stubsInProgress')}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{t('pages.maturityOps.stubsVoteRfc')}</div>
+                </div>
+                <MiniBadge color="var(--waf-warn)">{t('pages.maturityOps.stubBadge')}</MiniBadge>
+              </div>
+            </SectionCard>
+
+            {/* Badge verification pipeline stub */}
+            <SectionCard title={t('pages.maturityOps.badgeVerification')} icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '10px', border: '1px dashed var(--border)', background: 'var(--bg)' }}>
+                <Icon path="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" size={20} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--waf-warn)' }}>{t('pages.maturityOps.stubsInProgress')}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{t('pages.maturityOps.stubsVoteRfc')}</div>
+                </div>
+                <MiniBadge color="var(--waf-warn)">{t('pages.maturityOps.stubBadge')}</MiniBadge>
+              </div>
             </SectionCard>
 
             <RightRail>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { appendAuditEvent } from '../audit'
 import { fetchWaivers, upsertWaiver, deleteWaiver } from '../api'
 import { useI18n } from '../i18n'
+import { yamlQuote } from '../yamlQuote'
 
 export interface Waiver {
   id: string
@@ -11,7 +12,7 @@ export interface Waiver {
   project?: string
 }
 
-const STORAGE_KEY = 'wafpass_waivers'
+const STORAGE_KEY = 'wombat_waivers'
 
 function loadLocalWaivers(): Record<string, Waiver> {
   try {
@@ -29,10 +30,10 @@ function exportYaml(waivers: Record<string, Waiver>): string {
   if (!entries.length) return ''
   let yaml = 'version: "1"\nwaivers:\n'
   for (const w of entries) {
-    yaml += `  - id: "${w.id}"\n`
-    yaml += `    reason: "${w.reason.replace(/"/g, '\\"')}"\n`
-    yaml += `    owner: "${w.owner.replace(/"/g, '\\"')}"\n`
-    yaml += `    expires: "${w.expires}"\n`
+    yaml += `  - id: ${yamlQuote(w.id)}\n`
+    yaml += `    reason: ${yamlQuote(w.reason)}\n`
+    yaml += `    owner: ${yamlQuote(w.owner)}\n`
+    yaml += `    expires: ${yamlQuote(w.expires)}\n`
   }
   return yaml
 }
@@ -176,14 +177,14 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = '.wafpass-skip.yml'
+    a.download = '.wombat-skip.yml'
     a.click()
     URL.revokeObjectURL(url)
   }
 
   const inputStyle = {
     background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-    borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.82rem',
+    borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.85rem',
     outline: 'none', width: '100%', boxSizing: 'border-box' as const,
   }
 
@@ -211,7 +212,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
           style={{
             background: syncStatus === 'offline' ? '#94a3b8' : 'var(--waf-brand)',
             color: '#fff', border: 'none', borderRadius: '8px',
-            padding: '0.5rem 1.1rem', fontSize: '0.82rem', fontWeight: 700,
+            padding: '0.5rem 1.1rem', fontSize: '0.85rem', fontWeight: 700,
             cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer',
           }}
         >
@@ -223,7 +224,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
               onClick={copyYaml}
               style={{
                 background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
-                borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.82rem', cursor: 'pointer',
+                borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.85rem', cursor: 'pointer',
               }}
             >
               {copied ? t('pages.waivers.copied') : t('pages.waivers.copyYaml')}
@@ -232,7 +233,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
               onClick={downloadYaml}
               style={{
                 background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
-                borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.82rem', cursor: 'pointer',
+                borderRadius: '8px', padding: '0.5rem 1.1rem', fontSize: '0.85rem', cursor: 'pointer',
               }}
             >
               {t('pages.waivers.downloadYml')}
@@ -251,7 +252,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
       {/* Sync error banner */}
       {syncError && (
         <div style={{
-          background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+          background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
           borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: '#DA2C38',
         }}>
           {syncError}
@@ -279,17 +280,17 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
-                      <code style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--waf-brand)' }}>{w.id}</code>
+                      <code style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--waf-brand)' }}>{w.id}</code>
                       {expired && (
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#DA2C38', background: 'rgba(218,44,56,.15)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DA2C38', background: 'color-mix(in srgb, #da2c38 15%, transparent)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
                           {t('pages.waivers.expired')}
                         </span>
                       )}
                       {w.expires && !expired && (
-                        <span style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.waivers.expires')} {w.expires}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.waivers.expires')} {w.expires}</span>
                       )}
                       {w.project && (
-                        <span style={{ fontSize: '0.65rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
                           {w.project}
                         </span>
                       )}
@@ -308,7 +309,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                     <button
                       onClick={() => void remove(w.id)}
                       disabled={syncStatus === 'offline'}
-                      style={{ background: 'none', border: '1px solid rgba(218,44,56,.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
+                      style={{ background: 'none', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Remove
                     </button>
@@ -343,11 +344,11 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
         <>
           <div
             onClick={() => setShowForm(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 99 }}
+            style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 25%, transparent)', zIndex: 99 }}
           />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px color-mix(in srgb, #000000 20%, transparent)',
             padding: '1.5rem', width: '440px', maxWidth: '90vw', zIndex: 100,
             display: 'flex', flexDirection: 'column', gap: '1rem',
           }}>
@@ -415,7 +416,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
 
             {syncError && syncStatus !== 'loading' && (
               <div style={{
-                background: 'rgba(218,44,56,.08)', border: '1px solid rgba(218,44,56,.3)',
+                background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
                 borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: '#DA2C38',
               }}>
                 {syncError}
@@ -425,7 +426,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowForm(false)}
-                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.45rem 1rem', fontSize: '0.82rem', cursor: 'pointer', color: 'var(--muted)' }}
+                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.45rem 1rem', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--muted)' }}
               >
                 Cancel
               </button>
@@ -435,7 +436,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                 style={{
                   background: form.id && syncStatus !== 'saving' ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
                   border: 'none', borderRadius: '8px', padding: '0.45rem 1rem',
-                  fontSize: '0.82rem', fontWeight: 700,
+                  fontSize: '0.85rem', fontWeight: 700,
                   cursor: form.id && syncStatus !== 'saving' ? 'pointer' : 'not-allowed',
                 }}
               >

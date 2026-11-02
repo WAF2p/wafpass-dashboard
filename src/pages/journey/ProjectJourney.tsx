@@ -38,7 +38,7 @@ function fmt(iso: string) { return new Date(iso).toLocaleDateString(undefined, {
 function fmtFull(iso: string) { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }
 
 const ACHIEVEMENTS = [
-  { id: 'first_scan', title: 'First Scan', description: 'Complete your first WAF++ scan', check: (rs: RunSummary[]) => rs.length >= 1 },
+  { id: 'first_scan', title: 'First Scan', description: 'Complete your first WOMBATpass scan', check: (rs: RunSummary[]) => rs.length >= 1 },
   { id: 'score_60', title: 'Above Average', description: 'Achieve a score of 60 or higher', check: (rs: RunSummary[]) => rs.some(r => r.score >= 60) },
   { id: 'score_80', title: 'High Performer', description: 'Achieve a score of 80 or higher', check: (rs: RunSummary[]) => rs.some(r => r.score >= 80) },
   { id: 'score_90', title: 'Security Champion', description: 'Achieve a score of 90 or higher', check: (rs: RunSummary[]) => rs.some(r => r.score >= 90) },
@@ -133,7 +133,7 @@ export default function ProjectJourney({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.latestScore')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.latestScore')}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
               <span style={{ fontSize: '1.75rem', fontWeight: 800, color: scoreColor(latestRun?.score ?? 0) }}>{latestRun?.score ?? '—'}</span>
               {latestRun && <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>/100</span>}
@@ -148,22 +148,22 @@ export default function ProjectJourney({
 
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.bestScore')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.bestScore')}</div>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: scoreColor(bestScore) }}>{bestScore}</div>
           </div>
         </JourneyCard>
 
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.totalScans')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.totalScans')}</div>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)' }}>{projectRuns.length}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{branchCount} {t('pages.journey.branches')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{branchCount} {t('pages.journey.branches')}</div>
           </div>
         </JourneyCard>
 
         <JourneyCard accent={st.color}>
           <div style={{ padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.badgesEarned')}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>{t('pages.journey.badgesEarned')}</div>
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)' }}>
               {earnedMaturityCount + earnedCount}
               <span style={{ fontSize: '0.95rem', color: 'var(--muted)', fontWeight: 400 }}>/{MATURITY_META.length + ACHIEVEMENTS.length}</span>
@@ -265,7 +265,7 @@ export default function ProjectJourney({
                   L{m.level}
                 </div>
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: m.earned ? 'var(--text)' : 'var(--muted)' }}>{m.short}</div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--muted)', marginTop: '0.2rem' }}>{m.earned ? t('pages.journey.earned') : t('pages.journey.requires')} 90+</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.2rem' }}>{m.earned ? t('pages.journey.earned') : t('pages.journey.requires')} 90+</div>
               </div>
             ))}
           </div>
@@ -281,7 +281,7 @@ export default function ProjectJourney({
               <div key={a.id} style={{ textAlign: 'center', padding: '0.75rem', borderRadius: 12, background: a.earned ? 'rgba(0,148,255,0.08)' : 'var(--bg)', border: `1px solid ${a.earned ? 'rgba(0,148,255,0.25)' : 'var(--border)'}` }}>
                 <div style={{ fontSize: '1.25rem', marginBottom: '0.35rem' }}>{a.earned ? '✓' : '○'}</div>
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: a.earned ? 'var(--text)' : 'var(--muted)' }}>{a.title}</div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--muted)', marginTop: '0.2rem' }}>{a.description}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.2rem' }}>{a.description}</div>
               </div>
             ))}
           </div>
@@ -316,7 +316,7 @@ export default function ProjectJourney({
               <thead>
                 <tr style={{ background: 'var(--bg)' }}>
                   {['Score', 'Branch', 'Stage', 'Date'].map(h => (
-                    <th key={h} style={{ padding: '0.55rem 1rem', textAlign: 'left', fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{t(`pages.journey.col${h}`)}</th>
+                    <th key={h} style={{ padding: '0.55rem 1rem', textAlign: 'left', fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{t(`pages.journey.col${h}`)}</th>
                   ))}
                 </tr>
               </thead>

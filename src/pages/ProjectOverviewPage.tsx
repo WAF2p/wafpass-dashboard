@@ -6,6 +6,7 @@ import {
 import { fetchProjectAchievements, getApiBase, ProjectAchievement, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { MATURITY_META } from './settingsUtils'
+import { scoreColor } from '../severity';
 
 interface Props {
   runs: RunSummary[]
@@ -20,9 +21,6 @@ const MATURITY_THRESHOLDS: Record<number, number> = { 1: 0, 2: 40, 3: 60, 4: 75,
 
 // ── Semantic color helpers ────────────────────────────────────────────────────
 
-function scoreColor(s: number) {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
 
 function alpha(color: string, opacity: number) {
   return `color-mix(in srgb, ${color} ${Math.round(opacity * 100)}%, transparent)`
@@ -56,7 +54,7 @@ const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_scan',
     title: 'First Scan',
-    description: 'Complete your first WAF++ scan',
+    description: 'Complete your first WOMBATpass scan',
     category: 'coverage',
     iconPath: 'M13 10V3L4 14h7v7l9-11h-7z',
     check: rs => rs.length >= 1,
@@ -345,7 +343,7 @@ function CircleBadge({ title, description, category, iconPath, earned }: {
         )}
       </div>
       <span style={{
-        fontSize: '0.58rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '999px',
+        fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '999px',
         background: earned ? alpha(color, 21 / 255) : alpha('var(--text)', 0.04),
         color: earned ? color : 'var(--muted)',
         textTransform: 'uppercase', letterSpacing: '0.05em',
@@ -353,7 +351,7 @@ function CircleBadge({ title, description, category, iconPath, earned }: {
         {CATEGORY_LABEL[category]}
       </span>
       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: earned ? 'var(--text)' : 'var(--muted)', lineHeight: 1.2 }}>{title}</div>
-      <div style={{ fontSize: '0.62rem', color: 'var(--muted)', lineHeight: 1.45, maxWidth: '120px' }}>{description}</div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.45, maxWidth: '120px' }}>{description}</div>
     </div>
   )
 }
@@ -374,7 +372,7 @@ function SectionHeader({ title, sub, count, total }: { title: string; sub: strin
           </span>
         )}
         <span style={{
-          fontSize: '0.6rem', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: '999px',
+          fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: '999px',
           background: alpha('var(--waf-brand)', 0.08), color: 'var(--waf-brand)',
           border: `1px solid ${alpha('var(--waf-brand)', 0.2)}`,
           textTransform: 'uppercase', letterSpacing: '0.07em',
@@ -387,7 +385,7 @@ function SectionHeader({ title, sub, count, total }: { title: string; sub: strin
 function StatCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid var(--border)' }}>
-      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem', fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem', fontWeight: 600 }}>{label}</div>
       {children}
     </div>
   )
@@ -554,7 +552,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               background: alpha(currentColor, 0.08), borderRadius: '12px',
               padding: '1rem 1.25rem', border: `1px solid ${alpha(currentColor, 68 / 255)}`,
             }}>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem', fontWeight: 600 }}>{t('pages.projectOverview.bestScoreLevel')}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem', fontWeight: 600 }}>{t('pages.projectOverview.bestScoreLevel')}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{
                   width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
@@ -599,21 +597,21 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                   }}>L{currentMeta.level}</div>
                   <div>
                     <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fff' }}>{currentMeta.short}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.projectOverview.bestScore', { score: String(bestScore) })}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.projectOverview.bestScore', { score: String(bestScore) })}</div>
                   </div>
                 </div>
 
                 {/* Center: pts needed */}
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)' }}>{ptsNeeded}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{t('pages.projectOverview.pointsToNext')}</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text)' }}>{ptsNeeded}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.projectOverview.pointsToNext')}</div>
                 </div>
 
                 {/* Right: next level */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <div>
                     <div style={{ fontSize: '0.78rem', fontWeight: 700, color: alpha('#fff', 0.88), textAlign: 'right' }}>{nextMeta.short}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)', textAlign: 'right' }}>{t('pages.projectOverview.requiresScore', { score: String(nextThreshold) })}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textAlign: 'right' }}>{t('pages.projectOverview.requiresScore', { score: String(nextThreshold) })}</div>
                   </div>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
@@ -643,7 +641,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.4rem', fontSize: '0.65rem', color: 'var(--muted)', position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--muted)', position: 'relative' }}>
                 <span>{currentMeta.short} · score {currentThreshold}</span>
                 <span style={{ fontWeight: 700, color: 'var(--text)' }}>{progressPct}%</span>
                 <span>{nextMeta.short} · score {nextThreshold}</span>
@@ -659,7 +657,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
               <div>
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>{t('pages.projectOverview.maxMaturity')}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{t('pages.projectOverview.maxMaturity')}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{t('pages.projectOverview.allBadgesEarned', { count: String(MATURITY_META.length) })}</div>
               </div>
             </div>
@@ -688,7 +686,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.75rem' }}>
                           <div style={{ color: 'var(--muted)', marginBottom: '0.2rem' }}>{d.date}{d.branch ? ` · ${d.branch}` : ''}</div>
                           <div style={{ fontWeight: 800, color: scoreColor(d.score), fontSize: '1rem' }}>{d.score}/100</div>
-                          <div style={{ color: 'var(--muted)', fontSize: '0.65rem', marginTop: '0.2rem' }}>{t('pages.projectOverview.clickToOpen')}</div>
+                          <div style={{ color: 'var(--muted)', fontSize: '0.7rem', marginTop: '0.2rem' }}>{t('pages.projectOverview.clickToOpen')}</div>
                         </div>
                       )
                     }} />
@@ -746,9 +744,9 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                     />
                     <div style={{ textAlign: 'center', maxWidth: '130px' }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: m.earned ? 'var(--text)' : 'var(--muted)' }}>{m.label}</div>
-                      <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginTop: '0.2rem', lineHeight: 1.45 }}>{m.desc}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.2rem', lineHeight: 1.45 }}>{m.desc}</div>
                       <div style={{
-                        marginTop: '0.35rem', fontSize: '0.6rem', fontWeight: 700,
+                        marginTop: '0.35rem', fontSize: '0.7rem', fontWeight: 700,
                         color: m.earned ? '#fff' : 'var(--muted)',
                       }}>
                         {m.earned ? t('pages.projectOverview.scoreReached', { score: String(MATURITY_THRESHOLDS[m.level]) }) : t('pages.projectOverview.requiresScore', { score: String(MATURITY_THRESHOLDS[m.level]) })}
@@ -824,7 +822,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{a.tier_label}</span>
                           <span style={{
-                            fontSize: '0.6rem', fontWeight: 700, padding: '0.15rem 0.45rem', borderRadius: '999px',
+                            fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.45rem', borderRadius: '999px',
                             background: alpha(color, 20 / 255), color, border: `1px solid ${alpha(color, 48 / 255)}`,
                             textTransform: 'uppercase', letterSpacing: '0.05em',
                           }}>Score {a.score}</span>
@@ -840,7 +838,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                           rel="noopener noreferrer"
                           style={{
                             display: 'flex', alignItems: 'center', gap: '0.3rem',
-                            padding: '0.3rem 0.65rem', borderRadius: '7px', fontSize: '0.72rem', fontWeight: 600,
+                            padding: '0.3rem 0.65rem', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600,
                             background: alpha(color, 18 / 255), color, border: `1px solid ${alpha(color, 48 / 255)}`,
                             textDecoration: 'none', cursor: 'pointer',
                           }}
@@ -854,7 +852,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                           onClick={() => copyVerifyUrl(a.verification_token)}
                           style={{
                             display: 'flex', alignItems: 'center', gap: '0.3rem',
-                            padding: '0.3rem 0.65rem', borderRadius: '7px', fontSize: '0.72rem', fontWeight: 600,
+                            padding: '0.3rem 0.65rem', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600,
                             background: isCopied ? alpha('var(--pass)', 0.12) : 'var(--bg)',
                             color: isCopied ? 'var(--pass)' : 'var(--muted)',
                             border: `1px solid ${isCopied ? alpha('var(--pass)', 0.4) : 'var(--border)'}`,
@@ -886,7 +884,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               <thead>
                 <tr style={{ background: 'var(--bg)' }}>
                   {[t('pages.projectOverview.colScore'), t('pages.projectOverview.colBranch'), t('pages.projectOverview.colStage'), t('pages.projectOverview.colTriggeredBy'), t('pages.projectOverview.colDate'), ''].map(h => (
-                    <th key={h} style={{ padding: '0.55rem 1rem', textAlign: 'left', fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>
+                    <th key={h} style={{ padding: '0.55rem 1rem', textAlign: 'left', fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>

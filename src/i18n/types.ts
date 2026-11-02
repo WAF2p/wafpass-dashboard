@@ -107,6 +107,8 @@ export interface Translations {
       skipped: string
       access: string
       users: string
+      mandates: string
+      mandateadmin: string
       apikeys: string
       sso: string
       groupmappings: string
@@ -126,6 +128,63 @@ export interface Translations {
       'compliance-readiness': string
       validations: string
       shiprun: string
+      betafeatures: string
+      mydashboard: string
+      about: string
+    }
+    launcher: {
+      open: string
+      title: string
+      subtitle: string
+      close: string
+      betaNote: string
+      manage: string
+      pinned: string
+      pin: string
+      unpin: string
+      pinLimit: string
+    }
+    views: {
+      trigger: string
+      title: string
+      savePlaceholder: string
+      save: string
+      empty: string
+      apply: string
+      delete: string
+    }
+    palette: {
+      title: string
+      trigger: string
+      placeholder: string
+      pages: string
+      controls: string
+      runs: string
+      actions: string
+      action: string
+      empty: string
+      noProject: string
+      noBranch: string
+      score: string
+      openSettings: string
+      openBeta: string
+      toggleTheme: string
+      hintNavigate: string
+      hintSelect: string
+    }
+    // Phase 3.3 / 6a / 6b — the TopNavigation mandate scope indicator (see
+    // components/TopNavigation.tsx's MandateIndicator). A real switcher
+    // for holding_admin/holding_viewer/group_admin/group_viewer.
+    mandateIndicator: {
+      allMandatesCount: string // {{count}}
+      switcherHint: string
+    }
+    // components/ImpersonationBanner.tsx — the strip shown above the top
+    // nav while "viewing as" one mandate via the Global Context Switcher.
+    impersonationBanner: {
+      viewingAs: string // {{name}}
+      unknownMandate: string
+      exit: string
     }
   }
 
@@ -315,6 +374,34 @@ export interface Translations {
     failingFindings: string
     passLabel: string
     failLabel: string
+    frameworkDetailTab: string
+    openGapAnalysis: string
+  }
+
+  frameworkDetail: {
+    back: string
+    passRate: string
+    mapped: string
+    passed: string
+    failed: string
+    unknown: string
+    controlsTitle: string
+    controlsSubtitle: string
+    searchPlaceholder: string
+    groupByRequirement: string
+    controls: string
+    noMappedControls: string
+    noSearchMatch: string
+    notFound: string
+    requirementsTitle: string
+    requirementsSubtitle: string
+    requirements: string
+    mappedRequirements: string
+    unmappedRequirements: string
+    coverageRate: string
+    requirementMapped: string
+    requirementUnmapped: string
+    allRequirementsCovered: string
   }
 
   pages: {
@@ -328,6 +415,12 @@ export interface Translations {
       or: string
       footerLocal: string    // "Local authentication · Contact your administrator…"
       footerSso: string      // "Local and SSO authentication enabled · Contact your administrator…"
+      // ADR-005 — per-mandant SSO: an optional slug the login page sends
+      // as ?mandant=<slug> so a holding's own dedicated IdP (if any) is
+      // offered instead of (or alongside) the instance-wide one.
+      mandantLabel: string     // "Company ID"
+      mandantPlaceholder: string // "e.g. acme (optional)"
+      mandantHint: string      // "Only needed if your company has its own SSO connection."
     }
 
     findings: {
@@ -374,10 +467,10 @@ export interface Translations {
       addBtn: string              // "+ Add Waiver"
       copyYaml: string
       copied: string
-      downloadYml: string         // "Download .wafpass-skip.yml"
+      downloadYml: string         // "Download .wombat-skip.yml"
       noWaivers: string           // "No waivers configured"
       noWaiversHint: string
-      previewTitle: string        // ".wafpass-skip.yml Preview"
+      previewTitle: string        // ".wombat-skip.yml Preview"
       previewHint: string
       expired: string             // "EXPIRED"
       expires: string             // "expires {{date}}"
@@ -487,7 +580,7 @@ export interface Translations {
       serverUrlLabel: string      // "Dashboard server"
       serverUrlHint: string       // "Change it in Settings → Connection & Real Engine."
       cliPathTitle: string        // "CLI Push"
-      cliPathDesc: string         // "Run wafpass locally and push results."
+      cliPathDesc: string         // "Run wombat locally and push results."
       serverPathTitle: string      // "Server-side"
       serverPathDesc: string      // "Trigger a scan on the dashboard server."
       apiPathTitle: string        // "Direct API"
@@ -516,6 +609,8 @@ export interface Translations {
     }
 
     audit: {
+      heroTitle: string
+      heroSubtitle: string
       totalEvents: string
       waiverEvents: string
       riskEvents: string
@@ -523,14 +618,20 @@ export interface Translations {
       controlsTracked: string
       critHighTracked: string
       oldestFailure: string
-      tabEvents: string           // "Event Timeline ({{count}})"
-      tabExposure: string         // "Control Exposure ({{count}})"
+      tabEvents: string
+      tabExposure: string
+      serverSyncActive: string
+      serverSyncLocal: string
+      serverSyncActiveDetail: string
+      serverSyncLocalDetail: string
+      exportCsv: string
+      exportJson: string
       clearLog: string
-      clearConfirm: string        // "Permanently clear all audit data?"
-      clearYes: string            // "Yes, clear"
-      searchPlaceholder: string   // "Search events…"
+      clearConfirm: string
+      clearYes: string
+      searchPlaceholder: string
       allCategories: string
-      noEvents: string            // "No audit events yet"
+      noEvents: string
       noEventsHint: string
       colControl: string
       colResource: string
@@ -540,6 +641,77 @@ export interface Translations {
       colFirstSeen: string
       colAge: string
       noFirstSeen: string
+      diffBefore: string
+      diffAfter: string
+      eventId: string
+      ageDays: string
+      exposureAlert: string
+      exposureAlertSla: string
+      exposureHint: string
+    }
+
+    adminLogs: {
+      heroTitle: string
+      heroSubtitle: string
+      totalEvents: string
+      uniqueActors: string
+      actionTypes: string
+      serverIpEvents: string
+      tabEvents: string
+      tabDetails: string
+      serverSyncActive: string
+      serverSyncLocal: string
+      serverSyncActiveDetail: string
+      serverSyncLocalDetail: string
+      exportCsv: string
+      searchPlaceholder: string
+      allActions: string
+      noEvents: string
+      noEventsHint: string
+      colTimestamp: string
+      colAction: string
+      colActor: string
+      colIp: string
+      colMandate: string
+      eventId: string
+      ageDays: string
+      detailLabel: string
+      jsonLabel: string
+      accessDenied: string
+      syslogHint: string
+      siemStatus: string
+      siemConfigured: string
+      siemNotConfigured: string
+      siemEnabled: string
+      siemDisabled: string
+      configureSiem: string
+      siemModalTitle: string
+      siemEnabledLabel: string
+      siemHostLabel: string
+      siemPortLabel: string
+      siemProtocolLabel: string
+      siemFormatLabel: string
+      siemFacilityLabel: string
+      siemProgramTagLabel: string
+      siemTlsLabel: string
+      siemSeverityOverrides: string
+      siemActionLabel: string
+      siemSeverityLabel: string
+      siemAddOverride: string
+      siemRemoveOverride: string
+      siemSave: string
+      siemTest: string
+      siemTestSending: string
+      siemTestSuccess: string
+      siemTestFailed: string
+      siemCancel: string
+      siemHostRequired: string
+      siemPortRange: string
+      siemInvalidProtocol: string
+      siemInvalidFormat: string
+      siemSaveFailed: string
+      siemLoadFailed: string
+      siemKpiTitle: string
     }
 
     leaderboard: {
@@ -613,6 +785,129 @@ export interface Translations {
       disableBtn: string
       enableBtn: string
       delBtn: string
+      // Phase 3.4 — multi-mandant mandate/holding_role assignment
+      colMandate: string
+      noMandate: string
+      mandateLabel: string
+      holdingRoleLabel: string
+      holdingRoleNone: string
+    }
+
+    // Phase 3.2 — MandateManagementPage.tsx, holding_admin only: CRUD for
+    // the companies ("mandates") inside this holding.
+    mandates: {
+      holdingAdminRequired: string
+      totalMandates: string
+      active: string
+      mandatesHeader: string
+      newMandateBtn: string
+      editMandateTitle: string
+      newMandateTitle: string
+      nameLabel: string
+      slugLabel: string
+      slugHint: string
+      logoUrlLabel: string
+      uploadLogoBtn: string
+      logoLoaded: string
+      logoSizeHint: string
+      colName: string
+      colSlug: string
+      colCreated: string
+      colActions: string
+      // Phase 6a — hierarchy/governance metadata, display only (no RLS
+      // effect). See .plan.md's "Phase 6a" section.
+      inheritedBadge: string
+      customOverrideBadge: string
+      viewAsHint: string // {{name}}
+      rollup: {
+        mandateCount: string // {{count}}
+        runCount: string     // {{count}}
+        avgScore: string     // {{score}}
+      }
+      editModal: {
+        tabGeneral: string
+        tabGovernance: string
+        tabPolicy: string
+        tabAudit: string
+        mandateTypeLabel: string
+        mandateType: {
+          holding: string
+          subsidiary: string
+          division: string
+        }
+        parentLabel: string
+        noParent: string
+        jurisdictionLabel: string
+        jurisdictionHint: string
+        riskTierLabel: string
+        riskTierNone: string
+        riskTier: {
+          low: string
+          medium: string
+          high: string
+          critical: string
+        }
+        dataResidencyLabel: string
+        dataResidencyHint: string
+        // ADR-005 — per-mandant auth policy, alongside the other governance
+        // attributes above.
+        authModeLabel: string   // "Authentication"
+        authModeHint: string
+        authMode: {
+          inherit: string      // "Inherit (default — shared SSO and/or local)"
+          sso_optional: string // "SSO optional (reserved)"
+          local_only: string   // "Local accounts only — no SSO for this mandate"
+        }
+        authModeSsoConfigHint: string // links to the SSO Settings page for the actual provider config
+        policyInformationalNote: string
+        inheritPoliciesLabel: string
+        inheritPoliciesHint: string
+        auditId: string
+        auditCreated: string
+        auditUpdated: string
+        auditUnavailableOnCreate: string
+      }
+    }
+
+    // Phase 3.1/this-session — one-way multi-mandant activation.
+    // pages/MandateAdministrationPage.tsx (moved out of SettingsPage).
+    mandateAdmin: {
+      accessDenied: string
+      currentMode: string
+      modeSingleTenant: string
+      modeMultiMandant: string
+      userCount: string    // {{count}}
+      mandantCount: string // {{count}}
+      irreversibleBadge: string
+      activatedBy: string  // {{username}}
+      activateBtn: string
+      confirmTitle: string
+      confirmBody: string
+      confirmBtn: string
+      activating: string
+      impact: {
+        toggleLabel: string
+        title: string
+        intro: string
+        dataHeading: string
+        dataBody: string
+        enforcementHeading: string
+        enforcementBody: string
+        rolesHeading: string
+        rolesBody: string
+        apiKeysHeading: string
+        apiKeysBody: string
+        ssoHeading: string
+        ssoBody: string
+        badgesHeading: string
+        badgesBody: string
+        performanceHeading: string
+        performanceBody: string
+        irreversibleHeading: string
+        irreversibleBody: string
+        nextStepsHeading: string
+        nextStepsBody: string
+      }
     }
 
     sso: {
@@ -653,7 +948,7 @@ export interface Translations {
       roleMapping: string
       roleMappingHint: string
       autoProvision: string       // "Auto-provision new users"
-      autoProvisionHint: string   // "— create a WAF++ account on first SSO login"
+      autoProvisionHint: string   // "— create a WOMBATpass account on first SSO login"
       removeBtn: string           // "Remove"
       spMetadataLabel: string     // "SP Metadata:"
       spMetadataHint: string      // "Register this URL in your IdP."
@@ -679,6 +974,10 @@ export interface Translations {
       roleAttrHint: string
       overviewTitle: string       // "SSO Overview"
       overviewText: string
+      // ADR-005 — the mandate scope selector above the OIDC/SAML2 forms.
+      scopeLabel: string    // "Configuring"
+      scopeDefault: string  // "Instance default (shared by every mandate)"
+      scopeHint: string     // "A mandate's own override takes precedence over the default for its users."
     }
 
     groupMappings: {
@@ -792,42 +1091,53 @@ export interface Translations {
     }
 
     gapanalysis: {
-      resourcesToFix: string      // "{{count}} resource(s) to fix"
-      unlocksReqs: string         // "unlocks {{count}} req(s)"
-      failingCheck: string        // "Failing check:"
-      fixLabel: string            // "Fix:"
-      failingChecks: string       // "Failing checks ({{count}})"
-      passingChecks: string       // "Passing checks ({{count}})"
-      affectedResources: string   // "Affected resources ({{count}})"
-      moreItems: string           // "+{{count}} more"
-      currentCoverage: string     // "Current coverage"
-      afterGapsFixed: string      // "After all gaps fixed"
-      controlsToFix: string       // "controls to fix"
-      passing: string             // "passing"
-      waived: string              // "waived"
-      noData: string              // "no data"
-      requirementsMet: string     // "{{met}} of {{total}} requirements currently met"
-      gapsCount: string           // "{{count}} gaps"
-      exportCsv: string           // "↓ Export CSV"
-      noControlsMapped: string    // "No controls mapped to {{framework}}"
-      noControlsMappedDesc: string // "This run's controls do not include regulatory mappings for {{framework}}."
-      tabRoadmap: string          // "Remediation Roadmap"
-      tabRequirements: string     // "Requirements Map"
-      sortByLabel: string         // "Sort by:"
-      sortEfficiency: string      // "Shortest path (effort ÷ requirements)"
-      sortSeverity: string        // "Highest severity first"
-      sortValue: string           // "Most requirements unlocked first"
-      showPassingControls: string // "Show passing controls"
-      shortestPathIntro: string   // "Shortest path to {{framework}} compliance: Fix the {{count}} controls below in order."
-      shortestPathDetail: string  // "Each item shows how many resources need remediating (effort) and how many framework requirements it unlocks (value). Controls ranked #1 give you the highest requirement coverage per unit of effort."
-      allPassingGap: string       // "All {{framework}}-mapped controls are passing — no gaps detected"
-      passingControlsHeader: string // "Passing controls ({{count}})"
-      reqsMapped: string          // "{{total}} {{framework}} requirements mapped"
-      reqsMet: string             // "{{count}} met"
-      reqsGaps: string            // "{{count}} gaps"
-      afterFix: string            // "{{cumulative}}/{{total}} after fix"
-      waivedLabel: string         // "waived · {{owner}}"
-      riskAcceptedLabel: string   // "risk accepted · {{approver}}"
+      heroTitle: string
+      heroSubtitle: string
+      frameworkSelectorTitle: string
+      frameworkSelectorSubtitle: string
+      jurisdictionLabel: string
+      regulationLabel: string
+      resourcesToFix: string
+      unlocksReqs: string
+      failingCheck: string
+      fixLabel: string
+      failingChecks: string
+      passingChecks: string
+      affectedResources: string
+      moreItems: string
+      currentCoverage: string
+      afterGapsFixed: string
+      controlsToFix: string
+      passing: string
+      waived: string
+      noData: string
+      requirementsMet: string
+      gapsCount: string
+      exportCsv: string
+      noControlsMapped: string
+      noControlsMappedDesc: string
+      tabRoadmap: string
+      tabRequirements: string
+      requirementsMapSubtitle: string
+      sortByLabel: string
+      sortEfficiency: string
+      sortSeverity: string
+      sortValue: string
+      showPassingControls: string
+      shortestPathIntro: string
+      shortestPathDetail: string
+      allPassingGap: string
+      passingControlsHeader: string
+      reqsMapped: string
+      reqsMet: string
+      reqsGaps: string
+      afterFix: string
+      waivedLabel: string
+      riskAcceptedLabel: string
+      resourcesToFixTotal: string
+      criticalFindings: string
+      highFindings: string
+      backToSoc: string
     }
 
     access: {
@@ -862,6 +1172,12 @@ export interface Translations {
       revokeConfirm: string       // 'Revoke API key "{{name}}"? CI/CD pipelines using this key will stop working immediately.'
       revokedKeysHeader: string   // "Revoked Keys ({{count}})"
       colName: string
+      // Phase 6b follow-up — "sending to a specific mandate" completeness.
+      colMandate: string
+      noMandate: string
+      targetMandateLabel: string
+      targetMandateDefault: string
+      targetMandateHint: string
       usageRefHeader: string
       usageLogHeader: string
       entrySingular: string
@@ -931,6 +1247,9 @@ export interface Translations {
       autoFixCount: string         // "{{auto}} auto-fixable"
       manualCount: string          // "{{count}} manual"
       gapsLabel: string            // "{{count}} gaps"
+      trendStub: string
+      trendStubTitle: string
+      trendStubDesc: string
     }
 
     antipattern: {
@@ -1013,8 +1332,240 @@ export interface Translations {
       statusProbe: string
     }
 
+    betaFeatures: {
+      pageTitle: string
+      pageSubtitle: string
+      experimental: string
+      experimentalNotice: string
+      categoryLauncherTitle: string
+      categoryLauncherDesc: string
+      benefitNav: string
+      benefitOverlay: string
+      benefitReversible: string
+      enabled: string
+      disabled: string
+      betaPill: string
+      backToSettings: string
+      preview: string
+      tryIt: string
+      changesInstant: string
+      moreComing: string
+      commandPaletteTitle: string
+      commandPaletteDesc: string
+      commandPaletteBenefit1: string
+      commandPaletteBenefit2: string
+      commandPaletteBenefit3: string
+      savedViewsTitle: string
+      savedViewsDesc: string
+      savedViewsBenefit1: string
+      savedViewsBenefit2: string
+      savedViewsBenefit3: string
+      savedViewsHint: string
+      pinnedPagesTitle: string
+      pinnedPagesDesc: string
+      pinnedPagesHint: string
+      pinnedPagesEmpty: string
+      unpin: string
+      personaHomeTitle: string
+      personaHomeDesc: string
+      personaCiso: string
+      personaCisoDesc: string
+      personaArchitect: string
+      personaArchitectDesc: string
+      personaEngineer: string
+      personaEngineerDesc: string
+      personaDefault: string
+      personaDefaultDesc: string
+      personaHomeLanding: string
+      personaHomeKpis: string
+      personaOpen: string
+      personaOffHint: string
+      groupWorkspace: string
+      groupAnalysis: string
+      groupPresentation: string
+      searchPlaceholder: string
+      disableAll: string
+      noModules: string
+      findingsTriageTitle: string
+      findingsTriageDesc: string
+      findingsTriageBenefit1: string
+      findingsTriageBenefit2: string
+      findingsTriageBenefit3: string
+      triageOpenFindings: string
+      runBookmarksTitle: string
+      runBookmarksDesc: string
+      runBookmarksBenefit1: string
+      runBookmarksBenefit2: string
+      runBookmarksBenefit3: string
+      runBookmarksOpenRuns: string
+      runBookmarksCount: string
+      briefingModeTitle: string
+      briefingModeDesc: string
+      briefingModeBenefit1: string
+      briefingModeBenefit2: string
+      briefingModeBenefit3: string
+      briefingStart: string
+      briefingNoRun: string
+      widgetWallTitle: string
+      widgetWallDesc: string
+      widgetWallBenefit1: string
+      widgetWallBenefit2: string
+      widgetWallBenefit3: string
+      wallOpen: string
+      wallNoRun: string
+      myDashboardTitle: string
+      myDashboardDesc: string
+      myDashboardBenefit1: string
+      myDashboardBenefit2: string
+      myDashboardBenefit3: string
+      myDashboardOpen: string
+      myDashboardOffHint: string
+    }
+
+    myDashboard: {
+      defaultName: string
+      subtitle: string
+      edit: string
+      done: string
+      addWidget: string
+      reset: string
+      resetConfirm: string
+      editHint: string
+      share: string
+      shareTitle: string
+      shareHint: string
+      copy: string
+      copied: string
+      copyError: string
+      dismiss: string
+      importLayout: string
+      sharedLayout: string
+      sharedHint: string
+      rename: string
+      remove: string
+      moveLeft: string
+      moveRight: string
+      size: string
+      sizeSmall: string
+      sizeMedium: string
+      sizeLarge: string
+      empty: string
+      noRun: string
+      betaOffTitle: string
+      betaOffDesc: string
+      betaOffAction: string
+      addTitle: string
+      addHint: string
+      added: string
+      add: string
+      close: string
+      groupPosture: string
+      groupTrends: string
+      groupGovernance: string
+      groupInsights: string
+      rbacTitle: string
+      rbacDesc: string
+      shareRbacNote: string
+      scopeMandate: string
+      roles: {
+        admin: string
+        ciso: string
+        clevel: string
+        architect: string
+        engineer: string
+        unknown: string
+      }
+      holdingRoles: {
+        holding_admin: string
+        holding_viewer: string
+        group_admin: string
+        group_viewer: string
+      }
+      groupContent: string
+      editContent: string
+      dragHint: string
+      shareDataNote: string
+      config: {
+        title: string
+        hint: string
+        textLabel: string
+        textPlaceholder: string
+        urlLabel: string
+        frameTitleLabel: string
+        frameTitlePlaceholder: string
+        urlRequired: string
+        urlInvalid: string
+        iframeHint: string
+        logoUrlLabel: string
+        logoUpload: string
+        logoAltLabel: string
+        logoAltPlaceholder: string
+        logoRequired: string
+        logoInvalid: string
+        logoFileType: string
+        logoTooLarge: string
+        logoReadError: string
+        logoShareNote: string
+        save: string
+        cancel: string
+      }
+      widgets: {
+        scoreGauge: { title: string; desc: string }
+        severityBreakdown: { title: string; desc: string }
+        pillarHealth: { title: string; desc: string }
+        topControls: { title: string; desc: string }
+        scoreTrend: { title: string; desc: string }
+        recentRuns: { title: string; desc: string }
+        planChanges: { title: string; desc: string }
+        controlCoverage: { title: string; desc: string }
+        secretsRisk: { title: string; desc: string }
+        maturity: { title: string; desc: string }
+        complianceReadiness: { title: string; desc: string }
+        regions: { title: string; desc: string }
+        riskHotspots: { title: string; desc: string }
+        iframe: { title: string; desc: string }
+        text: { title: string; desc: string }
+        logo: { title: string; desc: string }
+      }
+      states: {
+        noRun: string
+        noFailures: string
+        noPillars: string
+        noTrend: string
+        noRuns: string
+        unnamed: string
+        noPlan: string
+        noData: string
+        noSecrets: string
+        noFrameworks: string
+        noRegions: string
+        noResources: string
+        iframeEmpty: string
+        textEmpty: string
+        logoEmpty: string
+        strong: string
+        focused: string
+        highRisk: string
+        previous: string
+        add: string
+        change: string
+        destroy: string
+        replace: string
+        pass: string
+        fail: string
+        skip: string
+        secrets: string
+        resources: string
+        activePillars: string
+        intelligence: string
+        coverageNote: string
+        governanceNote: string
+      }
+    }
+
     badgePage: {
       noScansYet: string
+      noMandateForBadges: string
       project: string
       deployMode: string
       liveModeLabel: string
@@ -1062,6 +1613,7 @@ export interface Translations {
 
     changes: {
       title: string
+      subtitle: string
       noChanges: string
       searchPlaceholder: string
       allActions: string
@@ -1126,6 +1678,12 @@ export interface Translations {
       colType: string
       colProvider: string
       colAction: string
+      changeDetail: string
+      kpiAdd: string
+      kpiChange: string
+      kpiReplace: string
+      kpiDestroy: string
+      kpiUnchanged: string
       close: string
       runsLabel: string           // "{{count}} run(s)"
       remediation: string
@@ -1234,7 +1792,9 @@ export interface Translations {
       planChanges: string
       sprintGain: string
       mttr: string
+      mttrSub: string
       mttrDemoValue: string
+      mttrTrend: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1247,7 +1807,11 @@ export interface Translations {
       failingModules: string
       attackPaths: string
       sandboxDrafts: string
+      sandboxDraftsSub: string
       criticalFindings: string
+      blastRadiusPreview: string
+      blastExposed: string
+      blastTopResource: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1257,6 +1821,8 @@ export interface Translations {
       title: string
       subtitle: string
       selectedProject: string
+      predictiveForecast: string
+      badgeVerification: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1270,6 +1836,16 @@ export interface Translations {
       durationRange: string
       scanDuration: string
       showManualRuns: string
+      flakyPipelines: string
+      flakyCount: string
+      flakyNoIssues: string
+      flakySwitches: string
+      durationForecast: string
+      predictedDuration: string
+      durationTrendUp: string
+      durationTrendDown: string
+      durationTrendFlat: string
+      durationConfidence: string
       stubsInProgress: string
       stubsVoteRfc: string
       stubBadge: string
@@ -1708,6 +2284,15 @@ export interface Translations {
       clickToOpen: string
     }
 
+    passports: {
+      bulkImport: string
+      bulkImportRfc: string
+      bulkExport: string
+      bulkExportRfc: string
+      auditLog: string
+      auditLogRfc: string
+    }
+
     regions: {
       noRegions: string
       pageTitle: string
@@ -1747,7 +2332,7 @@ export interface Translations {
       runningEngine: string
       evaluatingControls: string
       engineError: string
-      engineValue: string          // "Real WAF++ engine" / "Mock (regex)"
+      engineValue: string          // "Real WOMBATpass engine" / "Mock (regex)"
       controlsEvaluated: string
       withFindings: string
       pass: string
@@ -1938,6 +2523,16 @@ export interface Translations {
       roleRequired: string
     }
 
+    validationCenter: {
+      title: string
+      subtitle: string
+      tabRegistry: string
+      tabShip: string
+      teaserLabel: string
+      teaserText: string
+      downloadRootCa: string
+    }
+
     validations: {
       title: string
       subtitle: string
@@ -1993,6 +2588,38 @@ export interface Translations {
       hideFull: string
     }
 
+  }
+
+  about: {
+    title: string
+    subtitle: string
+    projectTitle: string
+    projectP1: string
+    projectP2: string
+    missionTitle: string
+    missionP1: string
+    missionP2: string
+    teamTitle: string
+    teamP1: string
+    supportTitle: string
+    supportP1: string
+    supportEmail: string
+    openSourceTitle: string
+    openSourceP1: string
+    openSourceP2: string
+    debugTitle: string
+    debugSubtitle: string
+    componentServer: string
+    componentCore: string
+    componentDashboard: string
+    healthCheck: string
+    apiVersion: string
+    dashboardHealth: string
+    loadingVersion: string
+    versionError: string
+    refresh: string
+    copyDebug: string
+    copiedDebug: string
   }
 
   welcome: {

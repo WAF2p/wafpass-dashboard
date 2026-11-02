@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react'
 import { type CatalogueControl, fetchCatalogueControls } from './api'
 import { CONTROLS, type Control } from './controls-data'
 
-const CACHE_KEY = 'wafpass_controls_cache'
+const CACHE_KEY = 'wombat_controls_cache'
 const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────

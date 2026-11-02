@@ -12,7 +12,7 @@ export default function AntiPatternMuseumPage() {
           {t('pages.antipattern.title')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-          Learn faster by seeing what goes wrong - side-by-side comparisons of anti-patterns vs. WAF++ compliant best practices
+          Learn faster by seeing what goes wrong - side-by-side comparisons of anti-patterns vs. Wombat compliant best practices
         </p>
       </div>
 
@@ -30,7 +30,7 @@ export default function AntiPatternMuseumPage() {
           <p style={{ fontSize: '0.9rem', color: 'var(--text)', marginBottom: '1rem', lineHeight: 1.6 }}>
             Documentation usually shows how to do things right, but engineers learn faster by seeing what is wrong.
             This museum showcases the most common infrastructure anti-patterns found in real-world IaC code,
-            paired with WAF++-compliant alternatives.
+            paired with Wombat-compliant alternatives.
           </p>
           <div style={{
             display: 'grid',
@@ -40,8 +40,8 @@ export default function AntiPatternMuseumPage() {
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(218,44,56,0.1)' : 'rgba(218,44,56,0.05)',
-              border: '1px solid rgba(218,44,56,0.2)',
+              background: themeName === 'dark' ? 'color-mix(in srgb, #da2c38 10%, transparent)' : 'rgba(218,44,56,0.05)',
+              border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)',
               borderRadius: '8px'
             }}>
               <strong style={{ color: '#DA2C38' }}>Anti-Patterns</strong>
@@ -54,7 +54,7 @@ export default function AntiPatternMuseumPage() {
               borderRadius: '8px'
             }}>
               <strong style={{ color: '#22c55e' }}>Best Practices</strong>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>WAF++ compliant alternatives</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Wombat compliant alternatives</p>
             </div>
             <div style={{
               padding: '1rem',
@@ -63,7 +63,7 @@ export default function AntiPatternMuseumPage() {
               borderRadius: '8px'
             }}>
               <strong style={{ color: '#fbbf24' }}>74 Controls</strong>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>All WAF++ pillars covered (SEC, SOV, OPS, COST, PERF, REL, SUS)</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>All Wombat pillars covered (SEC, SOV, OPS, COST, PERF, REL, SUS)</p>
             </div>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function AntiPatternMuseumPage() {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -129,7 +129,7 @@ resource "aws_iam_account_password_policy" "weak" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Strict IAM Password Policy
+              Wombat Compliant: Strict IAM Password Policy
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -140,7 +140,7 @@ resource "aws_iam_account_password_policy" "weak" {
                 overflowX: 'auto'
               }}>{`# WAF-SEC-010 COMPLIANT: Strong password policy
 resource "aws_iam_account_password_policy" "strict" {
-  minimum_password_length        = 14         # Meets WAF++ requirement
+  minimum_password_length        = 14         # Meets Wombat requirement
   require_uppercase_characters   = true       # Complexity enforced
   require_lowercase_characters   = true       # Complexity enforced
   require_numbers                = true       # Complexity enforced
@@ -149,7 +149,7 @@ resource "aws_iam_account_password_policy" "strict" {
   password_reuse_prevention      = 5          # Prevents cycling
 }
 
-# WAF++ COMPLIANCE CHECKLIST:
+# Wombat COMPLIANCE CHECKLIST:
 # [✓] minimum_password_length >= 14 characters
 # [✓] All complexity flags enabled (uppercase, lowercase, numbers, symbols)
 # [✓] Password expires after 90 days
@@ -160,7 +160,7 @@ resource "aws_iam_account_password_policy" "strict" {
           {/* Anti-Pattern 2 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -205,7 +205,7 @@ data "aws_iam_access_key" "root" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: No Root Access, MFA Enforced
+              Wombat Compliant: No Root Access, MFA Enforced
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -244,7 +244,7 @@ data "aws_iam_access_key" "root" {
           {/* Anti-Pattern 3 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -283,7 +283,7 @@ resource "aws_iam_role_policy_attachment" "admin" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Scoped Least-Privilege Policy
+              Wombat Compliant: Scoped Least-Privilege Policy
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -338,7 +338,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
   policy_arn = aws_iam_policy.app_scoped_policy.arn
 }
 
-# WAF++ COMPLIANCE CHECKLIST:
+# Wombat COMPLIANCE CHECKLIST:
 # [✓] No AdministratorAccess or FullAWSAccess policies
 # [✓] Actions explicitly listed, no wildcards
 # [✓] Resources restricted to specific ARNs
@@ -366,7 +366,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -427,7 +427,7 @@ resource "aws_db_instance" "non_compliant" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Encrypted RDS with Secrets Manager
+              Wombat Compliant: Encrypted RDS with Secrets Manager
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -492,7 +492,7 @@ resource "aws_db_instance" "compliant" {
   copy_tags_to_snapshot      = true
 }
 
-# WAF++ COMPLIANCE CHECKLIST:
+# Wombat COMPLIANCE CHECKLIST:
 # [✓] storage_encrypted = true
 # [✓] kms_key_id references customer-managed CMK
 # [✓] Backup retention enabled
@@ -522,7 +522,7 @@ resource "aws_db_instance" "compliant" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -570,7 +570,7 @@ terraform {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Remote State with Full CI/CD Pipeline
+              Wombat Compliant: Remote State with Full CI/CD Pipeline
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -668,7 +668,7 @@ jobs:
       - name: Run post-deployment checks
         run: aws iam get-account-password-policy
 
-# WAF++ COMPLIANCE CHECKLIST:
+# Wombat COMPLIANCE CHECKLIST:
 # [✓] Remote S3 backend with state locking
 # [✓] State encryption enabled
 # [✓] Lint, format, validate in pipeline
@@ -698,7 +698,7 @@ jobs:
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -772,7 +772,7 @@ resource "aws_security_group" "open" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Restricted Security Group with VPC Endpoints
+              Wombat Compliant: Restricted Security Group with VPC Endpoints
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -875,7 +875,7 @@ resource "aws_ecr_repository" "app" {
   }
 }
 
-# WAF++ COMPLIANCE CHECKLIST:
+# Wombat COMPLIANCE CHECKLIST:
 # [✓] No 0.0.0.0/0 for SSH/RDP/Database ports
 # [✓] SSH restricted to bastion/VPN IP ranges
 # [✓] Database only accessible from app tier
@@ -905,7 +905,7 @@ resource "aws_ecr_repository" "app" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -957,7 +957,7 @@ resource "aws_s3_bucket" "data" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Enforced Region Validation
+              Wombat Compliant: Enforced Region Validation
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -1049,7 +1049,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
   })
 }
 
-# WAF++ COMPLIANCE CHECKLIST:
+# Wombat COMPLIANCE CHECKLIST:
 # [✓] Region variable has validation block
 # [✓] Availability zones validated to sovereign region
 # [✓] Data residency variable with validation
@@ -1079,7 +1079,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -1124,7 +1124,7 @@ resource "aws_cloudwatch_log_group" "no_retention" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Comprehensive Security Logging
+              Wombat Compliant: Comprehensive Security Logging
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -1231,7 +1231,7 @@ resource "aws_cloudwatch_metric_alarm" "root_login" {
           {/* Anti-Pattern 1 */}
           <div style={{
             background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid rgba(218,44,56,0.3)',
+            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
@@ -1293,7 +1293,7 @@ resource "aws_db_instance" "dev" {
             marginBottom: '1.5rem'
           }}>
             <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
-              WAF++ Compliant: Managed Resources with Cost Controls
+              Wombat Compliant: Managed Resources with Cost Controls
             </div>
             <div style={{ padding: '1rem' }}>
               <pre style={{
@@ -1413,13 +1413,13 @@ resource "aws_db_instance" "main" {
         }}>
           <p style={{ fontSize: '0.9rem', color: 'var(--text)', marginBottom: '1rem' }}>
             This museum showcases the most common infrastructure anti-patterns found in real-world IaC code,
-            paired with WAF++-compliant alternatives. By learning from these mistakes, you can:
+            paired with Wombat-compliant alternatives. By learning from these mistakes, you can:
           </p>
           <ul style={{ fontSize: '0.8rem', color: 'var(--text)', marginLeft: '1.5rem', marginTop: '0.5rem', marginBottom: '1rem' }}>
             <li><strong>Identify issues faster:</strong> Recognize patterns that indicate security vulnerabilities</li>
             <li><strong>Prevent common mistakes:</strong> Avoid anti-patterns that lead to compliance failures</li>
             <li><strong>Learn from examples:</strong> See both what not to do and what to do instead</li>
-            <li><strong>Understand WAF++:</strong> See how each control addresses specific security gaps</li>
+            <li><strong>Understand Wombat:</strong> See how each control addresses specific security gaps</li>
           </ul>
 
           <div style={{
@@ -1429,12 +1429,12 @@ resource "aws_db_instance" "main" {
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(218,44,56,0.1)' : 'rgba(218,44,56,0.05)',
-              border: '1px solid rgba(218,44,56,0.2)',
+              background: themeName === 'dark' ? 'color-mix(in srgb, #da2c38 10%, transparent)' : 'rgba(218,44,56,0.05)',
+              border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)',
               borderRadius: '8px'
             }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#DA2C38', margin: '0 0 0.5rem' }}>Anti-Patterns</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Common security flaws and misconfigurations that violate WAF++ controls</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Common security flaws and misconfigurations that violate Wombat controls</p>
             </div>
             <div style={{
               padding: '1rem',
@@ -1443,7 +1443,7 @@ resource "aws_db_instance" "main" {
               borderRadius: '8px'
             }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#22c55e', margin: '0 0 0.5rem' }}>Best Practices</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>WAF++ compliant alternatives with explanations of why they work</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Wombat compliant alternatives with explanations of why they work</p>
             </div>
             <div style={{
               padding: '1rem',

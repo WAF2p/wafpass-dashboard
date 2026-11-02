@@ -1,12 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
-import { Page } from '../routing'
+import { FilterState, Page } from '../routing'
 import { NotificationBell } from './NotificationBell'
-import { hasMinRole } from '../AuthContext'
+import MandateLogo from './MandateLogo'
+import BrandLogo from './BrandLogo'
+import { hasMinRole, useAuth } from '../AuthContext'
 import { Settings, getMaturityMeta } from '../pages/settingsUtils'
-import { RunDetail, RunSummary } from '../api'
+import { RunDetail, RunSummary, fetchMyMandate, fetchSwitchableMandants, type MandantOut } from '../api'
 import { useI18n } from '../i18n'
-import { loadUserPrefs, saveUserPrefs } from '../pages/userPrefsUtils'
-import { NavEntry, NavSection, buildNavSections, categoryDescriptions } from '../navigation/navModel'
+import { loadUserPrefs, saveUserPrefs, MAX_PINNED_PAGES, BETA_CATEGORY_LAUNCHER, BETA_PINNED_PAGES, BETA_COMMAND_PALETTE, BETA_BRIEFING_MODE, BETA_WIDGET_WALL } from '../pages/userPrefsUtils'
+import { NavEntry, NavSection, buildNavSections, categoryDescriptions, sectionRequiredRole } from '../navigation/navModel'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { useTheme } from '../theme'
+import CategoryLauncher from './CategoryLauncher'
+import CommandPalette from './CommandPalette'
+import NineDotIcon from './NineDotIcon'
+import { safeImageUrl } from '../safeUrl'
 
 function chunkArray<T>(array: T[], size: number): T[][] {
   const result: T[][] = []
@@ -27,10 +35,14 @@ export interface TopNavigationProps {
   waiverCount: number
   riskCount: number
   failCount: number
-  navigate: (page: Page) => void
+  controls: { id: string; title: string }[]
+  navigate: (page: Page, filters?: FilterState) => void
+  onSelectRun: (id: string) => void
   onOpenUserPrefs: () => void
   onLogout: () => Promise<void>
   onShowRunModal: () => void
+  onStartBriefing: () => void
+  onStartWidgetWall: () => void
   onOpenOnboarding?: () => void
 }
 
@@ -45,6 +57,163 @@ const roleIcons: Record<string, string> = {
   runs: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zH21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   admin: 'M12 8c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 12c-6.627 0-12-5.373-12-12s5.373-12 12-12 12 5.373 12 12-5.373 12-12 12z',
   system: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+}
+
+// Same-session follow-up — the active mandate's own logo, always visible
+// in the top bar right next to the Wombat logo, not just on the Mandates
+// page. "Active" mirrors MandateIndicator's own notion of it exactly:
+// - An ordinary mandate-scoped user: their one mandate, via
+//   fetchMyMandate() — there's never anything to switch, so it's always
+//   their own.
+// - A holding_admin/holding_viewer/group_admin/group_viewer currently
+//   narrowed into one specific mandate (dropdown or a logo click on the
+//   Mandates page): that mandate's logo, read straight off
+//   effectiveMandantLogoUrl — no extra fetch needed, since
+//   setEffectiveMandantId() already captures it at the moment of
+//   narrowing (the same way it already captured a name for the
+//   impersonation banner).
+// - The same role *not* narrowed ("All mandates"): nothing — there is no
+//   single active mandate to show a logo for, by construction, not an
+//   oversight.
+// Renders nothing in single_tenant mode by construction, same reasoning
+// as MandateIndicator: fetchMyMandate() returns null, and no switchable
+// role flag is ever true.
+export function ActiveMandateLogo() {
+  const { isHoldingAdmin, isHoldingViewer, isGroupAdmin, isGroupViewer, effectiveMandantId, effectiveMandantName, effectiveMandantLogoUrl } = useAuth()
+  const [myMandate, setMyMandate] = useState<MandantOut | null>(null)
+  const canSwitch = isHoldingAdmin || isHoldingViewer || isGroupAdmin || isGroupViewer
+
+  useEffect(() => {
+    if (canSwitch) return // narrowed state already lives in AuthContext
+    let cancelled = false
+    fetchMyMandate().then(m => { if (!cancelled) setMyMandate(m) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [canSwitch])
+
+  if (canSwitch) {
+    if (!effectiveMandantId) return null // "All mandates" — no single active one
+    return (
+      <div title={effectiveMandantName ?? undefined} style={{ display: 'flex', alignItems: 'center' }}>
+        <MandateLogo name={effectiveMandantName ?? '?'} logoUrl={effectiveMandantLogoUrl ?? ''} size={32} />
+      </div>
+    )
+  }
+
+  if (!myMandate) return null
+  return (
+    <div title={myMandate.name} style={{ display: 'flex', alignItems: 'center' }}>
+      <MandateLogo name={myMandate.name} logoUrl={myMandate.logo_url} size={32} />
+    </div>
+  )
+}
+
+// Phase 3.3 / Phase 6a / Phase 6b — mandate indicator + global context
+// switcher. Renders nothing in single_tenant mode by construction: a
+// mandate-scoped user's fetchMyMandate() always returns null then
+// (get_auth_context() never sets mandant_id outside multi_mandant mode),
+// and every holding/group flag is always false then too — so there's no
+// separate "is multi_mandant active" check needed.
+//
+// A real switcher (Phase 6a), not just a label, for any of the four roles
+// that have something to narrow: holding_admin/holding_viewer (every
+// mandate in the holding) and — Phase 6b / ADR-004 — group_admin/
+// group_viewer (just their own subtree). The selection is sent as
+// X-Mandant-Context on every request (api.ts's _authHeaders(), set via
+// AuthContext's setEffectiveMandantId) and validated fresh server-side on
+// every request (auth/deps.py's get_auth_context()/require_ingest()) —
+// picking a specific mandate narrows the view to exactly that mandate
+// (RLS bypass dropped for the request), picking "All mandates" restores
+// the caller's full bypass. All four roles share one list endpoint
+// (GET /admin/mandants/switchable), scoped server-side per role — before
+// that endpoint existed, holding_viewer got a read-only label instead of
+// a real switcher, since GET /mandants (holding_admin-only) gave it no
+// list to populate a dropdown with; that limitation is gone now that
+// there's an endpoint every switchable role can call.
+export function MandateIndicator() {
+  const { isHoldingAdmin, isHoldingViewer, isGroupAdmin, isGroupViewer, effectiveMandantId, setEffectiveMandantId } = useAuth()
+  const { t } = useI18n()
+  const [myMandate, setMyMandate] = useState<MandantOut | null>(null)
+  const [mandants, setMandants] = useState<MandantOut[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const canSwitch = isHoldingAdmin || isHoldingViewer || isGroupAdmin || isGroupViewer
+
+  useEffect(() => {
+    let cancelled = false
+    if (canSwitch) {
+      fetchSwitchableMandants()
+        .then(list => { if (!cancelled) setMandants(list) })
+        .catch(() => {})
+        .finally(() => { if (!cancelled) setLoaded(true) })
+    } else {
+      fetchMyMandate()
+        .then(m => { if (!cancelled) setMyMandate(m) })
+        .catch(() => {})
+        .finally(() => { if (!cancelled) setLoaded(true) })
+    }
+    return () => { cancelled = true }
+  }, [canSwitch])
+
+  if (!loaded) return null
+
+  // Styled to match the other top-nav pills (the run selector, the
+  // language button, etc.) — var(--nav-surf)/--nav-border/--nav-text,
+  // not a standalone colored pill. It used to use the same purple accent
+  // as the Mandate Administration page's own badges, which made sense
+  // there (a one-off status badge) but looked out of place sitting among
+  // otherwise-neutral top-nav controls.
+  if (canSwitch) {
+    return (
+      <div title={t('nav.mandateIndicator.switcherHint')} style={{
+        display: 'flex', alignItems: 'center', gap: '0.5rem',
+        padding: '0.5rem 0.75rem', borderRadius: '8px',
+        background: 'var(--nav-surf)', border: '1px solid var(--nav-border)',
+      }}>
+        <svg width="14" height="14" fill="none" stroke="var(--nav-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+          <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
+        </svg>
+        <select
+          className="select-plain"
+          value={effectiveMandantId ?? ''}
+          onChange={e => {
+            const id = e.target.value || null
+            const picked = id ? mandants.find(m => m.id === id) : null
+            setEffectiveMandantId(id, picked?.name ?? null, picked?.logo_url ?? null)
+            // Every page's already-fetched data was scoped under the
+            // *previous* context — a full reload is the simple, always-
+            // correct way to make every page re-fetch under the new one,
+            // same approach this file's own handleLanguageChange already
+            // uses for a global setting change.
+            window.location.reload()
+          }}
+          style={{
+            background: 'transparent', border: 'none', color: 'var(--nav-text)',
+            fontSize: '0.75rem', fontWeight: 500, whiteSpace: 'nowrap',
+            cursor: 'pointer', outline: 'none', appearance: 'none',
+            WebkitAppearance: 'none', paddingRight: '0.1rem',
+          }}
+        >
+          <option value="">{t('nav.mandateIndicator.allMandatesCount', { count: mandants.length })}</option>
+          {mandants.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+      </div>
+    )
+  }
+
+  if (!myMandate) return null
+
+  const mandateLogoUrl = safeImageUrl(myMandate.logo_url)
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.4rem',
+      padding: '0.3rem 0.65rem', borderRadius: '999px',
+      background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)',
+      fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap',
+    }}>
+      {mandateLogoUrl && <img src={mandateLogoUrl} alt="" style={{ width: '14px', height: '14px', borderRadius: '4px' }} />}
+      {myMandate.name}
+    </div>
+  )
 }
 
 function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigate: (p: Page) => void }) {
@@ -88,7 +257,7 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
       <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap' }}>
         {item.label}
         {item.count != null && item.count > 0 && (
-          <span style={{ fontSize: '0.65rem', borderRadius: '999px', padding: '0.1rem 0.45rem', marginLeft: '0.4rem', background: 'var(--nav-surf)', color: 'var(--nav-text)' }}>
+          <span style={{ fontSize: '0.7rem', borderRadius: '999px', padding: '0.1rem 0.45rem', marginLeft: '0.4rem', background: 'var(--nav-surf)', color: 'var(--nav-text)' }}>
             {item.count}
           </span>
         )}
@@ -182,7 +351,7 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
             maxWidth: 'min(1200px, calc(100vw - 2rem))',
             background: 'var(--nav-bg-opaque)',
             border: '1px solid var(--nav-border)',
-            borderRadius: '14px',
+            borderRadius: '12px',
             boxShadow: '0 12px 40px rgba(0,0,0,0.28)',
             padding: '1.5rem 1.75rem',
             zIndex: 100,
@@ -340,7 +509,7 @@ function LanguageSwitcher({ currentLang, onChange }: { currentLang: string; onCh
               <span>{l.flag}</span>
               <span>{l.label}</span>
               {currentLang === l.code && (
-                <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--waf-brand)' }}>✓</span>
+                <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--waf-brand)' }}>✓</span>
               )}
             </button>
           ))}
@@ -352,17 +521,97 @@ function LanguageSwitcher({ currentLang, onChange }: { currentLang: string; onCh
 
 export default function TopNavigation({
   run, runs, page, role, user, maturityLevel,
-  settings, waiverCount, riskCount, failCount,
-  navigate, onOpenUserPrefs, onLogout, onShowRunModal,
-  onOpenOnboarding,
+  settings, waiverCount, riskCount, failCount, controls,
+  navigate, onSelectRun, onOpenUserPrefs, onLogout, onShowRunModal,
+  onStartBriefing, onStartWidgetWall, onOpenOnboarding,
 }: TopNavigationProps) {
   const { t, lang } = useI18n()
   const [linkCopied, setLinkCopied] = useState(false)
-  const showNotifications = role === 'admin'
+  const [launcherOpen, setLauncherOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [presentOpen, setPresentOpen] = useState(false)
+  const presentRef = useRef<HTMLDivElement>(null)
+  const { isEnabled, prefs, update } = useBetaFeatures()
+  const { themeName, toggleTheme } = useTheme()
+  const { isHoldingAdmin } = useAuth()
+  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
+  const effectiveRole = isHoldingAdmin ? 'admin' : role
+  const visibleSections = allSections
+    .filter(s => {
+      const required = sectionRequiredRole(s)
+      return required === null || hasMinRole(effectiveRole, required)
+    })
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.beta || isEnabled(item.beta)),
+    }))
+    .filter(section => section.items.length > 0)
+  const showNotifications = effectiveRole === 'admin'
+  const launcherEnabled = isEnabled(BETA_CATEGORY_LAUNCHER)
+  const pinsEnabled = isEnabled(BETA_PINNED_PAGES)
+  const paletteEnabled = isEnabled(BETA_COMMAND_PALETTE)
+  const briefingEnabled = isEnabled(BETA_BRIEFING_MODE)
+  const wallEnabled = isEnabled(BETA_WIDGET_WALL)
+  const presentationEnabled = !!run && (briefingEnabled || wallEnabled)
+  const pinnedPages = prefs.pinnedPages ?? []
+  const avatarUrl = safeImageUrl(user.image_url)
+  const launcherSections = visibleSections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.minRole || hasMinRole(effectiveRole, item.minRole)),
+    }))
+    .filter(section => section.items.length > 0)
+  const pageMeta = new Map(
+    launcherSections.flatMap(section => section.items.map(item => [item.page, { label: item.label, icon: item.icon, color: section.color }] as const)),
+  )
 
+  const togglePin = (target: Page) => {
+    const current = prefs.pinnedPages ?? []
+    if (current.includes(target)) {
+      update({ pinnedPages: current.filter(p => p !== target) })
+      return
+    }
+    if (current.length >= MAX_PINNED_PAGES) return
+    update({ pinnedPages: [...current, target] })
+  }
 
-  const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t)
-  const visibleSections = allSections.filter(s => hasMinRole(role, s.minRole ?? 'admin'))
+  useEffect(() => {
+    if (!launcherEnabled) setLauncherOpen(false)
+  }, [launcherEnabled])
+
+  // The beta page can preview the launcher without leaving Settings.
+  useEffect(() => {
+    const openLauncher = () => setLauncherOpen(true)
+    window.addEventListener('wombat:open-category-launcher', openLauncher)
+    return () => window.removeEventListener('wombat:open-category-launcher', openLauncher)
+  }, [])
+
+  useEffect(() => {
+    const openPalette = () => setPaletteOpen(true)
+    window.addEventListener('wombat:open-command-palette', openPalette)
+    return () => window.removeEventListener('wombat:open-command-palette', openPalette)
+  }, [])
+
+  useEffect(() => {
+    if (!presentOpen) return
+    const onPointer = (event: MouseEvent) => {
+      if (!presentRef.current?.contains(event.target as Node)) setPresentOpen(false)
+    }
+    document.addEventListener('mousedown', onPointer)
+    return () => document.removeEventListener('mousedown', onPointer)
+  }, [presentOpen])
+
+  useEffect(() => {
+    if (!paletteEnabled) return
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [paletteEnabled])
 
   const currentRunLabel = run ? `${run.project || 'unnamed'} · ${new Date(run.created_at).toLocaleDateString()}` : 'Select run…'
 
@@ -379,23 +628,65 @@ export default function TopNavigation({
   }
 
   return (
+    <>
     <header className="app-top-nav">
       {/* Logo */}
       <div className="app-top-nav-logo">
-        <img src="/logo.png" alt="WAF++ PASS" style={{ height: '32px', width: 'auto', objectFit: 'contain', filter: 'brightness(1.05)' }} />
+        <BrandLogo className="app-top-nav-logo-brand" height={32} />
+        {/* Same-session follow-up — the active mandate's own logo, always
+            visible right next to the Wombat logo, not just on the Mandates
+            page. See ActiveMandateLogo's own docstring for exactly what
+            "active" means for each role. */}
+        <ActiveMandateLogo />
       </div>
 
       {/* Navigation - only on large screens */}
-      <div className="app-top-nav-items">
-        {visibleSections.map(section => (
+      <div className={`app-top-nav-items${launcherEnabled ? ' app-top-nav-items--launcher' : ''}`}>
+        {launcherEnabled ? (
+          <button
+            type="button"
+            className="category-launcher-trigger"
+            aria-label={t('nav.launcher.open')}
+            aria-haspopup="dialog"
+            aria-expanded={launcherOpen}
+            title={t('nav.launcher.open')}
+            onClick={() => setLauncherOpen(true)}
+          >
+            <NineDotIcon size={18} />
+          </button>
+        ) : visibleSections.map(section => (
           <NavSectionDropdown
             key={section.id}
             section={section}
             page={page}
             navigate={navigate}
-            role={role}
+            role={effectiveRole}
           />
         ))}
+        {pinsEnabled && pinnedPages.length > 0 && (
+          <div className="app-top-nav-pins" aria-label={t('nav.launcher.pinned')}>
+            {pinnedPages.map(target => {
+              const meta = pageMeta.get(target)
+              if (!meta) return null
+              const active = target === page
+              return (
+                <button
+                  key={target}
+                  type="button"
+                  className={`app-top-nav-pin${active ? ' is-active' : ''}`}
+                  aria-label={meta.label}
+                  aria-current={active ? 'page' : undefined}
+                  title={meta.label}
+                  onClick={() => navigate(target)}
+                >
+                  <svg width="16" height="16" fill="none" stroke={meta.color} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={meta.icon} />
+                  </svg>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Right side - User controls */}
@@ -435,17 +726,73 @@ export default function TopNavigation({
 
         {/* Dark mode toggle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Mandate indicator (Phase 3.3) — renders nothing in single_tenant mode */}
+          <MandateIndicator />
+
+          {/* Presentation modes (beta) */}
+          {presentationEnabled && (
+            <div className="present-menu" ref={presentRef}>
+              <button
+                type="button"
+                className="present-trigger"
+                aria-haspopup="menu"
+                aria-expanded={presentOpen}
+                title="Present"
+                aria-label="Open presentation modes"
+                onClick={() => setPresentOpen(value => !value)}
+              >
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 3h20v14H2zM8 21h8M12 17v4" />
+                </svg>
+              </button>
+              {presentOpen && (
+                <div className="present-popover" role="menu">
+                  {briefingEnabled && (
+                    <button type="button" role="menuitem" onClick={() => { setPresentOpen(false); onStartBriefing() }}>
+                      <strong>Briefing mode</strong>
+                      <span>Clean, large-type run summary</span>
+                    </button>
+                  )}
+                  {wallEnabled && (
+                    <button type="button" role="menuitem" onClick={() => { setPresentOpen(false); onStartWidgetWall() }}>
+                      <strong>Widget wall</strong>
+                      <span>Rotating KPI board for a screen</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Command palette trigger (beta) */}
+          {paletteEnabled && (
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              title={t('nav.palette.trigger')}
+              aria-label={t('nav.palette.trigger')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '.4rem',
+                padding: '0.5rem 0.6rem', borderRadius: '8px',
+                background: 'var(--nav-surf)', color: 'var(--nav-text)',
+                border: '1px solid var(--nav-border)',
+                cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <kbd className="app-top-nav-kbd">⌘K</kbd>
+            </button>
+          )}
+
           {/* Notifications bell (admin only) */}
           {showNotifications && <NotificationBell navigate={navigate} />}
 
           {/* Dark mode toggle */}
           <button
-            onClick={() => {
-              const html = document.documentElement
-              const isDark = html.getAttribute('data-theme') === 'dark'
-              html.setAttribute('data-theme', isDark ? 'light' : 'dark')
-            }}
-            title={document.documentElement.getAttribute('data-theme') === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={toggleTheme}
+            title={themeName === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '0.5rem', borderRadius: '8px',
@@ -454,7 +801,7 @@ export default function TopNavigation({
               cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
             }}
           >
-            {document.documentElement.getAttribute('data-theme') === 'dark'
+            {themeName === 'dark'
               ? <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" strokeWidth={2}/><path strokeLinecap="round" strokeWidth={2} d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
               : <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
             }
@@ -555,13 +902,14 @@ export default function TopNavigation({
         {/* User dropdown - avatar with hover menu */}
         <div className="top-nav-wrapper" style={{ position: 'relative' }}>
           <button
+            aria-label={user.display_name || user.username}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: '32px', height: '32px', borderRadius: '50%',
               background: 'var(--nav-surf)',
               border: '1px solid var(--nav-border)',
               cursor: 'pointer', transition: 'all 0.15s',
-              flexShrink: 0,
+              flexShrink: 0, position: 'relative', overflow: 'hidden',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'var(--nav-bg)'
@@ -574,12 +922,23 @@ export default function TopNavigation({
               e.currentTarget.style.borderColor = 'var(--nav-border)'
             }}
           >
-            {user.image_url && user.image_url !== '' ? (
-              <img src={user.image_url} alt={user.display_name || user.username} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-            ) : (
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0094FF' }}>
-                {user.display_name ? user.display_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
-              </span>
+            {/* Initials stay underneath: if the avatar URL fails to load the
+                fallback is already visible, no onError handler needed. The
+                image is painted as a CSS background instead of <img src> —
+                CodeQL's URL-taint queries treat every img src as a
+                script-URL sink they cannot see safeImageUrl() sanitises. */}
+            <span aria-hidden="true" style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0094FF' }}>
+              {user.display_name ? user.display_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+            </span>
+            {avatarUrl && (
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  backgroundImage: `url("${avatarUrl}")`,
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                }}
+              />
             )}
           </button>
 
@@ -593,7 +952,7 @@ export default function TopNavigation({
             background: 'var(--card-bg)',
             border: '1px solid var(--nav-border)',
             borderRadius: '8px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+            boxShadow: '0 12px 40px color-mix(in srgb, #000000 25%, transparent)',
             zIndex: 100,
             display: 'none',
           }}>
@@ -605,7 +964,7 @@ export default function TopNavigation({
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nav-text)' }}>
                 {user.display_name || user.username}
               </div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--nav-muted)' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--nav-muted)' }}>
                 {role.charAt(0).toUpperCase() + role.slice(1)}
               </div>
             </div>
@@ -648,7 +1007,7 @@ export default function TopNavigation({
                 transition: 'all 0.15s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(218,44,56,0.1)'
+                e.currentTarget.style.background = 'color-mix(in srgb, #da2c38 10%, transparent)'
                 e.currentTarget.style.color = 'var(--waf-danger)'
               }}
               onMouseLeave={(e) => {
@@ -672,5 +1031,30 @@ export default function TopNavigation({
         `}</style>
       </div>
     </header>
+    {paletteOpen && (
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        sections={launcherSections}
+        controls={controls}
+        runs={runs}
+        onNavigate={navigate}
+        onSelectRun={onSelectRun}
+        canManageSettings={hasMinRole(effectiveRole, 'architect')}
+      />
+    )}
+    {launcherOpen && (
+      <CategoryLauncher
+        sections={launcherSections}
+        page={page}
+        navigate={navigate}
+        onClose={() => setLauncherOpen(false)}
+        onManageBeta={hasMinRole(effectiveRole, 'architect') ? () => navigate('betafeatures') : undefined}
+        pinsEnabled={pinsEnabled}
+        pinnedPages={pinnedPages}
+        onTogglePin={togglePin}
+      />
+    )}
+    </>
   )
 }

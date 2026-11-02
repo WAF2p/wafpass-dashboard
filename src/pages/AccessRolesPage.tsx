@@ -24,7 +24,7 @@ const ROLES = [
     ),
     description: 'Strategic leadership. Business risk posture, regulatory status, financial impact, and board-level compliance reporting.',
     pages: [
-      { name: 'Dashboard',         note: 'Overall WAF++ risk posture' },
+      { name: 'Dashboard',         note: 'Overall Wombat risk posture' },
       { name: 'Compliance Matrix',  note: 'Regulatory framework coverage' },
       { name: 'Cost Impact',        note: 'Financial exposure from failing controls' },
       { name: 'Gap Analysis',       note: 'Shortest path to full compliance' },
@@ -62,7 +62,7 @@ const ROLES = [
     subtitle: 'Solutions · Cloud · Platform Architect',
     color: '#8b5cf6',
     bg: 'rgba(139,92,246,0.08)',
-    border: 'rgba(139,92,246,0.28)',
+    border: 'color-mix(in srgb, #8b5cf6 28%, transparent)',
     access: 'Design R/W',
     accessColor: '#8b5cf6',
     icon: (
@@ -113,8 +113,8 @@ const ROLES = [
     label: 'Admin',
     subtitle: 'System Administrator',
     color: '#DA2C38',
-    bg: 'rgba(218,44,56,0.08)',
-    border: 'rgba(218,44,56,0.30)',
+    bg: 'color-mix(in srgb, #da2c38 8%, transparent)',
+    border: 'color-mix(in srgb, #da2c38 30%, transparent)',
     access: 'Full Access',
     accessColor: '#DA2C38',
     icon: (
@@ -172,7 +172,7 @@ const AUTH_PROVIDERS = [
       </svg>
     ),
     protocol: 'OAuth 2.0 · OIDC',
-    notes: ['Authorization Code flow with discovery endpoint', 'JWT claim → WAF++ role mapping (configurable)', 'Auto-provisioning of new users on first login'],
+    notes: ['Authorization Code flow with discovery endpoint', 'JWT claim → WOMBATpass role mapping (configurable)', 'Auto-provisioning of new users on first login'],
   },
   {
     id: 'saml2',
@@ -183,14 +183,14 @@ const AUTH_PROVIDERS = [
     statusColor: '#22c55e',
     color: '#8b5cf6',
     bg: 'rgba(139,92,246,0.08)',
-    border: 'rgba(139,92,246,0.25)',
+    border: 'color-mix(in srgb, #8b5cf6 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
       </svg>
     ),
     protocol: 'SAML 2.0',
-    notes: ['HTTP-Redirect binding for AuthnRequests', 'SAML attribute → WAF++ role mapping (configurable)', 'SP metadata endpoint for IdP registration'],
+    notes: ['HTTP-Redirect binding for AuthnRequests', 'SAML attribute → WOMBATpass role mapping (configurable)', 'SP metadata endpoint for IdP registration'],
   },
   {
     id: 'ldap',
@@ -201,7 +201,7 @@ const AUTH_PROVIDERS = [
     statusColor: '#64748b',
     color: '#475569',
     bg: 'rgba(71,85,105,0.08)',
-    border: 'rgba(71,85,105,0.25)',
+    border: 'color-mix(in srgb, #475569 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="2" width="20" height="8" rx="2" /><rect x="2" y="14" width="20" height="8" rx="2" />
@@ -217,12 +217,12 @@ const AUTH_PROVIDERS = [
 
 const IMPL_NOTES = [
   { label: 'Current state',         body: 'Phase 2 live — local JWT auth plus OIDC and SAML2 SSO. SSO providers are configured in the admin SSO Settings page and stored in the database. Local accounts remain available alongside SSO.' },
-  { label: 'SSO token handoff',     body: 'After SSO authentication the server issues a standard WAF++ JWT and redirects to the dashboard with tokens in query params. The frontend stores them in localStorage — the session model is identical to local login.' },
+  { label: 'SSO token handoff',     body: 'After SSO authentication the server issues a standard WOMBATpass JWT and redirects to the dashboard with tokens in query params. The frontend stores them in localStorage — the session model is identical to local login.' },
   { label: 'Role claim source',     body: 'For local accounts, roles are stored in the users table. For OIDC/SAML2, an optional role claim/attribute is mapped server-side via a JSON mapping table configured in SSO Settings.' },
-  { label: 'Enforcement boundary',  body: 'wafpass-server enforces roles via middleware on every request. The dashboard reflects roles returned by the server after token exchange — no role logic lives in the frontend.' },
+  { label: 'Enforcement boundary',  body: 'wombat-server enforces roles via middleware on every request. The dashboard reflects roles returned by the server after token exchange — no role logic lives in the frontend.' },
   { label: 'Session model',         body: 'Short-lived JWT access tokens (60 min default) with silent refresh via a long-lived refresh token. Both stored in localStorage for session persistence across page reloads.' },
   { label: 'Multi-provider',        body: 'OIDC and SAML2 can be enabled simultaneously alongside local accounts. LDAP federation is planned for a future release.' },
-  { label: 'Service accounts',      body: 'CI/CD pipelines use the X-Api-Key header. Admin users can generate per-service keys in the API Keys page. A legacy global key can also be set via WAFPASS_API_KEY on the server.' },
+  { label: 'Service accounts',      body: 'CI/CD pipelines use the X-Api-Key header. Admin users can generate per-service keys in the API Keys page. A legacy global key can also be set via WOMBAT_API_KEY on the server.' },
 ]
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -254,7 +254,7 @@ export default function AccessRolesPage() {
           <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)' }}>
             {t('pages.access.bannerTitle')}{' '}
           </span>
-          <span style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
             {t('pages.access.bannerText')}
             {role === 'admin' && <strong>{t('pages.access.bannerAdminText')}</strong>}
           </span>
@@ -299,7 +299,7 @@ export default function AccessRolesPage() {
                     <span style={{
                       display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
                       background: `${role.accessColor}18`, color: role.accessColor,
-                      fontWeight: 600, fontSize: '0.65rem', whiteSpace: 'nowrap',
+                      fontWeight: 600, fontSize: '0.7rem', whiteSpace: 'nowrap',
                     }}>
                       {role.access}
                     </span>
@@ -363,7 +363,7 @@ export default function AccessRolesPage() {
                   display: 'flex', alignItems: 'center', gap: '0.65rem',
                 }}>
                   <div style={{
-                    flexShrink: 0, width: '30px', height: '30px', borderRadius: '7px',
+                    flexShrink: 0, width: '30px', height: '30px', borderRadius: '8px',
                     background: 'rgba(255,255,255,0.65)', border: `1px solid ${p.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: p.color,
                   }}>
@@ -371,11 +371,11 @@ export default function AccessRolesPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.83rem', color: p.color }}>{p.label}</span>
+                      <span style={{ fontWeight: 700, fontSize: '0.85rem', color: p.color }}>{p.label}</span>
                       <span style={{
                         display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
                         background: `${p.statusColor}18`, color: p.statusColor,
-                        fontWeight: 600, fontSize: '0.62rem',
+                        fontWeight: 600, fontSize: '0.7rem',
                       }}>
                         {p.statusLabel}
                       </span>

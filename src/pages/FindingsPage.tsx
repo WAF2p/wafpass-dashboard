@@ -3,16 +3,15 @@ import { Finding, RunDetail, upsertWaiver, fetchFindingComments, createFindingCo
 import { appendAuditEvent } from '../audit'
 import { useI18n, type TFunction } from '../i18n'
 import { useAuth } from '../AuthContext'
-import { buildHash, parseHash, FilterState } from '../routing'
+import { buildHash, parseHash, FilterState, Page } from '../routing'
+import SavedViewsControl from '../components/SavedViewsControl'
+import FindingsTriage from '../components/FindingsTriage'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { BETA_FINDINGS_TRIAGE } from './userPrefsUtils'
+import { severityColor } from '../severity'
+import { safeImageUrl } from '../safeUrl'
 
-interface Props { run: RunDetail }
-
-const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: '#DA2C38',
-  HIGH:     '#f97316',
-  MEDIUM:   '#eab308',
-  LOW:      '#22c55e',
-}
+interface Props { run: RunDetail; onNavigate?: (page: Page) => void }
 
 const STATUS_COLOR: Record<string, string> = {
   PASS:   '#22c55e',
@@ -67,7 +66,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '0.5rem 0.7rem', borderRadius: '8px',
     border: '1px solid var(--border)', background: 'var(--input-bg)',
-    color: 'var(--text)', fontSize: '0.82rem', resize: 'none', minHeight: '60px',
+    color: 'var(--text)', fontSize: '0.85rem', resize: 'none', minHeight: '60px',
   }
 
   return (
@@ -98,14 +97,14 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
           style={{
             padding: '0.5rem 0.9rem', border: 'none', borderRadius: '8px',
             background: !message.trim() || !user || status === 'saving' ? '#94a3b8' : 'var(--waf-brand)',
-            color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: !message.trim() || !user ? 'default' : 'pointer',
+            color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: !message.trim() || !user ? 'default' : 'pointer',
             flexShrink: 0,
           }}
         >
           {status === 'saving' ? '...' : t('pages.findings.commentBtn')}
         </button>
       </div>
-      {!user && <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.25rem' }}>Sign in with your WAF++ account to participate</div>}
+      {!user && <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.25rem' }}>Sign in with your WOMBATpass account to participate</div>}
     </div>
   )
 }
@@ -155,13 +154,13 @@ function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
               {/* Debug: console.log(comment) */}
               <div style={{
                 width: '32px', height: '32px', borderRadius: '50%',
-                background: comment.image_url && comment.image_url.trim() ? 'transparent' : 'var(--waf-brand)',
+                background: safeImageUrl(comment.image_url) ? 'transparent' : 'var(--waf-brand)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: comment.image_url && comment.image_url.trim() ? '0' : '0.75rem', fontWeight: 700, flexShrink: 0,
+                fontSize: safeImageUrl(comment.image_url) ? '0' : '0.75rem', fontWeight: 700, flexShrink: 0,
                 overflow: 'hidden',
               }}>
-                {comment.image_url && comment.image_url.trim() ? (
-                  <img src={comment.image_url} alt={comment.display_name || comment.username} style={{
+                {safeImageUrl(comment.image_url) ? (
+                  <img src={safeImageUrl(comment.image_url) ?? undefined} alt={comment.display_name || comment.username} style={{
                     width: '100%', height: '100%', objectFit: 'cover',
                   }} />
                 ) : (
@@ -173,7 +172,7 @@ function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
                   <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text)' }}>
                     {comment.display_name || comment.username}
                   </span>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                     {new Date(comment.created_at).toLocaleString()}
                   </span>
                   {currentUser && currentUser.username === comment.username && (
@@ -255,7 +254,7 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
     <div style={{
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
       width: '600px', maxWidth: '92vw', maxHeight: '90vh',
-      background: 'var(--surface)', borderRadius: '14px',
+      background: 'var(--surface)', borderRadius: '12px',
       boxShadow: '0 24px 64px rgba(15,23,42,.18)',
       display: 'flex', flexDirection: 'column', zIndex: 100,
       overflowY: 'auto',
@@ -265,12 +264,12 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
           <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{finding.check_title || finding.check_id}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.2rem', fontFamily: 'monospace' }}>{finding.check_id}</div>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, fontSize: '1.1rem' }}>✕</button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, fontSize: '1.2rem' }}>✕</button>
       </div>
       <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Pill label={finding.status} color={STATUS_COLOR[finding.status] ?? '#94a3b8'} />
-          <Pill label={finding.severity.toUpperCase()} color={SEVERITY_COLOR[finding.severity.toUpperCase()] ?? '#94a3b8'} />
+          <Pill label={finding.severity.toUpperCase()} color={severityColor(finding.severity)} />
           {finding.pillar && <Pill label={finding.pillar} color="var(--waf-brand)" />}
         </div>
         <div>
@@ -392,9 +391,9 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
       }
       // keep localStorage in sync
       try {
-        const stored = JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}') as Record<string, unknown>
+        const stored = JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}') as Record<string, unknown>
         for (const id of controlIds) stored[id] = { id, reason: reason.trim(), owner: owner.trim(), expires: expires.trim(), project }
-        localStorage.setItem('wafpass_waivers', JSON.stringify(stored))
+        localStorage.setItem('wombat_waivers', JSON.stringify(stored))
       } catch {}
       setStatus('done')
       setTimeout(onDone, 900)
@@ -407,13 +406,13 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '0.45rem 0.7rem', borderRadius: '8px',
     border: '1px solid var(--border)', background: 'var(--input-bg)',
-    color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box',
+    color: 'var(--text)', fontSize: '0.85rem', boxSizing: 'border-box',
   }
 
   return (
     <div style={{
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-      width: 480, maxWidth: '92vw', background: 'var(--surface)', borderRadius: '14px',
+      width: 480, maxWidth: '92vw', background: 'var(--surface)', borderRadius: '12px',
       boxShadow: '0 24px 64px rgba(15,23,42,.2)', zIndex: 200,
       display: 'flex', flexDirection: 'column',
     }}>
@@ -426,7 +425,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
             {t('pages.findings.waiveModalSubtitle')}
           </div>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.1rem', padding: '0.25rem' }}>✕</button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', padding: '0.25rem' }}>✕</button>
       </div>
 
       <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -475,7 +474,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
         )}
 
         <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.5rem 1rem', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.82rem', cursor: 'pointer', fontWeight: 600 }}>
+          <button onClick={onClose} style={{ padding: '0.5rem 1rem', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}>
             Cancel
           </button>
           <button
@@ -484,7 +483,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
             style={{
               padding: '0.5rem 1.25rem', border: 'none', borderRadius: 8,
               background: !reason.trim() || status === 'saving' || status === 'done' ? '#94a3b8' : 'var(--waf-brand)',
-              color: '#fff', fontSize: '0.82rem', cursor: !reason.trim() || status !== 'idle' ? 'default' : 'pointer', fontWeight: 700,
+              color: '#fff', fontSize: '0.85rem', cursor: !reason.trim() || status !== 'idle' ? 'default' : 'pointer', fontWeight: 700,
             }}
           >
             {status === 'saving' ? t('pages.findings.wavingSaving') : t('pages.findings.waiveBtn', { count: controlIds.length })}
@@ -514,7 +513,7 @@ function exportCsv(findings: Finding[], filename: string) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function FindingsPage({ run }: Props) {
+export default function FindingsPage({ run, onNavigate }: Props) {
   const { t } = useI18n()
   const findings = run.findings
 
@@ -544,6 +543,8 @@ export default function FindingsPage({ run }: Props) {
   const [detail, setDetail]                 = useState<Finding | null>(null)
   const [checked, setChecked]               = useState<Set<string>>(new Set())
   const [showWaiveModal, setShowWaiveModal] = useState(false)
+  const [showTriage, setShowTriage] = useState(false)
+  const { isEnabled } = useBetaFeatures()
 
   // Sync filters to URL on change (but not on initial mount - that would be redundant)
   const isInitialMount = useRef(true)
@@ -651,10 +652,30 @@ export default function FindingsPage({ run }: Props) {
           <span style={{ fontSize: '0.75rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
             {filtered.length} / {findings.length}
           </span>
+          <SavedViewsControl
+            page="findings"
+            currentFilters={{ search, statusFilter, severityFilter, pillarFilter }}
+            onApply={filters => {
+              setSearch(typeof filters.search === 'string' ? filters.search : '')
+              setStatusFilter(typeof filters.statusFilter === 'string' ? filters.statusFilter : '')
+              setSeverityFilter(typeof filters.severityFilter === 'string' ? filters.severityFilter : '')
+              setPillarFilter(typeof filters.pillarFilter === 'string' ? filters.pillarFilter : '')
+            }}
+          />
+          {isEnabled(BETA_FINDINGS_TRIAGE) && (
+            <button type="button" className="triage-trigger" onClick={() => setShowTriage(true)} disabled={filtered.length === 0}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Triage
+              <span className="triage-trigger-count">{filtered.length}</span>
+            </button>
+          )}
 
           {/* Export with filter option */}
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <select
+              className="select-plain"
               value="visible"
               onChange={(e) => {
                 if (e.target.value === 'all') {
@@ -663,7 +684,7 @@ export default function FindingsPage({ run }: Props) {
                   exportCsv(filtered, `findings-${run.project || 'run'}-${today}.csv`)
                 }
               }}
-              style={{ ...selectStyle, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, color: '#059669', borderColor: 'rgba(5,150,105,.35)', padding: '0.35rem 2.25rem 0.35rem 0.6rem', appearance: 'none' }}
+              style={{ ...selectStyle, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, color: '#059669', borderColor: 'color-mix(in srgb, #059669 35%, transparent)', padding: '0.35rem 2.25rem 0.35rem 0.6rem', appearance: 'none' }}
             >
               <option value="visible">{t('pages.findings.exportVisibleFilters')}</option>
               <option value="all">{t('pages.findings.exportAllFindings')}</option>
@@ -694,7 +715,7 @@ export default function FindingsPage({ run }: Props) {
               onClick={() => setShowWaiveModal(true)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.4rem',
-                padding: '0.35rem 0.85rem', borderRadius: '7px', border: 'none',
+                padding: '0.35rem 0.85rem', borderRadius: '8px', border: 'none',
                 background: 'var(--waf-brand)', color: '#fff',
                 fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
               }}
@@ -709,8 +730,8 @@ export default function FindingsPage({ run }: Props) {
               onClick={() => exportCsv(checkedInView, `findings-selected-${today}.csv`)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.4rem',
-                padding: '0.35rem 0.85rem', borderRadius: '7px',
-                border: '1px solid rgba(5,150,105,.35)', background: 'rgba(5,150,105,.06)',
+                padding: '0.35rem 0.85rem', borderRadius: '8px',
+                border: '1px solid color-mix(in srgb, #059669 35%, transparent)', background: 'color-mix(in srgb, #059669 6%, transparent)',
                 color: '#059669', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
               }}
             >
@@ -784,7 +805,7 @@ export default function FindingsPage({ run }: Props) {
                         {(f.comment_count ?? 0) > 0 && (
                           <span style={{
                             marginLeft: '0.5rem',
-                            fontSize: '0.62rem',
+                            fontSize: '0.7rem',
                             fontWeight: 700,
                             borderRadius: '999px',
                             padding: '0.05rem 0.4rem',
@@ -803,7 +824,7 @@ export default function FindingsPage({ run }: Props) {
                       {f.pillar && <Pill label={f.pillar} color="var(--waf-brand)" />}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      <Pill label={f.severity.toUpperCase()} color={SEVERITY_COLOR[f.severity.toUpperCase()] ?? '#94a3b8'} />
+                      <Pill label={f.severity.toUpperCase()} color={severityColor(f.severity)} />
                     </td>
                     <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
                       <Pill label={f.status} color={STATUS_COLOR[f.status] ?? '#94a3b8'} />
@@ -826,15 +847,31 @@ export default function FindingsPage({ run }: Props) {
       {/* Detail panel overlay */}
       {detail && (
         <>
-          <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 99 }} />
+          <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 20%, transparent)', zIndex: 99 }} />
           <DetailPanel finding={detail} onClose={() => setDetail(null)} t={t} />
         </>
+      )}
+
+      {showTriage && (
+        <FindingsTriage
+          findings={filtered}
+          onClose={() => setShowTriage(false)}
+          onWaive={finding => {
+            setChecked(new Set([rowKey(finding)]))
+            setShowTriage(false)
+            setShowWaiveModal(true)
+          }}
+          onFix={() => {
+            setShowTriage(false)
+            onNavigate?.('autofix')
+          }}
+        />
       )}
 
       {/* Waive modal overlay */}
       {showWaiveModal && (
         <>
-          <div onClick={() => setShowWaiveModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 199 }} />
+          <div onClick={() => setShowWaiveModal(false)} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 30%, transparent)', zIndex: 199 }} />
           <WaiveModal
             controlIds={selectedControlIds}
             project={run.project ?? ''}

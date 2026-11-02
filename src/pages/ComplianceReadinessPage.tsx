@@ -1,7 +1,7 @@
 /**
  * Compliance Readiness Index
  *
- * Tracks compliance evidence readiness for decentralized WAF++ audits:
+ * Tracks compliance evidence readiness for decentralized Wombat audits:
  * - % of controls mapped to frameworks (GDPR, ISO, SOC2, etc.)
  * - Evidence collection completeness per audit period
  * - Findings with missing remediation documentation
@@ -9,7 +9,17 @@
  * - Expiration tracking for waivers/risk acceptances
  */
 import { useEffect, useState } from 'react'
-import { RunDetail, WaiverRecord, RiskRecord, fetchWaivers, fetchRisks } from '../api'
+import {
+  ComplianceReadinessData,
+  FrameworkStats,
+  RunDetail,
+  RiskRecord,
+  WaiverRecord,
+  fetchComplianceReadiness,
+  fetchRisks,
+  fetchWaivers,
+} from '../api'
+import { scoreColor } from '../severity';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -17,31 +27,9 @@ interface Props {
   run: RunDetail | null
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface FrameworkStats {
-  name: string
-  description: string
-  controls: number
-  pct: number
-}
-
-interface ComplianceReadinessData {
-  totalFrameworkCoverage: number
-  frameworkCount: number
-  evidenceCompleteness: number
-  findingsWithoutRemediation: number
-  readinessScore: number
-  frameworks: FrameworkStats[]
-  controlsWithoutRemediation: Array<{ id: string; title: string; category: string; severity: string }>
-}
-
 
 // ─── Helper functions ────────────────────────────────────────────────────────
 
-function scoreHex(s: number): string {
-  return s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#dc2626'
-}
 
 function isExpiringSoon(dateStr: string | undefined): boolean {
   if (!dateStr) return false
@@ -58,42 +46,52 @@ export default function ComplianceReadinessPage({ run }: Props) {
   const [data, setData] = useState<ComplianceReadinessData | null>(null)
   const [waivers, setWaivers] = useState<WaiverRecord[]>([])
   const [risks, setRisks] = useState<RiskRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [usingFallback, setUsingFallback] = useState(false)
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (!run) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    setUsingFallback(false)
+
+    const loadData = async () => {
       try {
-        // Fetch compliance readiness data from server
-        const res = await fetch('/api/v1/compliance-readiness')
-        if (res.ok) {
-          const result = await res.json()
-          setData(result)
-        } else {
-          // Fallback to in-memory calculation if API fails
-          setData(calculateReadinessFromRun(run))
-        }
-      } catch {
+        const result = await fetchComplianceReadiness(run.id)
+        setData(result)
+      } catch (err) {
+        // Fallback to in-memory calculation if server is unreachable
         setData(calculateReadinessFromRun(run))
+        setUsingFallback(true)
+        setError(err instanceof Error ? err.message : 'Server unavailable. Showing offline estimate.')
+      } finally {
+        setLoading(false)
       }
 
-      // Fetch waivers and risks separately
+      // Fetch waivers and risks separately, scoped to the run's project
       try {
-        const [w, r] = await Promise.all([fetchWaivers(), fetchRisks()])
+        const [w, r] = await Promise.all([fetchWaivers(run.project), fetchRisks(run.project)])
         setWaivers(w)
         setRisks(r)
       } catch {
         // Use localStorage cache if API fails
         try {
-          const w = JSON.parse(localStorage.getItem('wafpass_waivers') ?? '{}')
+          const w = JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}')
           setWaivers(Object.values(w) as WaiverRecord[])
         } catch {}
         try {
-          const r = JSON.parse(localStorage.getItem('wafpass_risk_acceptances') ?? '{}')
+          const r = JSON.parse(localStorage.getItem('wombat_risk_acceptances') ?? '{}')
           setRisks(Object.values(r) as RiskRecord[])
         } catch {}
       }
     }
 
-    fetchData()
+    loadData()
   }, [run])
 
   if (!run) {
@@ -104,8 +102,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
     )
   }
 
-  // Fallback calculation if server data is not available
-  const readinessData = data || calculateReadinessFromRun(run)
+  const readinessData = data ?? calculateReadinessFromRun(run)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -115,18 +112,50 @@ export default function ComplianceReadinessPage({ run }: Props) {
           Compliance Readiness
         </h1>
         <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--muted)' }}>
-          Evidence collection status and audit readiness scores — prepare for compliance audits with offline support
+          Evidence collection status and audit readiness scores — prepare for compliance audits
         </p>
       </div>
 
-      {/* ── Stats Dashboard ────────────────────────────────────────────────────── */}
+      {usingFallback && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          background: 'rgba(217,119,6,.08)',
+          border: '1px solid rgba(217,119,6,.3)',
+          borderRadius: '8px',
+          color: '#d97706',
+          fontSize: '0.75rem',
+        }}>
+          <strong>Offline estimate:</strong> evidence metrics require a server connection. Framework coverage and remediation gaps are calculated from the local run data.
+        </div>
+      )}
+
+      {error && !usingFallback && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          background: 'rgba(220,38,38,.08)',
+          border: '1px solid rgba(220,38,38,.3)',
+          borderRadius: '8px',
+          color: '#dc2626',
+          fontSize: '0.75rem',
+        }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem' }}>
+          Loading compliance readiness metrics…
+        </div>
+      ) : (
+        <>
+          {/* ── Stats Dashboard ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
         <StatCard
           label="Controls Mapped"
           value={`${readinessData.totalFrameworkCoverage}%`}
           color="#059669"
-          bg="rgba(5,150,105,.08)"
-          border="rgba(5,150,105,.2)"
+          bg="color-mix(in srgb, #059669 8%, transparent)"
+          border="color-mix(in srgb, #059669 20%, transparent)"
         />
         <StatCard
           label="Frameworks"
@@ -153,8 +182,8 @@ export default function ComplianceReadinessPage({ run }: Props) {
           label="Ready for Audit"
           value={`${readinessData.readinessScore}/100`}
           color="#7c3aed"
-          bg="rgba(124,58,237,.08)"
-          border="rgba(124,58,237,.2)"
+          bg="color-mix(in srgb, #7c3aed 8%, transparent)"
+          border="color-mix(in srgb, #7c3aed 20%, transparent)"
           highlight
         />
       </div>
@@ -170,7 +199,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Audit Readiness Score</h2>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <span style={{ fontSize: '2.5rem', fontWeight: 800, color: scoreHex(readinessData.readinessScore) }}>
+              <span style={{ fontSize: '2.5rem', fontWeight: 800, color: scoreColor(readinessData.readinessScore) }}>
                 {readinessData.readinessScore}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>/100</span>
@@ -181,8 +210,8 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 fontWeight: 700,
                 padding: '0.15rem 0.6rem',
                 borderRadius: '999px',
-                background: readinessData.readinessScore >= 70 ? 'rgba(5,150,105,.15)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.15)' : 'rgba(220,38,38,.15)',
-                border: `1px solid ${readinessData.readinessScore >= 70 ? 'rgba(5,150,105,.3)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
+                background: readinessData.readinessScore >= 70 ? 'color-mix(in srgb, #059669 15%, transparent)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.15)' : 'rgba(220,38,38,.15)',
+                border: `1px solid ${readinessData.readinessScore >= 70 ? 'color-mix(in srgb, #059669 30%, transparent)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
                 color: readinessData.readinessScore >= 70 ? '#059669' : readinessData.readinessScore >= 50 ? '#d97706' : '#dc2626',
               }}>
                 {readinessData.readinessScore >= 70 ? 'Ready for Audit' : readinessData.readinessScore >= 50 ? 'Near Ready' : 'Needs Work'}
@@ -208,7 +237,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
             </svg>
             <div style={{ textAlign: 'center', marginTop: '-90px' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>{readinessData.readinessScore}</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 600 }}>Ready Score</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>Ready Score</div>
             </div>
           </div>
         </div>
@@ -250,7 +279,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     }}>
                       {fw.pct}% complete
                     </div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--muted)' }}>{fw.controls} controls</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{fw.controls} controls</div>
                   </div>
                 </div>
                 <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '999px', overflow: 'hidden' }}>
@@ -317,13 +346,13 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     {w.id}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#d97706', marginTop: '0.2rem' }}>{w.reason}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                     Expires: {w.expires || 'Not set'}
                   </div>
                 </div>
                 {w.expires && isExpiringSoon(w.expires) && (
                   <span style={{
-                    fontSize: '0.65rem',
+                    fontSize: '0.7rem',
                     fontWeight: 700,
                     padding: '0.2rem 0.6rem',
                     borderRadius: '999px',
@@ -342,8 +371,8 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
-                background: 'rgba(14,165,233,.08)',
-                border: '1px solid rgba(14,165,233,.2)',
+                background: 'color-mix(in srgb, #0ea5e9 8%, transparent)',
+                border: '1px solid color-mix(in srgb, #0ea5e9 20%, transparent)',
                 borderRadius: '8px',
               }}>
                 <div style={{ flex: 1 }}>
@@ -351,17 +380,17 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     {ra.id}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#0094ff', marginTop: '0.2rem' }}>{ra.reason}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                     Expires: {ra.expires || 'Not set'} | Risk: {ra.residual_risk || 'medium'}
                   </div>
                 </div>
                 {ra.expires && isExpiringSoon(ra.expires) && (
                   <span style={{
-                    fontSize: '0.65rem',
+                    fontSize: '0.7rem',
                     fontWeight: 700,
                     padding: '0.2rem 0.6rem',
                     borderRadius: '999px',
-                    background: 'rgba(14,165,233,.2)',
+                    background: 'color-mix(in srgb, #0ea5e9 20%, transparent)',
                     color: '#0094ff',
                   }}>
                     EXPIRING SOON
@@ -396,7 +425,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
             color: 'var(--muted)',
             fontSize: '0.8rem',
             background: 'rgba(5,150,105,.04)',
-            border: '1px solid rgba(5,150,105,.2)',
+            border: '1px solid color-mix(in srgb, #059669 20%, transparent)',
             borderRadius: '8px',
           }}>
             All controls have remediation documentation.
@@ -421,20 +450,21 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     {control.id}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#dc2626' }}>{control.title}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
                     {control.category} | severity: {control.severity}
                   </div>
                 </div>
               </div>
             ))}
             {readinessData.controlsWithoutRemediation.length > 10 && (
-              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--muted)' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--muted)' }}>
                 +{readinessData.controlsWithoutRemediation.length - 10} more controls missing remediation
               </div>
             )}
           </div>
         )}
       </div>
+      </>)}
     </div>
   )
 }
@@ -469,7 +499,7 @@ function StatCard({ label, value, color, bg, border, highlight = false }: {
       </div>
       <div
         style={{
-          fontSize: '0.65rem',
+          fontSize: '0.7rem',
           fontWeight: 700,
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
@@ -485,6 +515,14 @@ function StatCard({ label, value, color, bg, border, highlight = false }: {
 
 // ─── Fallback calculation ────────────────────────────────────────────────────
 
+function frameworksForControl(control: RunDetail['controls_meta'][number]): Set<string> {
+  return new Set((control.regulatory_mapping || []).map(m => m.framework).filter(Boolean))
+}
+
+function controlHasRemediation(control: RunDetail['controls_meta'][number]): boolean {
+  return (control.checks || []).some(check => (check.remediation || '').trim().length > 0)
+}
+
 function calculateReadinessFromRun(run: RunDetail | null): ComplianceReadinessData {
   if (!run) {
     return {
@@ -498,53 +536,56 @@ function calculateReadinessFromRun(run: RunDetail | null): ComplianceReadinessDa
     }
   }
 
-  // Count controls with regulatory mapping
-  const controlsWithFramework = run.controls_meta.filter(c => c.regulatory_mapping && c.regulatory_mapping.length > 0)
-  const totalFrameworkCoverage = run.controls_meta.length > 0
-    ? Math.round((controlsWithFramework.length / run.controls_meta.length) * 100)
+  const controls = run.controls_meta || []
+  const totalControls = controls.length
+
+  // Framework coverage: % of controls mapped to at least one framework
+  const mappedControls = controls.filter(c => frameworksForControl(c).size > 0)
+  const totalFrameworkCoverage = totalControls > 0
+    ? Math.round((mappedControls.length / totalControls) * 100)
     : 0
 
-  // Count unique frameworks
-  const frameworkSet = new Set<string>()
-  run.controls_meta.forEach(c => {
-    c.regulatory_mapping?.forEach(m => frameworkSet.add(m.framework))
-  })
-  const frameworkCount = frameworkSet.size
+  // Build per-framework stats. Offline fallback has no evidence data, so bars show 0%
+  // to avoid the previous hard-coded 100% bug.
+  const frameworkNames = new Set<string>()
+  controls.forEach(c => frameworksForControl(c).forEach(fw => frameworkNames.add(fw)))
 
-  // Evidence completeness (controls with evidence defined)
-  const controlsWithEvidence = run.controls_meta.filter(c => (c as any).evidence && (c as any).evidence.required && (c as any).evidence.required.length > 0)
-  const evidenceCompleteness = run.controls_meta.length > 0
-    ? Math.round((controlsWithEvidence.length / run.controls_meta.length) * 100)
-    : 0
-
-  // Find controls missing remediation (check remediation field)
-  const controlsWithoutRemediation = run.controls_meta.filter(c => !(c as any).remediation || (c as any).remediation.trim() === '').map(c => ({
-    id: c.id,
-    title: c.title,
-    category: c.category || 'unknown',
-    severity: c.severity || 'medium',
-  }))
-
-  // Calculate readiness score
-  const remediationPenalty = Math.min(20, Math.round((controlsWithoutRemediation.length / run.controls_meta.length) * 20))
-  const readinessScore = Math.max(0, Math.round((totalFrameworkCoverage * 0.4) + (evidenceCompleteness * 0.4) - remediationPenalty))
-
-  // Framework stats
   const frameworks: FrameworkStats[] = []
-  frameworkSet.forEach(fwName => {
-    const frameworkControls = run.controls_meta.filter(c => c.regulatory_mapping?.some(m => m.framework === fwName))
+  frameworkNames.forEach(fwName => {
+    const fwControls = controls.filter(c => frameworksForControl(c).has(fwName))
     frameworks.push({
       name: fwName,
       description: getFrameworkDescription(fwName),
-      controls: frameworkControls.length,
-      pct: Math.round((frameworkControls.filter(c => c.regulatory_mapping?.some(m => m.framework === fwName)).length / frameworkControls.length) * 100) || 0,
+      controls: fwControls.length,
+      pct: 0,
     })
   })
-  frameworks.sort((a, b) => b.pct - a.pct)
+  frameworks.sort((a, b) => a.name.localeCompare(b.name))
+
+  // Evidence completeness: unknown offline, so report 0 rather than guess.
+  const evidenceCompleteness = 0
+
+  // Controls missing remediation: require at least one check with non-empty remediation text
+  const controlsWithoutRemediation = controls
+    .filter(c => !controlHasRemediation(c))
+    .map(c => ({
+      id: c.id,
+      title: c.title,
+      category: c.category || 'unknown',
+      severity: c.severity || 'medium',
+    }))
+
+  const remediationPenalty = totalControls > 0
+    ? Math.min(20, Math.round((controlsWithoutRemediation.length / totalControls) * 20))
+    : 0
+  const readinessScore = Math.max(
+    0,
+    Math.round((totalFrameworkCoverage * 0.4) + (evidenceCompleteness * 0.4) - remediationPenalty),
+  )
 
   return {
     totalFrameworkCoverage,
-    frameworkCount,
+    frameworkCount: frameworkNames.size,
     evidenceCompleteness,
     findingsWithoutRemediation: controlsWithoutRemediation.length,
     readinessScore,
@@ -567,6 +608,13 @@ function getFrameworkDescription(name: string): string {
     'CSRD': 'Corporate Sustainability Reporting Directive',
     'SOC 2': 'AICPA Service Organization Controls — Trust Services Criteria',
     'SOC 2 Type II': 'AICPA Service Organization Controls — Trust Services Criteria',
+    'PCI DSS v4.0': 'Payment Card Industry Data Security Standard v4.0',
+    'CIS Controls v8': 'Center for Internet Security Controls v8',
+    'COBIT 2019': 'Control Objectives for Information and Related Technologies',
+    'NIS2': 'Network and Information Security Directive (EU) 2022/2555',
+    'DORA': 'Digital Operational Resilience Act (EU) 2022/2554',
+    'CSA STAR': 'Cloud Security Alliance Security, Trust & Assurance Registry',
+    'IT-Grundschutz': 'BSI IT-Grundschutz Compendium',
   }
   return descriptions[name] || ''
 }

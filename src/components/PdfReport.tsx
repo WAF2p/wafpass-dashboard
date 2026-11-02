@@ -8,6 +8,7 @@
 
 import { RunDetail } from '../api'
 import { Settings, MATURITY_META } from '../pages/settingsUtils'
+import { severityBg, severityColor, scoreColor } from '../severity'
 
 interface Props {
   run: RunDetail
@@ -19,20 +20,12 @@ interface Props {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#eab308', LOW: '#22c55e',
-}
 const STATUS_COLOR: Record<string, string> = {
   PASS: '#22c55e', FAIL: '#ef4444', SKIP: '#94a3b8', WAIVED: '#a78bfa',
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function scoreColor(s: number, darkMode: boolean) {
-  return darkMode
-    ? s >= 80 ? '#22c55e' : s >= 60 ? '#eab308' : '#ef4444'
-    : s >= 80 ? '#059669' : s >= 60 ? '#d97706' : '#DA2C38'
-}
 
 function pct(pass: number, total: number) {
   return total > 0 ? Math.round((pass / total) * 100) : 0
@@ -197,8 +190,8 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
         {/* ── Cover ── */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', borderBottom: `3px solid ${colors.accent}`, paddingBottom: '1.75rem', marginBottom: '2rem' }}>
           <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: colors.accent, marginBottom: '0.5rem' }}>
-              WAF++ PASS · Compliance Report
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: colors.accent, marginBottom: '0.5rem' }}>
+              WOMBATpass · Compliance Report
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: colors.textMain, lineHeight: 1.15, marginBottom: '0.75rem' }}>
               {run.project || 'Unnamed Project'}
@@ -224,7 +217,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
               background: darkMode ? '#1e293b' : '#ffffff',
             }}>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: colors.accent, lineHeight: 1 }}>{run.score}</div>
-              <div style={{ fontSize: '0.65rem', color: colors.accent }}>/100</div>
+              <div style={{ fontSize: '0.7rem', color: colors.accent }}>/100</div>
             </div>
             <div style={{ marginTop: '0.6rem', fontSize: '0.7rem', fontWeight: 700, color: colors.accent }}>
               {matMeta.label}
@@ -286,8 +279,8 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                 <div style={{ display: 'flex', gap: '1.75rem', flexWrap: 'wrap' }}>
                   {severityCounts.map(({ sev, count }) => (
                     <div key={sev} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: SEVERITY_COLOR[sev] }} />
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: SEVERITY_COLOR[sev] }}>{sev}</span>
+                      <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: severityColor(sev) }} />
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: severityColor(sev) }}>{sev}</span>
                       <span style={{ fontSize: '0.8rem', color: colors.textMain, fontWeight: 600 }}>{count}</span>
                     </div>
                   ))}
@@ -305,23 +298,23 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
               <table style={tableStyle}>
                 <thead>
                   <tr style={tableHeaderStyle}>
-                    <th style={{ padding: '0.35rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Pillar</th>
-                    <th style={{ padding: '0.35rem 0.4rem', textAlign: 'right', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, width: '60px' }}>Score</th>
-                    <th style={{ padding: '0.35rem 0.4rem', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Visual</th>
-                    <th style={{ padding: '0.35rem 0.4rem', textAlign: 'right', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, width: '70px' }}>Status</th>
+                    <th style={{ padding: '0.35rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Pillar</th>
+                    <th style={{ padding: '0.35rem 0.4rem', textAlign: 'right', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, width: '60px' }}>Score</th>
+                    <th style={{ padding: '0.35rem 0.4rem', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Visual</th>
+                    <th style={{ padding: '0.35rem 0.4rem', textAlign: 'right', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, width: '70px' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...pillarData].sort((a, b) => b.score - a.score).map(({ pillar, score }) => (
                     <tr key={pillar} style={tableRowStyle}>
-                      <td style={{ padding: '0.3rem 0.4rem', fontWeight: 600, textTransform: 'capitalize', color: colors.textMain, fontSize: '0.65rem' }}>{pillar}</td>
-                      <td style={{ padding: '0.3rem 0.4rem', textAlign: 'right', fontWeight: 800, color: scoreColor(score, darkMode), fontSize: '0.65rem' }}>{score}</td>
+                      <td style={{ padding: '0.3rem 0.4rem', fontWeight: 600, textTransform: 'capitalize', color: colors.textMain, fontSize: '0.7rem' }}>{pillar}</td>
+                      <td style={{ padding: '0.3rem 0.4rem', textAlign: 'right', fontWeight: 800, color: scoreColor(score), fontSize: '0.7rem' }}>{score}</td>
                       <td style={{ padding: '0.3rem 0.4rem' }}>
                         <div style={{ height: '6px', borderRadius: '999px', background: darkMode ? '#334155' : '#e2e8f0', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', borderRadius: '999px', background: scoreColor(score, darkMode), width: `${score}%` }} />
+                          <div style={{ height: '100%', borderRadius: '999px', background: scoreColor(score), width: `${score}%` }} />
                         </div>
                       </td>
-                      <td style={{ padding: '0.3rem 0.4rem', textAlign: 'right', fontSize: '0.58rem', fontWeight: 700, color: scoreColor(score, darkMode) }}>
+                      <td style={{ padding: '0.3rem 0.4rem', textAlign: 'right', fontSize: '0.7rem', fontWeight: 700, color: scoreColor(score) }}>
                         {score >= 80 ? 'Good' : score >= 60 ? 'Attn' : 'Risk'}
                       </td>
                     </tr>
@@ -341,7 +334,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                 <thead>
                   <tr style={tableHeaderStyle}>
                     {['Severity', 'Control', 'Check', 'Resource', 'Pillar'].map(h => (
-                      <th key={h} style={{ padding: '0.3rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
+                      <th key={h} style={{ padding: '0.3rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -351,12 +344,12 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                     return (
                       <tr key={i} style={tableRowStyle}>
                         <td style={{ padding: '0.3rem 0.4rem' }}>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.3rem', borderRadius: '999px', background: `${SEVERITY_COLOR[sev ?? '']}20`, color: SEVERITY_COLOR[sev ?? ''] ?? '#888' }}>{sev}</span>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.3rem', borderRadius: '999px', background: severityBg(sev, 13), color: severityColor(sev) }}>{sev}</span>
                         </td>
-                        <td style={{ padding: '0.3rem 0.4rem', fontFamily: 'monospace', fontSize: '0.65rem', color: colors.textMuted }}>{f.control_id}</td>
-                        <td style={{ padding: '0.3rem 0.4rem', fontWeight: 500, color: colors.textMain, maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.6rem' }}>{f.check_title || f.check_id}</td>
-                        <td style={{ padding: '0.3rem 0.4rem', fontFamily: 'monospace', fontSize: '0.6rem', color: colors.textMuted, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.resource}</td>
-                        <td style={{ padding: '0.3rem 0.4rem', fontSize: '0.65rem', textTransform: 'capitalize', color: colors.textMuted }}>{f.pillar}</td>
+                        <td style={{ padding: '0.3rem 0.4rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMuted }}>{f.control_id}</td>
+                        <td style={{ padding: '0.3rem 0.4rem', fontWeight: 500, color: colors.textMain, maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.7rem' }}>{f.check_title || f.check_id}</td>
+                        <td style={{ padding: '0.3rem 0.4rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMuted, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.resource}</td>
+                        <td style={{ padding: '0.3rem 0.4rem', fontSize: '0.7rem', textTransform: 'capitalize', color: colors.textMuted }}>{f.pillar}</td>
                       </tr>
                     )
                   })}
@@ -374,7 +367,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
               {regulatoryReadiness.length > 0 && (
                 <div style={cardStyle}>
                   <div style={{ fontSize: '0.68rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Frameworks</div>
-                  <div style={{ fontSize: '0.65rem', color: colors.textMuted, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.7rem', color: colors.textMuted, lineHeight: 1.4 }}>
                     {regulatoryReadiness.map(({ framework, pass: p, total: t }) => (
                       <div key={framework} style={{ marginBottom: '0.25rem' }}>
                         <span style={{ fontWeight: 600, color: colors.textMain }}>{framework}:</span> {p}/{t} passed
@@ -386,7 +379,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
               {categoryBreakdown.length > 0 && (
                 <div style={cardStyle}>
                   <div style={{ fontSize: '0.68rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Categories</div>
-                  <div style={{ fontSize: '0.65rem', color: colors.textMuted, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.7rem', color: colors.textMuted, lineHeight: 1.4 }}>
                     {categoryBreakdown.map(({ cat, pass: p, total: t }) => (
                       <div key={cat} style={{ marginBottom: '0.25rem' }}>
                         <span style={{ fontWeight: 600, color: colors.textMain }}>{cat}:</span> {pct(p, t)}% pass rate
@@ -408,11 +401,11 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
               <table style={tableStyle}>
                 <thead>
                   <tr style={tableHeaderStyle}>
-                    <th style={{ padding: '0.3rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Pillar</th>
+                    <th style={{ padding: '0.3rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Pillar</th>
                     {SEVERITY_ORDER.map(s => (
-                      <th key={s} style={{ padding: '0.3rem 0.4rem', textAlign: 'center', fontWeight: 700, color: SEVERITY_COLOR[s], fontSize: '0.6rem', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{s}</th>
+                      <th key={s} style={{ padding: '0.3rem 0.4rem', textAlign: 'center', fontWeight: 700, color: severityColor(s), fontSize: '0.7rem', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{s}</th>
                     ))}
-                    <th style={{ padding: '0.3rem 0.4rem', textAlign: 'center', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Total</th>
+                    <th style={{ padding: '0.3rem 0.4rem', textAlign: 'center', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -423,9 +416,9 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                     const rowTotal = rowCounts.reduce((a, b) => a + b, 0)
                     return (
                       <tr key={p} style={tableRowStyle}>
-                        <td style={{ padding: '0.3rem 0.4rem', fontWeight: 600, textTransform: 'capitalize', color: colors.textMain, fontSize: '0.65rem' }}>{p}</td>
+                        <td style={{ padding: '0.3rem 0.4rem', fontWeight: 600, textTransform: 'capitalize', color: colors.textMain, fontSize: '0.7rem' }}>{p}</td>
                         {rowCounts.map((count, i) => {
-                          const col = SEVERITY_COLOR[SEVERITY_ORDER[i]] ?? '#888'
+                          const col = severityColor(SEVERITY_ORDER[i])
                           const intensity = count === 0 ? 0 : 0.12 + (count / heatMax) * 0.65
                           return (
                             <td key={i} style={{ padding: '0.3rem 0.4rem', textAlign: 'center' }}>
@@ -434,14 +427,14 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                                 borderRadius: '4px', fontWeight: count > 0 ? 700 : 400,
                                 background: count === 0 ? 'transparent' : `rgba(${parseInt(col.slice(1,3),16)},${parseInt(col.slice(3,5),16)},${parseInt(col.slice(5,7),16)},${intensity})`,
                                 color: count === 0 ? (darkMode ? '#475569' : '#cbd5e1') : col,
-                                fontSize: '0.6rem'
+                                fontSize: '0.7rem'
                               }}>
                                 {count === 0 ? '—' : count}
                               </span>
                             </td>
                           )
                         })}
-                        <td style={{ padding: '0.3rem 0.4rem', textAlign: 'center', fontWeight: 700, color: rowTotal > 0 ? '#ef4444' : '#22c55e', fontSize: '0.65rem' }}>
+                        <td style={{ padding: '0.3rem 0.4rem', textAlign: 'center', fontWeight: 700, color: rowTotal > 0 ? '#ef4444' : '#22c55e', fontSize: '0.7rem' }}>
                           {rowTotal}
                         </td>
                       </tr>
@@ -462,7 +455,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                 <thead>
                   <tr style={tableHeaderStyle}>
                     {['Status', 'Severity', 'Control', 'Check', 'Resource', 'Pillar'].map(h => (
-                      <th key={h} style={{ padding: '0.35rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
+                      <th key={h} style={{ padding: '0.35rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -478,15 +471,15 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                       return (
                         <tr key={i} style={tableRowStyle}>
                           <td style={{ padding: '0.25rem 0.35rem' }}>
-                            <span style={{ fontSize: '0.58rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: `${STATUS_COLOR[status ?? ''] ?? '#888'}18`, color: STATUS_COLOR[status ?? ''] ?? '#888' }}>{status}</span>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: `${STATUS_COLOR[status ?? ''] ?? '#888'}18`, color: STATUS_COLOR[status ?? ''] ?? '#888' }}>{status}</span>
                           </td>
                           <td style={{ padding: '0.25rem 0.35rem' }}>
-                            <span style={{ fontSize: '0.58rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: `${SEVERITY_COLOR[sev ?? ''] ?? '#888'}18`, color: SEVERITY_COLOR[sev ?? ''] ?? '#888' }}>{sev}</span>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: severityBg(sev, 9), color: severityColor(sev) }}>{sev}</span>
                           </td>
-                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.62rem', color: colors.textMuted }}>{f.control_id}</td>
-                          <td style={{ padding: '0.25rem 0.35rem', fontWeight: 500, color: colors.textMain, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.6rem' }}>{f.check_title || f.check_id}</td>
-                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.62rem', color: colors.textMuted, maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.resource}</td>
-                          <td style={{ padding: '0.25rem 0.35rem', fontSize: '0.62rem', textTransform: 'capitalize', color: colors.textMuted }}>{f.pillar}</td>
+                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMuted }}>{f.control_id}</td>
+                          <td style={{ padding: '0.25rem 0.35rem', fontWeight: 500, color: colors.textMain, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.7rem' }}>{f.check_title || f.check_id}</td>
+                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMuted, maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.resource}</td>
+                          <td style={{ padding: '0.25rem 0.35rem', fontSize: '0.7rem', textTransform: 'capitalize', color: colors.textMuted }}>{f.pillar}</td>
                         </tr>
                       )
                     })}
@@ -505,7 +498,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                 <thead>
                   <tr style={tableHeaderStyle}>
                     {['#', 'Severity', 'Control', 'Check', 'Resource', 'Remediation'].map(h => (
-                      <th key={h} style={{ padding: '0.35rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
+                      <th key={h} style={{ padding: '0.35rem 0.4rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -514,14 +507,14 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                     const sev = f.severity?.toUpperCase()
                     return (
                       <tr key={i} style={tableRowStyle}>
-                        <td style={{ padding: '0.25rem 0.35rem', color: colors.textMuted, fontWeight: 700, fontSize: '0.6rem' }}>{i + 1}</td>
+                        <td style={{ padding: '0.25rem 0.35rem', color: colors.textMuted, fontWeight: 700, fontSize: '0.7rem' }}>{i + 1}</td>
                         <td style={{ padding: '0.25rem 0.35rem' }}>
-                          <span style={{ fontSize: '0.58rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: `${SEVERITY_COLOR[sev ?? ''] ?? '#888'}18`, color: SEVERITY_COLOR[sev ?? ''] ?? '#888' }}>{sev}</span>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: severityBg(sev, 9), color: severityColor(sev) }}>{sev}</span>
                         </td>
-                        <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.62rem', color: colors.textMuted }}>{f.control_id}</td>
-                        <td style={{ padding: '0.25rem 0.35rem', fontWeight: 500, color: colors.textMain, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.6rem' }}>{f.check_title || f.check_id}</td>
-                        <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.62rem', color: colors.textMuted, maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.resource}</td>
-                        <td style={{ padding: '0.25rem 0.35rem', fontSize: '0.62rem', color: colors.textMuted, maxWidth: '140px' }}>{f.remediation || '—'}</td>
+                        <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMuted }}>{f.control_id}</td>
+                        <td style={{ padding: '0.25rem 0.35rem', fontWeight: 500, color: colors.textMain, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.7rem' }}>{f.check_title || f.check_id}</td>
+                        <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMuted, maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.resource}</td>
+                        <td style={{ padding: '0.25rem 0.35rem', fontSize: '0.7rem', color: colors.textMuted, maxWidth: '140px' }}>{f.remediation || '—'}</td>
                       </tr>
                     )
                   })}
@@ -551,15 +544,15 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
               <table style={tableStyle}>
                 <thead>
                   <tr style={tableHeaderStyle}>
-                    <th style={{ padding: '0.25rem 0.35rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Region</th>
-                    <th style={{ padding: '0.25rem 0.35rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Provider</th>
+                    <th style={{ padding: '0.25rem 0.35rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Region</th>
+                    <th style={{ padding: '0.25rem 0.35rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>Provider</th>
                   </tr>
                 </thead>
                 <tbody>
                   {detectedRegions.map(([region, provider], i) => (
                     <tr key={i} style={tableRowStyle}>
-                      <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.62rem', color: colors.textMain }}>{region}</td>
-                      <td style={{ padding: '0.25rem 0.35rem', textTransform: 'capitalize', color: colors.textMuted, fontSize: '0.62rem' }}>{provider}</td>
+                      <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMain }}>{region}</td>
+                      <td style={{ padding: '0.25rem 0.35rem', textTransform: 'capitalize', color: colors.textMuted, fontSize: '0.7rem' }}>{provider}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -578,7 +571,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                 return (
                   <div key={op} style={{ border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '10px', padding: '0.75rem 1rem', textAlign: 'center', minWidth: '75px', background: darkMode ? '#1e293b' : '#ffffff' }}>
                     <div style={{ fontSize: '1.5rem', fontWeight: 800, color: opColor[op] ?? '#94a3b8' }}>{cnt}</div>
-                    <div style={{ fontSize: '0.65rem', color: colors.textMuted, textTransform: 'capitalize', marginTop: '0.2rem' }}>{op.replace('_', ' ')}</div>
+                    <div style={{ fontSize: '0.7rem', color: colors.textMuted, textTransform: 'capitalize', marginTop: '0.2rem' }}>{op.replace('_', ' ')}</div>
                   </div>
                 )
               })}
@@ -589,7 +582,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                   <thead>
                     <tr style={tableHeaderStyle}>
                       {['Resource', 'Type', 'Action'].map(h => (
-                        <th key={h} style={{ padding: '0.25rem 0.35rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.6rem', textTransform: 'uppercase', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
+                        <th key={h} style={{ padding: '0.25rem 0.35rem', textAlign: 'left', fontWeight: 700, color: colors.textMuted, fontSize: '0.7rem', textTransform: 'uppercase', borderBottom: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}` }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -599,10 +592,10 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
                       const action = c.action ?? '—'
                       return (
                         <tr key={i} style={tableRowStyle}>
-                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.62rem', color: colors.textMain }}>{c.address ?? '—'}</td>
-                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.62rem', color: colors.textMuted }}>{c.type ?? '—'}</td>
+                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMain }}>{c.address ?? '—'}</td>
+                          <td style={{ padding: '0.25rem 0.35rem', fontFamily: 'monospace', fontSize: '0.7rem', color: colors.textMuted }}>{c.type ?? '—'}</td>
                           <td style={{ padding: '0.25rem 0.35rem' }}>
-                            <span style={{ fontSize: '0.58rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: `${actionColor[action] ?? '#888'}18`, color: actionColor[action] ?? '#888' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.08rem 0.25rem', borderRadius: '999px', background: `${actionColor[action] ?? '#888'}18`, color: actionColor[action] ?? '#888' }}>
                               {action}
                             </span>
                           </td>
@@ -617,14 +610,14 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
         )}
 
         {/* ── Footer ── */}
-        <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.62rem', color: colors.accent }}>
-          <div style={{ textAlign: 'center', fontWeight: 600 }}>WAF++ PASS · Open Source Compliance Framework</div>
+        <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.7rem', color: colors.accent }}>
+          <div style={{ textAlign: 'center', fontWeight: 600 }}>WOMBATpass · Open Source Compliance Framework</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', opacity: 0.8 }}>
             <span>Generated: {new Date().toLocaleString()}</span>
             <span>Maturity: {matMeta.label}</span>
             <span>Score: {run.score}/100</span>
           </div>
-          <div style={{ textAlign: 'center', opacity: 0.6 }}>© 2026 WAF++ · waf2p.dev</div>
+          <div style={{ textAlign: 'center', opacity: 0.6 }}>© 2026 Wombat · www.wombat-gov.dev</div>
         </div>
 
       </div>

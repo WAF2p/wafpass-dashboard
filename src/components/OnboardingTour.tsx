@@ -106,7 +106,7 @@ function CliCopy({ t }: { t: (key: string, vars?: Record<string, string | number
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--waf-brand)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}
         >
-          <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginBottom: '0.25rem', fontWeight: 600 }}>{c.label}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.25rem', fontWeight: 600 }}>{c.label}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
             <code style={{ fontSize: '0.8rem', color: 'var(--text)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', wordBreak: 'break-all' }}>
               $ {c.cmd}
@@ -178,7 +178,7 @@ function TimelineMini({ stages }: { stages: string[] }) {
             }}>
               {i <= 3 && <Icon d="M5 13l4 4L19 7" color="#fff" size={12} />}
             </div>
-            <span style={{ fontSize: '0.6rem', color: 'var(--muted)' }}>{s}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{s}</span>
           </div>
         ))}
       </div>
@@ -248,7 +248,7 @@ export default function OnboardingTour({ open, onClose, onComplete }: Onboarding
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,.6)',
+          background: 'color-mix(in srgb, #000000 60%, transparent)',
           backdropFilter: 'blur(5px)',
           zIndex: 9999,
         }}
@@ -264,7 +264,7 @@ export default function OnboardingTour({ open, onClose, onComplete }: Onboarding
           maxHeight: 'min(780px, 92vh)',
           background: 'var(--surface)',
           border: '1px solid var(--border)',
-          borderRadius: '22px',
+          borderRadius: '24px',
           boxShadow: '0 28px 90px rgba(0,0,0,.28)',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
@@ -334,7 +334,7 @@ export default function OnboardingTour({ open, onClose, onComplete }: Onboarding
             onClick={onClose}
             style={{
               background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer',
-              fontSize: '0.82rem', fontWeight: 600, padding: '0.45rem 0',
+              fontSize: '0.85rem', fontWeight: 600, padding: '0.45rem 0',
             }}
           >
             {t('onboarding.skip')}

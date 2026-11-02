@@ -40,8 +40,8 @@ export interface FirstSeenEntry {
 
 // ─── Storage keys ─────────────────────────────────────────────────────────────
 
-const AUDIT_KEY      = 'wafpass_audit_log'
-const FIRST_SEEN_KEY = 'wafpass_first_seen_failures'
+const AUDIT_KEY      = 'wombat_audit_log'
+const FIRST_SEEN_KEY = 'wombat_first_seen_failures'
 const MAX_EVENTS     = 2000
 
 // ─── ID generation ────────────────────────────────────────────────────────────

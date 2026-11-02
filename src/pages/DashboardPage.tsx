@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { RunDetail } from '../api'
 import { useI18n } from '../i18n'
+import { severityColor, scoreColor } from '../severity'
 
 interface Props {
   run: RunDetail
@@ -15,13 +16,6 @@ interface Props {
 }
 
 // ── Palette ────────────────────────────────────────────────────────────────────
-
-const SEVERITY_COLOR: Record<string, string> = {
-  CRITICAL: 'var(--fail)',
-  HIGH: 'var(--score-mid)',
-  MEDIUM: 'var(--waf-warn)',
-  LOW: 'var(--pass)',
-}
 
 const PILLAR_META: { key: string; label: string; color: string; slug: string }[] = [
   { key: 'security', label: 'Security', color: 'var(--fail)', slug: 'SEC' },
@@ -56,9 +50,6 @@ function normalizePillarName(p: string): string {
   return p
 }
 
-function scoreColor(s: number) {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
 
 function scoreLabel(s: number, t: (key: string) => string) {
   return s >= 80 ? t('pages.dashboard.goodPosture') : s >= 60 ? t('pages.dashboard.needsAttention') : t('pages.dashboard.highRisk')
@@ -186,7 +177,7 @@ function SectionTitle({ children, icon, action }: { children: React.ReactNode; i
 
 function SeverityBadge({ sev }: { sev: string }) {
   const u = sev.toUpperCase()
-  const c = SEVERITY_COLOR[u] ?? 'var(--muted)'
+  const c = severityColor(u)
   return <span className="x-sev" style={{ background: `color-mix(in srgb, ${c} 12%, transparent)`, color: c }}>{u}</span>
 }
 
@@ -510,7 +501,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie data={severityCounts} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={54} paddingAngle={3}>
-                          {severityCounts.map(d => <Cell key={d.name} fill={SEVERITY_COLOR[d.name]} />)}
+                          {severityCounts.map(d => <Cell key={d.name} fill={severityColor(d.name)} />)}
                         </Pie>
                         <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '0.78rem' }} itemStyle={{ color: 'var(--text)' }} />
                       </PieChart>
@@ -519,9 +510,9 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                   <div className="x-donut-legend">
                     {severityCounts.map(d => (
                       <div key={d.name} className="x-legend-item">
-                        <span className="x-legend-dot" style={{ background: SEVERITY_COLOR[d.name] }} />
+                        <span className="x-legend-dot" style={{ background: severityColor(d.name) }} />
                         <span className="x-legend-name">{d.name}</span>
-                        <span className="x-legend-val" style={{ color: SEVERITY_COLOR[d.name] }}>{d.value}</span>
+                        <span className="x-legend-val" style={{ color: severityColor(d.name) }}>{d.value}</span>
                       </div>
                     ))}
                   </div>
@@ -595,7 +586,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                 <thead>
                   <tr>
                     <th>{t('pages.dashboard.pillarHeader')}</th>
-                    {SEVERITIES.map(s => <th key={s} style={{ color: SEVERITY_COLOR[s] }}>{s}</th>)}
+                    {SEVERITIES.map(s => <th key={s} style={{ color: severityColor(s) }}>{s}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -633,7 +624,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             <div className="x-win-list">
               {quickWins.map((f, i) => {
                 const sev = f.severity?.toUpperCase() ?? ''
-                const sevColor = SEVERITY_COLOR[sev] ?? 'var(--muted)'
+                const sevColor = severityColor(sev)
                 const pColor = PILLAR_COLOR[f.pillar ?? ''] ?? 'var(--muted)'
                 return (
                   <button type="button" key={i} className="x-win-row" onClick={() => onNav?.('autofix')}>
@@ -676,6 +667,19 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
             </div>
           </section>
         )}
+
+        {/* Score trend / delta stub */}
+        <section className="x-card">
+          <SectionTitle icon={<span style={{ color: 'var(--waf-warn)' }}>{I.history}</span>}>{t('pages.dashboard.trendStub')}</SectionTitle>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '10px', border: '1px dashed var(--border)', background: 'var(--bg)' }}>
+            <svg width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" /></svg>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--waf-warn)' }}>{t('pages.dashboard.trendStubTitle')}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{t('pages.dashboard.trendStubDesc')}</div>
+            </div>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '0.25rem 0.55rem', borderRadius: '6px', background: 'color-mix(in srgb, var(--waf-warn) 15%, transparent)', color: 'var(--waf-warn)', border: '1px solid color-mix(in srgb, var(--waf-warn) 30%, transparent)' }}>RFC</span>
+          </div>
+        </section>
       </div>
 
       {/* ── Bottom check KPIs ───────────────────────────────────────────── */}
@@ -766,7 +770,7 @@ const dashboardCss = `
   justify-content: center;
   background: color-mix(in srgb, var(--waf-warn) 15%, transparent);
   color: var(--score-mid);
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 800;
   padding: 0.08rem 0.32rem;
   border-radius: 4px;
@@ -817,7 +821,7 @@ const dashboardCss = `
   position: relative;
   background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--waf-brand) 4%, transparent) 100%);
   border: 1px solid var(--border);
-  border-radius: 28px;
+  border-radius: 24px;
   padding: 2rem;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -862,7 +866,7 @@ const dashboardCss = `
   max-width: 100%;
 }
 .x-title {
-  font-size: 2.1rem;
+  font-size: 2rem;
   font-weight: 800;
   color: var(--text);
   line-height: 1.15;
@@ -922,10 +926,10 @@ const dashboardCss = `
   justify-content: center;
   box-shadow: inset 0 2px 12px color-mix(in srgb, var(--text) 6%, transparent);
 }
-.x-gauge-score { font-size: 2.1rem; font-weight: 800; line-height: 1; }
-.x-gauge-over { font-size: 0.65rem; color: var(--muted); font-weight: 700; }
+.x-gauge-score { font-size: 2rem; font-weight: 800; line-height: 1; }
+.x-gauge-over { font-size: 0.7rem; color: var(--muted); font-weight: 700; }
 .x-gauge-label {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -949,16 +953,16 @@ const dashboardCss = `
   border-top: 1px solid var(--border);
 }
 .x-statpill {
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid;
   padding: 1rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   min-width: 0;
 }
 .x-statpill:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.x-statpill-value { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.x-statpill-value { font-size: 1.5rem; font-weight: 800; line-height: 1; }
 .x-statpill-label {
-  font-size: 0.64rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--muted);
   text-transform: uppercase;
@@ -971,7 +975,7 @@ const dashboardCss = `
   overflow: hidden;
 }
 .x-statpill-sub {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--muted);
   margin-top: 0.15rem;
   overflow: hidden;
@@ -999,7 +1003,7 @@ const dashboardCss = `
 .x-attention-icon {
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 14px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--fail) 12%, transparent);
   color: var(--fail);
   display: flex;
@@ -1045,7 +1049,7 @@ const dashboardCss = `
   flex-shrink: 0;
 }
 .x-attention-text {
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
   flex: 1;
@@ -1065,7 +1069,7 @@ const dashboardCss = `
 .x-sev {
   padding: 0.14rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 800;
   flex-shrink: 0;
   white-space: nowrap;
@@ -1073,7 +1077,7 @@ const dashboardCss = `
 .x-pill {
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: capitalize;
   flex-shrink: 0;
@@ -1138,7 +1142,7 @@ const dashboardCss = `
   min-width: 0;
 }
 .x-navtile-title {
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text);
   flex: 1;
@@ -1226,7 +1230,7 @@ const dashboardCss = `
   flex-shrink: 0;
 }
 .x-pillar-info { min-width: 0; overflow: hidden; }
-.x-pillar-name { font-size: 0.84rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+.x-pillar-name { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
 .x-pillar-bar { height: 5px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .x-pillar-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
 .x-pillar-score { font-size: 1.25rem; font-weight: 800; line-height: 1; padding: 0 0.25rem; }
@@ -1265,8 +1269,8 @@ const dashboardCss = `
   justify-content: center;
   pointer-events: none;
 }
-.x-donut-total { font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1; }
-.x-donut-label { font-size: 0.65rem; color: var(--muted); font-weight: 700; }
+.x-donut-total { font-size: 1.75rem; font-weight: 800; color: var(--text); line-height: 1; }
+.x-donut-label { font-size: 0.7rem; color: var(--muted); font-weight: 700; }
 .x-donut-legend {
   display: flex;
   flex-direction: column;
@@ -1276,7 +1280,7 @@ const dashboardCss = `
   max-width: 160px;
 }
 .x-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; min-width: 0; }
-.x-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.x-legend-dot { width: 8px; height: 8px; border-radius: 4px; flex-shrink: 0; }
 .x-legend-name { color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .x-legend-val { font-weight: 800; flex-shrink: 0; }
 
@@ -1296,7 +1300,7 @@ const dashboardCss = `
   min-width: 0;
 }
 .x-compliance-name {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
@@ -1355,10 +1359,10 @@ const dashboardCss = `
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--muted);
 }
-.x-heat-swatch { width: 0.85rem; height: 0.85rem; border-radius: 3px; }
+.x-heat-swatch { width: 0.85rem; height: 0.85rem; border-radius: 4px; }
 
 /* Quick wins */
 .x-win-list {
@@ -1372,7 +1376,7 @@ const dashboardCss = `
   gap: 0.55rem;
   align-items: center;
   padding: 0.7rem 0.85rem;
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--bg);
   border: 1px solid var(--border);
   cursor: pointer;
@@ -1403,7 +1407,7 @@ const dashboardCss = `
   flex-shrink: 0;
 }
 .x-win-title {
-  font-size: 0.83rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text);
   min-width: 0;
@@ -1424,13 +1428,13 @@ const dashboardCss = `
   align-items: baseline;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
-  border-radius: 18px;
+  border-radius: 20px;
   background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   width: max-content;
   max-width: 100%;
 }
-.x-cloud-number { font-size: 2.2rem; font-weight: 800; color: var(--waf-brand); line-height: 1; }
+.x-cloud-number { font-size: 2rem; font-weight: 800; color: var(--waf-brand); line-height: 1; }
 .x-cloud-unit { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
 .x-cloud-providers { display: flex; flex-wrap: wrap; gap: 0.55rem; }
 .x-cloud-provider {
@@ -1462,7 +1466,7 @@ const dashboardCss = `
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .x-checkcard:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.x-checkcard-value { font-size: 1.85rem; font-weight: 800; line-height: 1; }
+.x-checkcard-value { font-size: 1.75rem; font-weight: 800; line-height: 1; }
 .x-checkcard-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-top: 0.3rem; }
 .x-checkcard-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.15rem; }
 
@@ -1491,7 +1495,7 @@ const dashboardCss = `
 }
 @media (max-width: 680px) {
   .x-masthead { padding: 1.25rem; }
-  .x-title { font-size: 1.6rem; }
+  .x-title { font-size: 1.5rem; }
   .x-statbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .x-nav-grid { grid-template-columns: 1fr; }
   .x-bento { grid-template-columns: 1fr; }

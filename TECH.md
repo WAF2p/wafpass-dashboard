@@ -1,8 +1,8 @@
-# wafpass-dashboard — Technical Reference
+# wombat-dashboard — Technical Reference
 
 This document covers internal architecture, design decisions, technical debt, and contribution guidance for the React dashboard. For user-facing documentation see `README.md`.
 
-> **BREAKING CHANGE:** The dashboard now calls `wafpass-server` endpoints under `/api/v1`. `api.ts` prepends `/api/v1` to every API path; `/health`, `/version`, and `/framework-update-info.yml` remain at the root.
+> **BREAKING CHANGE:** The dashboard now calls `wombat-server` endpoints under `/api/v1`. `api.ts` prepends `/api/v1` to every API path; `/health`, `/version`, and `/framework-update-info.yml` remain at the root.
 
 ---
 
@@ -66,13 +66,13 @@ src/
 │   ├── RiskAcceptancePage.tsx   # Formally accept risks with approver sign-off
 │   ├── AccessRolesPage.tsx      # Role hierarchy and permission overview
 │   ├── SsoSettingsPage.tsx      # Configure OIDC / SAML2 providers (admin)
-│   ├── GroupMappingsPage.tsx    # Map IdP groups to WAF++ roles (admin)
+│   ├── GroupMappingsPage.tsx    # Map IdP groups to WOMBATpass roles (admin)
 │   ├── ApiManagementPage.tsx    # Manage API keys for CI/CD (admin)
 │   ├── UserManagementPage.tsx   # Create, edit, deactivate users
 │   ├── SettingsPage.tsx         # Maturity level, feature toggles, PDF config
 │   ├── UserPreferencesPage.tsx  # Appearance, navigation defaults, date formats
-│   ├── ReferenceArchitecturePage.tsx # WAF++ Reference Architecture documentation
-│   └── FeedbackPage.tsx         # Send feedback to the WAF++ team
+│   ├── ReferenceArchitecturePage.tsx # Wombat Reference Architecture documentation
+│   └── FeedbackPage.tsx         # Send feedback to the Wombat team
 └── components/
     ├── RunSelectorModal.tsx     # Run picker modal
     └── PdfReport.tsx            # Print-to-PDF report layout with dark mode support
@@ -137,9 +137,9 @@ api.ts: POST /api/v1/auth/login
     │  {access_token, refresh_token, user}
     ▼
 AuthContext
-    ├─ localStorage.setItem('wafpass_access_token', ...)
-    ├─ localStorage.setItem('wafpass_refresh_token', ...)
-    ├─ localStorage.setItem('wafpass_auth_user', JSON.stringify(user))
+    ├─ localStorage.setItem('wombat_access_token', ...)
+    ├─ localStorage.setItem('wombat_refresh_token', ...)
+    ├─ localStorage.setItem('wombat_auth_user', JSON.stringify(user))
     └─ setState({ user, accessToken, role })
 
 App.tsx checks: if (!user) → <LoginPage />
@@ -164,9 +164,9 @@ LoginPage (on mount, detects sso_ok=1 in URL params)
     ├─ extract at, rt, u from URLSearchParams
     ├─ decode user: JSON.parse(atob(u))
     ├─ AuthContext.loginWithTokens(at, rt, user)
-    │   ├─ localStorage.setItem('wafpass_access_token', at)
-    │   ├─ localStorage.setItem('wafpass_refresh_token', rt)
-    │   └─ localStorage.setItem('wafpass_auth_user', JSON.stringify(user))
+    │   ├─ localStorage.setItem('wombat_access_token', at)
+    │   ├─ localStorage.setItem('wombat_refresh_token', rt)
+    │   └─ localStorage.setItem('wombat_auth_user', JSON.stringify(user))
     └─ window.history.replaceState(null, '', pathname + '#/dashboard')
        (clears tokens from URL / browser history immediately)
 ```
@@ -175,10 +175,10 @@ The tokens arrive via URL query parameters, which is a standard OAuth 2.0 patter
 
 ### On-mount session restore
 
-1. Read `wafpass_access_token` from localStorage
+1. Read `wombat_access_token` from localStorage
 2. Decode the JWT payload (`atob(token.split('.')[1])`) — check `exp`
 3. If valid → restore session immediately (no network round-trip)
-4. If expired but `wafpass_refresh_token` exists → `POST /api/v1/auth/refresh` → store new access token
+4. If expired but `wombat_refresh_token` exists → `POST /api/v1/auth/refresh` → store new access token
 5. If refresh fails → clear all tokens → show LoginPage
 
 ### `useAuth()` hook
@@ -210,7 +210,7 @@ Every `fetch()` call in `api.ts` passes `_authHeaders()`:
 
 ```typescript
 function _authHeaders(): Record<string, string> {
-  const t = localStorage.getItem('wafpass_access_token')
+  const t = localStorage.getItem('wombat_access_token')
   return t ? { Authorization: `Bearer ${t}` } : {}
 }
 ```
@@ -242,13 +242,13 @@ Several systems use `localStorage` for persistence:
 
 | Key | Content | Owner |
 |-----|---------|-------|
-| `wafpass_settings` | Serialised `Settings` object | SettingsPage |
-| `wafpass_maturity` | Maturity level integer | SettingsPage |
-| `wafpass_audit_log` | Array of `AuditEvent` (max 2000) | audit.ts |
-| `wafpass_first_seen_failures` | `Record<string, FirstSeenEntry>` | audit.ts |
-| `wafpass_waivers` | `Record<id, WaiverRecord>` cache | WaiversPage |
-| `wafpass_risk_acceptances` | `Record<id, RiskRecord>` cache | RiskAcceptancePage |
-| `wafpass_server_url` | Custom backend URL string | SettingsPage / api.ts |
+| `wombat_settings` | Serialised `Settings` object | SettingsPage |
+| `wombat_maturity` | Maturity level integer | SettingsPage |
+| `wombat_audit_log` | Array of `AuditEvent` (max 2000) | audit.ts |
+| `wombat_first_seen_failures` | `Record<string, FirstSeenEntry>` | audit.ts |
+| `wombat_waivers` | `Record<id, WaiverRecord>` cache | WaiversPage |
+| `wombat_risk_acceptances` | `Record<id, RiskRecord>` cache | RiskAcceptancePage |
+| `wombat_server_url` | Custom backend URL string | SettingsPage / api.ts |
 
 Waivers and risk acceptances use localStorage as an **offline cache**: on mount, the page fetches from the server and writes to localStorage; on mutation, it calls the server then updates localStorage. If the server is unreachable, the cache serves stale data.
 
@@ -264,7 +264,7 @@ All server communication goes through `api.ts`. Each function is a thin wrapper 
 const ENV_API_BASE = import.meta.env.VITE_API_URL ?? ''
 
 export function getApiBase(): string {
-    const stored = localStorage.getItem('wafpass_server_url')
+    const stored = localStorage.getItem('wombat_server_url')
     if (stored?.trim()) return stored.trim().replace(/\/$/, '')
     return ENV_API_BASE   // falls back to Vite env var or same-origin
 }
@@ -273,7 +273,7 @@ export function getApiBase(): string {
 This is called on every request, so changing the server URL in Settings takes effect immediately without a page reload.
 
 **Fallback chain (highest to lowest priority):**
-1. `localStorage` key `wafpass_server_url` — set via Settings → Connection & Real Engine
+1. `localStorage` key `wombat_server_url` — set via Settings → Connection & Real Engine
 2. `VITE_API_URL` build-time env var — set in `.env.local` (local dev) or Docker build args
 3. Empty string — resolves to same origin (correct for Docker Compose with nginx proxy)
 
@@ -381,7 +381,7 @@ interface AuditEvent {
 }
 ```
 
-The first-seen failure index (`wafpass_first_seen_failures`) records the first run in which each control+resource combination appeared as failing. This powers the "oldest open failure" metric in the Audit Log page.
+The first-seen failure index (`wombat_first_seen_failures`) records the first run in which each control+resource combination appeared as failing. This powers the "oldest open failure" metric in the Audit Log page.
 
 **Design limitation:** The audit log is per-browser. It cannot be shared across team members. The server does not persist audit events. This is the primary audit trail gap.
 
@@ -393,7 +393,7 @@ The PDF report (`components/PdfReport.tsx`) is a hidden `div` rendered at the bo
 
 ```html
 <!-- App.tsx -->
-<div id="wafpass-pdf-root" style="display:none">
+<div id="wombat-pdf-root" style="display:none">
     <PdfReport run={run} settings={settings} maturityLevel={maturityLevel} />
 </div>
 ```
@@ -401,8 +401,8 @@ The PDF report (`components/PdfReport.tsx`) is a hidden `div` rendered at the bo
 ```css
 /* index.css */
 @media print {
-    body > *:not(#wafpass-pdf-root) { display: none; }
-    #wafpass-pdf-root { display: block !important; }
+    body > *:not(#wombat-pdf-root) { display: none; }
+    #wombat-pdf-root { display: block !important; }
 }
 ```
 
@@ -429,7 +429,7 @@ No server round-trip; no additional library. The entire HTML is built by string 
 | Mode | Implementation |
 |------|---------------|
 | Mock | Browser-side regex matching against control check descriptions |
-| Real | `POST /api/v1/sandbox` → server runs wafpass-core, returns actual findings |
+| Real | `POST /api/v1/sandbox` → server runs wombat-core, returns actual findings |
 
 `sandboxStatus()` is called on mount to check if the real engine is available. If unavailable, the Real button is disabled with an explanatory tooltip.
 
@@ -463,7 +463,7 @@ Multi-stage build:
 1. `node:20-slim` — `npm install && npm run build` → `dist/`
 2. `nginx:alpine` — copies `dist/` to `/usr/share/nginx/html`
 
-The nginx config (`nginx.conf`) proxies API paths to `wafpass-server:8000` (Docker network hostname). If you run the server on a different hostname, update `nginx.conf` and rebuild.
+The nginx config (`nginx.conf`) proxies API paths to `wombat-server:8000` (Docker network hostname). If you run the server on a different hostname, update `nginx.conf` and rebuild.
 
 ---
 

@@ -1,4 +1,4 @@
-# Adding a new language to WAF++ Dashboard
+# Adding a new language to WOMBATpass Dashboard
 
 The i18n system uses typed TypeScript locale files with English as the fallback.
 Any string you leave untranslated automatically falls back to English — so a partial translation is perfectly valid and can be shipped incrementally.

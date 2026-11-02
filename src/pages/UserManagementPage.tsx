@@ -5,17 +5,23 @@
  */
 import { Fragment, useEffect, useState } from 'react'
 import { useAuth } from '../AuthContext'
-import { fetchUsers, createUser, updateUser, deleteUser, fetchUserLogs, type UserOut, type UserAuditLogEntry } from '../api'
+import {
+  fetchUsers, createUser, updateUser, deleteUser, fetchUserLogs,
+  fetchMandants, fetchMyMandate, type UserOut, type UserAuditLogEntry, type MandantOut,
+} from '../api'
 import { useI18n } from '../i18n'
+import { safeImageUrl } from '../safeUrl'
+
+const HOLDING_ROLES = ['', 'holding_admin', 'holding_viewer', 'group_admin', 'group_viewer'] as const
 
 const ALL_ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
 
 // Role accent: hue only — used for avatar dot, left accent stripe, and badge.
 // Everything else stays neutral so color doesn't dominate.
 const ROLE_COLOR: Record<string, { accent: string; subtle: string; text: string }> = {
-  admin:    { accent: '#DA2C38', subtle: 'rgba(218,44,56,0.08)',  text: '#DA2C38' },
+  admin:    { accent: '#DA2C38', subtle: 'color-mix(in srgb, #da2c38 8%, transparent)',  text: '#DA2C38' },
   engineer: { accent: '#16a34a', subtle: 'rgba(22,163,74,0.08)',  text: '#16a34a' },
-  architect:{ accent: '#7c3aed', subtle: 'rgba(124,58,237,0.08)', text: '#7c3aed' },
+  architect:{ accent: '#7c3aed', subtle: 'color-mix(in srgb, #7c3aed 8%, transparent)', text: '#7c3aed' },
   ciso:     { accent: '#0078d4', subtle: 'rgba(0,120,212,0.08)',  text: '#0078d4' },
   clevel:   { accent: '#b45309', subtle: 'rgba(180,83,9,0.08)',   text: '#b45309' },
 }
@@ -57,12 +63,12 @@ function fmtDate(iso: string | null | undefined): string {
 // ── Action badge ──────────────────────────────────────────────────────────────
 
 const ACTION_STYLE: Record<string, { color: string; bg: string }> = {
-  'login':       { color: '#059669', bg: 'rgba(5,150,105,0.09)' },
+  'login':       { color: '#059669', bg: 'color-mix(in srgb, #059669 9%, transparent)' },
   'logout':      { color: '#64748b', bg: 'rgba(100,116,139,0.09)' },
-  'run.push':    { color: '#0078d4', bg: 'rgba(0,120,212,0.09)' },
-  'user.create': { color: '#7c3aed', bg: 'rgba(124,58,237,0.09)' },
+  'run.push':    { color: '#0078d4', bg: 'color-mix(in srgb, #0078d4 9%, transparent)' },
+  'user.create': { color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 9%, transparent)' },
   'user.update': { color: '#b45309', bg: 'rgba(180,83,9,0.09)' },
-  'user.delete': { color: '#DA2C38', bg: 'rgba(218,44,56,0.09)' },
+  'user.delete': { color: '#DA2C38', bg: 'color-mix(in srgb, #da2c38 9%, transparent)' },
 }
 
 function ActionBadge({ action }: { action: string }) {
@@ -100,8 +106,8 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
         {detail.branch ? <> · <code style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{String(detail.branch)}</code></> : null}
         {score != null && (
           <span style={{
-            marginLeft: '0.4rem', padding: '0.1rem 0.35rem', borderRadius: '5px',
-            background: score >= 80 ? 'rgba(5,150,105,.1)' : score >= 60 ? 'rgba(180,83,9,.1)' : 'rgba(218,44,56,.1)',
+            marginLeft: '0.4rem', padding: '0.1rem 0.35rem', borderRadius: '6px',
+            background: score >= 80 ? 'color-mix(in srgb, #059669 10%, transparent)' : score >= 60 ? 'rgba(180,83,9,.1)' : 'color-mix(in srgb, #da2c38 10%, transparent)',
             color: score >= 80 ? '#059669' : score >= 60 ? '#b45309' : '#DA2C38',
             fontWeight: 700, fontSize: '0.68rem',
           }}>
@@ -150,7 +156,7 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
 function MetaTile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>
+      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>
         {label}
       </div>
       <div style={{ fontSize: '0.8rem', color: 'var(--text)', fontWeight: 500 }}>
@@ -187,7 +193,6 @@ function UserDetailPanel({ user }: { user: UserOut }) {
           border: '1px solid var(--border)',
           boxShadow: '0 2px 8px rgba(15,23,42,0.06)',
           overflow: 'hidden',
-          borderLeft: `3px solid ${roleC.accent}`,
         }}>
 
           {/* ── Profile strip ── */}
@@ -207,8 +212,8 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               fontSize: '1rem', fontWeight: 800, color: roleC.accent,
               overflow: 'hidden',
             }}>
-              {user.image_url ? (
-                <img src={user.image_url} alt={user.display_name || user.username} style={{
+              {safeImageUrl(user.image_url) ? (
+                <img src={safeImageUrl(user.image_url) ?? undefined} alt={user.display_name || user.username} style={{
                   width: '100%', height: '100%', objectFit: 'cover',
                 }} />
               ) : (
@@ -243,8 +248,8 @@ function UserDetailPanel({ user }: { user: UserOut }) {
 
               <MetaTile label={t('pages.users.colStatus')}>
                 <span style={{
-                  display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '5px',
-                  background: user.is_active ? 'rgba(5,150,105,0.1)' : 'rgba(100,116,139,0.09)',
+                  display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
+                  background: user.is_active ? 'color-mix(in srgb, #059669 10%, transparent)' : 'rgba(100,116,139,0.09)',
                   color: user.is_active ? '#059669' : '#64748b',
                   fontWeight: 600, fontSize: '0.7rem',
                 }}>
@@ -292,7 +297,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               <span style={{
                 marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)',
                 background: 'var(--surface)', border: '1px solid var(--border)',
-                padding: '0.1rem 0.5rem', borderRadius: '5px', fontWeight: 600,
+                padding: '0.1rem 0.5rem', borderRadius: '6px', fontWeight: 600,
               }}>
                 {logs.length} {logs.length === 1 ? t('pages.users.eventSingular') : t('pages.users.eventPlural')}
               </span>
@@ -315,7 +320,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
                   {[t('pages.users.colTimestamp'), t('pages.users.colAction'), t('pages.users.colDetail'), t('pages.users.colIp')].map(h => (
                     <th key={h} style={{
                       padding: '0.45rem 1.25rem', textAlign: 'left',
-                      fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
+                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
                       textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
                     }}>{h}</th>
                   ))}
@@ -355,7 +360,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px',
   border: '1px solid var(--border)', background: 'var(--bg)',
-  color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box',
+  color: 'var(--text)', fontSize: '0.85rem', boxSizing: 'border-box',
   outline: 'none',
 }
 
@@ -374,13 +379,22 @@ interface UserFormState {
   role: string
   password: string
   is_active: boolean
+  // Phase 3.4 — only ever sent to the server when the viewing user is
+  // holding_admin; '' means "leave mandant_id unset" in this form's own
+  // bookkeeping (translated to omitting the key, not sending null, in
+  // handleSave — see there for why those aren't the same thing).
+  mandant_id: string
+  holding_role: string // '' | 'holding_admin' | 'holding_viewer'
 }
 
-const EMPTY_FORM: UserFormState = { username: '', display_name: '', image_url: '', role: 'engineer', password: '', is_active: true }
+const EMPTY_FORM: UserFormState = {
+  username: '', display_name: '', image_url: '', role: 'engineer', password: '', is_active: true,
+  mandant_id: '', holding_role: '',
+}
 
 export default function UserManagementPage() {
   const { t } = useI18n()
-  const { role, user } = useAuth()
+  const { role, user, isHoldingAdmin } = useAuth()
   const isAdmin = role === 'admin'
 
   const [users, setUsers]           = useState<UserOut[]>([])
@@ -393,6 +407,13 @@ export default function UserManagementPage() {
   const [saveErr, setSaveErr]       = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
+  // Phase 3.4 — mandate name resolution. A holding_admin sees every user
+  // across every mandate and can list all mandants; an ordinary admin only
+  // ever sees users in their *own* mandate (RLS), so one lookup for "my own
+  // mandate" covers every row they'll ever see.
+  const [mandants, setMandants]   = useState<MandantOut[]>([])
+  const [myMandate, setMyMandate] = useState<MandantOut | null>(null)
+
   function loadUsers() {
     setLoading(true)
     fetchUsers()
@@ -401,7 +422,25 @@ export default function UserManagementPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { loadUsers() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!isAdmin) return
+    loadUsers()
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    if (isHoldingAdmin) {
+      fetchMandants().then(setMandants).catch(() => {})
+    } else {
+      fetchMyMandate().then(setMyMandate).catch(() => {})
+    }
+  }, [isAdmin, isHoldingAdmin])
+
+  function mandateNameFor(u: UserOut): string {
+    if (!u.mandant_id) return t('pages.users.noMandate')
+    if (isHoldingAdmin) return mandants.find(m => m.id === u.mandant_id)?.name ?? u.mandant_id.slice(0, 8)
+    return myMandate?.name ?? u.mandant_id.slice(0, 8)
+  }
 
   function openCreate() {
     setEditId(null)
@@ -413,7 +452,11 @@ export default function UserManagementPage() {
   function openEdit(u: UserOut, e: React.MouseEvent) {
     e.stopPropagation()
     setEditId(u.id)
-    setForm({ username: u.username, display_name: u.display_name, image_url: u.image_url || '', role: u.role, password: '', is_active: u.is_active })
+    setForm({
+      username: u.username, display_name: u.display_name, image_url: u.image_url || '', role: u.role,
+      password: '', is_active: u.is_active,
+      mandant_id: u.mandant_id ?? '', holding_role: u.holding_role ?? '',
+    })
     setSaveErr(null)
     setShowForm(true)
   }
@@ -423,13 +466,24 @@ export default function UserManagementPage() {
     setSaveErr(null)
     try {
       if (editId) {
-        const payload: { display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string } = {
+        const payload: {
+          display_name?: string; image_url?: string; role?: string; is_active?: boolean; password?: string
+          mandant_id?: string | null; holding_role?: string
+        } = {
           display_name: form.display_name,
           image_url: form.image_url || undefined,
           role: form.role,
           is_active: form.is_active,
         }
         if (form.password) payload.password = form.password
+        // Server-gated on holding_admin regardless, but only send these
+        // when the viewing user actually is one — a non-holding-admin's
+        // form never shows these fields, so form.mandant_id/holding_role
+        // would just be stale copies of whatever openEdit() prefilled.
+        if (isHoldingAdmin) {
+          payload.mandant_id = form.mandant_id || null // '' -> clear it
+          payload.holding_role = form.holding_role      // '' clears it server-side too
+        }
         await updateUser(editId, payload)
       } else {
         await createUser({ username: form.username, password: form.password, display_name: form.display_name, image_url: form.image_url, role: form.role })
@@ -474,12 +528,12 @@ export default function UserManagementPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.75rem',
         padding: '1rem 1.25rem', borderRadius: '10px',
-        background: 'rgba(218,44,56,0.06)', border: '1px solid rgba(218,44,56,0.18)',
+        background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)',
       }}>
         <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.83rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.users.adminRequired')}</span>
+        <span style={{ fontSize: '0.85rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.users.adminRequired')}</span>
       </div>
     )
   }
@@ -553,6 +607,31 @@ export default function UserManagementPage() {
                   {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
+
+              {/* Phase 3.4 — holding_admin only, and only when editing an
+                  existing account (per plan: "when edited by a holding
+                  admin" — new-user mandate assignment is a separate,
+                  not-yet-built gap, flagged in .plan.md). */}
+              {isHoldingAdmin && editId && (
+                <>
+                  <div>
+                    <label style={labelStyle}>{t('pages.users.mandateLabel')}</label>
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.mandant_id}
+                      onChange={e => setForm(f => ({ ...f, mandant_id: e.target.value }))}>
+                      <option value="">{t('pages.users.noMandate')}</option>
+                      {mandants.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>{t('pages.users.holdingRoleLabel')}</label>
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.holding_role}
+                      onChange={e => setForm(f => ({ ...f, holding_role: e.target.value }))}>
+                      {HOLDING_ROLES.map(r => <option key={r} value={r}>{r || t('pages.users.holdingRoleNone')}</option>)}
+                    </select>
+                  </div>
+                </>
+              )}
+
               <div>
                 <label style={labelStyle}>{t('pages.users.imageUrlLabel')}</label>
                 <input style={inputStyle} value={form.image_url}
@@ -598,7 +677,7 @@ export default function UserManagementPage() {
               {editId && (
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                   <label style={labelStyle}>{t('pages.users.activeLabel')}</label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.82rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
                     <input type="checkbox" checked={form.is_active}
                       onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
                     {t('pages.users.accountActiveLabel')}
@@ -607,7 +686,7 @@ export default function UserManagementPage() {
               )}
             </div>
             {saveErr && (
-              <div style={{ fontSize: '0.78rem', color: '#DA2C38', marginBottom: '0.65rem', padding: '0.45rem 0.75rem', background: 'rgba(218,44,56,0.06)', borderRadius: '7px', border: '1px solid rgba(218,44,56,0.15)' }}>
+              <div style={{ fontSize: '0.78rem', color: '#DA2C38', marginBottom: '0.65rem', padding: '0.45rem 0.75rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', borderRadius: '8px', border: '1px solid color-mix(in srgb, #da2c38 15%, transparent)' }}>
                 {saveErr}
               </div>
             )}
@@ -638,17 +717,17 @@ export default function UserManagementPage() {
           {loading ? (
             <div style={{ padding: '2.5rem', textAlign: 'center' }}><div className="spinner" /></div>
           ) : error ? (
-            <div style={{ padding: '1rem', color: '#DA2C38', fontSize: '0.82rem' }}>{error}</div>
+            <div style={{ padding: '1rem', color: '#DA2C38', fontSize: '0.85rem' }}>{error}</div>
           ) : users.length === 0 ? (
-            <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.82rem', textAlign: 'center' }}>No users found.</div>
+            <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem', textAlign: 'center' }}>No users found.</div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['', t('pages.users.colUser'), t('pages.users.colRole'), t('pages.users.colStatus'), t('pages.users.colLastLogin'), t('pages.users.colActions')].map(h => (
+                  {['', t('pages.users.colUser'), t('pages.users.colRole'), t('pages.users.colMandate'), t('pages.users.colStatus'), t('pages.users.colLastLogin'), t('pages.users.colActions')].map(h => (
                     <th key={h} style={{
                       padding: '0.55rem 0.875rem', textAlign: 'left',
-                      fontSize: '0.63rem', fontWeight: 700, color: 'var(--muted)',
+                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
                       textTransform: 'uppercase', letterSpacing: '0.06em',
                       whiteSpace: 'nowrap',
                     }}>{h}</th>
@@ -676,7 +755,7 @@ export default function UserManagementPage() {
                         {/* Chevron + accent */}
                         <td style={{ padding: '0.6rem 0.5rem 0.6rem 0.875rem', width: '28px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <div style={{ width: '3px', height: '24px', borderRadius: '2px', background: isExpanded ? roleC.accent : 'var(--border)', flexShrink: 0, transition: 'background 0.15s' }} />
+                            <div style={{ width: '3px', height: '24px', borderRadius: '4px', background: isExpanded ? roleC.accent : 'var(--border)', flexShrink: 0, transition: 'background 0.15s' }} />
                             <svg
                               width="11" height="11" fill="none" stroke="var(--muted)" strokeWidth="2.5"
                               strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
@@ -691,14 +770,14 @@ export default function UserManagementPage() {
                         <td style={{ padding: '0.6rem 0.875rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                             <div style={{
-                              width: '28px', height: '28px', borderRadius: '7px', flexShrink: 0,
+                              width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
                               background: roleC.subtle,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: '0.65rem', fontWeight: 800, color: roleC.accent,
+                              fontSize: '0.7rem', fontWeight: 800, color: roleC.accent,
                               overflow: 'hidden',
                             }}>
-                              {u.image_url ? (
-                                <img src={u.image_url} alt={u.display_name || u.username} style={{
+                              {safeImageUrl(u.image_url) ? (
+                                <img src={safeImageUrl(u.image_url) ?? undefined} alt={u.display_name || u.username} style={{
                                   width: '100%', height: '100%', objectFit: 'cover',
                                 }} />
                               ) : (
@@ -706,10 +785,10 @@ export default function UserManagementPage() {
                               )}
                             </div>
                             <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text)', fontSize: '0.83rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text)', fontSize: '0.85rem' }}>
                                 {u.username}
                                 {u.id === user?.id && (
-                                  <span style={{ fontSize: '0.6rem', color: 'var(--muted)', background: 'var(--bg)', padding: '0.08rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', fontWeight: 600 }}>you</span>
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg)', padding: '0.08rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', fontWeight: 600 }}>you</span>
                                 )}
                               </div>
                               {u.display_name && u.display_name !== u.username && (
@@ -721,12 +800,24 @@ export default function UserManagementPage() {
 
                         <td style={{ padding: '0.6rem 0.875rem' }}>
                           <RoleBadge role={u.role} />
+                          {u.holding_role && (
+                            <span style={{
+                              display: 'inline-flex', marginLeft: '0.3rem', padding: '0.12rem 0.5rem', borderRadius: '6px',
+                              background: 'color-mix(in srgb, #7c3aed 9%, transparent)', color: '#7c3aed', fontWeight: 700, fontSize: '0.68rem',
+                            }}>
+                              {u.holding_role}
+                            </span>
+                          )}
+                        </td>
+
+                        <td style={{ padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                          {mandateNameFor(u)}
                         </td>
 
                         <td style={{ padding: '0.6rem 0.875rem' }}>
                           <span style={{
-                            display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '5px',
-                            background: u.is_active ? 'rgba(5,150,105,0.09)' : 'rgba(100,116,139,0.09)',
+                            display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
+                            background: u.is_active ? 'color-mix(in srgb, #059669 9%, transparent)' : 'rgba(100,116,139,0.09)',
                             color: u.is_active ? '#059669' : '#64748b',
                             fontWeight: 600, fontSize: '0.69rem',
                           }}>
@@ -752,7 +843,7 @@ export default function UserManagementPage() {
                               <button onClick={e => handleToggleActive(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: u.is_active ? '#b45309' : '#059669', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
                                 {u.is_active ? t('pages.users.disableBtn') : t('pages.users.enableBtn')}
                               </button>
-                              <button onClick={e => handleDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: '#DA2C38', border: '1px solid rgba(218,44,56,0.25)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.delBtn')}</button>
+                              <button onClick={e => handleDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: '#DA2C38', border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.delBtn')}</button>
                             </div>
                           ) : (
                             <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>—</span>

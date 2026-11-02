@@ -56,7 +56,7 @@ function downloadBlob(content: string, filename: string, mime: string) {
 
 function loadLocalWaivers(): WaiverRecord[] {
   try {
-    const raw = localStorage.getItem('wafpass_waivers')
+    const raw = localStorage.getItem('wombat_waivers')
     if (!raw) return []
     return Object.values(JSON.parse(raw) as Record<string, WaiverRecord>)
   } catch { return [] }
@@ -64,7 +64,7 @@ function loadLocalWaivers(): WaiverRecord[] {
 
 function loadLocalRisks(): RiskRecord[] {
   try {
-    const raw = localStorage.getItem('wafpass_risk_acceptances')
+    const raw = localStorage.getItem('wombat_risk_acceptances')
     if (!raw) return []
     return Object.values(JSON.parse(raw) as Record<string, RiskRecord>)
   } catch { return [] }
@@ -77,7 +77,7 @@ function scoreHex(s: number): string {
 function regulatoryBadges(ctrl: RunDetail['controls_meta'][number]): string {
   if (!ctrl.regulatory_mapping?.length) return '<span style="color:#94a3b8;font-size:11px">—</span>'
   return ctrl.regulatory_mapping
-    .map(m => `<span style="display:inline-block;margin:1px 2px;padding:1px 5px;border-radius:3px;background:#1e40af22;color:#3b82f6;font-size:10px;font-weight:600">${m.framework}: ${m.controls.slice(0, 2).join(', ')}${m.controls.length > 2 ? '…' : ''}</span>`)
+    .map(m => `<span style="display:inline-block;margin:1px 2px;padding:1px 5px;border-radius:4px;background:color-mix(in srgb, #1e40af 13.3%, transparent);color:#3b82f6;font-size:0.7rem;font-weight:600">${m.framework}: ${m.controls.slice(0, 2).join(', ')}${m.controls.length > 2 ? '…' : ''}</span>`)
     .join('')
 }
 
@@ -119,7 +119,7 @@ function generateHtml(
     allFindings.some(f => f.control_id === c.id && f.status?.toUpperCase() === 'FAIL'))
 
   const frameworksHtml = cfg.frameworks.length
-    ? cfg.frameworks.map(f => `<span style="display:inline-block;margin:2px 3px;padding:3px 10px;border-radius:12px;background:#1e40af18;border:1px solid #3b82f630;color:#2563eb;font-size:11px;font-weight:700">${f}</span>`).join('')
+    ? cfg.frameworks.map(f => `<span style="display:inline-block;margin:2px 3px;padding:3px 10px;border-radius:12px;background:color-mix(in srgb, #1e40af 9.4%, transparent);border:1px solid color-mix(in srgb, #3b82f6 18.8%, transparent);color:#2563eb;font-size:11px;font-weight:700">${f}</span>`).join('')
     : '<span style="color:#94a3b8;font-size:12px">None specified</span>'
 
   const waiversHtml = waivers.length === 0
@@ -141,7 +141,7 @@ function generateHtml(
         <td style="padding:8px 10px;font-size:12px;color:#1e293b">${escHtml(r.reason)}</td>
         <td style="padding:8px 10px;font-size:12px;color:#475569">${escHtml(r.approver)}</td>
         <td style="padding:8px 10px">
-          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${r.risk_level === 'critical' ? '#dc262618' : r.risk_level === 'high' ? '#d9770618' : '#1e40af18'};color:${r.risk_level === 'critical' ? '#dc2626' : r.risk_level === 'high' ? '#d97706' : '#2563eb'}">
+          <span style="font-size:0.7rem;font-weight:700;padding:2px 7px;border-radius:10px;background:${r.risk_level === 'critical' ? '#dc262618' : r.risk_level === 'high' ? '#d9770618' : 'color-mix(in srgb, #1e40af 9.4%, transparent)'};color:${r.risk_level === 'critical' ? '#dc2626' : r.risk_level === 'high' ? '#d97706' : '#2563eb'}">
             ${escHtml(r.risk_level || '—')}
           </span>
         </td>
@@ -173,7 +173,7 @@ function generateHtml(
     <h2 style="font-size:16px;font-weight:700;color:#dc2626;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid #fecaca">
       Failing Controls (${failingControls.length})
     </h2>
-    <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:13px">
+    <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:0.85rem">
       <thead>
         <tr style="background:#fef2f2">
           <th style="padding:10px;text-align:left;font-size:11px;color:#dc2626;font-weight:700;text-transform:uppercase">Control</th>
@@ -208,7 +208,7 @@ function generateHtml(
     <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0">
       Audit Log (last ${Math.min(auditEvents.length, 50)} events)
     </h2>
-    <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:13px">
+    <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:0.85rem">
       <thead>
         <tr style="background:#f8fafc">
           <th style="padding:10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase">Time</th>
@@ -239,12 +239,12 @@ function generateHtml(
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
     </svg>
     <div style="flex:1">
-      <div style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:rgba(37,99,235,.3);border:1px solid rgba(37,99,235,.5);border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.04em;color:#93c5fd;text-transform:uppercase;margin-bottom:4px">
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:color-mix(in srgb, #2563eb 30%, transparent);border:1px solid color-mix(in srgb, #2563eb 50%, transparent);border-radius:999px;font-size:0.7rem;font-weight:700;letter-spacing:.04em;color:#93c5fd;text-transform:uppercase;margin-bottom:4px">
         &#x1F512; Locked Evidence Package
       </div>
-      <div style="font-size:13px;font-weight:600">Locked at ${escHtml(lockedInfo.lockedAt)} — this report is immutable</div>
+      <div style="font-size:0.85rem;font-weight:600">Locked at ${escHtml(lockedInfo.lockedAt)} — this report is immutable</div>
     </div>
-    <div style="text-align:right;font-size:10px;color:#475569;font-family:monospace">
+    <div style="text-align:right;font-size:0.7rem;color:#475569;font-family:'Courier New',monospace">
       <div><span style="color:#64748b">SHA-256:</span> ${lockedInfo.hashDigest.slice(0, 32)}…</div>
       <div style="margin-top:2px"><span style="color:#64748b">ID:</span> ${lockedInfo.evidenceId.slice(0, 8)}…</div>
     </div>
@@ -255,7 +255,7 @@ function generateHtml(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WAF++ PASS — Evidence Package · ${escHtml(run.project || 'Unnamed Project')}</title>
+<title>WOMBATpass — Evidence Package · ${escHtml(run.project || 'Unnamed Project')}</title>
 <style>
   @media print {
     body { margin: 0; font-size: 11px; }
@@ -278,12 +278,12 @@ function generateHtml(
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:24px;border-bottom:3px solid #0094ff;margin-bottom:28px">
     <div>
-      <div style="font-size:22px;font-weight:800;color:#0094ff;letter-spacing:-0.5px">WAF++ PASS</div>
-      <div style="font-size:13px;color:#64748b;margin-top:2px">Compliance Evidence Package</div>
+      <div style="font-size:22px;font-weight:800;color:#0094ff;letter-spacing:-0.5px">WOMBATpass</div>
+      <div style="font-size:0.85rem;color:#64748b;margin-top:2px">Compliance Evidence Package</div>
     </div>
     <div style="text-align:right">
       <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;font-weight:600">${lockedInfo ? 'Locked' : 'Exported'}</div>
-      <div style="font-size:13px;color:#475569;margin-top:2px">${exportedAtHuman}</div>
+      <div style="font-size:0.85rem;color:#475569;margin-top:2px">${exportedAtHuman}</div>
     </div>
   </div>
 
@@ -291,7 +291,7 @@ function generateHtml(
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px">
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px">
       <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:10px">Package Details</div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
         <tr><td style="padding:4px 0;color:#64748b;width:120px">Prepared by</td><td style="padding:4px 0;font-weight:600;color:#1e293b">${escHtml(cfg.preparedBy || '—')}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b">Organization</td><td style="padding:4px 0;font-weight:600;color:#1e293b">${escHtml(cfg.organization || '—')}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b">Audit period</td><td style="padding:4px 0;color:#1e293b">${escHtml(cfg.period || '—')}</td></tr>
@@ -301,13 +301,13 @@ function generateHtml(
     </div>
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px">
       <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:10px">Scan Run</div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
         <tr><td style="padding:4px 0;color:#64748b;width:120px">Project</td><td style="padding:4px 0;font-weight:600;color:#1e293b">${escHtml(run.project || '—')}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b">Branch</td><td style="padding:4px 0;color:#1e293b">${escHtml(run.branch || '—')}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b">Git SHA</td><td style="padding:4px 0;font-family:monospace;font-size:11px;color:#475569">${escHtml(run.git_sha || '—')}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b">IaC</td><td style="padding:4px 0;color:#1e293b">${escHtml(run.iac_framework || '—')}</td></tr>
         <tr><td style="padding:4px 0;color:#64748b">Scanned at</td><td style="padding:4px 0;color:#1e293b">${runDate}</td></tr>
-        <tr><td style="padding:4px 0;color:#64748b">Run ID</td><td style="padding:4px 0;font-family:monospace;font-size:10px;color:#94a3b8">${escHtml(run.id)}</td></tr>
+        <tr><td style="padding:4px 0;color:#64748b">Run ID</td><td style="padding:4px 0;font-family:monospace;font-size:0.7rem;color:#94a3b8">${escHtml(run.id)}</td></tr>
       </table>
     </div>
   </div>
@@ -319,25 +319,25 @@ function generateHtml(
       <div style="font-size:11px;color:#64748b;margin-top:2px;text-transform:uppercase;letter-spacing:.05em;font-weight:600">Overall Score</div>
     </div>
     <div style="padding:16px 24px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;text-align:center;min-width:90px">
-      <div style="font-size:28px;font-weight:800;color:#059669">${passing.length}</div>
+      <div style="font-size:1.75rem;font-weight:800;color:#059669">${passing.length}</div>
       <div style="font-size:11px;color:#64748b;margin-top:2px;text-transform:uppercase;font-weight:600">Passing checks</div>
     </div>
     <div style="padding:16px 24px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;text-align:center;min-width:90px">
-      <div style="font-size:28px;font-weight:800;color:#dc2626">${failing.length}</div>
+      <div style="font-size:1.75rem;font-weight:800;color:#dc2626">${failing.length}</div>
       <div style="font-size:11px;color:#64748b;margin-top:2px;text-transform:uppercase;font-weight:600">Failing checks</div>
     </div>
     <div style="padding:16px 24px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;text-align:center;min-width:90px">
-      <div style="font-size:28px;font-weight:800;color:#059669">${passingControls.length}</div>
+      <div style="font-size:1.75rem;font-weight:800;color:#059669">${passingControls.length}</div>
       <div style="font-size:11px;color:#64748b;margin-top:2px;text-transform:uppercase;font-weight:600">Controls passing</div>
     </div>
     <div style="padding:16px 24px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;text-align:center;min-width:90px">
-      <div style="font-size:28px;font-weight:800;color:#dc2626">${failingControls.length}</div>
+      <div style="font-size:1.75rem;font-weight:800;color:#dc2626">${failingControls.length}</div>
       <div style="font-size:11px;color:#64748b;margin-top:2px;text-transform:uppercase;font-weight:600">Controls failing</div>
     </div>
     ${pillarScores.map(([pillar, score]) => `
     <div style="padding:16px 20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;text-align:center;min-width:80px">
       <div style="font-size:22px;font-weight:800;color:${scoreHex(score)}">${score}</div>
-      <div style="font-size:10px;color:#64748b;margin-top:2px;text-transform:uppercase;letter-spacing:.04em;font-weight:600">${escHtml(pillar)}</div>
+      <div style="font-size:0.7rem;color:#64748b;margin-top:2px;text-transform:uppercase;letter-spacing:.04em;font-weight:600">${escHtml(pillar)}</div>
     </div>`).join('')}
   </div>
 
@@ -346,7 +346,7 @@ function generateHtml(
     Passing Controls (${passingControls.length})
     <span style="font-size:12px;font-weight:400;color:#64748b;margin-left:8px">All checks green — eligible for evidence submission</span>
   </h2>
-  <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:13px;margin-bottom:24px">
+  <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:0.85rem;margin-bottom:24px">
     <thead>
       <tr style="background:#f0fdf4">
         <th style="padding:10px;text-align:left;font-size:11px;color:#059669;font-weight:700;text-transform:uppercase">Control</th>
@@ -365,7 +365,7 @@ function generateHtml(
   <h2 style="font-size:16px;font-weight:700;color:#2563eb;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid #bfdbfe">
     Active Waivers (${waivers.length})
   </h2>
-  <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:13px;margin-bottom:24px">
+  <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:0.85rem;margin-bottom:24px">
     <thead><tr style="background:#eff6ff">
       <th style="padding:10px;text-align:left;font-size:11px;color:#2563eb;font-weight:700;text-transform:uppercase">Control ID</th>
       <th style="padding:10px;text-align:left;font-size:11px;color:#2563eb;font-weight:700;text-transform:uppercase">Reason</th>
@@ -380,7 +380,7 @@ function generateHtml(
   <h2 style="font-size:16px;font-weight:700;color:#7c3aed;margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid #ddd6fe">
     Risk Acceptances (${risks.length})
   </h2>
-  <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:13px;margin-bottom:24px">
+  <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;font-size:0.85rem;margin-bottom:24px">
     <thead><tr style="background:#f5f3ff">
       <th style="padding:10px;text-align:left;font-size:11px;color:#7c3aed;font-weight:700;text-transform:uppercase">ID</th>
       <th style="padding:10px;text-align:left;font-size:11px;color:#7c3aed;font-weight:700;text-transform:uppercase">Reason</th>
@@ -398,7 +398,7 @@ function generateHtml(
   <details style="background:#0f172a;border-radius:8px;padding:16px;margin-bottom:24px">
     <summary style="color:#94a3b8;font-size:12px;cursor:pointer;font-weight:600;letter-spacing:.03em;text-transform:uppercase">Expand embedded JSON manifest</summary>
     <pre style="margin:12px 0 0;color:#e2e8f0;font-size:11px;overflow-x:auto;white-space:pre-wrap;word-break:break-all">${escHtml(JSON.stringify({
-      wafpass_evidence_package: '1.0',
+      wombat_evidence_package: '1.0',
       exported_at: exportedAt,
       locked: !!lockedInfo,
       evidence_id: lockedInfo?.evidenceId,
@@ -424,11 +424,11 @@ function generateHtml(
 
   <div style="border-top:1px solid #e2e8f0;padding-top:20px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
     <div style="font-size:11px;color:#94a3b8;line-height:1.6;max-width:600px">
-      <strong style="color:#64748b">Disclaimer:</strong> This evidence package was generated automatically by WAF++ PASS from scan data recorded on ${runDate}. It reflects the compliance posture of the scanned infrastructure at the time of the scan. This document does not constitute a formal security audit or certification.
+      <strong style="color:#64748b">Disclaimer:</strong> This evidence package was generated automatically by WOMBATpass from scan data recorded on ${runDate}. It reflects the compliance posture of the scanned infrastructure at the time of the scan. This document does not constitute a formal security audit or certification.
     </div>
     <div style="text-align:right;flex-shrink:0">
       <div style="font-size:11px;color:#94a3b8">Generated by</div>
-      <div style="font-size:13px;font-weight:700;color:#0094ff">WAF++ PASS v1.0.0</div>
+      <div style="font-size:0.85rem;font-weight:700;color:#0094ff">WOMBATpass v1.0.0</div>
     </div>
   </div>
 
@@ -538,7 +538,7 @@ function LockerCard({
     }}>
       {/* Locked banner strip */}
       <div style={{
-        background: 'linear-gradient(90deg,rgba(37,99,235,.12) 0%,transparent 100%)',
+        background: 'linear-gradient(90deg,color-mix(in srgb, #2563eb 12%, transparent) 0%,transparent 100%)',
         borderBottom: '1px solid rgba(37,99,235,.15)',
         padding: '0.5rem 1.25rem',
         display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -546,10 +546,10 @@ function LockerCard({
         <svg width="12" height="12" fill="none" stroke="#60a5fa" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
-        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Locked — Immutable Evidence
         </span>
-        <span style={{ fontSize: '0.65rem', color: 'var(--muted)', marginLeft: 'auto' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: 'auto' }}>
           {ev.created_at ? new Date(ev.created_at).toLocaleString() : '—'}
         </span>
       </div>
@@ -560,7 +560,7 @@ function LockerCard({
         {/* QR code */}
         <div style={{ flexShrink: 0 }}>
           <QrCode evidenceId={ev.id} size={130} />
-          <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textAlign: 'center', marginTop: '4px' }}>Scan for public URL</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textAlign: 'center', marginTop: '4px' }}>Scan for public URL</div>
         </div>
 
         {/* Metadata */}
@@ -580,11 +580,11 @@ function LockerCard({
               <div style={{
                 flexShrink: 0, textAlign: 'center',
                 padding: '0.25rem 0.75rem', borderRadius: '8px',
-                background: scoreVal >= 80 ? 'rgba(5,150,105,.1)' : scoreVal >= 60 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
-                border: `1px solid ${scoreVal >= 80 ? 'rgba(5,150,105,.25)' : scoreVal >= 60 ? 'rgba(217,119,6,.25)' : 'rgba(220,38,38,.25)'}`,
+                background: scoreVal >= 80 ? 'color-mix(in srgb, #059669 10%, transparent)' : scoreVal >= 60 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
+                border: `1px solid ${scoreVal >= 80 ? 'color-mix(in srgb, #059669 25%, transparent)' : scoreVal >= 60 ? 'rgba(217,119,6,.25)' : 'rgba(220,38,38,.25)'}`,
               }}>
                 <div style={{ fontSize: '1.2rem', fontWeight: 800, color: scoreHex(scoreVal as number), lineHeight: 1 }}>{scoreVal}</div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>score</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>score</div>
               </div>
             )}
           </div>
@@ -594,9 +594,9 @@ function LockerCard({
             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
               {ev.frameworks.map(fw => (
                 <span key={fw} style={{
-                  fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.5rem',
-                  borderRadius: '999px', background: 'rgba(37,99,235,.08)',
-                  color: '#2563eb', border: '1px solid rgba(37,99,235,.2)',
+                  fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                  borderRadius: '999px', background: 'color-mix(in srgb, #2563eb 8%, transparent)',
+                  color: '#2563eb', border: '1px solid color-mix(in srgb, #2563eb 20%, transparent)',
                 }}>
                   {fw}
                 </span>
@@ -612,7 +612,7 @@ function LockerCard({
           )}
 
           {/* Hash */}
-          <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.35rem', opacity: 0.7 }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.35rem', opacity: 0.7 }}>
             SHA-256: {ev.hash_digest.slice(0, 40)}…
           </div>
 
@@ -622,10 +622,10 @@ function LockerCard({
               onClick={copyLink}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.3rem',
-                padding: '0.35rem 0.75rem', borderRadius: '7px', fontSize: '0.75rem', fontWeight: 600,
-                background: copied ? 'rgba(5,150,105,.12)' : 'var(--bg)',
+                padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
+                background: copied ? 'color-mix(in srgb, #059669 12%, transparent)' : 'var(--bg)',
                 color: copied ? '#059669' : 'var(--muted)',
-                border: `1px solid ${copied ? 'rgba(5,150,105,.3)' : 'var(--border)'}`,
+                border: `1px solid ${copied ? 'color-mix(in srgb, #059669 30%, transparent)' : 'var(--border)'}`,
                 cursor: 'pointer', transition: 'all .15s',
               }}
             >
@@ -643,7 +643,7 @@ function LockerCard({
               disabled={downloading}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                padding: '0.35rem 0.75rem', borderRadius: '7px', fontSize: '0.75rem', fontWeight: 600,
+                padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
                 background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)',
                 cursor: downloading ? 'wait' : 'pointer', opacity: downloading ? 0.6 : 1,
               }}
@@ -659,7 +659,7 @@ function LockerCard({
               target="_blank" rel="noopener noreferrer"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                padding: '0.35rem 0.75rem', borderRadius: '7px', fontSize: '0.75rem', fontWeight: 600,
+                padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
                 background: 'rgba(0,148,255,.08)', color: 'var(--waf-brand)', border: '1px solid rgba(0,148,255,.25)',
                 textDecoration: 'none',
               }}
@@ -673,7 +673,7 @@ function LockerCard({
             <button
               onClick={() => setExpanded(e => !e)}
               style={{
-                padding: '0.35rem 0.6rem', borderRadius: '7px', fontSize: '0.75rem', fontWeight: 600,
+                padding: '0.35rem 0.6rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
                 background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer',
               }}
             >
@@ -684,8 +684,8 @@ function LockerCard({
               <button
                 onClick={() => setDeleting(true)}
                 style={{
-                  padding: '0.35rem 0.6rem', borderRadius: '7px', fontSize: '0.75rem', fontWeight: 600,
-                  background: 'none', color: '#f87171', border: '1px solid rgba(218,44,56,.25)', cursor: 'pointer',
+                  padding: '0.35rem 0.6rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
+                  background: 'none', color: '#f87171', border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)', cursor: 'pointer',
                 }}
               >
                 Delete
@@ -698,13 +698,13 @@ function LockerCard({
       {/* Delete confirmation */}
       {deleting && (
         <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border)', background: 'rgba(218,44,56,.04)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text)' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>
             Delete this locked evidence package? This action cannot be undone.
           </span>
-          <button onClick={() => onDelete(ev.id)} style={{ padding: '0.3rem 0.8rem', borderRadius: '7px', background: '#DA2C38', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+          <button onClick={() => onDelete(ev.id)} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: '#DA2C38', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
             Confirm delete
           </button>
-          <button onClick={() => setDeleting(false)} style={{ padding: '0.3rem 0.7rem', borderRadius: '7px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+          <button onClick={() => setDeleting(false)} style={{ padding: '0.3rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
             Cancel
           </button>
         </div>
@@ -716,7 +716,7 @@ function LockerCard({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
             <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Evidence ID</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.id}</code></div>
             <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Run ID</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.run_id}</code></div>
-            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Full SHA-256</div><code style={{ fontSize: '0.65rem', wordBreak: 'break-all' }}>{ev.hash_digest}</code></div>
+            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Full SHA-256</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.hash_digest}</code></div>
           </div>
           {ev.note && (
             <div style={{ marginTop: '0.75rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
@@ -741,7 +741,7 @@ function CheckRow({ label, sub, checked, onChange, readOnly }: { label: string; 
       <input type="checkbox" checked={checked} onChange={e => !readOnly && onChange(e.target.checked)} disabled={readOnly}
         style={{ marginTop: '2px', accentColor: 'var(--waf-brand)', flexShrink: 0 }} />
       <div>
-        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '1px' }}>{sub}</div>
       </div>
     </label>
@@ -820,7 +820,7 @@ export default function EvidencePage({ run }: Props) {
     const html = generateHtml(run, cfg, waivers, risks, auditEvents)
     const slug = (run.project || 'project').replace(/[^a-z0-9]/gi, '-').toLowerCase()
     const date = new Date().toISOString().slice(0, 10)
-    downloadBlob(html, `wafpass-evidence-${slug}-${date}.html`, 'text/html')
+    downloadBlob(html, `wombat-evidence-${slug}-${date}.html`, 'text/html')
     setExported(true)
     setTimeout(() => setExported(false), 3000)
   }
@@ -829,7 +829,7 @@ export default function EvidencePage({ run }: Props) {
     if (!run) return
     const slug = (run.project || 'project').replace(/[^a-z0-9]/gi, '-').toLowerCase()
     const date = new Date().toISOString().slice(0, 10)
-    downloadBlob(JSON.stringify(buildSnapshot(), null, 2), `wafpass-evidence-${slug}-${date}.json`, 'application/json')
+    downloadBlob(JSON.stringify(buildSnapshot(), null, 2), `wombat-evidence-${slug}-${date}.json`, 'application/json')
   }
 
   async function handleLock() {
@@ -873,7 +873,7 @@ export default function EvidencePage({ run }: Props) {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px',
     border: '1px solid var(--border)', background: 'var(--bg)',
-    color: 'var(--text)', fontSize: '0.82rem', boxSizing: 'border-box',
+    color: 'var(--text)', fontSize: '0.85rem', boxSizing: 'border-box',
   }
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: '0.72rem', fontWeight: 700,
@@ -904,7 +904,7 @@ export default function EvidencePage({ run }: Props) {
         </div>
 
         {lockerErr && (
-          <div style={{ padding: '0.75rem 1rem', background: 'rgba(218,44,56,.06)', border: '1px solid rgba(218,44,56,.2)', borderRadius: '8px', fontSize: '0.82rem', color: '#f87171', marginBottom: '0.75rem' }}>
+          <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: '#f87171', marginBottom: '0.75rem' }}>
             {lockerErr}
           </div>
         )}
@@ -959,7 +959,7 @@ export default function EvidencePage({ run }: Props) {
         {justLocked && (
           <div style={{
             padding: '1rem 1.25rem', marginBottom: '1rem', borderRadius: '10px',
-            background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.25)',
+            background: 'color-mix(in srgb, #059669 6%, transparent)', border: '1px solid color-mix(in srgb, #059669 25%, transparent)',
             display: 'flex', alignItems: 'flex-start', gap: '1rem',
           }}>
             <svg width="18" height="18" fill="none" stroke="#059669" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 2 }}>
@@ -1008,7 +1008,7 @@ export default function EvidencePage({ run }: Props) {
                     {ALL_FRAMEWORKS.map(fw => (
                       <button key={fw} onClick={() => toggleFramework(fw)} style={{
                         padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', border: '1px solid',
-                        background: cfg.frameworks.includes(fw) ? 'rgba(37,99,235,.12)' : 'transparent',
+                        background: cfg.frameworks.includes(fw) ? 'color-mix(in srgb, #2563eb 12%, transparent)' : 'transparent',
                         borderColor: cfg.frameworks.includes(fw) ? 'rgba(37,99,235,.4)' : 'var(--border)',
                         color: cfg.frameworks.includes(fw) ? '#2563eb' : 'var(--muted)',
                       }}>{fw}</button>
@@ -1028,7 +1028,7 @@ export default function EvidencePage({ run }: Props) {
                   <CheckRow label="Embedded JSON manifest" sub="Machine-readable version — always included" checked={true} onChange={() => {}} readOnly />
                 </div>
 
-                <div style={{ ...cardStyle, background: 'rgba(5,150,105,.04)', borderColor: 'rgba(5,150,105,.2)' }}>
+                <div style={{ ...cardStyle, background: 'rgba(5,150,105,.04)', borderColor: 'color-mix(in srgb, #059669 20%, transparent)' }}>
                   <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>Run snapshot</div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.2rem' }}>{run.project || 'Unnamed'} · {run.branch || '—'}</div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>{run.git_sha ? run.git_sha.slice(0, 12) : '—'} · {new Date(run.created_at).toLocaleString()}</div>
@@ -1039,7 +1039,7 @@ export default function EvidencePage({ run }: Props) {
                       { label: 'Failing', value: `${failingFindings.length}`, color: '#dc2626' },
                     ].map(({ label, value, color }) => (
                       <div key={label}>
-                        <div style={{ fontSize: '0.62rem', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
                         <div style={{ fontSize: '0.92rem', fontWeight: 700, color }}>{value}</div>
                       </div>
                     ))}
@@ -1049,7 +1049,7 @@ export default function EvidencePage({ run }: Props) {
             </div>
 
             {lockErr && (
-              <div style={{ padding: '0.75rem 1rem', background: 'rgba(218,44,56,.06)', border: '1px solid rgba(218,44,56,.2)', borderRadius: '8px', fontSize: '0.82rem', color: '#f87171', marginTop: '0.75rem' }}>
+              <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: '#f87171', marginTop: '0.75rem' }}>
                 {lockErr}
               </div>
             )}
@@ -1079,7 +1079,7 @@ export default function EvidencePage({ run }: Props) {
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.65rem 1.25rem', borderRadius: '10px',
                   border: '1px solid var(--border)', background: 'var(--card)',
-                  color: 'var(--text)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer',
+                  color: 'var(--text)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
                 }}
               >
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1094,7 +1094,7 @@ export default function EvidencePage({ run }: Props) {
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.65rem 1rem', borderRadius: '10px',
                   border: '1px solid var(--border)', background: 'var(--card)',
-                  color: 'var(--text)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer',
+                  color: 'var(--text)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
                 }}
               >
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">

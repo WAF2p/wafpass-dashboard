@@ -19,11 +19,9 @@ import { Page } from '../routing'
 import { MATURITY_META } from './settingsUtils'
 import DashboardPage from './DashboardPage'
 import flightMapBg from '/flight-map-bg.png'
+import { scoreColor } from '../severity';
 
 // ── Semantic color helpers ────────────────────────────────────────────────────
-function scoreColor(s: number): string {
-  return s >= 80 ? 'var(--score-high)' : s >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
-}
 function pillarColor(key: string): string {
   const map: Record<string, string> = {
     security: 'var(--fail)',
@@ -180,7 +178,7 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
           justifyContent: 'center',
         }}
       >
-        <span style={{ fontSize: '2.75rem', fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
+        <span style={{ fontSize: '2.5rem', fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
         <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.05em' }}>OF 100</span>
       </div>
     </div>
@@ -210,7 +208,7 @@ function KpiTile({
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: '18px',
+        borderRadius: '20px',
         padding: '1.25rem',
         display: 'flex',
         flexDirection: 'column',
@@ -226,7 +224,7 @@ function KpiTile({
         <div style={{ color, opacity: 0.85 }}>{icon}</div>
       </div>
       <div>
-        <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{value}</div>
         {subtext && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{subtext}</div>}
       </div>
     </div>
@@ -499,7 +497,7 @@ function FlightTimeline({ runs, passports }: { runs: RunSummary[]; passports: Pr
                 alignItems: 'center',
                 gap: '0.85rem',
                 padding: '0.85rem 1rem',
-                borderRadius: '14px',
+                borderRadius: '12px',
                 background: 'var(--surface)',
                 border: `1px solid ${active ? 'var(--waf-brand)' : 'var(--border)'}`,
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -523,7 +521,7 @@ function FlightTimeline({ runs, passports }: { runs: RunSummary[]; passports: Pr
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stage.label}</div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{stage.description}</div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.35rem', fontWeight: 600 }}>{stage.range}%</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.35rem', fontWeight: 600 }}>{stage.range}%</div>
               </div>
               {active && (
                 <div
@@ -801,7 +799,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
       <div className="gd-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center', maxWidth: 420, padding: '2rem', borderRadius: '20px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div style={{ color: 'var(--fail)', marginBottom: '1rem' }}><ErrorIcon /></div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Error Loading Global Dashboard</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Error Loading Global Dashboard</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{error}</div>
         </div>
       </div>
@@ -828,8 +826,8 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
       <div className="gd-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center', maxWidth: 460, padding: '2.5rem', borderRadius: '24px', background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}>
           <div style={{ color: 'var(--waf-brand)', marginBottom: '1rem' }}><EmptyStateIcon /></div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>No run data available</div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>Run a WAF++ scan first to populate your operational center.</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>No run data available</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>Run a WOMBATpass scan first to populate your operational center.</div>
           <button
             onClick={() => navigate('runscan')}
             style={{
@@ -838,7 +836,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
               border: 'none',
               background: 'var(--waf-brand)',
               color: 'var(--surface)',
-              fontSize: '0.82rem',
+              fontSize: '0.85rem',
               fontWeight: 700,
               cursor: 'pointer',
               boxShadow: '0 4px 16px color-mix(in srgb, var(--waf-brand) 35%, transparent)',
@@ -973,7 +971,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                     </div>
                     <div
                       style={{
-                        fontSize: '0.65rem',
+                        fontSize: '0.7rem',
                         fontWeight: 800,
                         color: maturityColor(maturity.level),
                         padding: '0.15rem 0.4rem',
@@ -1023,7 +1021,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                   <div className="gd-featured-head">
                     <div className="gd-featured-icon"><StarIcon /></div>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{featuredProject.displayName}</div>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{featuredProject.displayName}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                         {getBestRunForProject(featuredProject.project, runs)?.branch}
                       </div>
@@ -1031,11 +1029,11 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                   </div>
                   <div className="gd-featured-stats">
                     <div className="gd-featured-stat" style={{ borderColor: scoreColor(featuredProject.score) }}>
-                      <div style={{ fontSize: '1.7rem', fontWeight: 800, color: scoreColor(featuredProject.score) }}>{featuredProject.score}</div>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: scoreColor(featuredProject.score) }}>{featuredProject.score}</div>
                       <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.score')}</div>
                     </div>
                     <div className="gd-featured-stat" style={{ borderColor: maturityColor(getMaturityForScore(featuredProject.score).level) }}>
-                      <div style={{ fontSize: '1.7rem', fontWeight: 800, color: maturityColor(getMaturityForScore(featuredProject.score).level) }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 800, color: maturityColor(getMaturityForScore(featuredProject.score).level) }}>
                         {getMaturityForScore(featuredProject.score).level}
                       </div>
                       <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.level')}</div>
@@ -1062,7 +1060,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                         <div key={p.key} className="gd-pillar-mini">
                           <div style={{ color: p.color }}><p.icon /></div>
                           <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)' }}>{score}</div>
-                          <div style={{ fontSize: '0.58rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{p.label}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{p.label}</div>
                         </div>
                       )
                     })
@@ -1123,7 +1121,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                 >
                   <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--muted)' }}>#{i + 1}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.displayName}
                     </div>
                     <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{p.score}/100 · {maturity.short}</div>
@@ -1230,7 +1228,7 @@ const globalDashboardCss = `
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 .gd-hero-title {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text);
   margin: 0 0 0.4rem;
@@ -1442,7 +1440,7 @@ const globalDashboardCss = `
   min-width: 0;
 }
 .gd-star-name {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
   overflow: hidden;
@@ -1468,7 +1466,7 @@ const globalDashboardCss = `
   line-height: 1;
 }
 .gd-star-label {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   color: var(--muted);
   text-transform: uppercase;
   margin-top: 0.15rem;
@@ -1575,7 +1573,7 @@ const skeletonCss = `
 .gd-skeleton {
   background: linear-gradient(90deg, var(--bg) 25%, var(--surface) 50%, var(--bg) 75%);
   background-size: 200% 100%;
-  border-radius: 18px;
+  border-radius: 20px;
   height: 120px;
   animation: gdSkeleton 1.4s infinite;
 }

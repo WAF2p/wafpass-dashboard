@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRun, Finding, PlanChange, RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
+import { severityColor } from '../severity'
 
 interface Props {
   run: RunDetail
@@ -27,16 +28,11 @@ type DriftDirection = 'regressed' | 'recovered'
 const SEV_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
 const sevOrder = (s: string) => SEV_ORDER[s?.toLowerCase()] ?? 9
 
-const SEV_COLOR: Record<string, string> = {
-  critical: '#dc2626', high: '#d97706', medium: '#2563eb', low: '#059669', info: '#94a3b8',
-}
-const sevColor = (s: string) => SEV_COLOR[s?.toLowerCase()] ?? '#94a3b8'
-
 const ACTION_META: Record<string, { label: string; color: string; bg: string; glyph: string }> = {
   update:  { label: 'Changed',  color: '#d97706', bg: 'rgba(217,119,6,.10)',   glyph: '~' },
-  replace: { label: 'Replaced', color: '#7c3aed', bg: 'rgba(124,58,237,.10)', glyph: '⟳' },
+  replace: { label: 'Replaced', color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 10%, transparent)', glyph: '⟳' },
   delete:  { label: 'Destroyed',color: '#dc2626', bg: 'rgba(220,38,38,.10)',   glyph: '−' },
-  create:  { label: 'Created',  color: '#16a34a', bg: 'rgba(22,163,74,.08)',   glyph: '+' },
+  create:  { label: 'Created',  color: '#16a34a', bg: 'color-mix(in srgb, #16a34a 8%, transparent)',   glyph: '+' },
   'no-op': { label: 'No-op',    color: '#94a3b8', bg: 'transparent',           glyph: '·' },
 }
 const actionMeta = (a: string) => ACTION_META[a] ?? ACTION_META['no-op']
@@ -132,7 +128,7 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
   return (
     <svg width={W} height={H} style={{ overflow: 'visible', display: 'block', margin: '0 auto' }}>
       {/* Fill */}
-      <polygon points={fillPoints} fill="rgba(37,99,235,.10)" />
+      <polygon points={fillPoints} fill="color-mix(in srgb, #2563eb 10%, transparent)" />
       {/* Line */}
       <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" />
       {/* Dots */}
@@ -163,10 +159,10 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
 
 function DriftCard({ item, direction }: { item: ComplianceDriftItem; direction: DriftDirection }) {
   const [open, setOpen] = useState(false)
-  const color = direction === 'regressed' ? sevColor(item.severity) : '#059669'
+  const color = direction === 'regressed' ? severityColor(item.severity) : 'var(--score-high-ink)'
   const bg    = direction === 'regressed'
     ? `rgba(${item.severity?.toLowerCase() === 'critical' ? '220,38,38' : item.severity?.toLowerCase() === 'high' ? '217,119,6' : '37,99,235'},.06)`
-    : 'rgba(5,150,105,.06)'
+    : 'color-mix(in srgb, #059669 6%, transparent)'
 
   return (
     <div style={{
@@ -264,7 +260,7 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
             {isNonCompliant && (
               <span style={{
                 fontSize: 10, fontWeight: 700, color: '#7c3aed',
-                background: 'rgba(124,58,237,.10)', border: '1px solid rgba(124,58,237,.3)',
+                background: 'color-mix(in srgb, #7c3aed 10%, transparent)', border: '1px solid color-mix(in srgb, #7c3aed 30%, transparent)',
                 borderRadius: 4, padding: '1px 6px',
               }}>
                 non-compliant
@@ -400,7 +396,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
     [filteredStateDrift]
   )
 
-  // Non-compliant state changes (resource is also failing a WAF++ check)
+  // Non-compliant state changes (resource is also failing a Wombat check)
   const nonCompliantDrift = useMemo(() =>
     filteredStateDrift.filter(c => failingResources.has(c.address)).length,
     [filteredStateDrift, failingResources]
@@ -416,8 +412,8 @@ export default function DriftDetectionPage({ run, runs }: Props) {
         borderRadius: 12, padding: '20px 24px', marginBottom: 24,
         background: hasDrift
           ? 'linear-gradient(135deg, rgba(220,38,38,.08) 0%, rgba(217,119,6,.05) 100%)'
-          : 'linear-gradient(135deg, rgba(5,150,105,.08) 0%, rgba(16,185,129,.05) 100%)',
-        border: `1px solid ${hasDrift ? 'rgba(220,38,38,.2)' : 'rgba(5,150,105,.2)'}`,
+          : 'linear-gradient(135deg, color-mix(in srgb, #059669 8%, transparent) 0%, rgba(16,185,129,.05) 100%)',
+        border: `1px solid ${hasDrift ? 'rgba(220,38,38,.2)' : 'color-mix(in srgb, #059669 20%, transparent)'}`,
         display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
       }}>
         <div style={{ fontSize: 32 }}>{hasDrift ? '⚠️' : '✅'}</div>
