@@ -42,7 +42,7 @@ export default function AboutPage() {
 
   useEffect(() => { fetchVersionInfo() }, [])
 
-  const dashboardVersion = import.meta.env.VITE_APP_VERSION || '1.1.0'
+  const dashboardVersion = import.meta.env.VITE_APP_VERSION || '1.2.0'
   const serverUrl = (getApiBase() || window.location.origin).replace(/\/$/, '')
   const dashboardUrl = window.location.origin.replace(/\/$/, '')
   // New servers return wombat_*; accept the deprecated wafpass_* aliases too.
