@@ -22,6 +22,7 @@ import {
   type WidgetSize,
   type WidgetType,
 } from '../widgets/types'
+import { safeImageUrl } from '../safeUrl'
 
 interface Props {
   run: RunDetail | null
@@ -591,7 +592,7 @@ export default function MyDashboardPage({
                       onChange={event => setDraft(previous => ({ ...previous, alt: event.target.value }))}
                     />
                   </label>
-                  {draft.src && <div className="wdg-logo-preview"><img src={draft.src} alt="" /></div>}
+                  {safeImageUrl(draft.src, { allowSvgData: true }) && <div className="wdg-logo-preview"><img src={safeImageUrl(draft.src, { allowSvgData: true }) ?? undefined} alt="" /></div>}
                   <p className="wdg-note">{t('pages.myDashboard.config.logoShareNote')}</p>
                 </>
               )}

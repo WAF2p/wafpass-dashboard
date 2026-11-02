@@ -3,6 +3,7 @@ import { useI18n } from '../i18n'
 import { fetchProjectPassports, fetchProjectPassport, getApiBase, upsertProjectPassport, deleteProject, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
 import { MATURITY_META } from './settingsUtils'
 import { scoreColor } from '../severity';
+import { safeImageUrl } from '../safeUrl'
 
 interface Props {
   runs: RunSummary[]
@@ -504,8 +505,8 @@ function PassportRow({
       <div className="pp-row-main">
         <div className="pp-row-accent" style={{ background: maturity.color }} />
         <div className="pp-row-seal">
-          {passport?.image_url ? (
-            <img src={passport.image_url} alt="" />
+          {safeImageUrl(passport?.image_url, { allowSvgData: true }) ? (
+            <img src={safeImageUrl(passport?.image_url, { allowSvgData: true }) ?? undefined} alt="" />
           ) : (
             <MaturitySeal level={maturity.level} color={maturity.color} textColor={maturity.textColor} size={40} />
           )}
@@ -610,8 +611,8 @@ function PassportCard({
           <div className="pp-score-label">/ 100</div>
         </div>
         <div className="pp-card-seal">
-          {passport?.image_url ? (
-            <img src={passport.image_url} alt="" />
+          {safeImageUrl(passport?.image_url, { allowSvgData: true }) ? (
+            <img src={safeImageUrl(passport?.image_url, { allowSvgData: true }) ?? undefined} alt="" />
           ) : (
             <MaturitySeal level={maturity.level} color={maturity.color} textColor={maturity.textColor} size={58} />
           )}
@@ -644,8 +645,8 @@ function PassportCard({
 
       <div className="pp-card-body">
         <div className="pp-card-photo">
-          {passport?.image_url ? (
-            <img src={passport.image_url} alt="" />
+          {safeImageUrl(passport?.image_url, { allowSvgData: true }) ? (
+            <img src={safeImageUrl(passport?.image_url, { allowSvgData: true }) ?? undefined} alt="" />
           ) : (
             <div className="pp-card-photo-placeholder">
               <span>{displayName[0]?.toUpperCase() ?? '?'}</span>
@@ -911,9 +912,9 @@ function PassportEditModal({
                 />
               </label>
             )}
-            {form.image_url && (
+            {safeImageUrl(form.image_url, { allowSvgData: true }) && (
               <div className="pp-image-preview">
-                <img src={form.image_url} alt="preview" />
+                <img src={safeImageUrl(form.image_url, { allowSvgData: true }) ?? undefined} alt="preview" />
                 <span>Preview</span>
               </div>
             )}

@@ -8,6 +8,7 @@ import { loadUserPrefs, saveUserPrefs, UserPreferences } from '../pages/userPref
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { NavEntry, buildNavSections, sectionRequiredRole } from '../navigation/navModel'
 import BrandLogo from './BrandLogo'
+import { safeImageUrl } from '../safeUrl'
 
 export interface SidebarProps {
   run: RunDetail | null
@@ -181,6 +182,7 @@ export default function Sidebar({
   const matMeta = getMaturityMeta(maturityLevel)
   const hide = hideDisabledMenuItems
   const { t } = useI18n()
+  const avatarUrl = safeImageUrl(user.image_url)
 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
     try { return JSON.parse(localStorage.getItem('wombat_nav_expanded') ?? '{}') } catch { return {} }
@@ -401,8 +403,8 @@ export default function Sidebar({
           fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand)',
           overflow: 'hidden',
         }}>
-          {user.image_url ? (
-            <img src={user.image_url} alt={user.display_name || user.username} style={{
+          {avatarUrl ? (
+            <img src={avatarUrl ?? undefined} alt={user.display_name || user.username} style={{
               width: '100%', height: '100%', objectFit: 'cover',
             }} />
           ) : (

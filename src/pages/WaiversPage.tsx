@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { appendAuditEvent } from '../audit'
 import { fetchWaivers, upsertWaiver, deleteWaiver } from '../api'
 import { useI18n } from '../i18n'
+import { yamlQuote } from '../yamlQuote'
 
 export interface Waiver {
   id: string
@@ -29,10 +30,10 @@ function exportYaml(waivers: Record<string, Waiver>): string {
   if (!entries.length) return ''
   let yaml = 'version: "1"\nwaivers:\n'
   for (const w of entries) {
-    yaml += `  - id: "${w.id}"\n`
-    yaml += `    reason: "${w.reason.replace(/"/g, '\\"')}"\n`
-    yaml += `    owner: "${w.owner.replace(/"/g, '\\"')}"\n`
-    yaml += `    expires: "${w.expires}"\n`
+    yaml += `  - id: ${yamlQuote(w.id)}\n`
+    yaml += `    reason: ${yamlQuote(w.reason)}\n`
+    yaml += `    owner: ${yamlQuote(w.owner)}\n`
+    yaml += `    expires: ${yamlQuote(w.expires)}\n`
   }
   return yaml
 }

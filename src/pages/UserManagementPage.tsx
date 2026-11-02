@@ -10,6 +10,7 @@ import {
   fetchMandants, fetchMyMandate, type UserOut, type UserAuditLogEntry, type MandantOut,
 } from '../api'
 import { useI18n } from '../i18n'
+import { safeImageUrl } from '../safeUrl'
 
 const HOLDING_ROLES = ['', 'holding_admin', 'holding_viewer', 'group_admin', 'group_viewer'] as const
 
@@ -211,8 +212,8 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               fontSize: '1rem', fontWeight: 800, color: roleC.accent,
               overflow: 'hidden',
             }}>
-              {user.image_url ? (
-                <img src={user.image_url} alt={user.display_name || user.username} style={{
+              {safeImageUrl(user.image_url) ? (
+                <img src={safeImageUrl(user.image_url) ?? undefined} alt={user.display_name || user.username} style={{
                   width: '100%', height: '100%', objectFit: 'cover',
                 }} />
               ) : (
@@ -775,8 +776,8 @@ export default function UserManagementPage() {
                               fontSize: '0.7rem', fontWeight: 800, color: roleC.accent,
                               overflow: 'hidden',
                             }}>
-                              {u.image_url ? (
-                                <img src={u.image_url} alt={u.display_name || u.username} style={{
+                              {safeImageUrl(u.image_url) ? (
+                                <img src={safeImageUrl(u.image_url) ?? undefined} alt={u.display_name || u.username} style={{
                                   width: '100%', height: '100%', objectFit: 'cover',
                                 }} />
                               ) : (

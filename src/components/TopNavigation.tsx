@@ -14,6 +14,7 @@ import { useTheme } from '../theme'
 import CategoryLauncher from './CategoryLauncher'
 import CommandPalette from './CommandPalette'
 import NineDotIcon from './NineDotIcon'
+import { safeImageUrl } from '../safeUrl'
 
 function chunkArray<T>(array: T[], size: number): T[][] {
   const result: T[][] = []
@@ -200,6 +201,8 @@ export function MandateIndicator() {
 
   if (!myMandate) return null
 
+  const mandateLogoUrl = safeImageUrl(myMandate.logo_url)
+
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '0.4rem',
@@ -207,7 +210,7 @@ export function MandateIndicator() {
       background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)',
       fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap',
     }}>
-      {myMandate.logo_url && <img src={myMandate.logo_url} alt="" style={{ width: '14px', height: '14px', borderRadius: '4px' }} />}
+      {mandateLogoUrl && <img src={mandateLogoUrl} alt="" style={{ width: '14px', height: '14px', borderRadius: '4px' }} />}
       {myMandate.name}
     </div>
   )
@@ -551,6 +554,7 @@ export default function TopNavigation({
   const wallEnabled = isEnabled(BETA_WIDGET_WALL)
   const presentationEnabled = !!run && (briefingEnabled || wallEnabled)
   const pinnedPages = prefs.pinnedPages ?? []
+  const avatarUrl = safeImageUrl(user.image_url)
   const launcherSections = visibleSections
     .map(section => ({
       ...section,
@@ -917,8 +921,8 @@ export default function TopNavigation({
               e.currentTarget.style.borderColor = 'var(--nav-border)'
             }}
           >
-            {user.image_url && user.image_url !== '' ? (
-              <img src={user.image_url} alt={user.display_name || user.username} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={user.display_name || user.username} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0094FF' }}>
                 {user.display_name ? user.display_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}

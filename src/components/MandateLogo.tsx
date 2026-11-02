@@ -7,6 +7,7 @@
  * mandate that hasn't set one yet.
  */
 import { useState } from 'react'
+import { safeImageUrl } from '../safeUrl'
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -25,8 +26,9 @@ function colorForName(name: string): string {
 export default function MandateLogo({ name, logoUrl, size = 64 }: { name: string; logoUrl: string; size?: number }) {
   const [errored, setErrored] = useState(false)
   const radius = Math.round(size * 0.22)
+  const src = safeImageUrl(logoUrl, { allowSvgData: true })
 
-  if (logoUrl && !errored) {
+  if (src && !errored) {
     // A white backdrop + object-fit: contain (not cover): most uploaded
     // brand logos are wide wordmarks or have a transparent background
     // designed against white, not square photos — `cover` was cropping a
@@ -41,7 +43,7 @@ export default function MandateLogo({ name, logoUrl, size = 64 }: { name: string
         padding: Math.max(4, Math.round(size * 0.12)), boxSizing: 'border-box', overflow: 'hidden',
       }}>
         <img
-          src={logoUrl}
+          src={src}
           alt=""
           onError={() => setErrored(true)}
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}

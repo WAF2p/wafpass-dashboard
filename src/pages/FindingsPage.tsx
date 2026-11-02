@@ -9,6 +9,7 @@ import FindingsTriage from '../components/FindingsTriage'
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_FINDINGS_TRIAGE } from './userPrefsUtils'
 import { severityColor } from '../severity'
+import { safeImageUrl } from '../safeUrl'
 
 interface Props { run: RunDetail; onNavigate?: (page: Page) => void }
 
@@ -153,13 +154,13 @@ function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
               {/* Debug: console.log(comment) */}
               <div style={{
                 width: '32px', height: '32px', borderRadius: '50%',
-                background: comment.image_url && comment.image_url.trim() ? 'transparent' : 'var(--waf-brand)',
+                background: safeImageUrl(comment.image_url) ? 'transparent' : 'var(--waf-brand)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: comment.image_url && comment.image_url.trim() ? '0' : '0.75rem', fontWeight: 700, flexShrink: 0,
+                fontSize: safeImageUrl(comment.image_url) ? '0' : '0.75rem', fontWeight: 700, flexShrink: 0,
                 overflow: 'hidden',
               }}>
-                {comment.image_url && comment.image_url.trim() ? (
-                  <img src={comment.image_url} alt={comment.display_name || comment.username} style={{
+                {safeImageUrl(comment.image_url) ? (
+                  <img src={safeImageUrl(comment.image_url) ?? undefined} alt={comment.display_name || comment.username} style={{
                     width: '100%', height: '100%', objectFit: 'cover',
                   }} />
                 ) : (
