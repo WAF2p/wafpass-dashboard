@@ -2,7 +2,10 @@ import { useMemo } from 'react'
 import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
-import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner, TwoColumnGrid } from './OperationsCenterShell'
+import { CenterHero, Icon, KpiCard, KpiSlot, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner, TwoColumnGrid } from './OperationsCenterShell'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { BETA_PERSONA_HOME } from './userPrefsUtils'
+import { getPersonaPreset } from './personaHome'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 const SEV_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
@@ -36,6 +39,11 @@ export default function EngineeringOperationsCenter({
   navigate?: (page: Page) => void
 }) {
   const { t } = useI18n()
+  const { prefs, isEnabled } = useBetaFeatures()
+  const persona = isEnabled(BETA_PERSONA_HOME) ? getPersonaPreset(prefs.personaHome) : null
+  const kpiOrder = persona?.id === 'engineer' ? persona.kpiOrder : null
+  const orderOf = (id: string) => (kpiOrder ? Math.max(0, kpiOrder.indexOf(id)) : 0)
+  const isHidden = (id: string) => !!kpiOrder && !kpiOrder.includes(id)
 
   const failed = useMemo(() => run?.findings.filter(f => f.status?.toUpperCase() === 'FAIL') ?? [], [run])
   const secretHits = run?.secret_findings?.length ?? 0
@@ -196,43 +204,53 @@ export default function EngineeringOperationsCenter({
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-        <KpiCard
-          label={t('pages.engineeringOps.openFindings')}
-          value={failed.length}
-          sub={t('pages.dashboard.failedControls')}
-          color="var(--fail)"
-          icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-        />
-        <KpiCard
-          label={t('pages.engineeringOps.secretHits')}
-          value={secretHits}
-          sub={t('pages.secretScan.secretsIssue')}
-          color="var(--waf-warn)"
-          icon="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-        />
-        <KpiCard
-          label={t('pages.engineeringOps.planChanges')}
-          value={planTotal}
-          sub={t('pages.changes.infraChanges')}
-          color="var(--waf-brand)"
-          icon="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-        />
-        <KpiCard
-          label={t('pages.engineeringOps.sprintGain')}
-          value={`+${sprintImpact.points}`}
-          sub={t('pages.remediation.sprintImpact')}
-          color="var(--waf-info)"
-          icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-          demo
-        />
-        <KpiCard
-          label={t('pages.engineeringOps.mttr')}
-          value={mttr ?? t('pages.engineeringOps.mttrDemoValue')}
-          sub={t('pages.engineeringOps.mttrSub')}
-          color="var(--waf-brand)"
-          icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          demo={mttr === null}
-        />
+        <KpiSlot order={orderOf('openFindings')} hidden={isHidden('openFindings')}>
+          <KpiCard
+            label={t('pages.engineeringOps.openFindings')}
+            value={failed.length}
+            sub={t('pages.dashboard.failedControls')}
+            color="var(--fail)"
+            icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('secretHits')} hidden={isHidden('secretHits')}>
+          <KpiCard
+            label={t('pages.engineeringOps.secretHits')}
+            value={secretHits}
+            sub={t('pages.secretScan.secretsIssue')}
+            color="var(--waf-warn)"
+            icon="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('planChanges')} hidden={isHidden('planChanges')}>
+          <KpiCard
+            label={t('pages.engineeringOps.planChanges')}
+            value={planTotal}
+            sub={t('pages.changes.infraChanges')}
+            color="var(--waf-brand)"
+            icon="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('sprintGain')} hidden={isHidden('sprintGain')}>
+          <KpiCard
+            label={t('pages.engineeringOps.sprintGain')}
+            value={`+${sprintImpact.points}`}
+            sub={t('pages.remediation.sprintImpact')}
+            color="var(--waf-info)"
+            icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+            demo
+          />
+        </KpiSlot>
+        <KpiSlot order={orderOf('mttr')} hidden={isHidden('mttr')}>
+          <KpiCard
+            label={t('pages.engineeringOps.mttr')}
+            value={mttr ?? t('pages.engineeringOps.mttrDemoValue')}
+            sub={t('pages.engineeringOps.mttrSub')}
+            color="var(--waf-brand)"
+            icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            demo={mttr === null}
+          />
+        </KpiSlot>
       </div>
 
       {!run ? (

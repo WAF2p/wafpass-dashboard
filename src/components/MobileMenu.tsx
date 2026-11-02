@@ -6,6 +6,7 @@ import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { scoreColor } from '../routing'
 import { NavEntry, NavSection, buildNavSections } from '../navigation/navModel'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import BrandLogo from './BrandLogo'
 
 function NavItem({ item, page, navigate, onClose }: { item: NavEntry; page: Page; navigate: (p: Page) => void; onClose: () => void }) {
@@ -96,6 +97,7 @@ export default function MobileMenu({
   onShowRunModal,
 }: MobileMenuProps) {
   const { t } = useI18n()
+  const { isEnabled } = useBetaFeatures()
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
   if (!mobileMenuOpen) return null
@@ -103,7 +105,13 @@ export default function MobileMenu({
   const { isHoldingAdmin } = useAuth()
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
   const effectiveRole = isHoldingAdmin ? 'admin' : role
-  const visibleSections = allSections.filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+  const visibleSections = allSections
+    .filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.beta || isEnabled(item.beta)),
+    }))
+    .filter(section => section.items.length > 0)
 
   // Only show on mobile devices - use matchMedia for reliable detection
   if (typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches) {

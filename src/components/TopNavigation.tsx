@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Page } from '../routing'
+import { FilterState, Page } from '../routing'
 import { NotificationBell } from './NotificationBell'
 import MandateLogo from './MandateLogo'
 import BrandLogo from './BrandLogo'
@@ -7,8 +7,13 @@ import { hasMinRole, useAuth } from '../AuthContext'
 import { Settings, getMaturityMeta } from '../pages/settingsUtils'
 import { RunDetail, RunSummary, fetchMyMandate, fetchSwitchableMandants, type MandantOut } from '../api'
 import { useI18n } from '../i18n'
-import { loadUserPrefs, saveUserPrefs } from '../pages/userPrefsUtils'
+import { loadUserPrefs, saveUserPrefs, MAX_PINNED_PAGES, BETA_CATEGORY_LAUNCHER, BETA_PINNED_PAGES, BETA_COMMAND_PALETTE, BETA_BRIEFING_MODE, BETA_WIDGET_WALL } from '../pages/userPrefsUtils'
 import { NavEntry, NavSection, buildNavSections, categoryDescriptions } from '../navigation/navModel'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { useTheme } from '../theme'
+import CategoryLauncher from './CategoryLauncher'
+import CommandPalette from './CommandPalette'
+import NineDotIcon from './NineDotIcon'
 
 function chunkArray<T>(array: T[], size: number): T[][] {
   const result: T[][] = []
@@ -29,10 +34,14 @@ export interface TopNavigationProps {
   waiverCount: number
   riskCount: number
   failCount: number
-  navigate: (page: Page) => void
+  controls: { id: string; title: string }[]
+  navigate: (page: Page, filters?: FilterState) => void
+  onSelectRun: (id: string) => void
   onOpenUserPrefs: () => void
   onLogout: () => Promise<void>
   onShowRunModal: () => void
+  onStartBriefing: () => void
+  onStartWidgetWall: () => void
   onOpenOnboarding?: () => void
 }
 
@@ -162,6 +171,7 @@ export function MandateIndicator() {
           <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
         </svg>
         <select
+          className="select-plain"
           value={effectiveMandantId ?? ''}
           onChange={e => {
             const id = e.target.value || null
@@ -508,17 +518,93 @@ function LanguageSwitcher({ currentLang, onChange }: { currentLang: string; onCh
 
 export default function TopNavigation({
   run, runs, page, role, user, maturityLevel,
-  settings, waiverCount, riskCount, failCount,
-  navigate, onOpenUserPrefs, onLogout, onShowRunModal,
-  onOpenOnboarding,
+  settings, waiverCount, riskCount, failCount, controls,
+  navigate, onSelectRun, onOpenUserPrefs, onLogout, onShowRunModal,
+  onStartBriefing, onStartWidgetWall, onOpenOnboarding,
 }: TopNavigationProps) {
   const { t, lang } = useI18n()
   const [linkCopied, setLinkCopied] = useState(false)
+  const [launcherOpen, setLauncherOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [presentOpen, setPresentOpen] = useState(false)
+  const presentRef = useRef<HTMLDivElement>(null)
+  const { isEnabled, prefs, update } = useBetaFeatures()
+  const { themeName, toggleTheme } = useTheme()
   const { isHoldingAdmin } = useAuth()
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
   const effectiveRole = isHoldingAdmin ? 'admin' : role
-  const visibleSections = allSections.filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+  const visibleSections = allSections
+    .filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.beta || isEnabled(item.beta)),
+    }))
+    .filter(section => section.items.length > 0)
   const showNotifications = effectiveRole === 'admin'
+  const launcherEnabled = isEnabled(BETA_CATEGORY_LAUNCHER)
+  const pinsEnabled = isEnabled(BETA_PINNED_PAGES)
+  const paletteEnabled = isEnabled(BETA_COMMAND_PALETTE)
+  const briefingEnabled = isEnabled(BETA_BRIEFING_MODE)
+  const wallEnabled = isEnabled(BETA_WIDGET_WALL)
+  const presentationEnabled = !!run && (briefingEnabled || wallEnabled)
+  const pinnedPages = prefs.pinnedPages ?? []
+  const launcherSections = visibleSections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.minRole || hasMinRole(effectiveRole, item.minRole)),
+    }))
+    .filter(section => section.items.length > 0)
+  const pageMeta = new Map(
+    launcherSections.flatMap(section => section.items.map(item => [item.page, { label: item.label, icon: item.icon, color: section.color }] as const)),
+  )
+
+  const togglePin = (target: Page) => {
+    const current = prefs.pinnedPages ?? []
+    if (current.includes(target)) {
+      update({ pinnedPages: current.filter(p => p !== target) })
+      return
+    }
+    if (current.length >= MAX_PINNED_PAGES) return
+    update({ pinnedPages: [...current, target] })
+  }
+
+  useEffect(() => {
+    if (!launcherEnabled) setLauncherOpen(false)
+  }, [launcherEnabled])
+
+  // The beta page can preview the launcher without leaving Settings.
+  useEffect(() => {
+    const openLauncher = () => setLauncherOpen(true)
+    window.addEventListener('wombat:open-category-launcher', openLauncher)
+    return () => window.removeEventListener('wombat:open-category-launcher', openLauncher)
+  }, [])
+
+  useEffect(() => {
+    const openPalette = () => setPaletteOpen(true)
+    window.addEventListener('wombat:open-command-palette', openPalette)
+    return () => window.removeEventListener('wombat:open-command-palette', openPalette)
+  }, [])
+
+  useEffect(() => {
+    if (!presentOpen) return
+    const onPointer = (event: MouseEvent) => {
+      if (!presentRef.current?.contains(event.target as Node)) setPresentOpen(false)
+    }
+    document.addEventListener('mousedown', onPointer)
+    return () => document.removeEventListener('mousedown', onPointer)
+  }, [presentOpen])
+
+  useEffect(() => {
+    if (!paletteEnabled) return
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [paletteEnabled])
 
   const currentRunLabel = run ? `${run.project || 'unnamed'} · ${new Date(run.created_at).toLocaleDateString()}` : 'Select run…'
 
@@ -535,6 +621,7 @@ export default function TopNavigation({
   }
 
   return (
+    <>
     <header className="app-top-nav">
       {/* Logo */}
       <div className="app-top-nav-logo">
@@ -547,8 +634,20 @@ export default function TopNavigation({
       </div>
 
       {/* Navigation - only on large screens */}
-      <div className="app-top-nav-items">
-        {visibleSections.map(section => (
+      <div className={`app-top-nav-items${launcherEnabled ? ' app-top-nav-items--launcher' : ''}`}>
+        {launcherEnabled ? (
+          <button
+            type="button"
+            className="category-launcher-trigger"
+            aria-label={t('nav.launcher.open')}
+            aria-haspopup="dialog"
+            aria-expanded={launcherOpen}
+            title={t('nav.launcher.open')}
+            onClick={() => setLauncherOpen(true)}
+          >
+            <NineDotIcon size={18} />
+          </button>
+        ) : visibleSections.map(section => (
           <NavSectionDropdown
             key={section.id}
             section={section}
@@ -557,6 +656,30 @@ export default function TopNavigation({
             role={effectiveRole}
           />
         ))}
+        {pinsEnabled && pinnedPages.length > 0 && (
+          <div className="app-top-nav-pins" aria-label={t('nav.launcher.pinned')}>
+            {pinnedPages.map(target => {
+              const meta = pageMeta.get(target)
+              if (!meta) return null
+              const active = target === page
+              return (
+                <button
+                  key={target}
+                  type="button"
+                  className={`app-top-nav-pin${active ? ' is-active' : ''}`}
+                  aria-label={meta.label}
+                  aria-current={active ? 'page' : undefined}
+                  title={meta.label}
+                  onClick={() => navigate(target)}
+                >
+                  <svg width="16" height="16" fill="none" stroke={meta.color} viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={meta.icon} />
+                  </svg>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Right side - User controls */}
@@ -599,17 +722,70 @@ export default function TopNavigation({
           {/* Mandate indicator (Phase 3.3) — renders nothing in single_tenant mode */}
           <MandateIndicator />
 
+          {/* Presentation modes (beta) */}
+          {presentationEnabled && (
+            <div className="present-menu" ref={presentRef}>
+              <button
+                type="button"
+                className="present-trigger"
+                aria-haspopup="menu"
+                aria-expanded={presentOpen}
+                title="Present"
+                aria-label="Open presentation modes"
+                onClick={() => setPresentOpen(value => !value)}
+              >
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 3h20v14H2zM8 21h8M12 17v4" />
+                </svg>
+              </button>
+              {presentOpen && (
+                <div className="present-popover" role="menu">
+                  {briefingEnabled && (
+                    <button type="button" role="menuitem" onClick={() => { setPresentOpen(false); onStartBriefing() }}>
+                      <strong>Briefing mode</strong>
+                      <span>Clean, large-type run summary</span>
+                    </button>
+                  )}
+                  {wallEnabled && (
+                    <button type="button" role="menuitem" onClick={() => { setPresentOpen(false); onStartWidgetWall() }}>
+                      <strong>Widget wall</strong>
+                      <span>Rotating KPI board for a screen</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Command palette trigger (beta) */}
+          {paletteEnabled && (
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              title={t('nav.palette.trigger')}
+              aria-label={t('nav.palette.trigger')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '.4rem',
+                padding: '0.5rem 0.6rem', borderRadius: '8px',
+                background: 'var(--nav-surf)', color: 'var(--nav-text)',
+                border: '1px solid var(--nav-border)',
+                cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <kbd className="app-top-nav-kbd">⌘K</kbd>
+            </button>
+          )}
+
           {/* Notifications bell (admin only) */}
           {showNotifications && <NotificationBell navigate={navigate} />}
 
           {/* Dark mode toggle */}
           <button
-            onClick={() => {
-              const html = document.documentElement
-              const isDark = html.getAttribute('data-theme') === 'dark'
-              html.setAttribute('data-theme', isDark ? 'light' : 'dark')
-            }}
-            title={document.documentElement.getAttribute('data-theme') === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={toggleTheme}
+            title={themeName === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '0.5rem', borderRadius: '8px',
@@ -618,7 +794,7 @@ export default function TopNavigation({
               cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
             }}
           >
-            {document.documentElement.getAttribute('data-theme') === 'dark'
+            {themeName === 'dark'
               ? <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" strokeWidth={2}/><path strokeLinecap="round" strokeWidth={2} d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
               : <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
             }
@@ -836,5 +1012,30 @@ export default function TopNavigation({
         `}</style>
       </div>
     </header>
+    {paletteOpen && (
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        sections={launcherSections}
+        controls={controls}
+        runs={runs}
+        onNavigate={navigate}
+        onSelectRun={onSelectRun}
+        canManageSettings={hasMinRole(effectiveRole, 'architect')}
+      />
+    )}
+    {launcherOpen && (
+      <CategoryLauncher
+        sections={launcherSections}
+        page={page}
+        navigate={navigate}
+        onClose={() => setLauncherOpen(false)}
+        onManageBeta={hasMinRole(effectiveRole, 'architect') ? () => navigate('betafeatures') : undefined}
+        pinsEnabled={pinsEnabled}
+        pinnedPages={pinnedPages}
+        onTogglePin={togglePin}
+      />
+    )}
+    </>
   )
 }

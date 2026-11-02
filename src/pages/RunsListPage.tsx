@@ -5,6 +5,10 @@ import {
 } from 'recharts'
 import { RunSummary } from '../api'
 import { useI18n } from '../i18n'
+import SavedViewsControl from '../components/SavedViewsControl'
+import RunTrendOverlay from '../components/RunTrendOverlay'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { BETA_RUN_BOOKMARKS } from './userPrefsUtils'
 
 interface Props {
   runs: RunSummary[]
@@ -390,6 +394,16 @@ function StageBadge({ stage }: { stage: string }) {
 }
 
 function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void }) {
+  const { prefs, isEnabled, update } = useBetaFeatures()
+  const bookmarkEnabled = isEnabled(BETA_RUN_BOOKMARKS)
+  const bookmarked = (prefs.bookmarkedRuns ?? []).includes(r.id)
+  const toggleBookmark = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (!bookmarkEnabled) return
+    const current = prefs.bookmarkedRuns ?? []
+    const next = bookmarked ? current.filter(id => id !== r.id) : [...current, r.id].slice(-5)
+    update({ bookmarkedRuns: next })
+  }
   return (
     <tr
       onClick={() => onSelect(r.id)}
@@ -398,8 +412,26 @@ function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void
       onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
     >
       <td style={{ padding: '0.75rem 1rem' }}>
-        <div style={{ fontWeight: 600, color: 'var(--waf-brand)' }}>{r.project || '—'}</div>
-        {r.git_sha && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>{r.git_sha.slice(0, 7)}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.45rem' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 600, color: 'var(--waf-brand)' }}>{r.project || '—'}</div>
+            {r.git_sha && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>{r.git_sha.slice(0, 7)}</div>}
+          </div>
+          {bookmarkEnabled && (
+            <button
+              type="button"
+              className={`run-bookmark${bookmarked ? ' is-on' : ''}`}
+              aria-pressed={bookmarked}
+              aria-label={bookmarked ? 'Remove run bookmark' : 'Bookmark run'}
+              title={bookmarked ? 'Remove run bookmark' : 'Bookmark run'}
+              onClick={toggleBookmark}
+            >
+              <svg width="14" height="14" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h12a1 1 0 011 1v16l-7-4-7 4V5a1 1 0 011-1z" />
+              </svg>
+            </button>
+          )}
+        </div>
       </td>
       <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{r.branch || '—'}</td>
       <td style={{ padding: '0.75rem 1rem' }}><StageBadge stage={r.stage} /></td>
@@ -442,6 +474,14 @@ function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: stri
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function RunsListPage({ runs, onSelect }: Props) {
   const { t } = useI18n()
+  const { prefs, isEnabled } = useBetaFeatures()
+  const [showTrend, setShowTrend] = useState(false)
+  const bookmarksEnabled = isEnabled(BETA_RUN_BOOKMARKS)
+  const bookmarkedRuns = runs.filter(run => (prefs.bookmarkedRuns ?? []).includes(run.id))
+  const canCompare = bookmarksEnabled && bookmarkedRuns.length >= 2
+  const trendOverlay = showTrend && canCompare
+    ? <RunTrendOverlay runs={bookmarkedRuns} onClose={() => setShowTrend(false)} onSelectRun={onSelect} />
+    : null
   const [viewMode, setViewMode] = useState<'all' | 'project' | 'trend'>('all')
   const [stageFilter, setStageFilter] = useState('')
   const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE)
@@ -496,6 +536,20 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   const toolbar = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)', gap: '0.4rem' }}>
       {stageSelect}
+      <SavedViewsControl
+        page="runs"
+        currentFilters={{ stageFilter, viewMode }}
+        onApply={filters => {
+          setStageFilter(typeof filters.stageFilter === 'string' ? filters.stageFilter : '')
+          const nextView = filters.viewMode
+          if (nextView === 'all' || nextView === 'project' || nextView === 'trend') setViewMode(nextView)
+        }}
+      />
+      {canCompare && (
+        <button type="button" className="run-compare" onClick={() => setShowTrend(true)}>
+          Compare bookmarks <span>{bookmarkedRuns.length}</span>
+        </button>
+      )}
       <div style={{ flex: 1 }} />
       <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}></span>
       <button style={vm === 'all'     ? btnActive : btnInactive} onClick={() => setViewMode('all')}>{t('pages.runs.viewAll')}</button>
@@ -521,11 +575,21 @@ export default function RunsListPage({ runs, onSelect }: Props) {
             </>
           )}
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginRight: '0.35rem' }}></span>
+          <SavedViewsControl
+            page="runs"
+            currentFilters={{ stageFilter, viewMode }}
+            onApply={filters => {
+              setStageFilter(typeof filters.stageFilter === 'string' ? filters.stageFilter : '')
+              const nextView = filters.viewMode
+              if (nextView === 'all' || nextView === 'project' || nextView === 'trend') setViewMode(nextView)
+            }}
+          />
           <button style={btnInactive} onClick={() => setViewMode('all')}>{t('pages.runs.viewAll')}</button>
           <button style={btnInactive} onClick={() => setViewMode('project')}>{t('pages.runs.viewProject')}</button>
           <button style={btnActive}   onClick={() => setViewMode('trend')}>{t('pages.runs.viewTrend')}</button>
         </div>
         <TrendView runs={displayedRuns} onSelect={onSelect} />
+        {trendOverlay}
       </div>
     )
   }
@@ -551,6 +615,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
             </button>
           </div>
         )}
+        {trendOverlay}
       </div>
     )
   }
@@ -602,6 +667,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
           </div>
         )
       })}
+      {trendOverlay}
       {hasMoreRuns && (
         <div style={{ textAlign: 'center', padding: '1rem' }}>
           <button

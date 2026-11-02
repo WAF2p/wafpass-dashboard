@@ -1,6 +1,8 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { CatalogueControl, CatalogueCheck, ControlMeta, createCatalogueControl, fetchCatalogueControls, downloadControlsZip, fetchActivePackInfo, ActivePackInfo, deleteCatalogueControl } from '../api'
 import { useAuth, hasMinRole } from '../AuthContext'
+import SavedViewsControl from '../components/SavedViewsControl'
+import { parseHash } from '../routing'
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
@@ -1598,13 +1600,25 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
   const [selected, setSelected]             = useState<UnifiedControl | null>(null)
   const [showWizard, setShowWizard]         = useState(false)
   const [showGuide, setShowGuide]           = useState(false)
-  const [search, setSearch]                 = useState('')
+  const [search, setSearch]                 = useState(() => parseHash().filters.search ?? '')
   const [pillarFilter, setPillarFilter]     = useState<string[]>([])
   const [severityFilter, setSeverityFilter] = useState<string[]>([])
   const [typeFilter, setTypeFilter]         = useState<string[]>([])
-  const [tab, setTab]                       = useState<TabFilter>('all')
+  const [tab, setTab]                       = useState<TabFilter>(() => {
+    const initialTab = parseHash().filters.tab
+    return initialTab === 'framework' || initialTab === 'custom' ? initialTab : 'all'
+  })
   const [packInfo, setPackInfo]             = useState<ActivePackInfo | null>(null)
   const [packLoading, setPackLoading]       = useState(true)
+
+  useEffect(() => {
+    const onPaletteSearch = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail
+      if (typeof id === 'string') setSearch(id)
+    }
+    window.addEventListener('wombat:catalogue-search', onPaletteSearch)
+    return () => window.removeEventListener('wombat:catalogue-search', onPaletteSearch)
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -1831,6 +1845,18 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             {filtered.length} of {allControls.length}
             {apiError && <span style={{ color: '#f97316', marginLeft: '0.5rem' }}>· custom controls unavailable</span>}
           </span>
+          <SavedViewsControl
+            page="catalogue"
+            currentFilters={{ search, pillarFilter, severityFilter, typeFilter, tab }}
+            onApply={filters => {
+              setSearch(typeof filters.search === 'string' ? filters.search : '')
+              const strings = (value: unknown) => Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
+              setPillarFilter(strings(filters.pillarFilter))
+              setSeverityFilter(strings(filters.severityFilter))
+              setTypeFilter(strings(filters.typeFilter))
+              if (filters.tab === 'all' || filters.tab === 'framework' || filters.tab === 'custom') setTab(filters.tab)
+            }}
+          />
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }} data-debug="pillar-filter">
           <span style={{ fontSize: '0.65rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Pillar</span>

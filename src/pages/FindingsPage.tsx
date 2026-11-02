@@ -3,9 +3,13 @@ import { Finding, RunDetail, upsertWaiver, fetchFindingComments, createFindingCo
 import { appendAuditEvent } from '../audit'
 import { useI18n, type TFunction } from '../i18n'
 import { useAuth } from '../AuthContext'
-import { buildHash, parseHash, FilterState } from '../routing'
+import { buildHash, parseHash, FilterState, Page } from '../routing'
+import SavedViewsControl from '../components/SavedViewsControl'
+import FindingsTriage from '../components/FindingsTriage'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { BETA_FINDINGS_TRIAGE } from './userPrefsUtils'
 
-interface Props { run: RunDetail }
+interface Props { run: RunDetail; onNavigate?: (page: Page) => void }
 
 const SEVERITY_COLOR: Record<string, string> = {
   CRITICAL: '#DA2C38',
@@ -514,7 +518,7 @@ function exportCsv(findings: Finding[], filename: string) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function FindingsPage({ run }: Props) {
+export default function FindingsPage({ run, onNavigate }: Props) {
   const { t } = useI18n()
   const findings = run.findings
 
@@ -544,6 +548,8 @@ export default function FindingsPage({ run }: Props) {
   const [detail, setDetail]                 = useState<Finding | null>(null)
   const [checked, setChecked]               = useState<Set<string>>(new Set())
   const [showWaiveModal, setShowWaiveModal] = useState(false)
+  const [showTriage, setShowTriage] = useState(false)
+  const { isEnabled } = useBetaFeatures()
 
   // Sync filters to URL on change (but not on initial mount - that would be redundant)
   const isInitialMount = useRef(true)
@@ -651,10 +657,30 @@ export default function FindingsPage({ run }: Props) {
           <span style={{ fontSize: '0.75rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
             {filtered.length} / {findings.length}
           </span>
+          <SavedViewsControl
+            page="findings"
+            currentFilters={{ search, statusFilter, severityFilter, pillarFilter }}
+            onApply={filters => {
+              setSearch(typeof filters.search === 'string' ? filters.search : '')
+              setStatusFilter(typeof filters.statusFilter === 'string' ? filters.statusFilter : '')
+              setSeverityFilter(typeof filters.severityFilter === 'string' ? filters.severityFilter : '')
+              setPillarFilter(typeof filters.pillarFilter === 'string' ? filters.pillarFilter : '')
+            }}
+          />
+          {isEnabled(BETA_FINDINGS_TRIAGE) && (
+            <button type="button" className="triage-trigger" onClick={() => setShowTriage(true)} disabled={filtered.length === 0}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Triage
+              <span className="triage-trigger-count">{filtered.length}</span>
+            </button>
+          )}
 
           {/* Export with filter option */}
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <select
+              className="select-plain"
               value="visible"
               onChange={(e) => {
                 if (e.target.value === 'all') {
@@ -829,6 +855,22 @@ export default function FindingsPage({ run }: Props) {
           <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)', zIndex: 99 }} />
           <DetailPanel finding={detail} onClose={() => setDetail(null)} t={t} />
         </>
+      )}
+
+      {showTriage && (
+        <FindingsTriage
+          findings={filtered}
+          onClose={() => setShowTriage(false)}
+          onWaive={finding => {
+            setChecked(new Set([rowKey(finding)]))
+            setShowTriage(false)
+            setShowWaiveModal(true)
+          }}
+          onFix={() => {
+            setShowTriage(false)
+            onNavigate?.('autofix')
+          }}
+        />
       )}
 
       {/* Waive modal overlay */}

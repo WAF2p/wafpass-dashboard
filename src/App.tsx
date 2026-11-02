@@ -2,8 +2,11 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { ControlMeta, createDemoRun, fetchWaivers, fetchRisks, fetchUserPrefsFromServer, getServerUrl, pushUserPrefsToServer, type UserOut } from './api'
 import { useAuth } from './AuthContext'
 import { I18nProvider } from './i18n'
+import { BetaFeaturesProvider } from './beta/BetaFeaturesContext'
 import LoginPage from './pages/LoginPage'
 import ImpersonationBanner from './components/ImpersonationBanner'
+import BriefingMode from './components/BriefingMode'
+import WidgetWall from './components/WidgetWall'
 import OnboardingTour from './components/OnboardingTour'
 import RunSelectorModal from './components/RunSelectorModal'
 import WelcomeChecklist from './components/WelcomeChecklist'
@@ -14,7 +17,7 @@ import Footer from './components/Footer'
 import PdfReport from './components/PdfReport'
 import { loadMaturityState, saveMaturityState, Settings } from './pages/settingsUtils'
 import { DEFAULT_USER_PREFS, loadUserPrefs, saveUserPrefs, UserPreferences } from './pages/userPrefsUtils'
-import { buildHash, FilterState, Page, parseHash } from './routing'
+import { buildHash, FilterState, PAGE_SET, Page, parseHash } from './routing'
 import { useControlsCatalogue } from './useControlsCatalogue'
 import { useRunLoader } from './useRunLoader'
 import { NotificationProvider } from './notifications/context'
@@ -71,6 +74,8 @@ const PipelineOperationsCenter = lazy(() => import('./pages/PipelineOperationsCe
 const AutoFixPage            = lazy(() => import('./pages/AutoFixPage'))
 const ValidationCenterPage   = lazy(() => import('./pages/ValidationCenterPage'))
 const AboutPage              = lazy(() => import('./pages/AboutPage'))
+const BetaFeaturesPage       = lazy(() => import('./pages/BetaFeaturesPage'))
+const MyDashboardPage        = lazy(() => import('./pages/MyDashboardPage'))
 
 export default function App() {
   const { user, role, isLoading, logout } = useAuth()
@@ -100,9 +105,17 @@ function AuthenticatedApp({ user, role, onLogout }: {
 }) {
   // Capture the hash run ID once on mount for deep-link restoration
   const [initialRunId] = useState(() => parseHash().runId)
-  const [page, setPage] = useState<Page>(() => parseHash().page)
+  const [page, setPage] = useState<Page>(() => {
+    const parsed = parseHash()
+    const hash = window.location.hash
+    if (hash && hash !== '#' && hash !== '#/' && parsed.page) return parsed.page
+    const preferred = loadUserPrefs().defaultPage
+    return PAGE_SET.has(preferred) ? preferred as Page : parsed.page
+  })
   const [filters, setFilters] = useState<FilterState>(() => parseHash().filters)
   const [showRunModal, setShowRunModal] = useState(false)
+  const [showBriefing, setShowBriefing] = useState(false)
+  const [showWidgetWall, setShowWidgetWall] = useState(false)
   const [userPrefs, setUserPrefs] = useState<UserPreferences>(loadUserPrefs)
   const [prefsSyncStatus, setPrefsSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
   const prefsSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -246,6 +259,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
 
   return (
     <I18nProvider lang={effectiveLang}>
+    <BetaFeaturesProvider prefs={userPrefs} onChange={handleUserPrefsChange}>
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       <ImpersonationBanner />
 
@@ -284,10 +298,14 @@ function AuthenticatedApp({ user, role, onLogout }: {
           waiverCount={waiverCount}
           riskCount={riskCount}
           failCount={failCount}
+          controls={availableControls}
           navigate={navigate}
+          onSelectRun={id => { setSelectedId(id); navigate('dashboard') }}
           onOpenUserPrefs={() => navigate('userprefs')}
           onLogout={onLogout}
           onShowRunModal={() => setShowRunModal(true)}
+          onStartBriefing={() => setShowBriefing(true)}
+          onStartWidgetWall={() => setShowWidgetWall(true)}
           onOpenOnboarding={() => setShowOnboarding(true)}
         />
 
@@ -300,6 +318,19 @@ function AuthenticatedApp({ user, role, onLogout }: {
         }>
           {page === 'userprefs' ? (
             <UserPreferencesPage prefs={userPrefs} user={user} syncStatus={prefsSyncStatus} onChange={handleUserPrefsChange} />
+          ) : page === 'mydashboard' ? (
+            <MyDashboardPage
+              run={run}
+              runs={runs}
+              waiverCount={waiverCount}
+              riskCount={riskCount}
+              maturityLevel={maturityLevel}
+              settings={settings}
+              prefs={userPrefs}
+              onChange={handleUserPrefsChange}
+              navigate={navigate}
+              onSelectRun={id => { setSelectedId(id); navigate('dashboard') }}
+            />
           ) : page === 'journey' ? (
             <JourneyPage run={run} runs={runs} navigate={navigate} />
           ) : page === 'globaldashboard' ? (
@@ -345,6 +376,16 @@ function AuthenticatedApp({ user, role, onLogout }: {
             <NotificationsPage />
           ) : page === 'settings' ? (
             <SettingsPage maturityLevel={maturityLevel} settings={settings} onChange={handleSettingsChange} />
+          ) : page === 'betafeatures' ? (
+            <BetaFeaturesPage
+              prefs={userPrefs}
+              onChange={handleUserPrefsChange}
+              onOpenSettings={() => navigate('settings')}
+              onNavigate={navigate}
+              hasRun={!!run}
+              onStartBriefing={() => setShowBriefing(true)}
+              onStartWidgetWall={() => setShowWidgetWall(true)}
+            />
           ) : page === 'runscan' ? (
             <RunScanPage />
           ) : page === 'sandbox' ? (
@@ -389,7 +430,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
           ) : page === 'dashboard' ? (
             <DashboardPage run={run} onNav={p => navigate(p as Page)} waiverCount={waiverCount} riskCount={riskCount} runCount={runs.length} />
           ) : page === 'findings' ? (
-            <FindingsPage run={run} />
+            <FindingsPage run={run} onNavigate={navigate} />
           ) : page === 'compliance' ? (
             <CompliancePage run={run} settings={settings} navigate={navigate} />
           ) : page === 'compliance-readiness' ? (
@@ -443,6 +484,9 @@ function AuthenticatedApp({ user, role, onLogout }: {
         </main>
       </div>
 
+      {showBriefing && run && <BriefingMode run={run} onClose={() => setShowBriefing(false)} />}
+      {showWidgetWall && run && <WidgetWall run={run} runs={runs} onClose={() => setShowWidgetWall(false)} />}
+
       {/* PDF report — hidden in normal view, printed only */}
       {run && (
         <div id="wombat-pdf-root" style={{ display: 'none' }}>
@@ -453,7 +497,7 @@ function AuthenticatedApp({ user, role, onLogout }: {
       {/* Footer - at bottom, full width, dark background */}
       <Footer />
     </div>
-
+    </BetaFeaturesProvider>
     </I18nProvider>
   )
 }

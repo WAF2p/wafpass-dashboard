@@ -219,6 +219,11 @@ export function CenterTabs<T extends string>({
   )
 }
 
+export function KpiSlot({ order, hidden, children }: { order: number; hidden?: boolean; children: ReactNode }) {
+  if (hidden) return null
+  return <div style={{ order, display: 'flex', minWidth: 0 }}>{children}</div>
+}
+
 export function KpiCard({
   label,
   value,

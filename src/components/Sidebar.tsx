@@ -5,6 +5,7 @@ import { getMaturityMeta, Settings } from '../pages/settingsUtils'
 import { Page, scoreColor } from '../routing'
 import { useI18n } from '../i18n'
 import { loadUserPrefs, saveUserPrefs, UserPreferences } from '../pages/userPrefsUtils'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { NavEntry, buildNavSections } from '../navigation/navModel'
 import BrandLogo from './BrandLogo'
 
@@ -189,10 +190,16 @@ export default function Sidebar({
   const [packControlCount, setPackControlCount] = useState<number>(0)
 
   const { isHoldingAdmin } = useAuth()
+  const { isEnabled } = useBetaFeatures()
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
   const effectiveRole = isHoldingAdmin ? 'admin' : role
-  const visibleSections = allSections.filter(s =>
-    hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+  const visibleSections = allSections
+    .filter(s => hasMinRole(effectiveRole, s.minRole ?? 'admin'))
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.beta || isEnabled(item.beta)),
+    }))
+    .filter(section => section.items.length > 0)
 
   // Use max of run count and pack count for accurate display
   useEffect(() => {

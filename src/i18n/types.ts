@@ -128,7 +128,49 @@ export interface Translations {
       'compliance-readiness': string
       validations: string
       shiprun: string
+      betafeatures: string
+      mydashboard: string
       about: string
+    }
+    launcher: {
+      open: string
+      title: string
+      subtitle: string
+      close: string
+      betaNote: string
+      manage: string
+      pinned: string
+      pin: string
+      unpin: string
+      pinLimit: string
+    }
+    views: {
+      trigger: string
+      title: string
+      savePlaceholder: string
+      save: string
+      empty: string
+      apply: string
+      delete: string
+    }
+    palette: {
+      title: string
+      trigger: string
+      placeholder: string
+      pages: string
+      controls: string
+      runs: string
+      actions: string
+      action: string
+      empty: string
+      noProject: string
+      noBranch: string
+      score: string
+      openSettings: string
+      openBeta: string
+      toggleTheme: string
+      hintNavigate: string
+      hintSelect: string
     }
     // Phase 3.3 / 6a / 6b — the TopNavigation mandate scope indicator (see
     // components/TopNavigation.tsx's MandateIndicator). A real switcher
@@ -1288,6 +1330,237 @@ export interface Translations {
       dockerCompose: string
       customControls: string
       statusProbe: string
+    }
+
+    betaFeatures: {
+      pageTitle: string
+      pageSubtitle: string
+      experimental: string
+      experimentalNotice: string
+      categoryLauncherTitle: string
+      categoryLauncherDesc: string
+      benefitNav: string
+      benefitOverlay: string
+      benefitReversible: string
+      enabled: string
+      disabled: string
+      betaPill: string
+      backToSettings: string
+      preview: string
+      tryIt: string
+      changesInstant: string
+      moreComing: string
+      commandPaletteTitle: string
+      commandPaletteDesc: string
+      commandPaletteBenefit1: string
+      commandPaletteBenefit2: string
+      commandPaletteBenefit3: string
+      savedViewsTitle: string
+      savedViewsDesc: string
+      savedViewsBenefit1: string
+      savedViewsBenefit2: string
+      savedViewsBenefit3: string
+      savedViewsHint: string
+      pinnedPagesTitle: string
+      pinnedPagesDesc: string
+      pinnedPagesHint: string
+      pinnedPagesEmpty: string
+      unpin: string
+      personaHomeTitle: string
+      personaHomeDesc: string
+      personaCiso: string
+      personaCisoDesc: string
+      personaArchitect: string
+      personaArchitectDesc: string
+      personaEngineer: string
+      personaEngineerDesc: string
+      personaDefault: string
+      personaDefaultDesc: string
+      personaHomeLanding: string
+      personaHomeKpis: string
+      personaOpen: string
+      personaOffHint: string
+      groupWorkspace: string
+      groupAnalysis: string
+      groupPresentation: string
+      searchPlaceholder: string
+      disableAll: string
+      noModules: string
+      findingsTriageTitle: string
+      findingsTriageDesc: string
+      findingsTriageBenefit1: string
+      findingsTriageBenefit2: string
+      findingsTriageBenefit3: string
+      triageOpenFindings: string
+      runBookmarksTitle: string
+      runBookmarksDesc: string
+      runBookmarksBenefit1: string
+      runBookmarksBenefit2: string
+      runBookmarksBenefit3: string
+      runBookmarksOpenRuns: string
+      runBookmarksCount: string
+      briefingModeTitle: string
+      briefingModeDesc: string
+      briefingModeBenefit1: string
+      briefingModeBenefit2: string
+      briefingModeBenefit3: string
+      briefingStart: string
+      briefingNoRun: string
+      widgetWallTitle: string
+      widgetWallDesc: string
+      widgetWallBenefit1: string
+      widgetWallBenefit2: string
+      widgetWallBenefit3: string
+      wallOpen: string
+      wallNoRun: string
+      myDashboardTitle: string
+      myDashboardDesc: string
+      myDashboardBenefit1: string
+      myDashboardBenefit2: string
+      myDashboardBenefit3: string
+      myDashboardOpen: string
+      myDashboardOffHint: string
+    }
+
+    myDashboard: {
+      defaultName: string
+      subtitle: string
+      edit: string
+      done: string
+      addWidget: string
+      reset: string
+      resetConfirm: string
+      editHint: string
+      share: string
+      shareTitle: string
+      shareHint: string
+      copy: string
+      copied: string
+      copyError: string
+      dismiss: string
+      importLayout: string
+      sharedLayout: string
+      sharedHint: string
+      rename: string
+      remove: string
+      moveLeft: string
+      moveRight: string
+      size: string
+      sizeSmall: string
+      sizeMedium: string
+      sizeLarge: string
+      empty: string
+      noRun: string
+      betaOffTitle: string
+      betaOffDesc: string
+      betaOffAction: string
+      addTitle: string
+      addHint: string
+      added: string
+      add: string
+      close: string
+      groupPosture: string
+      groupTrends: string
+      groupGovernance: string
+      groupInsights: string
+      rbacTitle: string
+      rbacDesc: string
+      shareRbacNote: string
+      scopeMandate: string
+      roles: {
+        admin: string
+        ciso: string
+        clevel: string
+        architect: string
+        engineer: string
+        unknown: string
+      }
+      holdingRoles: {
+        holding_admin: string
+        holding_viewer: string
+        group_admin: string
+        group_viewer: string
+      }
+      groupContent: string
+      editContent: string
+      dragHint: string
+      shareDataNote: string
+      config: {
+        title: string
+        hint: string
+        textLabel: string
+        textPlaceholder: string
+        urlLabel: string
+        frameTitleLabel: string
+        frameTitlePlaceholder: string
+        urlRequired: string
+        urlInvalid: string
+        iframeHint: string
+        logoUrlLabel: string
+        logoUpload: string
+        logoAltLabel: string
+        logoAltPlaceholder: string
+        logoRequired: string
+        logoInvalid: string
+        logoFileType: string
+        logoTooLarge: string
+        logoReadError: string
+        logoShareNote: string
+        save: string
+        cancel: string
+      }
+      widgets: {
+        scoreGauge: { title: string; desc: string }
+        severityBreakdown: { title: string; desc: string }
+        pillarHealth: { title: string; desc: string }
+        topControls: { title: string; desc: string }
+        scoreTrend: { title: string; desc: string }
+        recentRuns: { title: string; desc: string }
+        planChanges: { title: string; desc: string }
+        controlCoverage: { title: string; desc: string }
+        secretsRisk: { title: string; desc: string }
+        maturity: { title: string; desc: string }
+        complianceReadiness: { title: string; desc: string }
+        regions: { title: string; desc: string }
+        riskHotspots: { title: string; desc: string }
+        iframe: { title: string; desc: string }
+        text: { title: string; desc: string }
+        logo: { title: string; desc: string }
+      }
+      states: {
+        noRun: string
+        noFailures: string
+        noPillars: string
+        noTrend: string
+        noRuns: string
+        unnamed: string
+        noPlan: string
+        noData: string
+        noSecrets: string
+        noFrameworks: string
+        noRegions: string
+        noResources: string
+        iframeEmpty: string
+        textEmpty: string
+        logoEmpty: string
+        strong: string
+        focused: string
+        highRisk: string
+        previous: string
+        add: string
+        change: string
+        destroy: string
+        replace: string
+        pass: string
+        fail: string
+        skip: string
+        secrets: string
+        resources: string
+        activePillars: string
+        intelligence: string
+        coverageNote: string
+        governanceNote: string
+      }
     }
 
     badgePage: {

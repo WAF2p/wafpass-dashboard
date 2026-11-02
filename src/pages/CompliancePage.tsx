@@ -4,6 +4,9 @@ import { FRAMEWORKS } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
 import type { Settings } from './settingsUtils'
 import { useI18n } from '../i18n'
+import { useBetaFeatures } from '../beta/BetaFeaturesContext'
+import { BETA_PERSONA_HOME } from './userPrefsUtils'
+import { getPersonaPreset } from './personaHome'
 import FrameworkDetailPage from './FrameworkDetailPage'
 import {
   CircularScore, SectionCard, SegmentedTabs, SocStyles,
@@ -62,6 +65,11 @@ type SortKey = 'country' | 'name' | 'coverage_desc' | 'coverage_asc'
 
 export default function CompliancePage({ run, settings, navigate }: Props) {
   const { t } = useI18n()
+  const { prefs, isEnabled } = useBetaFeatures()
+  const persona = isEnabled(BETA_PERSONA_HOME) ? getPersonaPreset(prefs.personaHome) : null
+  const kpiOrder = persona?.id === 'ciso' ? persona.kpiOrder : null
+  const orderOf = (id: string) => (kpiOrder ? Math.max(0, kpiOrder.indexOf(id)) : 0)
+  const isHidden = (id: string) => !!kpiOrder && !kpiOrder.includes(id)
   const [tab, setTab] = useState<'pillars' | 'frameworks' | 'framework-detail'>('pillars')
   const [detailFrameworkId, setDetailFrameworkId] = useState<string | null>(null)
   const catalogue = useControlsCatalogue()
@@ -210,19 +218,19 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
 
       {/* KPI tiles */}
       <div className="scc-kpi-grid">
-        <div className="scc-kpi scc-kpi--pass">
+        <div className="scc-kpi scc-kpi--pass" style={{ order: orderOf('passing'), display: isHidden('passing') ? 'none' : undefined }}>
           <div className="scc-kpi__label">PASSING CHECKS</div>
           <div className="scc-kpi__value" style={{ color: statusColor('good') }}>{overallPassRate}%</div>
         </div>
-        <div className="scc-kpi scc-kpi--fail">
+        <div className="scc-kpi scc-kpi--fail" style={{ order: orderOf('failed'), display: isHidden('failed') ? 'none' : undefined }}>
           <div className="scc-kpi__label">FAILED CHECKS</div>
           <div className="scc-kpi__value" style={{ color: overallFailCount > 0 ? statusColor('bad') : statusColor('muted') }}>{overallFailCount}</div>
         </div>
-        <div className="scc-kpi scc-kpi--crit">
+        <div className="scc-kpi scc-kpi--crit" style={{ order: orderOf('critical'), display: isHidden('critical') ? 'none' : undefined }}>
           <div className="scc-kpi__label">CRITICAL FINDINGS</div>
           <div className="scc-kpi__value" style={{ color: overallCritCount > 0 ? statusColor('bad') : statusColor('muted') }}>{overallCritCount}</div>
         </div>
-        <div className="scc-kpi scc-kpi--frameworks">
+        <div className="scc-kpi scc-kpi--frameworks" style={{ order: orderOf('frameworks'), display: isHidden('frameworks') ? 'none' : undefined }}>
           <div className="scc-kpi__label">FRAMEWORKS TRACKED</div>
           <div className="scc-kpi__value" style={{ color: statusColor('info') }}>{FRAMEWORKS.length}</div>
         </div>

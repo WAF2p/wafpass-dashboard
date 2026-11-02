@@ -133,6 +133,19 @@ const xx: PartialTranslations = {
       journey: 'Maturity Journey',
       userprefs: 'My Preferences',
       validations: 'Validation Registry',
+      betafeatures: 'Beta Features',
+    },
+    launcher: {
+      open: 'Open category menu',
+      title: 'All categories',
+      subtitle: 'Jump to any part of WOMBATpass',
+      close: 'Close category menu',
+      betaNote: 'Beta category menu — turn it off in Settings → Beta Features.',
+      manage: 'Manage beta features',
+      pinned: 'Pinned pages',
+      pin: 'Pin {{page}}',
+      unpin: 'Unpin {{page}}',
+      pinLimit: 'Pin limit reached ({{max}}). Unpin a page to add another.',
     },
     // Phase 3 / 6a / 6b — TopNavigation mandate scope indicator
     mandateIndicator: {
@@ -1087,6 +1100,25 @@ const xx: PartialTranslations = {
       dockerCompose: 'Docker Compose (bundled controls)',
       customControls: 'Custom controls or bare server',
       statusProbe: 'Status probe',
+    },
+
+    betaFeatures: {
+      pageTitle: 'Beta features',
+      pageSubtitle: 'Try early WOMBATpass features before they ship. Switches here apply to this browser and sync with your preferences.',
+      experimental: 'Experimental',
+      experimentalNotice: 'Beta features are still changing. They can move, break, or disappear — your data and the existing navigation are never affected.',
+      categoryLauncherTitle: 'Category launcher',
+      categoryLauncherDesc: 'Replace the crowded top-navigation categories with a single 9-dot launcher. One click opens every category in a focused overlay, so the top bar stays calm as new modules arrive.',
+      benefitNav: 'The top bar keeps only the launcher and the run controls.',
+      benefitOverlay: 'Every category stays one click away, with all of its pages in one place.',
+      benefitReversible: 'Turn it off at any time; the standard navigation returns instantly.',
+      enabled: 'On',
+      disabled: 'Off',
+      betaPill: 'Beta',
+      backToSettings: 'Back to Settings',
+      preview: 'Preview menu',
+      changesInstant: 'Changes apply instantly.',
+      moreComing: 'More beta modules will appear here as they become available.',
     },
 
     badgePage: {

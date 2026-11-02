@@ -4,6 +4,7 @@ import {
 } from '../api'
 import { FRAMEWORKS } from '../controls-data'
 import { LOCALES, useI18n } from '../i18n'
+import Toggle from '../components/Toggle'
 import {
   ALL_PILLARS, controlsForLevel, DEFAULT_REPORT_SECTIONS,
   getMaturityMeta, MATURITY_META, MATURITY_PRESETS, PILLAR_COUNTS, saveMaturityState, TOTAL_CONTROLS,
@@ -12,27 +13,6 @@ import {
 export type { MaturityState, ReportSections, Settings } from './settingsUtils'
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
-  return (
-    <button
-      onClick={() => !disabled && onChange(!checked)}
-      style={{
-        width: '40px', height: '22px', borderRadius: '999px', border: 'none',
-        cursor: disabled ? 'default' : 'pointer',
-        background: checked ? 'var(--waf-brand)' : '#cbd5e1',
-        transition: 'background 0.2s', position: 'relative', flexShrink: 0,
-        opacity: disabled ? 0.4 : 1,
-      }}
-    >
-      <span style={{
-        position: 'absolute', top: '3px', left: checked ? '21px' : '3px',
-        width: '16px', height: '16px', borderRadius: '50%',
-        background: '#fff', transition: 'left 0.2s',
-      }} />
-    </button>
-  )
-}
 
 function ProgressBar({ value, total, color }: { value: number; total: number; color: string }) {
   const pct = Math.min(100, Math.round((value / total) * 100))
