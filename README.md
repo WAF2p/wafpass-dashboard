@@ -5,8 +5,8 @@ React SPA for visualising WOMBATpass compliance scan results. Part of the [Womba
 | Component | Role |
 |-----------|------|
 | `pass/` · `wombat-core` | Compliance engine, CLI, IaC parsers |
-| `wafpass-server/` · FastAPI | REST API · PostgreSQL persistence |
-| `wafpass-dashboard/` · **this package** | Browser dashboard · fetches from server |
+| `wombat-server/` · FastAPI | REST API · PostgreSQL persistence |
+| `wombat-dashboard/` · **this package** | Browser dashboard · fetches from server |
 
 No Python dependency. No local scan access. All data comes from `wombat-server`.
 
