@@ -22,11 +22,6 @@ export default defineConfig({
     // - index.html and main bundle (~500KB) includes all app logic
     // These chunks are loaded on-demand and benefit from browser caching
     chunkSizeWarningLimit: 700,
-    rollupOptions: {
-      output: {
-        manualChunks: {},
-      },
-    },
   },
   // Custom logger to suppress chunk size warnings
   customLogger: {

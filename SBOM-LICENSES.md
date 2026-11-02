@@ -21,13 +21,13 @@ Release builds also attach the CycloneDX and SPDX files to the GitHub release.
 
 ## Dependency summary
 
-- **Total detected packages:** 126
+- **Total detected packages:** 124
 
 ### License distribution
 
 | License | Count |
 |---------|-------|
-| MIT | 96 |
+| MIT | 94 |
 | ISC | 20 |
 | BSD-3-Clause | 6 |
 | BSD-2-Clause | 3 |
@@ -141,8 +141,6 @@ Release builds also attach the CycloneDX and SPDX files to the GitHub release.
 | react-is | 16.13.1 | MIT |
 | react-is | 18.3.1 | MIT |
 | react-map-gl | 8.1.3 | MIT |
-| react-router | 6.30.6 | MIT |
-| react-router-dom | 6.30.6 | MIT |
 | react-smooth | 4.0.4 | MIT |
 | react-transition-group | 4.4.5 | BSD-3-Clause |
 | recharts | 2.15.4 | MIT |
@@ -162,7 +160,7 @@ Release builds also attach the CycloneDX and SPDX files to the GitHub release.
 | typewise-core | 1.2.0 | MIT |
 | union-value | 1.0.1 | MIT |
 | victory-vendor | 36.9.2 | MIT AND ISC |
-| wombat-dashboard | 1.1.0 | Apache-2.0 |
+| wombat-dashboard | 1.2.0 | Apache-2.0 |
 
 ---
 
