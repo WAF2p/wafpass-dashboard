@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth, hasMinRole } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { loadMaturityState, type ValidationMetadata } from './settingsUtils'
+import { EmptyState, Skeleton, SkeletonRows } from '../ui'
 import {
   checkApiReachable,
   checkValidationGatewayReachable,
@@ -34,10 +35,10 @@ import {
 } from '../api'
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
-  official:  { color: '#059669', bg: 'color-mix(in srgb, #059669 9%, transparent)' },
-  active:    { color: '#059669', bg: 'color-mix(in srgb, #059669 9%, transparent)' },
-  revoked:   { color: '#DA2C38', bg: 'color-mix(in srgb, #da2c38 9%, transparent)' },
-  offline:   { color: '#b45309', bg: 'rgba(180,83,9,0.09)' },
+  official:  { color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 9%, transparent)' },
+  active:    { color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 9%, transparent)' },
+  revoked:   { color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 9%, transparent)' },
+  offline:   { color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--waf-warn) 9%, transparent)' },
 }
 
 function fmtDate(iso: string | undefined | null): string {
@@ -56,7 +57,7 @@ function shortId(id: string): string {
 
 function statusPill(status: string) {
   const s = status.toLowerCase()
-  const { color, bg } = STATUS_COLORS[s] ?? { color: '#64748b', bg: 'rgba(100,116,139,0.09)' }
+  const { color, bg } = STATUS_COLORS[s] ?? { color: 'var(--muted)', bg: 'color-mix(in srgb, var(--muted) 9%, transparent)' }
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
@@ -117,7 +118,7 @@ function MonoRow({ label, value, copy }: { label: string; value: string; copy?: 
             style={{
               flexShrink: 0, padding: '0.25rem 0.45rem', borderRadius: '6px',
               border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer',
-              fontSize: '0.7rem', fontWeight: 600, color: copied ? '#059669' : 'var(--muted)',
+              fontSize: '0.7rem', fontWeight: 600, color: copied ? 'var(--pass-ink)' : 'var(--muted)',
             }}
           >
             {copied ? 'Copied' : 'Copy'}
@@ -199,7 +200,7 @@ function CertificateRow({ cert, index, total }: { cert: string; index: number; t
       {open && (
         <pre style={{
           margin: '0.5rem 0 0', padding: '0.6rem 0.75rem', background: '#0f172a', color: '#e2e8f0',
-          borderRadius: '8px', fontSize: '0.68rem', lineHeight: 1.55, overflowX: 'auto',
+          borderRadius: '8px', fontSize: '0.7rem', lineHeight: 1.55, overflowX: 'auto',
           whiteSpace: 'pre-wrap', wordBreak: 'break-all',
         }}>{cert}</pre>
       )}
@@ -238,11 +239,11 @@ function ConnectionBanner() {
   return (
     <div style={{
       marginBottom: '1.25rem', padding: '1rem 1.25rem', borderRadius: '12px',
-      background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)',
+      background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)',
       color: 'var(--text)', fontSize: '0.85rem',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem', fontWeight: 700 }}>
-        <span style={{ color: '#DA2C38' }}>⚠</span>
+        <span style={{ color: 'var(--fail)' }}>⚠</span>
         {t('pages.validations.connectionIssueTitle')}
       </div>
 
@@ -418,9 +419,7 @@ function SubmitPanel({ onSubmitted }: { onSubmitted: (id: string) => void }) {
       />
       <div style={{ marginBottom: '0.75rem' }}>
         {loadingRuns ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)', fontSize: '0.8rem' }}>
-            <div className="spinner" style={{ width: '14px', height: '14px' }} /> {t('pages.validations.loadingRuns')}
-          </div>
+          <Skeleton height={42} radius={8} />
         ) : (
           <select
             value={selectedRunId}
@@ -469,12 +468,12 @@ function SubmitPanel({ onSubmitted }: { onSubmitted: (id: string) => void }) {
             {t('pages.validations.noMetadataHint')}
           </div>
         )}
-        <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.35rem' }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.35rem' }}>
           {t('pages.validations.metadataHint')}
         </div>
       </div>
       {error && (
-        <div style={{ color: '#DA2C38', fontSize: '0.78rem', marginBottom: '0.75rem' }}>{error}</div>
+        <div style={{ color: 'var(--fail-ink)', fontSize: '0.78rem', marginBottom: '0.75rem' }}>{error}</div>
       )}
       {step && !error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)', fontSize: '0.78rem', marginBottom: '0.75rem' }}>
@@ -514,6 +513,7 @@ function DetailPanel({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [revoking, setRevoking] = useState(false)
+  const [confirmRevoke, setConfirmRevoke] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -551,7 +551,7 @@ function DetailPanel({
   }, [id])
 
   async function handleRevoke() {
-    if (!confirm(t('pages.validations.revokeConfirm'))) return
+    setConfirmRevoke(false)
     setRevoking(true)
     try {
       await revokeValidation(id)
@@ -567,7 +567,7 @@ function DetailPanel({
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100,
-      background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--scrim)', display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1rem',
     }} onClick={onClose}>
       <div
@@ -583,17 +583,23 @@ function DetailPanel({
             <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>Validation {shortId(id)}</h2>
             {record && statusPill(record.status)}
           </div>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} aria-label={t('common.close')} style={{
             background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1.2rem',
           }}>✕</button>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}><div className="spinner" /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }} aria-hidden="true">
+            <Skeleton width="30%" height={14} />
+            <Skeleton height={16} />
+            <Skeleton width="85%" height={16} />
+            <Skeleton width="65%" height={16} />
+            <Skeleton width="75%" height={16} />
+          </div>
         ) : error ? (
-          <div style={{ color: '#DA2C38', fontSize: '0.85rem' }}>{error}</div>
+          <div style={{ color: 'var(--fail-ink)', fontSize: '0.85rem' }}>{error}</div>
         ) : !record ? (
-          <div style={{ color: 'var(--muted)' }}>{t('pages.validations.notFound')}</div>
+          <EmptyState compact title={t('pages.validations.notFound')} />
         ) : (
           <>
             <Section title={t('pages.validations.runIdentity')}>
@@ -687,16 +693,32 @@ function DetailPanel({
             {hasMinRole(role, 'admin') && record.status !== 'revoked' && record.metadata?.gateway_source !== true && (
               <Section title={t('pages.validations.adminTitle')}>
                 <button
-                  onClick={handleRevoke}
+                  onClick={() => setConfirmRevoke(true)}
                   disabled={revoking}
                   style={{
-                    padding: '0.55rem 1rem', borderRadius: '8px', border: '1px solid #DA2C38',
-                    background: 'color-mix(in srgb, #da2c38 8%, transparent)', color: '#DA2C38', fontWeight: 700,
+                    padding: '0.55rem 1rem', borderRadius: '8px', border: '1px solid var(--fail)',
+                    background: 'color-mix(in srgb, var(--fail) 8%, transparent)', color: 'var(--fail-ink)', fontWeight: 700,
                     fontSize: '0.8rem', cursor: revoking ? 'not-allowed' : 'pointer',
                   }}
                 >
                   {revoking ? t('common.saving') : t('pages.validations.revokeBtn')}
                 </button>
+                {confirmRevoke && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
+                    marginTop: '0.75rem', padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)',
+                    background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+                    border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+                  }}>
+                    <span style={{ flex: 1 }}>{t('pages.validations.revokeConfirm')}</span>
+                    <button onClick={handleRevoke} disabled={revoking} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: revoking ? 'wait' : 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+                      {t('pages.validations.revokeBtn')}
+                    </button>
+                    <button onClick={() => setConfirmRevoke(false)} style={{ padding: '0.3rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+                      {t('common.cancel')}
+                    </button>
+                  </div>
+                )}
               </Section>
             )}
           </>
@@ -862,18 +884,12 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
           </button>
         </div>
 
-        {loading && ids.length > 0 && (
-          <div style={{ textAlign: 'center', padding: '1.5rem' }}><div className="spinner" /></div>
-        )}
-
         {error && (
-          <div style={{ color: '#DA2C38', fontSize: '0.85rem', marginBottom: '1rem' }}>{error}</div>
+          <div style={{ color: 'var(--fail-ink)', fontSize: '0.85rem', marginBottom: '1rem' }}>{error}</div>
         )}
 
         {!loading && ids.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-            {t('pages.validations.noValidations')}
-          </div>
+          <EmptyState title={t('pages.validations.noValidations')} />
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
@@ -882,19 +898,27 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
                   {[t('pages.validations.colStatus'), t('pages.validations.colProject'), t('pages.validations.colBranch'), t('pages.validations.colGitSha'), t('pages.validations.colValidated'), t('pages.validations.colAction')].map(h => (
                     <th key={h} style={{
                       padding: '0.55rem 0.75rem', textAlign: 'left',
-                      fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)',
+                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
                       textTransform: 'uppercase', letterSpacing: '0.06em',
                     }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(id => {
+                {loading && <SkeletonRows rows={Math.min(Math.max(ids.length, 1), 5)} columns={6} />}
+                {!loading && filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6}>
+                      <EmptyState compact title={t('common.noData')} />
+                    </td>
+                  </tr>
+                )}
+                {!loading && filtered.map(id => {
                   const r = records[id]
                   return (
                     <tr key={id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '0.6rem 0.75rem' }}>
-                        {r ? statusPill(r.status) : <span style={{ color: 'var(--muted)' }}>loading…</span>}
+                        {r ? statusPill(r.status) : <span style={{ color: 'var(--muted)' }}>—</span>}
                       </td>
                       <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text)', fontWeight: 600 }}>{r?.project || '—'}</td>
                       <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text)' }}>{r?.branch || '—'}</td>

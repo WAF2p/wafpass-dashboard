@@ -13,13 +13,14 @@
 import { useState, useMemo, useEffect } from 'react'
 import { RunDetail, ControlMeta, getApiBase, getAccessToken } from '../api'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 import { severityBg, severityBorder, severityColor, scoreColor } from '../severity'
 
 interface Props { run: RunDetail }
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const SEV_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
-const EFFORT_COLOR = { Low: '#22c55e', Medium: '#f97316', High: '#DA2C38' }
+const EFFORT_COLOR = { Low: 'var(--pass)', Medium: 'var(--sev-high)', High: 'var(--fail)' }
 
 // ── Data model ───────────────────────────────────────────────────────────────
 interface FailingCtrl {
@@ -185,6 +186,7 @@ export default function RemediationSprintPage({ run }: Props) {
 
   // ── Export handlers ────────────────────────────────────────────────────────
   const [isExporting, setIsExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState<string | null>(null)
   const apiBase = getApiBase()
   const authHeaders: Record<string, string> = getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}
 
@@ -194,6 +196,7 @@ export default function RemediationSprintPage({ run }: Props) {
     const url = `${apiBase}/runs/${run.id}/export/csv?sprint=${encodeURIComponent(sprintList)}`
     try {
       setIsExporting(true)
+      setExportMessage(null)
       const response = await fetch(url, { headers: authHeaders })
       if (!response.ok) throw new Error(`Export failed: ${response.status}`)
       const blob = await response.blob()
@@ -214,6 +217,7 @@ export default function RemediationSprintPage({ run }: Props) {
     const url = `${apiBase}/runs/${run.id}/export/jira?sprint=${encodeURIComponent(sprintList)}`
     try {
       setIsExporting(true)
+      setExportMessage(null)
       const response = await fetch(url, { headers: authHeaders })
       if (!response.ok) throw new Error(`Export failed: ${response.status}`)
       const blob = await response.blob()
@@ -234,6 +238,7 @@ export default function RemediationSprintPage({ run }: Props) {
     const url = `${apiBase}/runs/${run.id}/export/slack`
     try {
       setIsExporting(true)
+      setExportMessage(null)
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
@@ -248,7 +253,7 @@ export default function RemediationSprintPage({ run }: Props) {
       textArea.select()
       document.execCommand('copy')
       document.body.removeChild(textArea)
-      alert('Slack/Teams message text copied to clipboard! You can paste it into your message.')
+      setExportMessage('Slack/Teams message text copied to clipboard! You can paste it into your message.')
     } finally {
       setIsExporting(false)
     }
@@ -303,6 +308,7 @@ export default function RemediationSprintPage({ run }: Props) {
   if (allControls.length === 0) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--muted)' }}>
+        <h1 className="ui-sr-only">{PAGE_TITLE.remediation}</h1>
         <svg width="52" height="52" fill="none" stroke="currentColor" viewBox="0 0 24 24"
           style={{ margin: '0 auto 1rem', display: 'block', opacity: 0.25 }}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -317,6 +323,7 @@ export default function RemediationSprintPage({ run }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.remediation}</h1>
 
       {/* ── Quick-add bar ── */}
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -411,7 +418,7 @@ export default function RemediationSprintPage({ run }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', position: 'sticky', top: '1rem' }}>
 
           {/* Impact projection card */}
-          <div className="card" style={{ padding: '1.25rem', background: sprintControls.length > 0 ? 'linear-gradient(135deg, #0b1220 0%, #0f1e3a 100%)' : undefined, border: sprintControls.length > 0 ? '1px solid #0094FF40' : undefined }}>
+          <div className="card" style={{ padding: '1.25rem', background: sprintControls.length > 0 ? 'linear-gradient(135deg, #0b1220 0%, #0f1e3a 100%)' : undefined, border: sprintControls.length > 0 ? '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)' : undefined }}>
             {sprintControls.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.4rem' }}>{t('pages.remediation.sprintImpact')}</div>
@@ -421,7 +428,7 @@ export default function RemediationSprintPage({ run }: Props) {
               </div>
             ) : (
               <>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', marginBottom: '0.75rem' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--skip)', marginBottom: '0.75rem' }}>
                   {t('pages.remediation.sprintImpactProjection')}
                 </div>
 
@@ -429,23 +436,23 @@ export default function RemediationSprintPage({ run }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.25rem', marginBottom: '1rem' }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(run.score), lineHeight: 1 }}>{run.score}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.remediation.current')}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--skip)', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.remediation.current')}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
                     <svg width="32" height="14" viewBox="0 0 32 14">
-                      <line x1="0" y1="7" x2="24" y2="7" stroke="#0094FF" strokeWidth="2" />
-                      <polygon points="24,3 32,7 24,11" fill="#0094FF" />
+                      <line x1="0" y1="7" x2="24" y2="7" stroke="var(--waf-brand)" strokeWidth="2" />
+                      <polygon points="24,3 32,7 24,11" fill="var(--waf-brand)" />
                     </svg>
-                    <span style={{ fontSize: '0.7rem', color: '#0094FF', fontWeight: 700 }}>+{impact.pointsGain} pts</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--waf-brand)', fontWeight: 700 }}>+{impact.pointsGain} pts</span>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(impact.projectedScore), lineHeight: 1 }}>{impact.projectedScore}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.remediation.projected')}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--skip)', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.remediation.projected')}</div>
                   </div>
                 </div>
 
                 {/* Progress bar */}
-                <div style={{ height: '6px', borderRadius: '999px', background: '#1e293b', overflow: 'hidden', marginBottom: '1rem' }}>
+                <div style={{ height: '6px', borderRadius: '999px', background: 'color-mix(in srgb, var(--skip) 25%, transparent)', overflow: 'hidden', marginBottom: '1rem' }}>
                   <div style={{ height: '100%', borderRadius: '999px', background: `linear-gradient(90deg, ${scoreColor(run.score)}, ${scoreColor(impact.projectedScore)})`, width: `${impact.projectedScore}%`, transition: 'width 0.4s' }} />
                 </div>
 
@@ -457,31 +464,31 @@ export default function RemediationSprintPage({ run }: Props) {
                     { label: t('pages.remediation.metricFrameworks'), value: String(impact.touchedFrameworks.length), sub: t('pages.remediation.metricAddressed') },
                     { label: t('pages.remediation.metricGapsClosed'), value: String(impact.closedFrameworks.length), sub: t('pages.remediation.metricFullyResolved') },
                   ].map(m => (
-                    <div key={m.label} style={{ background: '#0f1e3a', borderRadius: '8px', padding: '0.5rem 0.625rem', border: '1px solid #1e3a5f' }}>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', lineHeight: 1 }}>{m.value}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.15rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.label}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#475569' }}>{m.sub}</div>
+                    <div key={m.label} style={{ background: 'color-mix(in srgb, var(--skip) 10%, transparent)', borderRadius: '8px', padding: '0.5rem 0.625rem', border: '1px solid color-mix(in srgb, var(--skip) 20%, transparent)' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'white', lineHeight: 1 }}>{m.value}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--skip)', marginTop: '0.15rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.label}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'color-mix(in srgb, var(--skip) 75%, transparent)' }}>{m.sub}</div>
                     </div>
                   ))}
                 </div>
 
                 {/* Effort */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                  <span style={{ color: '#64748b' }}>{t('pages.remediation.sprintEffort')}</span>
-                  <span style={{ fontWeight: 700, color: EFFORT_COLOR[impact.effortLabel as keyof typeof EFFORT_COLOR] ?? '#64748b' }}>
+                  <span style={{ color: 'var(--skip)' }}>{t('pages.remediation.sprintEffort')}</span>
+                  <span style={{ fontWeight: 700, color: EFFORT_COLOR[impact.effortLabel as keyof typeof EFFORT_COLOR] ?? 'var(--skip)' }}>
                     {impact.effortLabel}
                   </span>
                 </div>
 
                 {/* Closed frameworks list */}
                 {impact.closedFrameworks.length > 0 && (
-                  <div style={{ marginTop: '0.75rem', padding: '0.625rem', background: '#0a1628', borderRadius: '8px', border: '1px solid #22c55e30' }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>
+                  <div style={{ marginTop: '0.75rem', padding: '0.625rem', background: 'color-mix(in srgb, var(--pass) 8%, transparent)', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--pass) 19%, transparent)' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--pass)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>
                       {t('pages.remediation.fullyClosing')}
                     </div>
                     {impact.closedFrameworks.map(fw => (
-                      <div key={fw} style={{ fontSize: '0.7rem', color: '#86efac', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
-                        <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span> {fw}
+                      <div key={fw} style={{ fontSize: '0.7rem', color: 'var(--pass)', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
+                        <span style={{ color: 'var(--pass)', fontWeight: 700 }}>✓</span> {fw}
                       </div>
                     ))}
                   </div>
@@ -489,20 +496,21 @@ export default function RemediationSprintPage({ run }: Props) {
 
                 {/* Export buttons */}
                 {sprintControls.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #1e3a5f' }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid color-mix(in srgb, var(--skip) 20%, transparent)' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--skip)', marginBottom: '0.5rem' }}>
                       {t('pages.remediation.exportLabel')}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <button
                         onClick={handleExportCsv}
                         disabled={isExporting}
+                        aria-label={t('pages.remediation.exportCsv')}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '0.5rem',
                           padding: '0.5rem 0.75rem', borderRadius: '8px',
-                          border: '1px solid #0094FF', background: '#0094FF1A',
-                          color: '#0094FF', cursor: isExporting ? 'not-allowed' : 'pointer',
-                          fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s',
+                          border: '1px solid var(--waf-brand)', background: 'color-mix(in srgb, var(--waf-brand) 10%, transparent)',
+                          color: 'var(--waf-brand)', cursor: isExporting ? 'not-allowed' : 'pointer',
+                          fontSize: '0.75rem', fontWeight: 600, transition: 'background 0.2s, border-color 0.2s, color 0.2s',
                         }}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -513,12 +521,13 @@ export default function RemediationSprintPage({ run }: Props) {
                       <button
                         onClick={handleExportJira}
                         disabled={isExporting}
+                        aria-label={t('pages.remediation.exportJira')}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '0.5rem',
                           padding: '0.5rem 0.75rem', borderRadius: '8px',
-                          border: '1px solid #f59e0b', background: '#f59e0b1A',
-                          color: '#f59e0b', cursor: isExporting ? 'not-allowed' : 'pointer',
-                          fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s',
+                          border: '1px solid var(--waf-warn)', background: 'color-mix(in srgb, var(--waf-warn) 10%, transparent)',
+                          color: 'var(--waf-warn)', cursor: isExporting ? 'not-allowed' : 'pointer',
+                          fontSize: '0.75rem', fontWeight: 600, transition: 'background 0.2s, border-color 0.2s, color 0.2s',
                         }}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -530,12 +539,13 @@ export default function RemediationSprintPage({ run }: Props) {
                       <button
                         onClick={handleExportSlack}
                         disabled={isExporting}
+                        aria-label={t('pages.remediation.exportSlack')}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '0.5rem',
                           padding: '0.5rem 0.75rem', borderRadius: '8px',
-                          border: '1px solid #22c55e', background: '#22c55e1A',
-                          color: '#22c55e', cursor: isExporting ? 'not-allowed' : 'pointer',
-                          fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s',
+                          border: '1px solid var(--pass)', background: 'color-mix(in srgb, var(--pass) 10%, transparent)',
+                          color: 'var(--pass)', cursor: isExporting ? 'not-allowed' : 'pointer',
+                          fontSize: '0.75rem', fontWeight: 600, transition: 'background 0.2s, border-color 0.2s, color 0.2s',
                         }}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -546,6 +556,11 @@ export default function RemediationSprintPage({ run }: Props) {
                         {t('pages.remediation.exportSlack')}
                       </button>
                     </div>
+                    {exportMessage && (
+                      <div role="status" style={{ fontSize: '0.75rem', color: 'var(--pass)', background: 'color-mix(in srgb, var(--pass) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)', borderRadius: '8px', padding: '0.4rem 0.6rem' }}>
+                        {exportMessage}
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -570,11 +585,12 @@ export default function RemediationSprintPage({ run }: Props) {
                     <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.3, marginBottom: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {ctrl.title}
                     </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                       +{ctrl.pointsGain} pts · {ctrl.frameworks.length} fw · {t('pages.remediation.effortBadge', { effort: ctrl.effort })}
                     </div>
                   </div>
                   <button onClick={() => removeFromSprint(ctrl.id)}
+                    aria-label={t('pages.remediation.removeFromSprint')}
                     style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', lineHeight: 1, padding: '0.1rem', flexShrink: 0 }}>
                     ×
                   </button>
@@ -603,18 +619,19 @@ function ControlCard({
   const effCol  = EFFORT_COLOR[ctrl.effort]
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden', border: inSprint ? `1px solid #0094FF40` : undefined }}>
+    <div className="card" style={{ padding: 0, overflow: 'hidden', border: inSprint ? '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)' : undefined }}>
       {/* Main row */}
       <div style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
 
         {/* Add button */}
         <button onClick={onAction}
           title={inSprint ? t('pages.remediation.removeFromSprint') : t('pages.remediation.addToSprint')}
+          aria-label={inSprint ? t('pages.remediation.removeFromSprint') : t('pages.remediation.addToSprint')}
           style={{
             flexShrink: 0, width: '28px', height: '28px', borderRadius: '8px', cursor: 'pointer',
-            border: inSprint ? '1px solid #0094FF' : '1px solid var(--border)',
-            background: inSprint ? '#0094FF' : 'var(--bg)',
-            color: inSprint ? '#fff' : 'var(--muted)',
+            border: inSprint ? '1px solid var(--waf-brand-btn)' : '1px solid var(--border)',
+            background: inSprint ? 'var(--waf-brand-btn)' : 'var(--bg)',
+            color: inSprint ? 'white' : 'var(--muted)',
             fontSize: '1.2rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: 700,
           }}>
@@ -627,7 +644,7 @@ function ControlCard({
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 700, flexShrink: 0 }}>{ctrl.id}</span>
             <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text)', flex: 1, minWidth: 0 }}>{ctrl.title}</span>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.12rem 0.45rem', borderRadius: '999px', background: `${sevCol}20`, color: sevCol, flexShrink: 0 }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.12rem 0.45rem', borderRadius: '999px', background: severityBg(ctrl.severity), color: sevCol, flexShrink: 0 }}>
               {ctrl.severity}
             </span>
           </div>
@@ -648,16 +665,16 @@ function ControlCard({
             {/* Score bar */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: '120px' }}>
               <div style={{ flex: 1, height: '5px', borderRadius: '999px', background: 'var(--bg)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: '999px', background: '#0094FF', width: `${Math.min(100, ctrl.pointsGain * 5)}%` }} />
+                <div style={{ height: '100%', borderRadius: '999px', background: 'var(--waf-brand)', width: `${Math.min(100, ctrl.pointsGain * 5)}%` }} />
               </div>
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#0094FF', whiteSpace: 'nowrap' }}>~{ctrl.pointsGain} pts</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand-ink)', whiteSpace: 'nowrap' }}>~{ctrl.pointsGain} pts</span>
             </div>
             {/* Framework badge */}
-            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
               {ctrl.frameworks.length > 0 ? `${ctrl.frameworks.length} framework${ctrl.frameworks.length !== 1 ? 's' : ''}` : t('pages.remediation.noFrameworks')}
             </span>
             {/* Effort badge */}
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '999px', background: `${effCol}18`, color: effCol, border: `1px solid ${effCol}35`, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '999px', background: `color-mix(in srgb, ${effCol} 9%, transparent)`, color: effCol, border: `1px solid color-mix(in srgb, ${effCol} 21%, transparent)`, whiteSpace: 'nowrap' }}>
               {t('pages.remediation.effortBadge', { effort: ctrl.effort })}
             </span>
           </div>
@@ -666,6 +683,7 @@ function ControlCard({
         {/* Expand chevron */}
         {(ctrl.description || ctrl.remediations.length > 0 || ctrl.frameworks.length > 0) && (
           <button onClick={onExpand}
+            aria-label={expanded ? 'Collapse details' : 'Expand details'}
             style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, marginTop: '2px' }}>
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -704,7 +722,7 @@ function ControlCard({
               <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>{t('pages.remediation.regulatoryMapping')}</div>
               <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                 {ctrl.frameworks.map(fw => (
-                  <span key={fw} style={{ fontSize: '0.68rem', padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
+                  <span key={fw} style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
                     {fw}
                   </span>
                 ))}

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTheme } from '../theme'
+import { useDialog } from '../ui/useDialog'
 import { UserPreferences, saveUserPrefs, DEFAULT_USER_PREFS } from '../pages/userPrefsUtils'
 
 interface Props {
@@ -41,7 +42,7 @@ function PrefRow({ label, desc, children }: { label: string; desc?: string; chil
 
 function SectionHead({ label }: { label: string }) {
   return (
-    <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', paddingTop: '0.75rem', paddingBottom: '0.25rem', borderBottom: '1px solid var(--border)', marginBottom: '0.1rem' }}>
+    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', paddingTop: '0.75rem', paddingBottom: '0.25rem', borderBottom: '1px solid var(--border)', marginBottom: '0.1rem' }}>
       {label}
     </div>
   )
@@ -69,6 +70,8 @@ const selectStyle: React.CSSProperties = {
 
 export default function UserPreferencesModal({ prefs, onChange, onClose }: Props) {
   const { themeName, toggleTheme } = useTheme()
+  const panelRef = useRef<HTMLDivElement>(null)
+  useDialog(onClose, panelRef)
   const [p, setP] = useState<UserPreferences>(prefs)
   const [saved, setSaved] = useState(false)
 
@@ -96,7 +99,13 @@ export default function UserPreferencesModal({ prefs, onChange, onClose }: Props
       <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, #000000 45%, transparent)' }} onClick={onClose} />
 
       {/* Panel — anchored bottom-left, beside the sidebar */}
-      <div style={{
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Preferences"
+        tabIndex={-1}
+        style={{
         position: 'relative', zIndex: 1,
         width: '320px', maxHeight: 'calc(100vh - 2rem)',
         marginLeft: '0.75rem', marginBottom: '0.75rem',
@@ -111,7 +120,7 @@ export default function UserPreferencesModal({ prefs, onChange, onClose }: Props
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text)' }}>User Preferences</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>Personal — saved to this browser only</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.2rem', borderRadius: '4px' }}>
+          <button onClick={onClose} aria-label="Close user preferences" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.2rem', borderRadius: '4px' }}>
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>

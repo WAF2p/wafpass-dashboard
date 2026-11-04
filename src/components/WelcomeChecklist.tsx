@@ -78,7 +78,7 @@ function StepBadge({ done, loading, index }: { done: boolean; loading?: boolean;
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: done ? '#22c55e' : loading ? 'var(--waf-brand)' : 'rgba(148,163,184,.2)',
+        background: done ? 'var(--pass)' : loading ? 'var(--waf-brand)' : 'color-mix(in srgb, var(--skip) 20%, transparent)',
         color: done || loading ? '#fff' : 'var(--muted)',
         fontSize: '0.7rem',
         fontWeight: 700,
@@ -141,8 +141,8 @@ function StepRow({
               marginTop: '0.4rem',
               padding: '0.35rem 0.5rem',
               borderRadius: '6px',
-              background: 'rgba(0,148,255,.06)',
-              border: '1px solid rgba(0,148,255,.15)',
+              background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
             }}
           >
             <code
@@ -265,8 +265,8 @@ export default function WelcomeChecklist({
         style={{
           padding: '1.5rem 1.75rem',
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, rgba(0,148,255,.1) 0%, color-mix(in srgb, #7c3aed 8%, transparent) 100%)',
-          border: '1px solid rgba(0,148,255,.25)',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--waf-brand) 10%, transparent) 0%, color-mix(in srgb, var(--waf-info) 8%, transparent) 100%)',
+          border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
@@ -276,8 +276,8 @@ export default function WelcomeChecklist({
               width: '44px',
               height: '44px',
               borderRadius: '12px',
-              background: 'rgba(0,148,255,.15)',
-              border: '1px solid rgba(0,148,255,.3)',
+              background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -302,10 +302,10 @@ export default function WelcomeChecklist({
               gap: '0.4rem',
               padding: '0.35rem 0.65rem',
               borderRadius: '999px',
-              background: serverOnline === true ? 'rgba(34,197,94,.1)' : serverOnline === false ? 'color-mix(in srgb, #ef4444 10%, transparent)' : 'rgba(148,163,184,.1)',
-              border: `1px solid ${serverOnline === true ? 'rgba(34,197,94,.3)' : serverOnline === false ? 'color-mix(in srgb, #ef4444 30%, transparent)' : 'rgba(148,163,184,.3)'}`,
+              background: serverOnline === true ? 'color-mix(in srgb, var(--pass) 10%, transparent)' : serverOnline === false ? 'color-mix(in srgb, var(--fail) 10%, transparent)' : 'color-mix(in srgb, var(--skip) 10%, transparent)',
+              border: `1px solid ${serverOnline === true ? 'color-mix(in srgb, var(--pass) 30%, transparent)' : serverOnline === false ? 'color-mix(in srgb, var(--fail) 30%, transparent)' : 'color-mix(in srgb, var(--skip) 30%, transparent)'}`,
               fontSize: '0.72rem',
-              color: serverOnline === true ? '#22c55e' : serverOnline === false ? '#ef4444' : 'var(--muted)',
+              color: serverOnline === true ? 'var(--pass-ink)' : serverOnline === false ? 'var(--fail-ink)' : 'var(--muted)',
               whiteSpace: 'nowrap',
             }}
           >
@@ -314,7 +314,7 @@ export default function WelcomeChecklist({
                 width: '7px',
                 height: '7px',
                 borderRadius: '50%',
-                background: serverOnline === true ? '#22c55e' : serverOnline === false ? '#ef4444' : '#94a3b8',
+                background: serverOnline === true ? 'var(--pass)' : serverOnline === false ? 'var(--fail)' : 'var(--skip)',
               }}
             />
             {t('welcome.serverStatus')}: {serverOnline === true ? t('welcome.serverOnline') : serverOnline === false ? t('welcome.serverOffline') : '…'}
@@ -348,7 +348,7 @@ export default function WelcomeChecklist({
                 width: '26px',
                 height: '26px',
                 borderRadius: '50%',
-                background: 'rgba(0,148,255,.15)',
+                background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -407,7 +407,7 @@ export default function WelcomeChecklist({
                 width: '26px',
                 height: '26px',
                 borderRadius: '50%',
-                background: 'rgba(148,163,184,.15)',
+                background: 'color-mix(in srgb, var(--skip) 15%, transparent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -432,8 +432,8 @@ export default function WelcomeChecklist({
               gap: '0.5rem',
               padding: '0.4rem 0.55rem',
               borderRadius: '6px',
-              background: 'rgba(0,148,255,.06)',
-              border: '1px solid rgba(0,148,255,.15)',
+              background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
             }}
           >
             <code
@@ -480,8 +480,8 @@ export default function WelcomeChecklist({
             gap: '0.5rem',
             padding: '0.35rem 0.5rem',
             borderRadius: '6px',
-            background: 'rgba(0,148,255,.06)',
-            border: '1px solid rgba(0,148,255,.15)',
+            background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
             flex: 2,
             minWidth: '220px',
           }}
@@ -534,10 +534,10 @@ export default function WelcomeChecklist({
           style={{
             padding: '0.75rem 1rem',
             borderRadius: '8px',
-            background: 'color-mix(in srgb, #ef4444 8%, transparent)',
-            border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)',
             fontSize: '0.85rem',
-            color: '#ef4444',
+            color: 'var(--fail-ink)',
           }}
         >
           {t('welcome.demoError', { message: demoError })}
@@ -549,10 +549,10 @@ export default function WelcomeChecklist({
           style={{
             padding: '0.75rem 1rem',
             borderRadius: '8px',
-            background: 'rgba(34,197,94,.08)',
-            border: '1px solid rgba(34,197,94,.25)',
+            background: 'color-mix(in srgb, var(--pass) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
             fontSize: '0.85rem',
-            color: '#22c55e',
+            color: 'var(--pass-ink)',
           }}
         >
           {t('welcome.demoSuccess')}

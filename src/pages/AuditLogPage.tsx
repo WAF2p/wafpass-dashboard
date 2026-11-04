@@ -18,6 +18,7 @@ import {
 } from './shared/SocComponents'
 import AdminLogPage from './AdminLogPage'
 import { severityBg, severityBorder, severityColor } from '../severity'
+import { DataTable, EmptyState, type Column } from '../ui'
 
 // ─── Category metadata ──────────────────────────────────────────────────────────
 
@@ -144,6 +145,55 @@ function FirstSeenTable({ entries, t }: { entries: FirstSeenEntry[]; t: ReturnTy
 
   const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
 
+  const columns: Column<FirstSeenEntry>[] = [
+    {
+      key: 'control',
+      header: t('pages.audit.colControl'),
+      render: e => <span className="audit-table__mono audit-table__mono--strong">{e.control_id}</span>,
+    },
+    {
+      key: 'resource',
+      header: t('pages.audit.colResource'),
+      render: e => <span className="audit-table__mono" title={e.resource} style={{ display: 'inline-block' }}>{e.resource}</span>,
+    },
+    {
+      key: 'severity',
+      header: t('pages.audit.colSeverity'),
+      render: e => {
+        const sev = e.severity?.toLowerCase()
+        return (
+          <span className="audit-sev" style={{ color: severityColor(sev), background: severityBg(sev, 9), borderColor: severityBorder(sev, 20) }}>
+            {e.severity}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'pillar',
+      header: t('pages.audit.colPillar'),
+      render: e => e.pillar,
+    },
+    {
+      key: 'project',
+      header: t('pages.audit.colProject'),
+      render: e => <span className="audit-table__mono">{e.project} / {e.branch}</span>,
+    },
+    {
+      key: 'firstSeen',
+      header: t('pages.audit.colFirstSeen'),
+      render: e => new Date(e.timestamp).toLocaleDateString(),
+    },
+    {
+      key: 'age',
+      header: t('pages.audit.colAge'),
+      render: e => {
+        const days = daysSince(e.timestamp)
+        const ageColor = days > 90 ? statusColor('bad') : days > 30 ? statusColor('warn') : statusColor('good')
+        return <span className="audit-age" style={{ color: ageColor }}>{t('pages.audit.ageDays', { days })}</span>
+      },
+    },
+  ]
+
   return (
     <div>
       <div className="audit-table__filters">
@@ -171,48 +221,13 @@ function FirstSeenTable({ entries, t }: { entries: FirstSeenEntry[]; t: ReturnTy
         <span className="audit-count">{filtered.length} / {entries.length}</span>
       </div>
 
-      <div className="audit-table__wrap">
-        <table className="audit-table">
-          <thead>
-            <tr>
-              {[t('pages.audit.colControl'), t('pages.audit.colResource'), t('pages.audit.colSeverity'), t('pages.audit.colPillar'), t('pages.audit.colProject'), t('pages.audit.colFirstSeen'), t('pages.audit.colAge')].map(h => (
-                <th key={h}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((e, i) => {
-              const days = daysSince(e.timestamp)
-              const ageColor = days > 90 ? statusColor('bad') : days > 30 ? statusColor('warn') : statusColor('good')
-              const sev = e.severity?.toLowerCase()
-              return (
-                <tr key={i}>
-                  <td className="audit-table__mono audit-table__mono--strong">{e.control_id}</td>
-                  <td className="audit-table__mono" title={e.resource}>{e.resource}</td>
-                  <td>
-                    <span className="audit-sev" style={{ color: severityColor(sev), background: severityBg(sev, 9), borderColor: severityBorder(sev, 20) }}>
-                      {e.severity}
-                    </span>
-                  </td>
-                  <td>{e.pillar}</td>
-                  <td className="audit-table__mono">{e.project} / {e.branch}</td>
-                  <td>{new Date(e.timestamp).toLocaleDateString()}</td>
-                  <td>
-                    <span className="audit-age" style={{ color: ageColor }}>{t('pages.audit.ageDays', { days })}</span>
-                  </td>
-                </tr>
-              )
-            })}
-            {sorted.length === 0 && (
-              <tr>
-                <td colSpan={7} className="audit-table__empty">
-                  {t('pages.audit.noFirstSeen')}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={sorted}
+        rowKey={e => e.key}
+        className="audit-table__wrap"
+        empty={<EmptyState compact title={t('pages.audit.noFirstSeen')} />}
+      />
     </div>
   )
 }
@@ -396,11 +411,10 @@ export default function AuditLogPage() {
           </div>
 
           {filtered.length === 0 ? (
-            <div className="audit-empty">
-              <div className="audit-empty__icon">📋</div>
-              <strong>{t('pages.audit.noEvents')}</strong>
-              <div>{t('pages.audit.noEventsHint')}</div>
-            </div>
+            <EmptyState
+              title={t('pages.audit.noEvents')}
+              description={t('pages.audit.noEventsHint')}
+            />
           ) : (
             <div className="audit-timeline">
               {filtered.map(e => <EventRow key={e.id} event={e} t={t} />)}
@@ -591,7 +605,7 @@ const auditCss = `
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .audit-btn--export {
   color: var(--pass);

@@ -18,7 +18,6 @@ import { useI18n } from '../i18n'
 import { Page } from '../routing'
 import { MATURITY_META } from './settingsUtils'
 import DashboardPage from './DashboardPage'
-import flightMapBg from '/flight-map-bg.png'
 import { scoreColor } from '../severity';
 
 // ── Semantic color helpers ────────────────────────────────────────────────────
@@ -163,7 +162,6 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
         borderRadius: '50%',
         background: `conic-gradient(${color} ${pct}%, var(--track) ${pct}%)`,
         padding: 10,
-        boxShadow: `0 12px 40px color-mix(in srgb, ${color} 16%, transparent)`,
       }}
     >
       <div
@@ -208,7 +206,7 @@ function KpiTile({
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: '20px',
+        borderRadius: '12px',
         padding: '1.25rem',
         display: 'flex',
         flexDirection: 'column',
@@ -218,13 +216,13 @@ function KpiTile({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
           {label}
         </span>
         <div style={{ color, opacity: 0.85 }}>{icon}</div>
       </div>
       <div>
-        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
         {subtext && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{subtext}</div>}
       </div>
     </div>
@@ -251,7 +249,7 @@ function SectionCard({
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',
-        borderRadius: '20px',
+        borderRadius: '12px',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -384,96 +382,54 @@ function FlightTimeline({ runs, passports }: { runs: RunSummary[]; passports: Pr
     { x: 870, y: 184 },
   ]
 
+  // Furthest stage reached by any project — used to tint the connector.
+  const lastActive = stageDistribution.reduce((acc, count, idx) => (count > 0 ? idx : acc), -1)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div className="gd-flight-wrap gd-flight-wrap--real" style={{ backgroundImage: `url(${flightMapBg})` }}>
-        <svg width="100%" height="100%" viewBox="0 0 1000 260" preserveAspectRatio="xMidYMid slice" style={{ overflow: 'visible' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="gd-flight-wrap">
+        <svg width="100%" height="100%" viewBox="0 0 1000 260" preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
           <defs>
-            <linearGradient id="gdSkyFade" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" style={{ stopColor: 'var(--bg)', stopOpacity: 0.18 }} />
-              <stop offset="50%" style={{ stopColor: 'var(--bg)', stopOpacity: 0 }} />
-              <stop offset="100%" style={{ stopColor: 'var(--bg)', stopOpacity: 0.06 }} />
+            <linearGradient id="gdFlightTrail" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" style={{ stopColor: 'var(--waf-brand)', stopOpacity: 0.75 }} />
+              <stop offset="100%" style={{ stopColor: 'var(--waf-brand)', stopOpacity: 0.3 }} />
             </linearGradient>
-            <radialGradient id="gdMarkerHalo" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" style={{ stopColor: 'var(--waf-brand)', stopOpacity: 0.18 }} />
-              <stop offset="100%" style={{ stopColor: 'var(--waf-brand)', stopOpacity: 0 }} />
-            </radialGradient>
-            <filter id="gdMarkerDrop" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="color-mix(in srgb, var(--text) 35%, transparent)" floodOpacity="0.22" />
-            </filter>
-            <filter id="gdLabelShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="var(--surface)" floodOpacity="0.95" />
-            </filter>
           </defs>
 
-          {/* Light top/bottom fade to keep markers readable */}
-          <rect x="0" y="0" width="1000" height="260" fill="url(#gdSkyFade)" />
-
-          {/* Flight arc path - solid for active/reached, dashed beyond */}
+          {/* A single quiet trace — the data lives in the nodes, not in scenery. */}
           <path
-            d="M 120 202 C 220 202 300 190 400 158 C 470 136 500 124 520 124 C 565 124 610 100 650 86"
+            d="M 120 202 C 220 202 300 190 400 158 C 470 136 500 124 520 124 C 565 124 610 100 650 86 C 710 66 780 86 870 184"
             fill="none"
-            stroke="var(--waf-brand)"
-            strokeWidth="2.5"
+            stroke={lastActive >= 0 ? 'url(#gdFlightTrail)' : 'var(--flight-line)'}
+            strokeWidth="1.5"
             strokeLinecap="round"
-            opacity="0.85"
-          />
-          <path
-            d="M 650 86 C 710 66 780 86 870 184"
-            fill="none"
-            stroke="var(--waf-brand)"
-            strokeWidth="2"
-            strokeDasharray="6 5"
-            strokeLinecap="round"
-            opacity="0.6"
           />
 
-          {/* Stage markers with labels */}
           {STAGE_META.map((stage, idx) => {
             const pos = stagePositions[idx]
             const count = stageDistribution[idx]
             const active = totalProjects > 0 && count > 0
-            const iconSize = 16
             return (
-              <g key={idx} transform={`translate(${pos.x}, ${pos.y})`} filter="url(#gdMarkerDrop)">
-                {/* Label above */}
-                <text
-                  x="0"
-                  y={-28}
-                  textAnchor="middle"
-                  fontSize="8"
-                  fontWeight="800"
-                  fill="var(--text)"
-                  letterSpacing="0.06em"
-                  filter="url(#gdLabelShadow)"
-                >
-                  {stage.label.toUpperCase()}
-                </text>
-                {/* Range label */}
-                <text
-                  x="0"
-                  y={-18}
-                  textAnchor="middle"
-                  fontSize="7"
-                  fontWeight="700"
-                  fill={active ? 'var(--waf-brand)' : 'var(--muted)'}
-                  filter="url(#gdLabelShadow)"
-                >
-                  {stage.range}
-                </text>
-                {/* Outer halo */}
-                <circle r="20" fill="url(#gdMarkerHalo)" opacity={active ? 0.9 : 0.35} />
-                {/* Marker circle */}
-                <circle r="16" fill={active ? 'var(--waf-brand)' : 'var(--surface)'} stroke="var(--waf-brand)" strokeWidth="1.5" />
-                {/* Icon */}
-                <g transform={`translate(-${iconSize / 2}, -${iconSize / 2})`} style={{ color: active ? 'var(--surface)' : 'var(--text)' }}>
+              <g key={idx} transform={`translate(${pos.x}, ${pos.y})`}>
+                <circle
+                  r="15"
+                  fill="var(--flight-node)"
+                  stroke={active ? 'var(--waf-brand)' : 'var(--flight-line-strong)'}
+                  strokeWidth="1.5"
+                />
+                <g transform="translate(-8, -8)" style={{ color: active ? 'var(--waf-brand)' : 'var(--flight-fg-muted)' }}>
                   <stage.icon />
                 </g>
-                {/* Count badge */}
+                <text x="0" y="28" textAnchor="middle" fontSize="8" fontWeight="700" fill="var(--flight-fg)" letterSpacing="0.07em">
+                  {stage.label.toUpperCase()}
+                </text>
+                <text x="0" y="39" textAnchor="middle" fontSize="7.5" fontWeight="600" fill="var(--flight-fg-muted)">
+                  {stage.range.replace('-', '–')}%
+                </text>
                 {active && (
-                  <g transform="translate(12, -12)">
-                    <circle r="9" fill="var(--waf-brand)" stroke="var(--surface)" strokeWidth="1.5" />
-                    <text x="0" y="1" textAnchor="middle" dominantBaseline="middle" fontSize="8" fontWeight="800" fill="var(--surface)">
+                  <g transform="translate(11, -11)">
+                    <rect x="-8" y="-7" width="16" height="14" rx="4" fill="var(--waf-brand)" />
+                    <text x="0" y="0" textAnchor="middle" dominantBaseline="middle" fontSize="8" fontWeight="700" fill="#08111c">
                       {count}
                     </text>
                   </g>
@@ -489,54 +445,17 @@ function FlightTimeline({ runs, passports }: { runs: RunSummary[]; passports: Pr
           const count = stageDistribution[idx]
           const active = totalProjects > 0 && count > 0
           return (
-            <div
-              key={idx}
-              className="gd-flight-stage"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.85rem',
-                padding: '0.85rem 1rem',
-                borderRadius: '12px',
-                background: 'var(--surface)',
-                border: `1px solid ${active ? 'var(--waf-brand)' : 'var(--border)'}`,
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              }}
-            >
-              <div
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  background: active ? 'color-mix(in srgb, var(--waf-brand) 12%, var(--surface))' : 'var(--bg)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: active ? 'var(--waf-brand)' : 'var(--text)',
-                  flexShrink: 0,
-                }}
-              >
+            <div key={idx} className={`gd-flight-stage${active ? ' is-active' : ''}`}>
+              <div className="gd-flight-stage-icon">
                 <stage.icon />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stage.label}</div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{stage.description}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.35rem', fontWeight: 600 }}>{stage.range}%</div>
-              </div>
-              {active && (
-                <div
-                  style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 800,
-                    color: 'var(--waf-brand)',
-                    padding: '0.2rem 0.6rem',
-                    borderRadius: '999px',
-                    background: 'color-mix(in srgb, var(--waf-brand) 10%, var(--surface))',
-                  }}
-                >
-                  {count}
+                <div className="gd-flight-stage-name">{stage.label}</div>
+                <div className="gd-flight-stage-meta">
+                  {stage.description} · {stage.range.replace('-', '–')}%
                 </div>
-              )}
+              </div>
+              <div className="gd-flight-stage-count">{count}</div>
             </div>
           )
         })}
@@ -613,7 +532,7 @@ function RecentActivity({ runs }: { runs: RunSummary[] }) {
             <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activity.project}
             </div>
-            <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{formatDateTime(activity.timestamp)}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{formatDateTime(activity.timestamp)}</div>
           </div>
           <div
             style={{
@@ -652,7 +571,7 @@ function ViewSwitcher({ activeView, onChange }: { activeView: 'flight' | 'dashbo
             fontSize: '0.78rem',
             fontWeight: activeView === view ? 700 : 600,
             cursor: 'pointer',
-            transition: 'all 0.15s',
+            transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
           }}
         >
           {view === 'flight' ? t('pages.globaldashboard.operationalCenter') : t('nav.items.dashboard')}
@@ -797,7 +716,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
   if (error) {
     return (
       <div className="gd-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-        <div style={{ textAlign: 'center', maxWidth: 420, padding: '2rem', borderRadius: '20px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <div style={{ textAlign: 'center', maxWidth: 420, padding: '2rem', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div style={{ color: 'var(--fail)', marginBottom: '1rem' }}><ErrorIcon /></div>
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Error Loading Global Dashboard</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{error}</div>
@@ -824,7 +743,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
   if (!runs || runs.length === 0) {
     return (
       <div className="gd-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-        <div style={{ textAlign: 'center', maxWidth: 460, padding: '2.5rem', borderRadius: '24px', background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ textAlign: 'center', maxWidth: 460, padding: '2.5rem', borderRadius: '16px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div style={{ color: 'var(--waf-brand)', marginBottom: '1rem' }}><EmptyStateIcon /></div>
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>No run data available</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>Run a WOMBATpass scan first to populate your operational center.</div>
@@ -1030,19 +949,19 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                   <div className="gd-featured-stats">
                     <div className="gd-featured-stat" style={{ borderColor: scoreColor(featuredProject.score) }}>
                       <div style={{ fontSize: '1.75rem', fontWeight: 800, color: scoreColor(featuredProject.score) }}>{featuredProject.score}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.score')}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.score')}</div>
                     </div>
                     <div className="gd-featured-stat" style={{ borderColor: maturityColor(getMaturityForScore(featuredProject.score).level) }}>
                       <div style={{ fontSize: '1.75rem', fontWeight: 800, color: maturityColor(getMaturityForScore(featuredProject.score).level) }}>
                         {getMaturityForScore(featuredProject.score).level}
                       </div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.level')}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.level')}</div>
                     </div>
                     <div className="gd-featured-stat" style={{ borderColor: 'var(--waf-brand)' }}>
                       <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--waf-brand)' }}>
                         {formatDate(getBestRunForProject(featuredProject.project, runs)?.created_at)}
                       </div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.lastScan')}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.globaldashboard.lastScan')}</div>
                     </div>
                   </div>
                 </div>
@@ -1124,7 +1043,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                     <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.displayName}
                     </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{p.score}/100 · {maturity.short}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{p.score}/100 · {maturity.short}</div>
                   </div>
                   <div
                     style={{
@@ -1133,7 +1052,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
                       background: `color-mix(in srgb, ${maturityColor(maturity.level)} 10%, transparent)`,
                       border: `1px solid color-mix(in srgb, ${maturityColor(maturity.level)} 20%, transparent)`,
                       color: maturityColor(maturity.level),
-                      fontSize: '0.68rem',
+                      fontSize: '0.7rem',
                       fontWeight: 800,
                       flexShrink: 0,
                     }}
@@ -1172,13 +1091,13 @@ const globalDashboardCss = `
 .gd-hero-glass {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 16px;
   padding: 1.5rem 1.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   position: relative;
   overflow: hidden;
   flex-wrap: wrap;
@@ -1259,11 +1178,9 @@ const globalDashboardCss = `
 .gd-btn-primary {
   background: var(--waf-brand);
   color: var(--surface);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--waf-brand) 32%, var(--surface));
 }
 .gd-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--waf-brand) 40%, var(--surface));
+  background: var(--waf-brand-h);
 }
 .gd-btn-primary:active {
   transform: scale(0.98);
@@ -1275,7 +1192,6 @@ const globalDashboardCss = `
 }
 .gd-btn-secondary:hover {
   background: var(--row-hover);
-  transform: translateY(-1px);
 }
 .gd-btn-secondary:active {
   transform: scale(0.98);
@@ -1306,8 +1222,7 @@ const globalDashboardCss = `
   justify-content: space-between;
 }
 .gd-tile:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
   border-color: color-mix(in srgb, var(--waf-brand) 25%, var(--surface));
 }
 .gd-tile:active {
@@ -1332,10 +1247,10 @@ const globalDashboardCss = `
 .gd-col-2 { grid-column: span 2; }
 
 .gd-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 .gd-card:hover {
-  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--waf-brand) 22%, var(--border));
 }
 
 .gd-project-row:hover,
@@ -1473,23 +1388,50 @@ const globalDashboardCss = `
 }
 
 .gd-flight-wrap {
+  /* A media surface: deliberately dark in both themes, like a map tile, so
+     the photo reads and the overlay text stays legible. */
+  --flight-fg: #e8eef7;
+  --flight-fg-muted: rgba(232, 238, 247, 0.66);
+  --flight-node: rgba(8, 13, 20, 0.68);
+  --flight-line: rgba(255, 255, 255, 0.18);
+  --flight-line-strong: rgba(255, 255, 255, 0.30);
   position: relative;
   border-radius: 16px;
-  background: var(--bg);
+  background: #0a0f16;
   border: 1px solid var(--border);
   overflow: hidden;
   aspect-ratio: 1000 / 260;
 }
-.gd-flight-wrap svg {
-  display: block;
-}
-.gd-flight-wrap--real {
-  border-radius: 20px;
-  box-shadow: inset 0 0 60px color-mix(in srgb, var(--text) 4%, transparent), 0 10px 40px color-mix(in srgb, var(--text) 8%, transparent);
+/* The airport photo is an atmosphere layer, not the subject: lightly
+   desaturated and softened so the rail, rings and labels stay crisp. */
+.gd-flight-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
   background-image: url('/flight-map-bg.png');
   background-size: cover;
-  background-position: center 55%;
+  background-position: center center;
   background-repeat: no-repeat;
+  filter: saturate(0.85) blur(0.4px);
+}
+/* Light scrim + measurement grid: above the photo, below the data. */
+.gd-flight-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.11) 1px, transparent 0),
+    linear-gradient(180deg,
+      rgba(8, 12, 18, 0.52) 0%,
+      rgba(8, 12, 18, 0.30) 45%,
+      rgba(8, 12, 18, 0.70) 100%);
+  background-size: 22px 22px, 100% 100%;
+  pointer-events: none;
+}
+.gd-flight-wrap svg {
+  display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .gd-flight-stages {
@@ -1498,10 +1440,65 @@ const globalDashboardCss = `
   gap: 0.75rem;
 }
 
-.gd-flight-stage:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--text) 8%, transparent);
+.gd-flight-stage {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: border-color .15s ease, background-color .15s ease;
 }
+.gd-flight-stage:hover {
+  background: var(--row-hover);
+  border-color: color-mix(in srgb, var(--waf-brand) 30%, var(--border));
+}
+.gd-flight-stage.is-active {
+  border-color: color-mix(in srgb, var(--waf-brand) 35%, var(--border));
+}
+.gd-flight-stage-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.gd-flight-stage.is-active .gd-flight-stage-icon {
+  background: color-mix(in srgb, var(--waf-brand) 10%, var(--surface));
+  border-color: transparent;
+  color: var(--waf-brand);
+}
+.gd-flight-stage-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gd-flight-stage-meta {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gd-flight-stage-count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 1.25rem;
+  text-align: right;
+}
+.gd-flight-stage.is-active .gd-flight-stage-count { color: var(--waf-brand); }
 
 @media (max-width: 1100px) {
   .gd-flight-stages { grid-template-columns: repeat(3, minmax(0, 1fr)); }

@@ -136,7 +136,7 @@ export default function LoginPage() {
                 border: '1px solid',
                 borderColor: loading || !username.trim() || !password ? 'var(--border)' : 'var(--waf-brand)',
                 fontWeight: 700, fontSize: '0.875rem', cursor: loading ? 'wait' : 'pointer',
-                transition: 'all .15s',
+                transition: 'background-color .15s, border-color .15s, color .15s',
               }}
             >
               {loading ? t('pages.login.signingIn') : t('pages.login.signIn')}
@@ -178,7 +178,7 @@ export default function LoginPage() {
 
         {/* ADR-005: optional per-mandant SSO — most deployments never touch this */}
         <div>
-          <label style={{ display: 'block', fontSize: '0.68rem', color: 'var(--muted)', marginBottom: '0.3rem' }}>
+          <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.3rem' }}>
             {t('pages.login.mandantLabel')}
           </label>
           <input

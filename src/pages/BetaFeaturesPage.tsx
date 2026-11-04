@@ -313,7 +313,7 @@ export default function BetaFeaturesPage({
           </div>
           <p className="beta-page-subtitle">{t('pages.betaFeatures.pageSubtitle')}</p>
         </div>
-        <button type="button" className="beta-secondary" onClick={onOpenSettings}>
+        <button type="button" className="beta-secondary" onClick={onOpenSettings} aria-label={t('pages.betaFeatures.backToSettings')}>
           <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>

@@ -4,6 +4,8 @@ import { PILLAR_COLOR } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
 import { useI18n } from '../i18n'
 import { severityColor } from '../severity'
+import { EmptyState } from '../ui'
+import { PAGE_TITLE } from '../routing'
 
 interface Props {
   controls: ControlMeta[]   // from active run API — empty when no run selected
@@ -11,11 +13,11 @@ interface Props {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  PASS: '#22c55e', FAIL: '#DA2C38', SKIP: '#94a3b8', WAIVED: '#a78bfa',
+  PASS: 'var(--pass)', FAIL: 'var(--fail)', SKIP: 'var(--skip)', WAIVED: 'var(--waived)',
 }
 
 function pillarColor(pillar: string): string {
-  return PILLAR_COLOR[pillar.toLowerCase()] ?? '#94a3b8'
+  return PILLAR_COLOR[pillar.toLowerCase()] ?? 'var(--skip)'
 }
 
 function Pill({ label, color }: { label: string; color: string }) {
@@ -23,7 +25,7 @@ function Pill({ label, color }: { label: string; color: string }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center',
       padding: '0.15rem 0.55rem', borderRadius: '999px',
-      background: `${color}22`, color, fontSize: '0.72rem', fontWeight: 700,
+      background: `color-mix(in srgb, ${color} 13%, transparent)`, color, fontSize: '0.72rem', fontWeight: 700,
     }}>
       {label}
     </span>
@@ -57,7 +59,7 @@ function CopyBtn({ code }: { code: string }) {
   return (
     <button
       onClick={() => navigator.clipboard.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })}
-      style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '4px', color: copied ? '#22c55e' : '#94a3b8', fontSize: '0.7rem', padding: '0.15rem 0.45rem', cursor: 'pointer' }}
+      style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '4px', color: copied ? 'var(--pass)' : 'var(--skip)', fontSize: '0.7rem', padding: '0.15rem 0.45rem', cursor: 'pointer' }}
     >
       {copied ? 'Copied!' : 'Copy'}
     </button>
@@ -115,7 +117,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
     <div style={{
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
       width: '1040px', maxWidth: '92vw', maxHeight: '85vh',
-      background: '#fff', borderRadius: '12px',
+      background: 'var(--surface)', borderRadius: '12px',
       boxShadow: '0 24px 64px rgba(15,23,42,.18)',
       display: 'flex', flexDirection: 'column', zIndex: 100,
       overflow: 'hidden',
@@ -129,10 +131,10 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
             <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
               <Pill label={ctrl.pillar} color={pc} />
               <Pill label={ctrl.severity} color={severityColor(ctrl.severity)} />
-              {status && <Pill label={status} color={STATUS_COLOR[status] ?? '#94a3b8'} />}
+              {status && <Pill label={status} color={STATUS_COLOR[status] ?? 'var(--skip)'} />}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, fontSize: '1.2rem' }}>✕</button>
+          <button aria-label={t('common.close')} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, fontSize: '1.2rem' }}>✕</button>
         </div>
 
         {/* Tab bar */}
@@ -196,7 +198,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
         {activeTab === 'why' && (
           <>
             {ctrl.rationale && (
-              <div style={{ background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)', borderRadius: '10px', padding: '1rem' }}>
+              <div style={{ background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)', borderRadius: '10px', padding: '1rem' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>Business Impact</div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>{ctrl.rationale}</p>
               </div>
@@ -206,7 +208,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                 <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>Technical Impact</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   {ctrl.threat.map((t, i) => (
-                    <div key={i} style={{ background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)', borderRadius: '8px', padding: '0.65rem 0.875rem' }}>
+                    <div key={i} style={{ background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)', borderRadius: '8px', padding: '0.65rem 0.875rem' }}>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.5 }}>{t}</span>
                     </div>
                   ))}
@@ -224,13 +226,13 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                     <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--waf-brand)', marginBottom: '0.4rem' }}>{m.framework}</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                       {m.controls.map((c, j) => (
-                        <span key={j} style={{ padding: '0.1rem 0.5rem', borderRadius: '999px', background: 'rgba(0,148,255,.1)', color: 'var(--waf-brand)', fontSize: '0.72rem', fontWeight: 600 }}>{c}</span>
+                        <span key={j} style={{ padding: '0.1rem 0.5rem', borderRadius: '999px', background: 'color-mix(in srgb, var(--waf-brand) 10%, transparent)', color: 'var(--waf-brand)', fontSize: '0.72rem', fontWeight: 600 }}>{c}</span>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            : <p style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>No regulatory mappings for this control.</p>
+            : <EmptyState compact title="No regulatory mappings for this control." />
         )}
 
         {activeTab === 'checks' && (
@@ -244,7 +246,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                   </div>
                 ))}
               </div>
-            : <p style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>No automated checks for this control.</p>
+            : <EmptyState compact title="No automated checks for this control." />
         )}
 
         {activeTab === 'fix' && (
@@ -273,13 +275,13 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                   </div>
                 ))}
               </div>
-            : <p style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>No remediation guidance available for this control.</p>
+            : <EmptyState compact title="No remediation guidance available for this control." />
         )}
 
         {activeTab === 'waiver' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '580px' }}>
             {existingWaiver && (
-              <div style={{ background: 'color-mix(in srgb, #a78bfa 10%, transparent)', border: '1px solid color-mix(in srgb, #a78bfa 30%, transparent)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.85rem', color: '#7c3aed' }}>
+              <div style={{ background: 'color-mix(in srgb, var(--waived) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--waived) 30%, transparent)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.85rem', color: 'var(--waf-info)' }}>
                 {t('pages.controlsPage.existingWaiver')}
               </div>
             )}
@@ -305,14 +307,14 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
               <button
                 onClick={saveWaiver}
                 disabled={!wReason.trim()}
-                style={{ padding: '0.45rem 1rem', borderRadius: '8px', border: 'none', cursor: wReason.trim() ? 'pointer' : 'not-allowed', background: wSaved ? '#22c55e' : 'var(--waf-brand)', color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}
+                style={{ padding: '0.45rem 1rem', borderRadius: '8px', border: 'none', cursor: wReason.trim() ? 'pointer' : 'not-allowed', background: wSaved ? 'var(--pass)' : 'var(--waf-brand)', color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}
               >
                 {wSaved ? t('pages.controlsPage.waiverSaved') : existingWaiver ? t('pages.controlsPage.waiverUpdate') : t('pages.controlsPage.waiveSave')}
               </button>
               {existingWaiver && (
                 <button
                   onClick={removeWaiver}
-                  style={{ padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)', cursor: 'pointer', background: 'color-mix(in srgb, #da2c38 6%, transparent)', color: '#DA2C38', fontWeight: 700, fontSize: '0.85rem' }}
+                  style={{ padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)', cursor: 'pointer', background: 'color-mix(in srgb, var(--fail) 6%, transparent)', color: 'var(--fail-ink)', fontWeight: 700, fontSize: '0.85rem' }}
                 >
                   {t('pages.controlsPage.waiverRemove')}
                 </button>
@@ -370,22 +372,23 @@ export default function ControlsPage({ controls, findings }: Props) {
   )
 
   const selectStyle = {
-    background: '#fff', color: 'var(--text)', border: '1px solid var(--border)',
+    background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)',
     borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.8rem', outline: 'none',
   }
 
   return (
     <>
+      <h1 className="ui-sr-only">{PAGE_TITLE['catalogue']}</h1>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {/* Source indicator */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.6rem',
           padding: '0.6rem 0.875rem', borderRadius: '10px', fontSize: '0.8rem',
-          background: isLive ? 'rgba(0,148,255,.06)' : 'rgba(148,163,184,.08)',
-          border: `1px solid ${isLive ? 'rgba(0,148,255,.2)' : 'rgba(148,163,184,.2)'}`,
+          background: isLive ? 'color-mix(in srgb, var(--waf-brand) 6%, transparent)' : 'color-mix(in srgb, var(--skip) 8%, transparent)',
+          border: `1px solid ${isLive ? 'color-mix(in srgb, var(--waf-brand) 20%, transparent)' : 'color-mix(in srgb, var(--skip) 20%, transparent)'}`,
           color: isLive ? 'var(--waf-brand)' : 'var(--muted)',
         }}>
-          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isLive ? 'var(--waf-brand)' : '#94a3b8', flexShrink: 0 }} />
+          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isLive ? 'var(--waf-brand)' : 'var(--skip)', flexShrink: 0 }} />
           {isLive
             ? <><strong>{source.length} controls</strong> loaded from the active run</>
             : <>Showing reference set — run <code style={{ fontSize: '0.75rem' }}>wombat check --output json --push …</code> to see your actual loaded controls</>
@@ -413,6 +416,13 @@ export default function ControlsPage({ controls, findings }: Props) {
         </div>
 
         {/* Controls grid */}
+        {filtered.length === 0 ? (
+          <EmptyState
+            title={source.length === 0
+              ? t('pages.controlsPage.noControls')
+              : t('pages.controlsPage.noMatch')}
+          />
+        ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
           {filtered.map(ctrl => {
             const status = controlStatus(ctrl.id, ctrl.checks, findings)
@@ -435,7 +445,7 @@ export default function ControlsPage({ controls, findings }: Props) {
                   {status && (
                     <span style={{
                       flexShrink: 0, padding: '0.1rem 0.45rem', borderRadius: '999px',
-                      background: `${STATUS_COLOR[status]}22`, color: STATUS_COLOR[status],
+                      background: `color-mix(in srgb, ${STATUS_COLOR[status]} 13%, transparent)`, color: STATUS_COLOR[status],
                       fontSize: '0.7rem', fontWeight: 700,
                     }}>
                       {status}
@@ -457,7 +467,7 @@ export default function ControlsPage({ controls, findings }: Props) {
                   <Pill label={ctrl.pillar} color={pc} />
                   <Pill label={ctrl.severity} color={sc} />
                   {ctrl.checks.length > 0 && (
-                    <span style={{ marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)' }}>
+                    <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)' }}>
                       {ctrl.checks.length} check{ctrl.checks.length !== 1 ? 's' : ''}
                     </span>
                   )}
@@ -466,11 +476,12 @@ export default function ControlsPage({ controls, findings }: Props) {
             )
           })}
         </div>
+        )}
       </div>
 
       {selected && (
         <>
-          <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 20%, transparent)', zIndex: 99 }} />
+          <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 99 }} />
           <DetailPanel
             ctrl={selected}
             status={controlStatus(selected.id, selected.checks, findings)}

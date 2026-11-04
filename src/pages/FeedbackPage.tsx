@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useI18n } from '../i18n'
+import { Button } from '../ui'
+import { PAGE_TITLE } from '../routing'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,47 +70,47 @@ const CATEGORIES: { label: Category; icon: JSX.Element; color: string; bg: strin
   {
     label: 'Bug Report',
     icon: <BugIcon />,
-    color: '#dc2626',
-    bg: 'rgba(220,38,38,0.07)',
-    border: '#dc2626',
+    color: 'var(--fail-ink)',
+    bg: 'color-mix(in srgb, var(--fail) 7%, transparent)',
+    border: 'var(--fail)',
   },
   {
     label: 'Feature Request',
     icon: <LightbulbIcon />,
-    color: '#0094FF',
-    bg: 'rgba(0,148,255,0.07)',
-    border: '#0094FF',
+    color: 'var(--waf-brand-ink)',
+    bg: 'color-mix(in srgb, var(--waf-brand) 7%, transparent)',
+    border: 'var(--waf-brand-ink)',
   },
   {
     label: 'General Feedback',
     icon: <ChatIcon />,
-    color: '#059669',
-    bg: 'rgba(5,150,105,0.07)',
-    border: '#059669',
+    color: 'var(--score-high-ink)',
+    bg: 'color-mix(in srgb, var(--score-high) 7%, transparent)',
+    border: 'var(--score-high)',
   },
   {
     label: 'Security Issue',
     icon: <ShieldIcon />,
-    color: '#d97706',
-    bg: 'rgba(217,119,6,0.07)',
-    border: '#d97706',
+    color: 'var(--score-mid-ink)',
+    bg: 'color-mix(in srgb, var(--waf-warn) 7%, transparent)',
+    border: 'var(--waf-warn)',
   },
   {
     label: 'Improvement',
     icon: <SparkleIcon />,
-    color: '#7c3aed',
-    bg: 'rgba(124,58,237,0.07)',
-    border: '#7c3aed',
+    color: 'var(--waf-info)',
+    bg: 'color-mix(in srgb, var(--waf-info) 7%, transparent)',
+    border: 'var(--waf-info)',
   },
 ]
 
 // ─── Priority config ──────────────────────────────────────────────────────────
 
 const PRIORITIES: { label: Priority; color: string }[] = [
-  { label: 'Low',    color: '#059669' },
-  { label: 'Medium', color: '#0094FF' },
-  { label: 'High',   color: '#d97706' },
-  { label: 'Urgent', color: '#dc2626' },
+  { label: 'Low',    color: 'var(--pass-ink)' },
+  { label: 'Medium', color: 'var(--waf-brand-ink)' },
+  { label: 'High',   color: 'var(--score-mid-ink)' },
+  { label: 'Urgent', color: 'var(--fail-ink)' },
 ]
 
 
@@ -137,7 +139,7 @@ export default function FeedbackPage() {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   const charCount = message.length
-  const charColor = charCount >= 1950 ? '#dc2626' : charCount >= 1800 ? '#d97706' : 'var(--muted)'
+  const charColor = charCount >= 1950 ? 'var(--fail-ink)' : charCount >= 1800 ? 'var(--score-mid-ink)' : 'var(--muted)'
 
   const displayRating = hoverRating || rating
 
@@ -179,14 +181,14 @@ export default function FeedbackPage() {
   function inputStyle(hasError?: boolean): React.CSSProperties {
     return {
       width: '100%',
-      background: '#fff',
+      background: 'var(--surface)',
       color: 'var(--text)',
-      border: `1px solid ${hasError ? '#dc2626' : 'var(--border)'}`,
+      border: `1px solid ${hasError ? 'var(--fail)' : 'var(--border)'}`,
       borderRadius: '8px',
       padding: '0.5rem 0.75rem',
       fontSize: '0.85rem',
       outline: 'none',
-      boxShadow: hasError ? '0 0 0 2px rgba(220,38,38,0.12)' : undefined,
+      boxShadow: hasError ? '0 0 0 2px color-mix(in srgb, var(--fail) 12%, transparent)' : undefined,
       fontFamily: 'inherit',
     }
   }
@@ -213,15 +215,16 @@ export default function FeedbackPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '760px', margin: '0 auto' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['feedback']}</h1>
 
       {/* ── Info banner ─────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.75rem',
         padding: '0.875rem 1.1rem', borderRadius: '12px',
-        background: 'rgba(0,148,255,0.07)', border: '1px solid rgba(0,148,255,0.25)',
+        background: 'color-mix(in srgb, var(--waf-brand) 7%, var(--surface))', border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
         color: 'var(--text)',
       }}>
-        <span style={{ color: '#0094FF', flexShrink: 0 }}><MailIcon /></span>
+        <span style={{ color: 'var(--waf-brand-ink)', flexShrink: 0 }}><MailIcon /></span>
         <span style={{ fontSize: '0.85rem', lineHeight: 1.5 }}>
           {t('pages.feedbackPage.teamNote')}
         </span>
@@ -232,8 +235,8 @@ export default function FeedbackPage() {
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.75rem',
           padding: '0.875rem 1.1rem', borderRadius: '12px',
-          background: 'color-mix(in srgb, #059669 9%, transparent)', border: '1px solid color-mix(in srgb, #059669 30%, transparent)',
-          color: '#065f46', fontSize: '0.875rem', fontWeight: 600,
+          background: 'color-mix(in srgb, var(--pass) 9%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
+          color: 'var(--pass-ink)', fontSize: '0.875rem', fontWeight: 600,
         }}>
           <span style={{ fontSize: '1rem' }}>✓</span>
           {t('pages.feedbackPage.emailClientOpened')}
@@ -284,7 +287,7 @@ export default function FeedbackPage() {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: '1.75rem', lineHeight: 1, padding: '0 0.05rem',
-                color: n <= displayRating ? '#f59e0b' : '#cbd5e1',
+                color: n <= displayRating ? 'var(--waf-warn)' : 'var(--track)',
                 transition: 'color 0.1s',
               }}
               aria-label={`Rate ${n}`}
@@ -314,7 +317,7 @@ export default function FeedbackPage() {
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.45rem 1rem', borderRadius: '8px',
                   border: `2px solid ${active ? p.color : 'var(--border)'}`,
-                  background: active ? `${p.color}14` : 'var(--bg)',
+                  background: active ? `color-mix(in srgb, ${p.color} 8%, transparent)` : 'var(--bg)',
                   color: active ? p.color : 'var(--text)',
                   fontWeight: active ? 700 : 500,
                   fontSize: '0.85rem', cursor: 'pointer',
@@ -345,7 +348,7 @@ export default function FeedbackPage() {
               placeholder="Your name"
               style={inputStyle(errors.name)}
             />
-            {errors.name && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>{t('pages.feedbackPage.nameRequired')}</div>}
+            {errors.name && <div style={{ fontSize: '0.72rem', color: 'var(--fail-ink)', marginTop: '0.25rem' }}>{t('pages.feedbackPage.nameRequired')}</div>}
           </div>
           <div>
             <label style={labelStyle}>{t('pages.feedbackPage.emailLabel')}</label>
@@ -356,7 +359,7 @@ export default function FeedbackPage() {
               placeholder="you@company.com"
               style={inputStyle(errors.email)}
             />
-            {errors.email && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>{t('pages.feedbackPage.emailRequired')}</div>}
+            {errors.email && <div style={{ fontSize: '0.72rem', color: 'var(--fail-ink)', marginTop: '0.25rem' }}>{t('pages.feedbackPage.emailRequired')}</div>}
           </div>
           <div>
             <label style={labelStyle}>{t('pages.feedbackPage.companyLabel')}</label>
@@ -377,7 +380,7 @@ export default function FeedbackPage() {
               placeholder="Short description"
               style={inputStyle(errors.subject)}
             />
-            {errors.subject && <div style={{ fontSize: '0.72rem', color: '#dc2626', marginTop: '0.25rem' }}>{t('pages.feedbackPage.subjectRequired')}</div>}
+            {errors.subject && <div style={{ fontSize: '0.72rem', color: 'var(--fail-ink)', marginTop: '0.25rem' }}>{t('pages.feedbackPage.subjectRequired')}</div>}
           </div>
         </div>
       </div>
@@ -426,18 +429,13 @@ export default function FeedbackPage() {
 
       {/* ── Submit ───────────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1.5rem' }}>
-        <button
+        <Button
+          variant="primary"
           onClick={handleSubmit}
-          style={{
-            background: 'var(--waf-brand)', color: '#fff',
-            border: 'none', borderRadius: '8px',
-            padding: '0.65rem 1.75rem', fontSize: '0.875rem', fontWeight: 700,
-            cursor: 'pointer', fontFamily: 'inherit',
-            boxShadow: '0 4px 16px rgba(0,148,255,0.25)',
-          }}
+          style={{ padding: '0.65rem 1.75rem', fontSize: '0.875rem', fontWeight: 700 }}
         >
           {t('pages.feedbackPage.sendBtn')}
-        </button>
+        </Button>
         <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
           {t('pages.feedbackPage.emailClientHint')}
         </span>

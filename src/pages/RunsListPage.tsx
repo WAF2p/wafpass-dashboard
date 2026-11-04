@@ -11,6 +11,8 @@ import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_RUN_BOOKMARKS } from './userPrefsUtils'
 import { scoreColor } from '../severity';
 import { scoreBg } from '../severity';
+import { Card, EmptyState } from '../ui';
+import { PAGE_TITLE } from '../routing'
 
 interface Props {
   runs: RunSummary[]
@@ -51,18 +53,18 @@ function ScoreTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background: '#fff', border: '1px solid var(--border)', borderRadius: '10px',
+      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px',
       padding: '0.75rem 0.875rem', boxShadow: '0 4px 16px rgba(15,23,42,.12)',
       fontSize: '0.78rem', minWidth: '160px',
     }}>
-      <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: '0.5rem', fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.5rem', fontWeight: 600 }}>{label}</div>
       {payload.map((entry: any) => (
         <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color, flexShrink: 0 }} />
           <span style={{ color: 'var(--muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.name}</span>
           <span style={{ fontWeight: 800, color: scoreColor(entry.value) }}>{entry.value}</span>
           {entry.payload?.branch && (
-            <span style={{ color: 'var(--muted)', fontSize: '0.68rem' }}>· {entry.payload.branch}</span>
+            <span style={{ color: 'var(--muted)', fontSize: '0.7rem' }}>· {entry.payload.branch}</span>
           )}
         </div>
       ))}
@@ -76,7 +78,7 @@ function PillarTooltip({ active, payload, label }: any) {
   const v = payload[0]?.value
   return (
     <div style={{
-      background: '#fff', border: '1px solid var(--border)', borderRadius: '8px',
+      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px',
       padding: '0.5rem 0.75rem', boxShadow: '0 4px 12px rgba(15,23,42,.1)',
       fontSize: '0.75rem',
     }}>
@@ -189,12 +191,12 @@ function TrendView({ runs, onSelect }: Props) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
             <svg width="28" height="12" viewBox="0 0 28 12">
-              <line x1="0" y1="6" x2="20" y2="6" stroke="#94a3b8" strokeWidth="1.5" />
-              <polygon points="20,2 28,6 20,10" fill="#94a3b8" />
+              <line x1="0" y1="6" x2="20" y2="6" stroke="var(--skip)" strokeWidth="1.5" />
+              <polygon points="20,2 28,6 20,10" fill="var(--skip)" />
             </svg>
             <span style={{
-              fontSize: '0.68rem', fontWeight: 700,
-              color: overallDelta > 0 ? '#059669' : overallDelta < 0 ? '#DC2626' : 'var(--muted)',
+              fontSize: '0.7rem', fontWeight: 700,
+              color: overallDelta > 0 ? 'var(--score-high-ink)' : overallDelta < 0 ? 'var(--score-low-ink)' : 'var(--muted)',
             }}>
               {overallDelta > 0 ? '+' : ''}{overallDelta} pts
             </span>
@@ -228,31 +230,29 @@ function TrendView({ runs, onSelect }: Props) {
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {t('pages.runs.overallScore')}
           </span>
-          <div style={{ display: 'flex', gap: '1.25rem', marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)' }}>
+          <div style={{ display: 'flex', gap: '1.25rem', marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '20px', height: '1.5px', background: '#059669', display: 'inline-block', borderTop: '1.5px dashed #059669' }} /> 80
+              <span style={{ width: '20px', height: '1.5px', background: 'var(--score-high)', display: 'inline-block', borderTop: '1.5px dashed var(--score-high)' }} /> 80
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '20px', height: '1.5px', background: '#d97706', display: 'inline-block', borderTop: '1.5px dashed #d97706' }} /> 60
+              <span style={{ width: '20px', height: '1.5px', background: 'var(--score-mid)', display: 'inline-block', borderTop: '1.5px dashed var(--score-mid)' }} /> 60
             </span>
           </div>
         </div>
         <div style={{ padding: '1rem 0.5rem 0.5rem' }}>
           {sorted.length < 2 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              {t('pages.runs.needTwoScans')}
-            </div>
+            <EmptyState compact title={t('pages.runs.needTwoScans')} />
           ) : (
             <ResponsiveContainer width="100%" height={280}>
               <LineChart margin={{ top: 8, right: 24, left: 0, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis
                   dataKey="date" type="category" allowDuplicatedCategory={false}
-                  tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false}
+                  tick={{ fontSize: 11, fill: 'var(--skip)' }} tickLine={false} axisLine={false}
                   interval="preserveStartEnd" padding={{ left: 16, right: 16 }}
                 />
                 <YAxis
-                  domain={[0, 100]} tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--skip)' }}
                   tickLine={false} axisLine={false} width={28}
                 />
                 <Tooltip content={<ScoreTooltip />} />
@@ -262,8 +262,8 @@ function TrendView({ runs, onSelect }: Props) {
                     formatter={(v) => v.length > 24 ? v.slice(0, 23) + '…' : v}
                   />
                 )}
-                <ReferenceLine y={80} stroke="#059669" strokeDasharray="4 4" strokeWidth={1} />
-                <ReferenceLine y={60} stroke="#d97706" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={80} stroke="var(--score-high)" strokeDasharray="4 4" strokeWidth={1} />
+                <ReferenceLine y={60} stroke="var(--score-mid)" strokeDasharray="4 4" strokeWidth={1} />
                 {filteredSeries.map(({ proj, color, data }) => (
                   data.length > 0 && (
                     <Line
@@ -275,7 +275,7 @@ function TrendView({ runs, onSelect }: Props) {
                       strokeWidth={2}
                       type="monotone"
                       dot={{ r: 4, fill: color, strokeWidth: 0 }}
-                      activeDot={{ r: 6, fill: color, strokeWidth: 2, stroke: '#fff', onClick: handleDotClick, style: { cursor: 'pointer' } }}
+                      activeDot={{ r: 6, fill: color, strokeWidth: 2, stroke: 'var(--surface)', onClick: handleDotClick, style: { cursor: 'pointer' } }}
                       connectNulls
                     />
                   )
@@ -307,7 +307,7 @@ function TrendView({ runs, onSelect }: Props) {
                       {delta !== null && (
                         <span style={{
                           marginLeft: '0.4rem', fontSize: '0.7rem', fontWeight: 700,
-                          color: delta > 0 ? '#059669' : delta < 0 ? '#DC2626' : 'var(--muted)',
+                          color: delta > 0 ? 'var(--score-high-ink)' : delta < 0 ? 'var(--score-low-ink)' : 'var(--muted)',
                         }}>
                           {delta > 0 ? '↑' : delta < 0 ? '↓' : '—'}{delta !== 0 ? Math.abs(delta) : ''}
                         </span>
@@ -367,19 +367,19 @@ function ScoreBadge({ score }: { score: number }) {
 }
 
 const STAGE_COLORS: Record<string, { bg: string; text: string }> = {
-  prod:       { bg: '#fef2f2', text: '#b91c1c' },
-  production: { bg: '#fef2f2', text: '#b91c1c' },
-  staging:    { bg: '#fff7ed', text: '#c2410c' },
-  stage:      { bg: '#fff7ed', text: '#c2410c' },
-  dev:        { bg: '#f0fdf4', text: '#15803d' },
-  development:{ bg: '#f0fdf4', text: '#15803d' },
-  test:       { bg: '#eff6ff', text: '#1d4ed8' },
-  qa:         { bg: '#faf5ff', text: '#7e22ce' },
+  prod:       { bg: 'color-mix(in srgb, var(--fail) 8%, var(--surface))', text: 'var(--fail-ink)' },
+  production: { bg: 'color-mix(in srgb, var(--fail) 8%, var(--surface))', text: 'var(--fail-ink)' },
+  staging:    { bg: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))', text: 'var(--score-mid-ink)' },
+  stage:      { bg: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))', text: 'var(--score-mid-ink)' },
+  dev:        { bg: 'color-mix(in srgb, var(--pass) 8%, var(--surface))', text: 'var(--pass-ink)' },
+  development:{ bg: 'color-mix(in srgb, var(--pass) 8%, var(--surface))', text: 'var(--pass-ink)' },
+  test:       { bg: 'color-mix(in srgb, var(--waf-brand) 8%, var(--surface))', text: 'var(--waf-brand-ink)' },
+  qa:         { bg: 'color-mix(in srgb, var(--waf-info) 8%, var(--surface))', text: 'var(--waf-info)' },
 }
 
 function StageBadge({ stage }: { stage: string }) {
   if (!stage) return <span style={{ color: 'var(--muted)' }}>—</span>
-  const colors = STAGE_COLORS[stage.toLowerCase()] ?? { bg: '#f1f5f9', text: '#475569' }
+  const colors = STAGE_COLORS[stage.toLowerCase()] ?? { bg: 'var(--bg)', text: 'var(--skip-ink)' }
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
@@ -464,6 +464,13 @@ function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: stri
         </thead>
         <tbody>
           {runs.map(r => <RunRow key={r.id} r={r} onSelect={onSelect} />)}
+          {runs.length === 0 && (
+            <tr>
+              <td colSpan={colHeaders.length}>
+                <EmptyState compact title={t('common.noData')} />
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -487,9 +494,12 @@ export default function RunsListPage({ runs, onSelect }: Props) {
 
   if (runs.length === 0) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        {t('pages.runs.noRuns')} <code>wombat check --push http://localhost:8000/api/v1/runs</code>
-      </div>
+      <Card padding="none">
+        <EmptyState
+          title={t('pages.runs.noRuns')}
+          description={<code>wombat check --push http://localhost:8000/api/v1/runs</code>}
+        />
+      </Card>
     )
   }
 
@@ -516,12 +526,13 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)',
   }
   const btnActive: React.CSSProperties   = { ...btnBase, background: 'var(--waf-brand)', color: '#fff', borderColor: 'var(--waf-brand)' }
-  const btnInactive: React.CSSProperties = { ...btnBase, background: '#fff', color: 'var(--muted)' }
+  const btnInactive: React.CSSProperties = { ...btnBase, background: 'var(--surface)', color: 'var(--muted)' }
 
   const vm = viewMode as string
   const stageSelect = stages.length > 0 ? (
     <>
       <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
+      <h1 className="ui-sr-only">{PAGE_TITLE['runs']}</h1>
       <select
         value={stageFilter} onChange={e => setStageFilter(e.target.value)}
         className="filter-select" style={{ fontSize: '0.75rem' }}
@@ -607,7 +618,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
                 padding: '0.5rem 1rem', borderRadius: '8px',
                 border: '1px solid var(--border)', background: 'var(--surface)',
                 color: 'var(--text)', fontSize: '0.75rem', fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.2s'
+                cursor: 'pointer'
               }}
             >
               {t('pages.runs.loadMore', { count: Math.min(PAGE_SIZE, filteredRuns.length - displayLimit) })}
@@ -637,6 +648,11 @@ export default function RunsListPage({ runs, onSelect }: Props) {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {toolbar}
       </div>
+      {groups.length === 0 && (
+        <Card padding="none">
+          <EmptyState compact title={t('common.noData')} />
+        </Card>
+      )}
       {groups.map(([project, groupRuns]) => {
         // For project view, we only show runs that are within displayLimit of the filtered runs
         const displayedGroupRuns = groupRuns.filter(r => {
@@ -675,7 +691,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
               padding: '0.5rem 1rem', borderRadius: '8px',
               border: '1px solid var(--border)', background: 'var(--surface)',
               color: 'var(--text)', fontSize: '0.75rem', fontWeight: 600,
-              cursor: 'pointer', transition: 'all 0.2s'
+              cursor: 'pointer'
             }}
           >
             {t('pages.runs.loadMore', { count: Math.min(PAGE_SIZE, filteredRuns.length - displayLimit) })}

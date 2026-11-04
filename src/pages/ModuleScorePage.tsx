@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { RunDetail, Finding } from '../api'
 import { useI18n } from '../i18n'
 import { severityBg, severityBorder, severityColor, scoreColor, scoreBg } from '../severity'
+import { EmptyState, PageHeader } from '../ui'
 
 interface Props { run: RunDetail }
 
@@ -42,19 +43,24 @@ function moduleDepth(path: string): number {
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 }
 const STATUS_COLOR: Record<string, string> = {
-  PASS: '#059669', FAIL: '#DA2C38', SKIP: '#94a3b8', WAIVED: '#a78bfa',
+  PASS: 'var(--pass)', FAIL: 'var(--fail)', SKIP: 'var(--skip)', WAIVED: 'var(--waived)',
 }
 
 const PILLAR_META: { key: string; label: string; color: string }[] = [
-  { key: 'security',       label: 'Security',       color: '#DA2C38' },
-  { key: 'cost',           label: 'Cost',            color: '#0094FF' },
-  { key: 'operations',     label: 'Operations',      color: '#8b5cf6' },
-  { key: 'performance',    label: 'Performance',     color: '#f97316' },
-  { key: 'reliability',    label: 'Reliability',     color: '#22c55e' },
-  { key: 'sovereign',      label: 'Sovereignty',     color: '#eab308' },
-  { key: 'sustainability', label: 'Sustainability',  color: '#14b8a6' },
-  { key: 'agentic',        label: 'Agentic',        color: '#ec4899' },
+  { key: 'security',       label: 'Security',       color: 'var(--fail)' },
+  { key: 'cost',           label: 'Cost',            color: 'var(--waf-brand)' },
+  { key: 'operations',     label: 'Operations',      color: 'var(--waived)' },
+  { key: 'performance',    label: 'Performance',     color: 'var(--waf-warn)' },
+  { key: 'reliability',    label: 'Reliability',     color: 'var(--pass)' },
+  { key: 'sovereign',      label: 'Sovereignty',     color: 'var(--waf-warn)' },
+  { key: 'sustainability', label: 'Sustainability',  color: 'var(--score-high)' },
+  { key: 'agentic',        label: 'Agentic',         color: 'var(--waived)' },
 ]
+
+/** Translucent tint of a token colour (replaces `${hex}0d` concatenation). */
+function tint(color: string, percent: number): string {
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`
+}
 
 // Normalize pillar names: database uses "operational", dashboard uses "operations"
 function normalizePillarName(pillar: string): string {
@@ -258,10 +264,10 @@ function ModuleRow({
       style={{
         display: 'flex', alignItems: 'center', gap: '0.7rem', width: '100%',
         padding: `0.7rem 1rem 0.7rem ${leftPad}rem`,
-        background: selected ? 'rgba(0,148,255,.07)' : 'transparent',
+        background: selected ? 'color-mix(in srgb, var(--waf-brand) 7%, transparent)' : 'transparent',
         border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer',
-        textAlign: 'left', transition: 'background .12s',
-        borderLeft: selected ? '3px solid var(--waf-brand)' : '3px solid transparent',
+        textAlign: 'left', transition: 'background-color .12s',
+        borderLeft: '3px solid transparent',
       }}
       onMouseEnter={e => { if (!selected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg)' }}
       onMouseLeave={e => { if (!selected) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
@@ -286,7 +292,7 @@ function ModuleRow({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem' }}>
           <div style={{ flex: 1, minWidth: '40px' }}>
-            <MiniBar value={mod.pass} total={mod.pass + mod.fail} color={mod.fail === 0 ? '#059669' : '#DA2C38'} />
+            <MiniBar value={mod.pass} total={mod.pass + mod.fail} color={mod.fail === 0 ? 'var(--pass)' : 'var(--fail)'} />
           </div>
           <span style={{ fontSize: '0.7rem', color: 'var(--muted)', flexShrink: 0 }}>
             {mod.pass + mod.fail} checks
@@ -306,7 +312,7 @@ function ModuleRow({
 
       {/* Fail count */}
       {mod.fail > 0 && (
-        <div style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: '#DA2C38', minWidth: '2.2rem', textAlign: 'right' }}>
+        <div style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: 'var(--fail)', minWidth: '2.2rem', textAlign: 'right' }}>
           {mod.fail}✗
         </div>
       )}
@@ -379,8 +385,8 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {[
               { label: t('pages.moduleScore.resources'), value: mod.uniqueResources },
-              { label: t('pages.moduleScore.failingRes'), value: mod.failingResources, color: mod.failingResources > 0 ? '#DA2C38' : undefined },
-              { label: t('pages.moduleScore.scoreDrag'), value: mod.scoreDrag > 0 ? `▼${mod.scoreDrag}pt` : '—', color: mod.scoreDrag > 0 ? '#DA2C38' : undefined },
+              { label: t('pages.moduleScore.failingRes'), value: mod.failingResources, color: mod.failingResources > 0 ? 'var(--fail)' : undefined },
+              { label: t('pages.moduleScore.scoreDrag'), value: mod.scoreDrag > 0 ? `▼${mod.scoreDrag}pt` : '—', color: mod.scoreDrag > 0 ? 'var(--fail)' : undefined },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{label}</span>
@@ -396,7 +402,7 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
             {statusRows.map(({ key, count, color, label }) => (
               <div key={key} style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr 2rem', alignItems: 'center', gap: '0.6rem' }}>
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {label}
                 </span>
                 <MiniBar value={count} total={totalChecks} color={color} />
@@ -414,7 +420,7 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
             {severityRows.map(({ key, count, color }) => (
               <div key={key} style={{ display: 'grid', gridTemplateColumns: '3.4rem 1fr 2rem', alignItems: 'center', gap: '0.6rem' }}>
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {key[0] + key.slice(1).toLowerCase()}
                 </span>
                 <MiniBar value={count} total={mod.fail || 1} color={color} />
@@ -445,7 +451,7 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
                       {hasData ? `${p.score}%` : '—'}
                     </span>
                   </div>
-                  {hasData && <MiniBar value={p.pass} total={p.pass + p.fail} color={p.score >= 80 ? p.color : '#DA2C38'} height={5} />}
+                  {hasData && <MiniBar value={p.pass} total={p.pass + p.fail} color={p.score >= 80 ? p.color : 'var(--fail)'} height={5} />}
                   <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                     {p.pass} {t('pages.moduleScore.passes')} · {p.fail} {t('pages.moduleScore.failures')}
                   </div>
@@ -476,18 +482,13 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{c.id}</div>
                   </div>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#DA2C38', flexShrink: 0 }}>{c.failCount}✗</span>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--fail)', flexShrink: 0 }}>{c.failCount}✗</span>
                 </div>
               )
             })}
           </div>
         ) : (
-          <div style={{
-            padding: '1rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)',
-            color: 'var(--muted)', fontSize: '0.78rem', textAlign: 'center',
-          }}>
-            {t('pages.moduleScore.noTopIssues')}
-          </div>
+          <EmptyState compact title={t('pages.moduleScore.noTopIssues')} />
         )}
       </div>
 
@@ -511,12 +512,12 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: '0.6rem',
                 padding: '0.45rem 0.6rem', borderRadius: '8px',
-                background: st === 'FAIL' ? 'rgba(218,44,56,.04)' : 'var(--bg)',
-                border: `1px solid ${st === 'FAIL' ? 'color-mix(in srgb, #da2c38 15%, transparent)' : 'var(--border)'}`,
+                background: st === 'FAIL' ? 'color-mix(in srgb, var(--fail) 4%, transparent)' : 'var(--bg)',
+                border: `1px solid ${st === 'FAIL' ? 'color-mix(in srgb, var(--fail) 15%, transparent)' : 'var(--border)'}`,
               }}>
                 <div style={{
                   width: '3px', alignSelf: 'stretch', minHeight: '18px', borderRadius: '4px',
-                  background: STATUS_COLOR[st] ?? '#94a3b8', flexShrink: 0,
+                  background: STATUS_COLOR[st] ?? 'var(--skip)', flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
@@ -558,9 +559,7 @@ function DetailPanel({ mod }: { mod: ModuleData }) {
           </button>
         )}
         {filtered.length === 0 && (
-          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.78rem' }}>
-            {t('pages.moduleScore.noMatchFilter')}
-          </div>
+          <EmptyState compact title={t('pages.moduleScore.noMatchFilter')} />
         )}
       </div>
     </div>
@@ -611,9 +610,7 @@ export default function ModuleScorePage({ run }: Props) {
 
   if (modules.length === 0) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        {t('pages.moduleScore.noFindings')}
-      </div>
+      <EmptyState title={t('pages.moduleScore.noFindings')} />
     )
   }
 
@@ -621,18 +618,12 @@ export default function ModuleScorePage({ run }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
       {/* ── Page header ── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.35rem' }}>
-            {t('pages.moduleScore.pageTitle')}
-          </h1>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
-            {t('pages.moduleScore.pageSubtitle')}
-          </div>
-        </div>
-        {run.source_paths && run.source_paths.length > 0 && (
+      <PageHeader
+        title={t('pages.moduleScore.pageTitle')}
+        description={t('pages.moduleScore.pageSubtitle')}
+        actions={run.source_paths && run.source_paths.length > 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.moduleScore.scannedPaths')}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.moduleScore.scannedPaths')}</span>
             {run.source_paths.map(p => (
               <code key={p} style={{
                 fontSize: '0.7rem', background: 'var(--surface)', border: '1px solid var(--border)',
@@ -640,8 +631,8 @@ export default function ModuleScorePage({ run }: Props) {
               }}>{p}</code>
             ))}
           </div>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* ── Summary cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.875rem' }}>
@@ -650,34 +641,34 @@ export default function ModuleScorePage({ run }: Props) {
             label: t('pages.moduleScore.modulesLabel'),
             value: modules.length,
             sub: `${run.source_paths?.length ?? 0} scanned path${run.source_paths?.length !== 1 ? 's' : ''}`,
-            color: 'var(--waf-brand)',
+            color: 'var(--waf-brand-ink)',
           },
           {
             label: t('pages.moduleScore.modulesWithFailures'),
             value: modulesWithFail,
-            color: modulesWithFail > 0 ? '#DA2C38' : '#059669',
+            color: modulesWithFail > 0 ? 'var(--fail)' : 'var(--pass)',
           },
           {
             label: t('pages.moduleScore.totalFailures'),
             value: totalFails,
-            color: totalFails > 0 ? '#DA2C38' : '#059669',
+            color: totalFails > 0 ? 'var(--fail)' : 'var(--pass)',
           },
           {
             label: t('pages.moduleScore.criticalFails'),
             value: totalCrit,
-            color: totalCrit > 0 ? '#DA2C38' : '#059669',
+            color: totalCrit > 0 ? 'var(--fail)' : 'var(--pass)',
           },
           {
             label: t('pages.moduleScore.worstModule'),
             value: worstModule?.displayName ?? '—',
             sub: worstModule ? `${worstModule.score}% · ${worstModule.fail} failures` : undefined,
-            color: worstModule?.fail ? '#DA2C38' : '#059669',
+            color: worstModule?.fail ? 'var(--fail)' : 'var(--pass)',
           },
         ].map(({ label, value, color, sub }) => (
           <div key={label} style={{
             borderRadius: '12px', padding: '1rem 1.1rem',
-            background: color ? `${color}0d` : 'var(--bg)',
-            border: `1px solid ${color ? `${color}30` : 'var(--border)'}`,
+            background: color ? tint(color, 5) : 'var(--bg)',
+            border: `1px solid ${color ? tint(color, 19) : 'var(--border)'}`,
             display: 'flex', flexDirection: 'column', gap: '0.2rem',
           }}>
             <div style={{
@@ -727,10 +718,10 @@ export default function ModuleScorePage({ run }: Props) {
                   style={{
                     fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.45rem',
                     borderRadius: '6px', border: '1px solid var(--border)',
-                    background: sortKey === k ? 'var(--waf-brand)' : 'var(--surface)',
+                    background: sortKey === k ? 'var(--waf-brand-btn)' : 'var(--surface)',
                     color: sortKey === k ? '#fff' : 'var(--muted)',
                     cursor: 'pointer', flexShrink: 0,
-                    transition: 'all .12s',
+                    transition: 'background-color .12s, color .12s, border-color .12s',
                   }}
                 >{label}</button>
               ))}
@@ -748,14 +739,12 @@ export default function ModuleScorePage({ run }: Props) {
               />
             ))}
             {sorted.length === 0 && (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem' }}>
-                {t('pages.moduleScore.noMatch', { search })}
-              </div>
+              <EmptyState compact title={t('pages.moduleScore.noMatch', { search })} />
             )}
           </div>
 
           {/* Footer count */}
-          <div style={{ padding: '0.5rem 1rem', borderTop: '1px solid var(--border)', fontSize: '0.68rem', color: 'var(--muted)', background: 'var(--bg)' }}>
+          <div style={{ padding: '0.5rem 1rem', borderTop: '1px solid var(--border)', fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg)' }}>
             {t('pages.moduleScore.modulesOf', { count: String(sorted.length), total: String(modules.length) })}
           </div>
         </div>
@@ -765,9 +754,7 @@ export default function ModuleScorePage({ run }: Props) {
           {selected
             ? <DetailPanel key={selected.path} mod={selected} />
             : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--muted)', fontSize: '0.85rem', padding: '2rem', textAlign: 'center' }}>
-                {t('pages.moduleScore.selectFromList')}
-              </div>
+              <EmptyState title={t('pages.moduleScore.selectFromList')} />
             )}
         </div>
 

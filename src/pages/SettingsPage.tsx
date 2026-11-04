@@ -5,6 +5,7 @@ import {
 import { FRAMEWORKS } from '../controls-data'
 import { LOCALES, useI18n } from '../i18n'
 import Toggle from '../components/Toggle'
+import { PageHeader } from '../ui'
 import {
   ALL_PILLARS, controlsForLevel, DEFAULT_REPORT_SECTIONS,
   getMaturityMeta, MATURITY_META, MATURITY_PRESETS, PILLAR_COUNTS, saveMaturityState, TOTAL_CONTROLS,
@@ -248,7 +249,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
       key="save"
       onClick={save}
       style={{
-        background: 'var(--waf-brand)', color: '#fff', border: 'none', borderRadius: '8px',
+        background: 'var(--waf-brand-btn)', color: '#fff', border: 'none', borderRadius: '8px',
         padding: '0.6rem 1.5rem', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
         whiteSpace: 'nowrap',
       }}
@@ -275,24 +276,17 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
       {/* ── Page header ────────────────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between',
-        gap: '1rem', paddingBottom: '0.25rem',
-      }}>
-        <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.35rem' }}>
-            {t('pages.settingsPage.pageTitle')}
-          </h1>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
-            {t('pages.settingsPage.pageSubtitle')}
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-          {resetButton}
-          {saveButton}
-          {saved && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 600 }}>{t('pages.settingsPage.savedMsg')}</span>}
-        </div>
-      </div>
+      <PageHeader
+        title={t('pages.settingsPage.pageTitle')}
+        description={t('pages.settingsPage.pageSubtitle')}
+        actions={
+          <>
+            {resetButton}
+            {saveButton}
+            {saved && <span style={{ fontSize: '0.8rem', color: 'var(--pass-ink)', fontWeight: 600 }}>{t('pages.settingsPage.savedMsg')}</span>}
+          </>
+        }
+      />
 
       {/* ── Maturity Level ─────────────────────────────────────────────────── */}
       <section className="card">
@@ -312,7 +306,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   borderRadius: '12px', border: `2px solid ${active ? 'transparent' : 'var(--border)'}`,
                   background: active ? m.color : 'var(--bg)',
                   cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'all 0.15s',
+                  transition: 'background-color 0.15s, border-color 0.15s',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
@@ -487,7 +481,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     </span>
                   </div>
                   {!active && (
-                    <span style={{ fontSize: '0.7rem', color: '#dc2626', fontWeight: 600 }}>{t('pages.settingsPage.offLabel')}</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', fontWeight: 600 }}>{t('pages.settingsPage.offLabel')}</span>
                   )}
                 </div>
               )
@@ -542,7 +536,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             return (
               <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
                 <div style={{
-                  fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase',
+                  fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase',
                   letterSpacing: '0.06em', marginBottom: '0.5rem', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border)',
                 }}>
                   {catLabel}
@@ -590,12 +584,12 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     padding: '0.4rem 0.9rem', borderRadius: 8, cursor: 'pointer',
                     fontSize: '0.85rem', fontWeight: 600,
                     border: `1px solid ${isActive ? 'var(--waf-brand)' : 'var(--border)'}`,
-                    background: isActive ? 'rgba(0,148,255,0.12)' : 'var(--bg)',
+                    background: isActive ? 'color-mix(in srgb, var(--waf-brand) 12%, transparent)' : 'var(--bg)',
                     color: isActive ? 'var(--waf-brand)' : 'var(--text)',
-                    transition: 'all 0.15s',
+                    transition: 'border-color 0.15s, background-color 0.15s, color 0.15s',
                   }}>
                   {preset.label}
-                  <span style={{ marginLeft: '0.4rem', fontSize: '0.68rem', color: isActive ? 'var(--waf-brand)' : 'var(--muted)', fontWeight: 400 }}>
+                  <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: isActive ? 'var(--waf-brand)' : 'var(--muted)', fontWeight: 400 }}>
                     {preset.desc}
                   </span>
                 </button>
@@ -624,9 +618,9 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     padding: '0.35rem 0.8rem', borderRadius: 999, cursor: 'pointer',
                     fontSize: '0.78rem', fontWeight: 600,
                     border: `1px solid ${active ? 'var(--waf-brand)' : 'var(--border)'}`,
-                    background: active ? 'rgba(0,148,255,0.12)' : 'var(--bg)',
+                    background: active ? 'color-mix(in srgb, var(--waf-brand) 12%, transparent)' : 'var(--bg)',
                     color: active ? 'var(--waf-brand)' : 'var(--muted)',
-                    transition: 'all 0.15s',
+                    transition: 'border-color 0.15s, background-color 0.15s, color 0.15s',
                   }}>
                   <span style={{ fontSize: '1rem', lineHeight: 1 }}>{flag}</span>
                   {country}
@@ -720,7 +714,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 </button>
               </div>
               <div style={{ marginTop: '0.35rem', fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                Enter the base URL only — no <code style={{ fontSize: '0.68rem' }}>/api/v1/runs</code> suffix (e.g. <code style={{ fontSize: '0.68rem' }}>http://localhost:8000</code> when running locally). Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
+                Enter the base URL only — no <code style={{ fontSize: '0.7rem' }}>/api/v1/runs</code> suffix (e.g. <code style={{ fontSize: '0.7rem' }}>http://localhost:8000</code> when running locally). Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
               </div>
             </div>
 
@@ -728,9 +722,9 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem',
-                background: serverStatus === 'ok' ? 'rgba(34,197,94,.08)' : serverStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'color-mix(in srgb, #da2c38 8%, transparent)',
-                border: `1px solid ${serverStatus === 'ok' ? 'rgba(34,197,94,.3)' : serverStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'color-mix(in srgb, #da2c38 30%, transparent)'}`,
-                color: serverStatus === 'ok' ? '#15803d' : serverStatus === 'checking' ? '#0369a1' : '#DA2C38',
+                background: serverStatus === 'ok' ? 'color-mix(in srgb, var(--pass) 8%, transparent)' : serverStatus === 'checking' ? 'color-mix(in srgb, var(--waf-brand) 8%, transparent)' : 'color-mix(in srgb, var(--fail) 8%, transparent)',
+                border: `1px solid ${serverStatus === 'ok' ? 'color-mix(in srgb, var(--pass) 30%, transparent)' : serverStatus === 'checking' ? 'color-mix(in srgb, var(--waf-brand) 30%, transparent)' : 'color-mix(in srgb, var(--fail) 30%, transparent)'}`,
+                color: serverStatus === 'ok' ? 'var(--pass-ink)' : serverStatus === 'checking' ? 'var(--waf-brand-ink)' : 'var(--fail-ink)',
               }}>
                 <span style={{ fontSize: '0.7rem' }}>
                   {serverStatus === 'ok' ? '●' : serverStatus === 'checking' ? '○' : '✕'}
@@ -745,9 +739,9 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6 }}>
               To set a persistent default without rebuilding, add{' '}
-              <code style={{ color: 'var(--waf-brand)', fontSize: '0.68rem' }}>VITE_API_URL=http://localhost:8000</code>{' '}
-              to <code style={{ color: 'var(--text)', fontSize: '0.68rem' }}>.env.local</code>{' '}
-              (copy from <code style={{ color: 'var(--text)', fontSize: '0.68rem' }}>.env.example</code>).
+              <code style={{ color: 'var(--waf-brand)', fontSize: '0.7rem' }}>VITE_API_URL=http://localhost:8000</code>{' '}
+              to <code style={{ color: 'var(--text)', fontSize: '0.7rem' }}>.env.local</code>{' '}
+              (copy from <code style={{ color: 'var(--text)', fontSize: '0.7rem' }}>.env.example</code>).
               The runtime value above takes precedence.
             </div>
           </div>
@@ -781,7 +775,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 </button>
               </div>
               <div style={{ marginTop: '0.35rem', fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                Base URL of the central WOMBATpass validation gateway. Used by the dashboard to request official countersignatures. Leave empty to use the build-time <code style={{ fontSize: '0.68rem' }}>VITE_VALIDATION_URL</code> value.
+                Base URL of the central WOMBATpass validation gateway. Used by the dashboard to request official countersignatures. Leave empty to use the build-time <code style={{ fontSize: '0.7rem' }}>VITE_VALIDATION_URL</code> value.
               </div>
             </div>
 
@@ -789,9 +783,9 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.5rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem',
-                background: validationStatus === 'ok' ? 'rgba(34,197,94,.08)' : validationStatus === 'checking' ? 'rgba(0,148,255,.08)' : 'color-mix(in srgb, #da2c38 8%, transparent)',
-                border: `1px solid ${validationStatus === 'ok' ? 'rgba(34,197,94,.3)' : validationStatus === 'checking' ? 'rgba(0,148,255,.3)' : 'color-mix(in srgb, #da2c38 30%, transparent)'}`,
-                color: validationStatus === 'ok' ? '#15803d' : validationStatus === 'checking' ? '#0369a1' : '#DA2C38',
+                background: validationStatus === 'ok' ? 'color-mix(in srgb, var(--pass) 8%, transparent)' : validationStatus === 'checking' ? 'color-mix(in srgb, var(--waf-brand) 8%, transparent)' : 'color-mix(in srgb, var(--fail) 8%, transparent)',
+                border: `1px solid ${validationStatus === 'ok' ? 'color-mix(in srgb, var(--pass) 30%, transparent)' : validationStatus === 'checking' ? 'color-mix(in srgb, var(--waf-brand) 30%, transparent)' : 'color-mix(in srgb, var(--fail) 30%, transparent)'}`,
+                color: validationStatus === 'ok' ? 'var(--pass-ink)' : validationStatus === 'checking' ? 'var(--waf-brand-ink)' : 'var(--fail-ink)',
               }}>
                 <span style={{ fontSize: '0.7rem' }}>
                   {validationStatus === 'ok' ? '●' : validationStatus === 'checking' ? '○' : '✕'}
@@ -805,7 +799,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             </div>
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-              The gateway must trust the server's sub-CA certificate (see <code style={{ color: 'var(--waf-brand)', fontSize: '0.68rem' }}>WOMBAT_SERVER_SUBCA_CERT</code> on the server).
+              The gateway must trust the server's sub-CA certificate (see <code style={{ color: 'var(--waf-brand)', fontSize: '0.7rem' }}>WOMBAT_SERVER_SUBCA_CERT</code> on the server).
             </div>
           </div>
 

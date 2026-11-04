@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { getGatewayRootCertificateUrl } from '../api'
 import { useI18n } from '../i18n'
+import { PageHeader, buttonClass } from '../ui'
 import ShipRunPage from './ShipRunPage'
 import ValidationsPage from './ValidationsPage'
 
@@ -45,64 +46,33 @@ function TeaserBanner() {
   )
 }
 
-function linkBtnStyle(): React.CSSProperties {
-  return {
-    display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-    padding: '0.45rem 0.75rem', borderRadius: '8px',
-    background: 'var(--surface)', border: '1px solid var(--border)',
-    color: 'var(--waf-brand)', fontSize: '0.78rem', fontWeight: 600,
-    textDecoration: 'none',
-  }
-}
-
 export default function ValidationCenterPage({ initialTab = 'registry' }: ValidationCenterPageProps) {
   const { t } = useI18n()
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab)
 
   return (
     <div style={{ padding: '1.25rem 1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.5rem', color: 'var(--text)' }}>
-            {t('pages.validationCenter.title')}
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
-            {t('pages.validationCenter.subtitle')}
-          </p>
-        </div>
-        <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
-          {t('pages.validationCenter.downloadRootCa')}
-        </a>
-      </div>
+      <PageHeader
+        title={t('pages.validationCenter.title')}
+        description={t('pages.validationCenter.subtitle')}
+        actions={
+          <a href={getGatewayRootCertificateUrl()} download className={buttonClass('secondary')}>
+            {t('pages.validationCenter.downloadRootCa')}
+          </a>
+        }
+      />
 
       <TeaserBanner />
 
-      <div style={{
-        display: 'inline-flex',
-        gap: '0.25rem',
-        background: 'var(--bg)',
-        border: '1px solid var(--border)',
-        borderRadius: '10px',
-        padding: '0.35rem',
-        marginBottom: '1.25rem',
-      }}>
+      <div className="ui-tabs" role="group" aria-label={t('pages.validationCenter.title')}>
         {TABS.map(tab => {
           const active = activeTab === tab.key
           return (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              style={{
-                padding: '0.55rem 1rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: active ? 'color-mix(in srgb, var(--waf-brand) 12%, transparent)' : 'transparent',
-                color: active ? 'var(--waf-brand)' : 'var(--muted)',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
+              aria-pressed={active}
+              className="ui-tab"
             >
               {t(`pages.validationCenter.${tab.labelKey}`)}
             </button>

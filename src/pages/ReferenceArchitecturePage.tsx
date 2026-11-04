@@ -1,22 +1,17 @@
-import { useTheme } from '../theme'
 import { useI18n } from '../i18n'
+import { PageHeader } from '../ui'
 
 export default function ReferenceArchitecturePage() {
-  const { themeName } = useTheme()
   const { t } = useI18n()
 
   // Examples are rendered as plain text - no actual resource references here
   // These are examples to be copied/pasted into actual Terraform .tf or Pulumi .py files
   return (
     <div style={{ maxWidth: 'none', width: '100%', margin: '0' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 0.5rem' }}>
-          {t('pages.reference.title')}
-        </h1>
-        <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-          Complete Terraform and Pulumi implementation examples for all Wombat controls
-        </p>
-      </div>
+      <PageHeader
+        title={t('pages.reference.title')}
+        description="Complete Terraform and Pulumi implementation examples for all Wombat controls"
+      />
 
       {/* Executive Summary */}
       <section style={{ marginBottom: '2.5rem' }}>
@@ -24,7 +19,7 @@ export default function ReferenceArchitecturePage() {
           Wombat Reference Architecture - Best Practices Implementation
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -43,29 +38,29 @@ export default function ReferenceArchitecturePage() {
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(0,148,255,0.1)' : 'rgba(0,148,255,0.05)',
-              border: '1px solid rgba(0,148,255,0.2)',
+              background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: '#0094ff' }}>74 Controls</strong>
+              <strong style={{ color: 'var(--waf-brand-ink)' }}>74 Controls</strong>
               <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Wombat security, sovereignty, operations, cost, performance, reliability, and sustain controls</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(34,197,94,0.1)' : 'rgba(34,197,94,0.05)',
-              border: '1px solid rgba(34,197,94,0.2)',
+              background: 'color-mix(in srgb, var(--pass) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: '#22c55e' }}>Terraform</strong>
+              <strong style={{ color: 'var(--pass-ink)' }}>Terraform</strong>
               <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Production-ready, version-controlled IaC with remote state</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-              border: '1px solid rgba(251,191,36,0.2)',
+              background: 'color-mix(in srgb, var(--sev-medium) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--sev-medium) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: '#fbbf24' }}>CI/CD</strong>
+              <strong style={{ color: 'var(--sev-medium)' }}>CI/CD</strong>
               <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Fully automated pipeline with security gates and vulnerability scanning</p>
             </div>
           </div>
@@ -78,7 +73,7 @@ export default function ReferenceArchitecturePage() {
           1. Identity & Access Management (WAF-SEC-010, WAF-SEC-020)
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -91,8 +86,8 @@ export default function ReferenceArchitecturePage() {
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -101,7 +96,7 @@ export default function ReferenceArchitecturePage() {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-010
               </a>
@@ -110,7 +105,7 @@ export default function ReferenceArchitecturePage() {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-010 EN
               </a>
@@ -119,7 +114,7 @@ export default function ReferenceArchitecturePage() {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-020
               </a>
@@ -128,7 +123,7 @@ export default function ReferenceArchitecturePage() {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-020 EN
               </a>
@@ -139,12 +134,12 @@ export default function ReferenceArchitecturePage() {
             AWS IAM Account Password Policy (WAF-SEC-010)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               iam/baseline.tf
             </div>
             <pre style={{
@@ -184,12 +179,12 @@ resource "aws_iam_account_password_policy" "strict" {
             No Root Access Keys (WAF-SEC-010)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               iam/root.tf
             </div>
             <pre style={{
@@ -219,12 +214,12 @@ resource "aws_iam_account_password_policy" "strict" {
             Least Privilege IAM Role (WAF-SEC-020)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               iam/roles.tf
             </div>
             <pre style={{
@@ -297,8 +292,8 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
           <div style={{
             marginTop: '1rem',
             padding: '1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -318,7 +313,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
           2. Encryption & Secrets Management (WAF-SEC-030, WAF-SEC-060)
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -332,8 +327,8 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -342,7 +337,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-030.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-030
               </a>
@@ -351,7 +346,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-030.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-030 EN
               </a>
@@ -360,7 +355,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-060.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-060
               </a>
@@ -369,7 +364,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-060.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-060 EN
               </a>
@@ -380,12 +375,12 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
             KMS CMK with Rotation (WAF-SEC-030)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               encryption/cmks.tf
             </div>
             <pre style={{
@@ -448,12 +443,12 @@ resource "aws_kms_key" "logs" {
             RDS Instance with CMK Encryption (WAF-SEC-030)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               database/rds.tf
             </div>
             <pre style={{
@@ -507,12 +502,12 @@ resource "aws_db_instance" "main" {
             Secrets Manager with Rotation (WAF-SEC-060)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               secrets/secrets.tf
             </div>
             <pre style={{
@@ -603,7 +598,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
           3. CI/CD Pipeline (WAF-OPS-010, WAF-OPS-020)
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -617,8 +612,8 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -627,7 +622,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-010
               </a>
@@ -636,7 +631,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-010 EN
               </a>
@@ -645,7 +640,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-020
               </a>
@@ -654,7 +649,7 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-020 EN
               </a>
@@ -665,12 +660,12 @@ resource "aws_secretsmanager_secret_rotation" "api_key_rotation" {
             Terraform Remote State Backend (WAF-OPS-020)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               terraform/backend.tf
             </div>
             <pre style={{
@@ -734,12 +729,12 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
             GitHub Actions Pipeline (WAF-OPS-010)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               .github/workflows/terraform.yml
             </div>
             <pre style={{
@@ -928,7 +923,7 @@ jobs:
           4. Networking & Security Controls (WAF-SEC-070)
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -941,8 +936,8 @@ jobs:
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -951,7 +946,7 @@ jobs:
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-070.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-070
               </a>
@@ -960,7 +955,7 @@ jobs:
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-070.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-070 EN
               </a>
@@ -971,12 +966,12 @@ jobs:
             ECR Repository with Scanning (WAF-SEC-070)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               ecr/repository.tf
             </div>
             <pre style={{
@@ -1063,7 +1058,7 @@ resource "aws_events_target" "critical_vuln_sns" {
           5. Sovereignty & Data Residency (WAF-SOV-010, WAF-SOV-020)
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -1077,8 +1072,8 @@ resource "aws_events_target" "critical_vuln_sns" {
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -1087,7 +1082,7 @@ resource "aws_events_target" "critical_vuln_sns" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-sovereignty/controls/WAF-SOV-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SOV-010
               </a>
@@ -1096,7 +1091,7 @@ resource "aws_events_target" "critical_vuln_sns" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-sovereignty/controls/WAF-SOV-010.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SOV-010 EN
               </a>
@@ -1105,7 +1100,7 @@ resource "aws_events_target" "critical_vuln_sns" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-sovereignty/controls/WAF-SOV-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SOV-020
               </a>
@@ -1114,7 +1109,7 @@ resource "aws_events_target" "critical_vuln_sns" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-sovereignty/controls/WAF-SOV-020.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SOV-020 EN
               </a>
@@ -1125,12 +1120,12 @@ resource "aws_events_target" "critical_vuln_sns" {
             Region Validation Variables (WAF-SOV-020)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               variables.tf
             </div>
             <pre style={{
@@ -1217,12 +1212,12 @@ provider "aws" {
             S3 Bucket with Data Residency Tags (WAF-SOV-010)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               s3/buckets.tf
             </div>
             <pre style={{
@@ -1329,7 +1324,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
           6. Logging & Incident Response (WAF-SEC-100)
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -1342,8 +1337,8 @@ resource "aws_s3_bucket_policy" "pii_data" {
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -1352,7 +1347,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-security/controls/WAF-SEC-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-100
               </a>
@@ -1361,7 +1356,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-security/controls/WAF-SEC-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-SEC-100 EN
               </a>
@@ -1372,12 +1367,12 @@ resource "aws_s3_bucket_policy" "pii_data" {
             CloudWatch Log Groups (WAF-SEC-100)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               logging/logs.tf
             </div>
             <pre style={{
@@ -1471,12 +1466,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs_archive" {
             SNS Topic for Security Alerts (WAF-SEC-100)
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               alerts/sns.tf
             </div>
             <pre style={{
@@ -1580,7 +1575,7 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
           7. Infrastructure Modules (WAF-OPS-090)
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -1593,8 +1588,8 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -1603,7 +1598,7 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-090.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-090
               </a>
@@ -1612,7 +1607,7 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-090.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-090 EN
               </a>
@@ -1623,12 +1618,12 @@ resource "aws_cloudwatch_event_target" "guardduty_critical_sns" {
             EKS Module - README
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               modules/eks/README.md
             </div>
             <pre style={{
@@ -1704,12 +1699,12 @@ Run tests with:
             Module Structure
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               modules structure
             </div>
             <pre style={{
@@ -1794,7 +1789,7 @@ project-root/
           8. Compliance Verification & Automation
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -1807,8 +1802,8 @@ project-root/
           <div style={{
             marginTop: '1rem',
             padding: '0.75rem 1rem',
-            background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-            border: '1px solid rgba(251,191,36,0.3)',
+            background: 'color-mix(in srgb, var(--sev-medium) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sev-medium) 30%, transparent)',
             borderRadius: '8px'
           }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: 0 }}>
@@ -1817,7 +1812,7 @@ project-root/
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0/pillar-excellence/controls/WAF-OPS-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-100
               </a>
@@ -1826,7 +1821,7 @@ project-root/
                 href="https://www.wombat-gov.dev/docs/wafpp/1.0-en/pillar-excellence/controls/WAF-OPS-100.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#fbbf24', fontWeight: 600, textDecoration: 'none' }}
+                style={{ color: 'var(--sev-medium)', fontWeight: 600, textDecoration: 'none' }}
               >
                 WAF-OPS-100 EN
               </a>
@@ -1837,12 +1832,12 @@ project-root/
             Control Validation Script
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <div style={{ padding: '0.5rem 1rem', background: themeName === 'dark' ? '#334155' : '#e2e8f0', color: 'var(--muted)', fontSize: '0.7rem' }}>
+            <div style={{ padding: '0.5rem 1rem', background: 'color-mix(in srgb, var(--input-bg) 90%, var(--text))', color: 'var(--muted)', fontSize: '0.7rem' }}>
               scripts/validate-controls.sh
             </div>
             <pre style={{
@@ -1963,7 +1958,7 @@ exit 0
             CI Pipeline Integration
           </h3>
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#f8fafc',
+            background: 'var(--input-bg)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
             overflow: 'hidden'
@@ -2008,7 +2003,7 @@ jobs:
           Reference Architecture Summary
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -2032,29 +2027,29 @@ jobs:
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(0,148,255,0.1)' : 'rgba(0,148,255,0.05)',
-              border: '1px solid rgba(0,148,255,0.2)',
+              background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0094ff', margin: '0 0 0.5rem' }}>Terraform</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--waf-brand-ink)', margin: '0 0 0.5rem' }}>Terraform</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Full IaC implementation with S3 backend, state locking, and versioned modules</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(0,148,255,0.1)' : 'rgba(0,148,255,0.05)',
-              border: '1px solid rgba(0,148,255,0.2)',
+              background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0094ff', margin: '0 0 0.5rem' }}>GitHub Actions</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--waf-brand-ink)', margin: '0 0 0.5rem' }}>GitHub Actions</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Automated pipeline with lint, validate, security-scan, approval, apply, and validate stages</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(34,197,94,0.1)' : 'rgba(34,197,94,0.05)',
-              border: '1px solid rgba(34,197,94,0.2)',
+              background: 'color-mix(in srgb, var(--pass) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#22c55e', margin: '0 0 0.5rem' }}>74 Controls</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--pass-ink)', margin: '0 0 0.5rem' }}>74 Controls</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>WAF-SEC, WAF-SOV, WAF-OPS, WAF-COST, WAF-PERF, WAF-REL, WAF-SUS controls satisfied</p>
             </div>
           </div>
@@ -2063,13 +2058,13 @@ jobs:
 
       {/* Back to Wombat docs link */}
       <div style={{
-        background: themeName === 'dark' ? 'rgba(0,148,255,0.1)' : 'rgba(0,148,255,0.05)',
-        border: '1px solid rgba(0,148,255,0.3)',
+        background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent)',
         borderRadius: '12px',
         padding: '1.5rem',
         marginBottom: '2rem'
       }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0094ff', margin: '0 0 0.75rem' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--waf-brand-ink)', margin: '0 0 0.75rem' }}>
           Need More Details?
         </h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text)', marginBottom: '1rem' }}>
@@ -2087,11 +2082,11 @@ jobs:
             gap: '0.4rem',
             fontSize: '0.85rem',
             fontWeight: 600,
-            color: '#0094ff',
+            color: 'var(--waf-brand-ink)',
             textDecoration: 'none',
             padding: '0.5rem 1rem',
-            background: themeName === 'dark' ? 'rgba(0,148,255,0.2)' : 'rgba(0,148,255,0.1)',
-            border: '1px solid rgba(0,148,255,0.4)',
+            background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--waf-brand) 40%, transparent)',
             borderRadius: '6px'
           }}
         >

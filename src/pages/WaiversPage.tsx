@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { appendAuditEvent } from '../audit'
 import { fetchWaivers, upsertWaiver, deleteWaiver } from '../api'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
+import { Card, EmptyState, Skeleton, SkeletonText } from '../ui'
 import { yamlQuote } from '../yamlQuote'
 
 export interface Waiver {
@@ -194,15 +196,16 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
   }
 
   const syncPill = (() => {
-    if (syncStatus === 'loading') return { label: t('pages.waivers.syncLoading'), color: '#94a3b8' }
-    if (syncStatus === 'saving') return { label: t('pages.waivers.syncSaving'), color: '#0094ff' }
-    if (syncStatus === 'synced') return { label: t('pages.waivers.syncSynced'), color: '#22c55e' }
-    if (syncStatus === 'offline') return { label: t('pages.waivers.syncOffline'), color: '#eab308' }
-    return { label: t('pages.waivers.syncError'), color: '#DA2C38' }
+    if (syncStatus === 'loading') return { label: t('pages.waivers.syncLoading'), color: 'var(--skip)' }
+    if (syncStatus === 'saving') return { label: t('pages.waivers.syncSaving'), color: 'var(--waf-brand)' }
+    if (syncStatus === 'synced') return { label: t('pages.waivers.syncSynced'), color: 'var(--pass)' }
+    if (syncStatus === 'offline') return { label: t('pages.waivers.syncOffline'), color: 'var(--waf-warn)' }
+    return { label: t('pages.waivers.syncError'), color: 'var(--fail)' }
   })()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.waivers}</h1>
 
       {/* Header actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -210,7 +213,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
           onClick={openAdd}
           disabled={syncStatus === 'offline'}
           style={{
-            background: syncStatus === 'offline' ? '#94a3b8' : 'var(--waf-brand)',
+            background: syncStatus === 'offline' ? 'var(--skip)' : 'var(--waf-brand)',
             color: '#fff', border: 'none', borderRadius: '8px',
             padding: '0.5rem 1.1rem', fontSize: '0.85rem', fontWeight: 700,
             cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer',
@@ -242,7 +245,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
         )}
         <span style={{
           marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 600, color: syncPill.color,
-          background: `${syncPill.color}18`, border: `1px solid ${syncPill.color}40`,
+          background: `color-mix(in srgb, ${syncPill.color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${syncPill.color} 25%, transparent)`,
           borderRadius: '999px', padding: '0.2rem 0.7rem',
         }}>
           {syncPill.label}
@@ -252,8 +255,8 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
       {/* Sync error banner */}
       {syncError && (
         <div style={{
-          background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
-          borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: '#DA2C38',
+          background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+          borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: 'var(--fail-ink)',
         }}>
           {syncError}
         </div>
@@ -261,28 +264,34 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
 
       {/* Waivers list */}
       {syncStatus === 'loading' ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <div className="spinner" />
+        <div aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {[0, 1, 2].map(i => (
+            <Card key={i}>
+              <Skeleton width="38%" height={14} />
+              <SkeletonText lines={2} />
+              <Skeleton width="22%" height={10} />
+            </Card>
+          ))}
         </div>
       ) : entries.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-          <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>{t('pages.waivers.noWaivers')}</div>
-          <div style={{ fontSize: '0.78rem' }}>
-            {t('pages.waivers.noWaiversHint')}
-          </div>
-        </div>
+        <Card padding="none">
+          <EmptyState
+            title={t('pages.waivers.noWaivers')}
+            description={t('pages.waivers.noWaiversHint')}
+          />
+        </Card>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {entries.map(w => {
             const expired = isExpired(w.expires)
             return (
-              <div key={w.id} className="card" style={{ borderLeft: `3px solid ${expired ? '#DA2C38' : '#a78bfa'}` }}>
+              <div key={w.id} className="card" style={{ borderLeft: `3px solid ${expired ? 'var(--fail)' : 'var(--waived)'}` }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
                       <code style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--waf-brand)' }}>{w.id}</code>
                       {expired && (
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DA2C38', background: 'color-mix(in srgb, #da2c38 15%, transparent)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--fail-ink)', background: 'color-mix(in srgb, var(--fail) 15%, transparent)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
                           {t('pages.waivers.expired')}
                         </span>
                       )}
@@ -309,7 +318,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                     <button
                       onClick={() => void remove(w.id)}
                       disabled={syncStatus === 'offline'}
-                      style={{ background: 'none', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
+                      style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--fail-ink)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Remove
                     </button>
@@ -344,11 +353,11 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
         <>
           <div
             onClick={() => setShowForm(false)}
-            style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 25%, transparent)', zIndex: 99 }}
+            style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 99 }}
           />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px color-mix(in srgb, #000000 20%, transparent)',
+            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px color-mix(in srgb, black 20%, transparent)',
             padding: '1.5rem', width: '440px', maxWidth: '90vw', zIndex: 100,
             display: 'flex', flexDirection: 'column', gap: '1rem',
           }}>
@@ -416,8 +425,8 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
 
             {syncError && syncStatus !== 'loading' && (
               <div style={{
-                background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
-                borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: '#DA2C38',
+                background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+                borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: 'var(--fail-ink)',
               }}>
                 {syncError}
               </div>
@@ -434,7 +443,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                 onClick={() => void submit()}
                 disabled={!form.id || syncStatus === 'saving'}
                 style={{
-                  background: form.id && syncStatus !== 'saving' ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
+                  background: form.id && syncStatus !== 'saving' ? 'var(--waf-brand)' : 'var(--skip)', color: '#fff',
                   border: 'none', borderRadius: '8px', padding: '0.45rem 1rem',
                   fontSize: '0.85rem', fontWeight: 700,
                   cursor: form.id && syncStatus !== 'saving' ? 'pointer' : 'not-allowed',

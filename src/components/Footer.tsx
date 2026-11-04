@@ -1,212 +1,84 @@
 // Footer content - centralized "CMS" style configuration
-const FOOTER_LINKS = [
-  { href: 'https://www.wombat-gov.dev', label: 'Main Page' },
-  { href: 'https://www.wombat-gov.dev/docs', label: 'Documentation' },
-  { href: 'https://github.com/WAF2p', label: 'GitHub' },
-  { href: 'https://www.wombat-gov.dev/blog', label: 'Blog' },
-] as const;
+const EXTERNAL = { target: '_blank', rel: 'noopener noreferrer' } as const
 
-const FOOTER_LINKS_WITH_LEGAL = [
-  ...FOOTER_LINKS,
-  { href: '#/legal', label: 'Legal' },
-] as const;
+const FOOTER_COLUMNS = [
+  {
+    title: 'Product',
+    links: [
+      { href: 'https://www.wombat-gov.dev', label: 'Main Page', external: true },
+      { href: 'https://www.wombat-gov.dev/docs', label: 'Documentation', external: true },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { href: 'https://github.com/WAF2p', label: 'GitHub', external: true },
+      { href: 'https://www.wombat-gov.dev/blog', label: 'Blog', external: true },
+    ],
+  },
+] as const
 
 export default function Footer() {
   return (
-    <footer className="footer" style={{
-      width: '100%',
-      padding: '2.5rem 1rem',
-      marginTop: '20px',
-      background: 'var(--footer-bg)',
-      color: 'var(--footer-text)',
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '2rem',
-      }}>
-        <div style={{
-          minWidth: '350px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1.25rem',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            fontSize: '1rem',
-            fontWeight: 600,
-            color: 'var(--footer-light)',
-            padding: '1.25rem 2.6rem',
-            background: 'var(--footer-gradient)',
-            borderRadius: '16px',
-            border: '1px solid color-mix(in srgb, #22d3ee 20%, transparent)',
-          }}>
-            <span style={{ fontSize: '1.5rem' }}>❤️</span>
-            <span>Created <span style={{ color: '#22d3ee' }}>with</span> the community, <span style={{ color: '#a78bfa' }}>for</span> the community</span>
-            <span style={{ fontSize: '1.5rem' }}>🚀</span>
+    <footer className="footer">
+      <div className="footer-inner">
+        <div className="footer-main">
+          <div className="footer-brand">
+            <a className="footer-brand-link" href="https://www.wombat-gov.dev" {...EXTERNAL}>
+              <img src="/logo.png" alt="" width={24} height={24} />
+              <span>WOMBAT</span>
+            </a>
+            <p className="footer-desc">
+              WOMBAT is an open-source framework for security and compliance.
+              It is distributed free of charge — the framework and its utilities
+              are not sold.
+            </p>
+            <p className="footer-note">
+              Audit and hosting certification services are planned from 2030.
+            </p>
           </div>
-          <div style={{
-            fontSize: '0.72rem',
-            color: 'var(--footer-muted)',
-            textAlign: 'center',
-            display: 'flex',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}>
-            <span>© 2026 Wombat</span>
-            <span style={{ opacity: 0.5 }}>•</span>
-            <span>Open Source</span>
-            <span style={{ opacity: 0.5 }}>•</span>
-            <span>Community Driven</span>
-          </div>
-          <div style={{
-            fontSize: '0.68rem',
-            color: 'var(--footer-muted)',
-            textAlign: 'center',
-            maxWidth: '320px',
-            lineHeight: 1.5,
-          }}>
-            Wombat is an open-source framework distributed free of charge. We do not sell the framework or its utilities. Official certification services (hosting/audit) will be available from 2030.
-          </div>
+
+          <nav className="footer-nav" aria-label="Footer">
+            {FOOTER_COLUMNS.map(column => (
+              <div className="footer-col" key={column.title}>
+                <h3 className="footer-col-title">{column.title}</h3>
+                {column.links.map(link => (
+                  <a key={link.href} href={link.href} {...EXTERNAL}>
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            ))}
+            <div className="footer-col">
+              <h3 className="footer-col-title">Community</h3>
+              <a
+                className="footer-partner"
+                href="https://www.cloudnativeconference.de"
+                {...EXTERNAL}
+                aria-label="Cloud Native Conference"
+              >
+                <img
+                  src="https://lirp.cdn-website.com/9dbc9654/dms3rep/multi/opt/Cloud-Native_Conference_2022_white-f2589334-1920w.png"
+                  alt="Cloud Native Conference"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+          </nav>
         </div>
 
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: '0.75rem',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            flexWrap: 'wrap',
-          }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--footer-muted)' }}>With love from</span>
-            <a
-              href="https://www.cloudnativeconference.de"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                textDecoration: 'none',
-                color: 'var(--footer-light)',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                padding: '0.5rem 1rem',
-                background: 'rgba(255,255,255,0.03)',
-                borderRadius: '8px',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(34,211,238,0.1)'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(34,211,238,0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              <img
-                src="https://lirp.cdn-website.com/9dbc9654/dms3rep/multi/opt/Cloud-Native_Conference_2022_white-f2589334-1920w.png"
-                alt="Cloud Native Conference"
-                style={{
-                  height: '32px',
-                  width: 'auto',
-                  borderRadius: '4px',
-                }}
-              />
-            </a>
-            <span style={{ color: 'var(--footer-muted)' }}>•</span>
-            <a
-              href="https://www.wombat-gov.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                textDecoration: 'none',
-                color: 'var(--footer-light)',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                padding: '0.5rem 1rem',
-                background: 'rgba(255,255,255,0.03)',
-                borderRadius: '8px',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(34,211,238,0.1)'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(34,211,238,0.15)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              <img
-                src="/logo.png"
-                alt="Wombat"
-                style={{
-                  height: '32px',
-                  width: 'auto',
-                  borderRadius: '4px',
-                }}
-              />
-            </a>
+        <div className="footer-bottom">
+          <div className="footer-legal">
+            <span>© 2026 WOMBAT</span>
+            <span className="footer-dot" aria-hidden="true" />
+            <span>Open source</span>
+            <span className="footer-dot" aria-hidden="true" />
+            <span>Community driven</span>
           </div>
-          <div style={{
-            display: 'flex',
-            gap: '2rem',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}>
-            {FOOTER_LINKS_WITH_LEGAL.map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: 'var(--footer-light)',
-                  textDecoration: 'none',
-                  transition: 'all 0.25s ease',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.03)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#22d3ee'
-                  e.currentTarget.style.background = 'rgba(34,211,238,0.1)'
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(34,211,238,0.15)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--footer-light)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-              >
-                {link.label}
-              </a>
-            ))}
+          <div className="footer-bottom-links">
+            <a href="#/legal">Legal notice</a>
+            <span className="footer-dot" aria-hidden="true" />
+            <a href="https://www.wombat-gov.dev" {...EXTERNAL}>wombat-gov.dev</a>
           </div>
         </div>
       </div>

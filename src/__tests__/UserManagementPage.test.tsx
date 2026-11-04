@@ -293,16 +293,15 @@ describe('UserManagementPage', () => {
     })
   })
 
-  it('deletes a user after the confirmation dialog is accepted, then reloads the list', async () => {
+  it('deletes a user after the inline confirmation is accepted, then reloads the list', async () => {
     mockAuth({ role: 'admin', isHoldingAdmin: false })
     const fetchSpy = mockFetch([makeUser({ id: 'u9', username: 'carol' })], { myMandate: null })
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     render(<UserManagementPage />)
     await screen.findByText('carol')
     await userEvent.click(screen.getByText('Del'))
+    await userEvent.click(await screen.findByText('Delete'))
 
-    expect(confirmSpy).toHaveBeenCalled()
     await waitFor(() => {
       const deleteCall = fetchSpy.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'DELETE')
       expect(deleteCall).toBeTruthy()
@@ -310,14 +309,14 @@ describe('UserManagementPage', () => {
     })
   })
 
-  it('does not delete a user when the confirmation dialog is cancelled', async () => {
+  it('does not delete a user when the inline confirmation is cancelled', async () => {
     mockAuth({ role: 'admin', isHoldingAdmin: false })
     const fetchSpy = mockFetch([makeUser({ id: 'u10', username: 'carol' })], { myMandate: null })
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
 
     render(<UserManagementPage />)
     await screen.findByText('carol')
     await userEvent.click(screen.getByText('Del'))
+    await userEvent.click(await screen.findByText('Cancel'))
 
     expect(fetchSpy.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'DELETE')).toBe(false)
   })

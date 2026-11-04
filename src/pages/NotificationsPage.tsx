@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNotifications } from '../notifications/context'
 import { useI18n } from '../i18n'
 import { NotificationCategory } from '../notifications/types'
+import { Card, EmptyState, Skeleton, SkeletonText } from '../ui'
+import PageHeader from '../ui/PageHeader'
 
 const CATEGORY_STYLES: Record<NotificationCategory, { label: string; color: string; icon: string; bg: string }> = {
   info: { label: 'Info', color: '#0094ff', icon: 'i', bg: 'rgba(0,148,255,0.1)' },
@@ -12,7 +14,7 @@ const CATEGORY_STYLES: Record<NotificationCategory, { label: string; color: stri
 
 export default function NotificationsPage() {
   const { t } = useI18n()
-  const { notifications, markAsRead, markAllAsRead, triggerTest } = useNotifications()
+  const { notifications, loading, markAsRead, markAllAsRead, triggerTest } = useNotifications()
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
   const [creating, setCreating] = useState(false)
   const [testForm, setTestForm] = useState<{ title: string; message: string; category: NotificationCategory }>({
@@ -43,41 +45,27 @@ export default function NotificationsPage() {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div>
-          <h2
+      <PageHeader
+        title={t('pages.notifications.title')}
+        description={t('pages.notifications.pageDescription')}
+        actions={
+          <button
+            onClick={() => setCreating(!creating)}
             style={{
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              color: 'var(--muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom: '0.5rem',
+              background: 'var(--waf-brand)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
             }}
           >
-            {t('nav.items.notifications')}
-          </h2>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text)' }}>
-            {t('pages.notifications.pageDescription')}
-          </div>
-        </div>
-        <button
-          onClick={() => setCreating(!creating)}
-          style={{
-            background: 'var(--waf-brand)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.5rem 1rem',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          {creating ? t('pages.notifications.cancel') : t('pages.notifications.create')}
-        </button>
-      </div>
+            {creating ? t('pages.notifications.cancel') : t('pages.notifications.create')}
+          </button>
+        }
+      />
 
       {/* Create Test Form - Admin only */}
       {creating && (
@@ -192,7 +180,7 @@ export default function NotificationsPage() {
                       background: testForm.category === cat ? getCategoryStyle(cat).bg : 'var(--bg)',
                       color: testForm.category === cat ? getCategoryStyle(cat).color : 'var(--text)',
                       cursor: 'pointer',
-                      transition: 'all 0.15s',
+                      transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
                     }}
                   >
                     {CATEGORY_STYLES[cat].label}
@@ -274,7 +262,7 @@ export default function NotificationsPage() {
               background: filter === f ? 'var(--bg)' : 'transparent',
               color: filter === f ? 'var(--waf-brand)' : 'var(--muted)',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
             }}
           >
             {t(`pages.notifications.${f}` as any)}
@@ -304,25 +292,39 @@ export default function NotificationsPage() {
 
       {/* Notifications list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {filteredNotifications.length === 0 ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '3rem 1rem',
-              color: 'var(--muted)',
-              fontSize: '0.78rem',
-              background: 'var(--bg)',
-              border: '1px solid var(--border)',
-              borderRadius: '12px',
-            }}
-          >
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem', opacity: 0.3 }}>
-              {filter === 'unread' ? '铃铃铃' : filter === 'read' ? '✓' : '铃铃铃'}
-            </div>
-            {filter === 'unread' && <div>{t('pages.notifications.noUnread')}</div>}
-            {filter === 'read' && <div>{t('pages.notifications.noRead')}</div>}
-            {filter === 'all' && <div>{t('pages.notifications.noNotifications')}</div>}
+        {loading ? (
+          <div aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {[0, 1, 2].map(i => (
+              <Card key={i}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <Skeleton width={40} height={40} radius="50%" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Skeleton width="32%" height={12} />
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <SkeletonText lines={2} />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
+        ) : filteredNotifications.length === 0 ? (
+          <Card padding="none">
+            <EmptyState
+              icon={
+                <span style={{ fontSize: '3rem', opacity: 0.3 }}>
+                  {filter === 'read' ? '✓' : '铃铃铃'}
+                </span>
+              }
+              title={
+                filter === 'unread'
+                  ? t('pages.notifications.noUnread')
+                  : filter === 'read'
+                    ? t('pages.notifications.noRead')
+                    : t('pages.notifications.noNotifications')
+              }
+            />
+          </Card>
         ) : (
           filteredNotifications.map((note) => {
             const style = getCategoryStyle(note.category)
@@ -339,7 +341,7 @@ export default function NotificationsPage() {
                   border: note.is_read
                     ? '1px solid var(--border)'
                     : `1px solid ${style.color}44`,
-                  transition: 'all 0.15s',
+                  transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
                 }}
                 onMouseEnter={(e) => {
                   if (!note.is_read) {
@@ -433,7 +435,7 @@ export default function NotificationsPage() {
                   </div>
                   <div
                     style={{
-                      fontSize: '0.68rem',
+                      fontSize: '0.7rem',
                       color: 'var(--muted)',
                       display: 'flex',
                       alignItems: 'center',

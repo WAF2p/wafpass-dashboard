@@ -14,6 +14,7 @@ import {
   statusColor,
 } from './shared/SocComponents'
 import SyslogConfigModal from './SyslogConfigModal'
+import { DataTable, EmptyState, Skeleton, type Column } from '../ui'
 
 const ACTION_META: Record<string, { label: string; color: string; bg: string }> = {
   login:    { label: 'Login',    color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)' },
@@ -90,34 +91,51 @@ function EventRow({ log, t }: { log: AdminAuditLogEntry; t: ReturnType<typeof us
   )
 }
 
-function RawDetailsTable({ logs, t }: { logs: AdminAuditLogEntry[]; t: ReturnType<typeof useI18n>['t'] }) {
+function RawDetailsTable({ logs, t, loading = false }: { logs: AdminAuditLogEntry[]; t: ReturnType<typeof useI18n>['t']; loading?: boolean }) {
+  const columns: Column<AdminAuditLogEntry>[] = [
+    {
+      key: 'timestamp',
+      header: t('pages.adminLogs.colTimestamp'),
+      render: l => new Date(l.timestamp).toLocaleString(),
+    },
+    {
+      key: 'action',
+      header: t('pages.adminLogs.colAction'),
+      render: l => {
+        const meta = actionMeta(l.action)
+        return (
+          <span className="adminlog-table__badge" style={{ color: meta.color, background: meta.bg, borderColor: `${meta.color}33` }}>
+            {meta.label}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'actor',
+      header: t('pages.adminLogs.colActor'),
+      render: l => l.actor_username ?? '—',
+    },
+    {
+      key: 'ip',
+      header: t('pages.adminLogs.colIp'),
+      render: l => <span className="adminlog-table__mono">{l.ip}</span>,
+    },
+    {
+      key: 'mandate',
+      header: t('pages.adminLogs.colMandate'),
+      render: l => <span className="adminlog-table__mono">{l.mandant_id ? l.mandant_id.slice(0, 8) : '—'}</span>,
+    },
+  ]
+
   return (
-    <div className="adminlog-table__wrap">
-      <table className="adminlog-table">
-        <thead>
-          <tr>
-            {[t('pages.adminLogs.colTimestamp'), t('pages.adminLogs.colAction'), t('pages.adminLogs.colActor'), t('pages.adminLogs.colIp'), t('pages.adminLogs.colMandate')].map(h => (
-              <th key={h}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map(l => (
-            <tr key={l.id}>
-              <td>{new Date(l.timestamp).toLocaleString()}</td>
-              <td>
-                <span className="adminlog-table__badge" style={{ color: actionMeta(l.action).color, background: actionMeta(l.action).bg, borderColor: `${actionMeta(l.action).color}33` }}>
-                  {actionMeta(l.action).label}
-                </span>
-              </td>
-              <td>{l.actor_username ?? '—'}</td>
-              <td className="adminlog-table__mono">{l.ip}</td>
-              <td className="adminlog-table__mono">{l.mandant_id ? l.mandant_id.slice(0, 8) : '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      rows={logs}
+      rowKey={l => l.id}
+      loading={loading}
+      className="adminlog-table__wrap"
+      empty={<EmptyState compact title={t('pages.adminLogs.noEvents')} />}
+    />
   )
 }
 
@@ -256,13 +274,32 @@ export default function AdminLogPage() {
         </div>
 
         {loading ? (
-          <div className="adminlog-empty"><div className="spinner" /></div>
-        ) : filtered.length === 0 ? (
-          <div className="adminlog-empty">
-            <div className="adminlog-empty__icon">🛡️</div>
-            <strong>{t('pages.adminLogs.noEvents')}</strong>
-            <div>{t('pages.adminLogs.noEventsHint')}</div>
+          subTab === 'details' ? (
+            <RawDetailsTable logs={[]} t={t} loading />
+          ) : (
+          <div className="adminlog-timeline" aria-busy="true">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="adminlog-event" aria-hidden="true">
+                <div className="adminlog-event__header">
+                  <Skeleton width={78} height={20} radius={4} />
+                  <div className="adminlog-event__main" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <Skeleton width="28%" height={12} />
+                    <Skeleton width="46%" height={10} />
+                  </div>
+                  <div className="adminlog-event__meta" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    <Skeleton width={58} height={10} />
+                    <Skeleton width={106} height={10} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
+          )
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            title={t('pages.adminLogs.noEvents')}
+            description={t('pages.adminLogs.noEventsHint')}
+          />
         ) : subTab === 'events' ? (
           <div className="adminlog-timeline">
             {filtered.map(l => <EventRow key={l.id} log={l} t={t} />)}
@@ -362,7 +399,7 @@ const adminLogCss = `
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 .adminlog-subtab:hover {
   color: var(--text);
@@ -444,7 +481,7 @@ const adminLogCss = `
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .adminlog-btn--export {
   color: var(--pass);

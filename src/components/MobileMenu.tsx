@@ -147,6 +147,7 @@ export default function MobileMenu({
         </div>
         <button
           onClick={onMobileMenuToggle}
+          aria-label="Close menu"
           style={{
             background: 'var(--sidebar-surf)',
             border: 'none', cursor: 'pointer',

@@ -10,15 +10,17 @@ import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_FINDINGS_TRIAGE } from './userPrefsUtils'
 import { severityColor } from '../severity'
 import { safeImageUrl } from '../safeUrl'
+import { EmptyState } from '../ui'
+import { PAGE_TITLE } from '../routing'
 
 interface Props { run: RunDetail; onNavigate?: (page: Page) => void }
 
 const STATUS_COLOR: Record<string, string> = {
-  PASS:   '#22c55e',
-  FAIL:   '#DA2C38',
-  SKIP:   '#94a3b8',
-  WAIVED: '#a78bfa',
-  ERROR:  '#f97316',
+  PASS:   'var(--pass)',
+  FAIL:   'var(--fail)',
+  SKIP:   'var(--skip)',
+  WAIVED: 'var(--waived)',
+  ERROR:  'var(--waf-warn)',
 }
 
 function rowKey(f: Finding) { return `${f.check_id}||${f.resource}` }
@@ -28,7 +30,7 @@ function Pill({ label, color }: { label: string; color: string }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center',
       padding: '0.15rem 0.55rem', borderRadius: '999px',
-      background: `${color}22`, color, fontSize: '0.72rem', fontWeight: 700,
+      background: `color-mix(in srgb, ${color} 13%, transparent)`, color, fontSize: '0.72rem', fontWeight: 700,
     }}>
       {label}
     </span>
@@ -85,10 +87,10 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
             style={{ ...inputStyle, opacity: !user ? 0.6 : 1 }}
           />
           {status === 'error' && (
-            <div style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '0.25rem' }}>{errorMsg}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', marginTop: '0.25rem' }}>{errorMsg}</div>
           )}
           {status === 'done' && (
-            <div style={{ fontSize: '0.7rem', color: '#15803d', marginTop: '0.25rem' }}>✓ Comment added</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--pass-ink)', marginTop: '0.25rem' }}>✓ Comment added</div>
           )}
         </div>
         <button
@@ -96,7 +98,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
           disabled={!message.trim() || !user || status === 'saving'}
           style={{
             padding: '0.5rem 0.9rem', border: 'none', borderRadius: '8px',
-            background: !message.trim() || !user || status === 'saving' ? '#94a3b8' : 'var(--waf-brand)',
+            background: !message.trim() || !user || status === 'saving' ? 'var(--skip)' : 'var(--waf-brand)',
             color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: !message.trim() || !user ? 'default' : 'pointer',
             flexShrink: 0,
           }}
@@ -104,7 +106,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
           {status === 'saving' ? '...' : t('pages.findings.commentBtn')}
         </button>
       </div>
-      {!user && <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '0.25rem' }}>Sign in with your WOMBATpass account to participate</div>}
+      {!user && <div style={{ fontSize: '0.7rem', color: 'var(--skip)', marginTop: '0.25rem' }}>Sign in with your WOMBATpass account to participate</div>}
     </div>
   )
 }
@@ -118,9 +120,10 @@ interface CommentThreadProps {
 
 function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   async function handleDelete(commentId: string) {
-    if (!confirm(t('pages.findings.confirmDeleteComment'))) return
+    setConfirmDeleteId(null)
     setDeleting(prev => new Set(prev).add(commentId))
     try {
       await onDelete(commentId)
@@ -141,15 +144,13 @@ function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
         {t('pages.findings.commentThread', { count: comments.length })}
       </div>
       {comments.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--muted)', fontSize: '0.8rem' }}>
-          {t('pages.findings.noComments')}
-        </div>
+        <EmptyState compact title={t('pages.findings.noComments')} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {comments.map(comment => (
             <div key={comment.id} style={{
               display: 'flex', gap: '0.75rem', padding: '0.75rem', borderRadius: '8px',
-              background: 'rgba(0,148,255,.03)', border: '1px solid rgba(0,148,255,.08)',
+              background: 'color-mix(in srgb, var(--waf-brand) 3%, var(--surface))', border: '1px solid color-mix(in srgb, var(--waf-brand) 8%, transparent)',
             }}>
               {/* Debug: console.log(comment) */}
               <div style={{
@@ -177,10 +178,10 @@ function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
                   </span>
                   {currentUser && currentUser.username === comment.username && (
                     <button
-                      onClick={() => handleDelete(comment.id)}
+                      onClick={() => setConfirmDeleteId(comment.id)}
                       disabled={deleting.has(comment.id)}
                       style={{
-                        marginLeft: 'auto', fontSize: '0.7rem', color: '#dc2626',
+                        marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--fail-ink)',
                         background: 'none', border: 'none', cursor: 'pointer',
                         padding: '0.15rem 0.4rem', borderRadius: '4px',
                       }}
@@ -192,6 +193,22 @@ function CommentThread({ comments, onDelete, user, t }: CommentThreadProps) {
                 <div style={{ fontSize: '0.8rem', color: 'var(--text)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                   {comment.message}
                 </div>
+                {confirmDeleteId === comment.id && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap',
+                    marginTop: '0.5rem', padding: '0.4rem 0.6rem', borderRadius: '8px', fontSize: '0.78rem', color: 'var(--text)',
+                    background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+                    border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+                  }}>
+                    <span style={{ flex: 1 }}>{t('pages.findings.confirmDeleteComment')}</span>
+                    <button onClick={() => handleDelete(comment.id)} disabled={deleting.has(comment.id)} style={{ padding: '0.25rem 0.7rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: deleting.has(comment.id) ? 'wait' : 'pointer', fontWeight: 600, fontSize: '0.75rem' }}>
+                      {t('common.delete')}
+                    </button>
+                    <button onClick={() => setConfirmDeleteId(null)} style={{ padding: '0.25rem 0.6rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.75rem' }}>
+                      {t('common.cancel')}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -264,11 +281,11 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
           <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{finding.check_title || finding.check_id}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.2rem', fontFamily: 'monospace' }}>{finding.check_id}</div>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, fontSize: '1.2rem' }}>✕</button>
+        <button onClick={onClose} aria-label={t('common.close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, fontSize: '1.2rem' }}>✕</button>
       </div>
       <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Pill label={finding.status} color={STATUS_COLOR[finding.status] ?? '#94a3b8'} />
+          <Pill label={finding.status} color={STATUS_COLOR[finding.status] ?? 'var(--skip)'} />
           <Pill label={finding.severity.toUpperCase()} color={severityColor(finding.severity)} />
           {finding.pillar && <Pill label={finding.pillar} color="var(--waf-brand)" />}
         </div>
@@ -304,9 +321,9 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
         )}
 
         {/* Anti-Pattern Museum link */}
-        <div style={{ padding: '0.75rem', background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div style={{ padding: '0.75rem', background: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--waf-warn) 25%, transparent)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--text)' }}>
-            <div style={{ fontWeight: 700, color: '#fbbf24', marginBottom: '0.15rem' }}>{t('pages.antipattern.bestpractices')}</div>
+            <div style={{ fontWeight: 700, color: 'var(--score-mid-ink)', marginBottom: '0.15rem' }}>{t('pages.antipattern.bestpractices')}</div>
             <div style={{ color: 'var(--muted)' }}>
               {finding.status === 'FAIL'
                 ? t('pages.antipattern.failingInfo', { pillar: finding.pillar || '' })
@@ -345,7 +362,7 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
 
         {/* Comments section */}
         {error && (
-          <div style={{ padding: '0.75rem', background: 'rgba(220,38,38,.08)', border: '1px solid rgba(220,38,38,.25)', borderRadius: 7, fontSize: '0.8rem', color: '#dc2626' }}>
+          <div style={{ padding: '0.75rem', background: 'color-mix(in srgb, var(--fail) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)', borderRadius: 7, fontSize: '0.8rem', color: 'var(--fail-ink)' }}>
             {error}
           </div>
         )}
@@ -425,7 +442,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
             {t('pages.findings.waiveModalSubtitle')}
           </div>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', padding: '0.25rem' }}>✕</button>
+        <button onClick={onClose} aria-label={t('common.close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', padding: '0.25rem' }}>✕</button>
       </div>
 
       <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -439,7 +456,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
 
         <div>
           <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
-            {t('pages.findings.waiveReason')} <span style={{ color: '#dc2626' }}>*</span>
+            {t('pages.findings.waiveReason')} <span style={{ color: 'var(--fail-ink)' }}>*</span>
           </label>
           <textarea
             value={reason}
@@ -462,13 +479,13 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
         </div>
 
         {status === 'error' && (
-          <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(220,38,38,.08)', border: '1px solid rgba(220,38,38,.25)', borderRadius: 7, fontSize: '0.8rem', color: '#dc2626' }}>
+          <div style={{ padding: '0.5rem 0.75rem', background: 'color-mix(in srgb, var(--fail) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)', borderRadius: 7, fontSize: '0.8rem', color: 'var(--fail-ink)' }}>
             {errorMsg}
           </div>
         )}
 
         {status === 'done' && (
-          <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.25)', borderRadius: 7, fontSize: '0.8rem', color: '#15803d', fontWeight: 600 }}>
+          <div style={{ padding: '0.5rem 0.75rem', background: 'color-mix(in srgb, var(--pass) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)', borderRadius: 7, fontSize: '0.8rem', color: 'var(--pass-ink)', fontWeight: 600 }}>
             ✓ {t('pages.findings.wavingDone', { count: controlIds.length })}
           </div>
         )}
@@ -482,7 +499,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
             disabled={!reason.trim() || status === 'saving' || status === 'done'}
             style={{
               padding: '0.5rem 1.25rem', border: 'none', borderRadius: 8,
-              background: !reason.trim() || status === 'saving' || status === 'done' ? '#94a3b8' : 'var(--waf-brand)',
+              background: !reason.trim() || status === 'saving' || status === 'done' ? 'var(--skip)' : 'var(--waf-brand)',
               color: '#fff', fontSize: '0.85rem', cursor: !reason.trim() || status !== 'idle' ? 'default' : 'pointer', fontWeight: 700,
             }}
           >
@@ -626,6 +643,7 @@ export default function FindingsPage({ run, onNavigate }: Props) {
   return (
     <>
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['findings']}</h1>
 
         {/* ── Filter bar ────────────────────────────────────────────────────── */}
         <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -684,12 +702,12 @@ export default function FindingsPage({ run, onNavigate }: Props) {
                   exportCsv(filtered, `findings-${run.project || 'run'}-${today}.csv`)
                 }
               }}
-              style={{ ...selectStyle, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, color: '#059669', borderColor: 'color-mix(in srgb, #059669 35%, transparent)', padding: '0.35rem 2.25rem 0.35rem 0.6rem', appearance: 'none' }}
+              style={{ ...selectStyle, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--pass-ink)', borderColor: 'color-mix(in srgb, var(--pass) 35%, transparent)', padding: '0.35rem 2.25rem 0.35rem 0.6rem', appearance: 'none' }}
             >
               <option value="visible">{t('pages.findings.exportVisibleFilters')}</option>
               <option value="all">{t('pages.findings.exportAllFindings')}</option>
             </select>
-            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#059669' }}>
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--pass-ink)' }}>
               <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
@@ -699,7 +717,7 @@ export default function FindingsPage({ run, onNavigate }: Props) {
         {someSelected && (
           <div style={{
             padding: '0.6rem 1.25rem',
-            background: 'rgba(0,148,255,.06)', borderBottom: '1px solid rgba(0,148,255,.2)',
+            background: 'color-mix(in srgb, var(--waf-brand) 6%, var(--surface))', borderBottom: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
             display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
           }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--waf-brand)' }}>
@@ -731,8 +749,8 @@ export default function FindingsPage({ run, onNavigate }: Props) {
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.4rem',
                 padding: '0.35rem 0.85rem', borderRadius: '8px',
-                border: '1px solid color-mix(in srgb, #059669 35%, transparent)', background: 'color-mix(in srgb, #059669 6%, transparent)',
-                color: '#059669', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+                border: '1px solid color-mix(in srgb, var(--pass) 35%, transparent)', background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+                color: 'var(--pass-ink)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
               }}
             >
               {t('pages.findings.exportSelection')}
@@ -779,7 +797,7 @@ export default function FindingsPage({ run, onNavigate }: Props) {
                     key={i}
                     style={{
                       borderTop: '1px solid var(--border)',
-                      background: isChecked ? 'rgba(0,148,255,.05)' : isDetail ? 'rgba(0,148,255,.04)' : undefined,
+                      background: isChecked ? 'color-mix(in srgb, var(--waf-brand) 5%, transparent)' : isDetail ? 'color-mix(in srgb, var(--waf-brand) 4%, transparent)' : undefined,
                     }}
                     onMouseEnter={e => { if (!isChecked && !isDetail) (e.currentTarget as HTMLElement).style.background = 'var(--bg)' }}
                     onMouseLeave={e => { if (!isChecked && !isDetail) (e.currentTarget as HTMLElement).style.background = '' }}
@@ -809,8 +827,8 @@ export default function FindingsPage({ run, onNavigate }: Props) {
                             fontWeight: 700,
                             borderRadius: '999px',
                             padding: '0.05rem 0.4rem',
-                            background: 'rgba(0,148,255,.15)',
-                            color: '#0094ff',
+                            background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
+                            color: 'var(--waf-brand-ink)',
                           }}>
                             {(f.comment_count ?? 0)} {(f.comment_count ?? 0) === 1 ? 'comment' : 'comments'}
                           </span>
@@ -827,15 +845,15 @@ export default function FindingsPage({ run, onNavigate }: Props) {
                       <Pill label={f.severity.toUpperCase()} color={severityColor(f.severity)} />
                     </td>
                     <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      <Pill label={f.status} color={STATUS_COLOR[f.status] ?? '#94a3b8'} />
+                      <Pill label={f.status} color={STATUS_COLOR[f.status] ?? 'var(--skip)'} />
                     </td>
                   </tr>
                 )
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
-                    {t('pages.findings.noFindings')}
+                  <td colSpan={6}>
+                    <EmptyState compact title={t('pages.findings.noFindings')} />
                   </td>
                 </tr>
               )}
@@ -847,7 +865,7 @@ export default function FindingsPage({ run, onNavigate }: Props) {
       {/* Detail panel overlay */}
       {detail && (
         <>
-          <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 20%, transparent)', zIndex: 99 }} />
+          <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 99 }} />
           <DetailPanel finding={detail} onClose={() => setDetail(null)} t={t} />
         </>
       )}
@@ -871,7 +889,7 @@ export default function FindingsPage({ run, onNavigate }: Props) {
       {/* Waive modal overlay */}
       {showWaiveModal && (
         <>
-          <div onClick={() => setShowWaiveModal(false)} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 30%, transparent)', zIndex: 199 }} />
+          <div onClick={() => setShowWaiveModal(false)} style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 199 }} />
           <WaiveModal
             controlIds={selectedControlIds}
             project={run.project ?? ''}

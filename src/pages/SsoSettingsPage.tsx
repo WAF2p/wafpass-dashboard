@@ -5,6 +5,8 @@ import {
 } from '../api'
 import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
+import { Skeleton, SkeletonText } from '../ui'
 
 /** Where a save/delete in this page actually lands (ADR-005): the
  * instance-wide default, or one specific mandate's own override.
@@ -27,7 +29,7 @@ function scopeDelete(scope: SsoScope, provider: 'oidc' | 'saml2') {
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-      <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--muted)' }}>{label}</label>
+      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)' }}>{label}</label>
       {children}
       {hint && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', opacity: 0.75 }}>{hint}</div>}
     </div>
@@ -36,7 +38,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 const inputSx: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
-  background: 'var(--bg)', color: 'var(--text)',
+  background: 'var(--input-bg)', color: 'var(--text)',
   border: '1px solid var(--border)', borderRadius: '6px',
   padding: '0.35rem 0.65rem', fontSize: '0.8rem',
   fontFamily: 'inherit',
@@ -110,6 +112,7 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
   const [form, setForm]       = useState(initial ? toOidcForm(initial.config) : { ...OIDC_DEFAULTS })
   const [saving, setSaving]   = useState(false)
   const [msg, setMsg]         = useState<{ ok: boolean; text: string } | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState(false)
 
   function set(k: keyof typeof OIDC_DEFAULTS, v: string | boolean) {
     setForm(f => ({ ...f, [k]: v }))
@@ -130,7 +133,7 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
   }
 
   async function handleDelete() {
-    if (!confirm(t('pages.sso.oidcRemoveConfirm'))) return
+    setConfirmRemove(false)
     setSaving(true)
     try {
       await scopeDelete(scope, 'oidc')
@@ -156,13 +159,13 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
             {t('pages.sso.oidcSubtitle')}
           </div>
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: enabled ? '#22c55e' : 'var(--muted)' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: enabled ? 'var(--pass-ink)' : 'var(--muted)' }}>
           <div
             onClick={() => setEnabled(e => !e)}
             style={{
               width: '36px', height: '20px', borderRadius: '10px', cursor: 'pointer',
-              background: enabled ? '#22c55e' : 'var(--border)',
-              position: 'relative', transition: 'background .2s',
+              background: enabled ? 'var(--pass)' : 'var(--border)',
+              position: 'relative', transition: 'background-color .2s',
             }}
           >
             <div style={{
@@ -227,9 +230,9 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
       {msg && (
         <div style={{
           padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.78rem',
-          background: msg.ok ? 'rgba(34,197,94,.08)' : 'color-mix(in srgb, #ef4444 8%, transparent)',
-          border: `1px solid ${msg.ok ? 'rgba(34,197,94,.25)' : 'color-mix(in srgb, #ef4444 25%, transparent)'}`,
-          color: msg.ok ? '#15803d' : '#ef4444',
+          background: msg.ok ? 'color-mix(in srgb, var(--pass) 8%, transparent)' : 'color-mix(in srgb, var(--fail) 8%, transparent)',
+          border: `1px solid ${msg.ok ? 'color-mix(in srgb, var(--pass) 25%, transparent)' : 'color-mix(in srgb, var(--fail) 25%, transparent)'}`,
+          color: msg.ok ? 'var(--pass-ink)' : 'var(--fail-ink)',
         }}>
           {msg.text}
         </div>
@@ -241,26 +244,42 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
           disabled={saving}
           style={{
             padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
-            background: saving ? 'var(--bg)' : 'var(--waf-brand)', color: saving ? 'var(--muted)' : '#fff',
-            border: '1px solid var(--waf-brand)', cursor: saving ? 'wait' : 'pointer',
+            background: saving ? 'var(--bg)' : 'var(--waf-brand-btn)', color: saving ? 'var(--muted)' : '#fff',
+            border: '1px solid var(--waf-brand-btn)', cursor: saving ? 'wait' : 'pointer',
           }}
         >
           {saving ? t('pages.sso.saving') : t('pages.sso.saveOidc')}
         </button>
         {initial && (
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmRemove(true)}
             disabled={saving}
             style={{
               padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
-              background: 'transparent', color: '#ef4444',
-              border: '1px solid color-mix(in srgb, #ef4444 40%, transparent)', cursor: 'pointer',
+              background: 'transparent', color: 'var(--fail-ink)',
+              border: '1px solid color-mix(in srgb, var(--fail) 40%, transparent)', cursor: 'pointer',
             }}
           >
             {t('pages.sso.removeBtn')}
           </button>
         )}
       </div>
+      {confirmRemove && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
+          padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)',
+          background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+        }}>
+          <span style={{ flex: 1 }}>{t('pages.sso.oidcRemoveConfirm')}</span>
+          <button onClick={handleDelete} disabled={saving} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: saving ? 'wait' : 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+            {t('pages.sso.removeBtn')}
+          </button>
+          <button onClick={() => setConfirmRemove(false)} style={{ padding: '0.3rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+            {t('common.cancel')}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -331,6 +350,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
   const [form, setForm]       = useState(initial ? toSamlForm(initial.config) : { ...SAML_DEFAULTS })
   const [saving, setSaving]   = useState(false)
   const [msg, setMsg]         = useState<{ ok: boolean; text: string } | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState(false)
 
   function set(k: keyof typeof SAML_DEFAULTS, v: string | boolean) {
     setForm(f => ({ ...f, [k]: v }))
@@ -351,7 +371,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
   }
 
   async function handleDelete() {
-    if (!confirm(t('pages.sso.saml2RemoveConfirm'))) return
+    setConfirmRemove(false)
     setSaving(true)
     try {
       await scopeDelete(scope, 'saml2')
@@ -378,13 +398,13 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
             {t('pages.sso.saml2Subtitle')}
           </div>
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: enabled ? '#22c55e' : 'var(--muted)' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: enabled ? 'var(--pass-ink)' : 'var(--muted)' }}>
           <div
             onClick={() => setEnabled(e => !e)}
             style={{
               width: '36px', height: '20px', borderRadius: '10px', cursor: 'pointer',
-              background: enabled ? '#22c55e' : 'var(--border)',
-              position: 'relative', transition: 'background .2s',
+              background: enabled ? 'var(--pass)' : 'var(--border)',
+              position: 'relative', transition: 'background-color .2s',
             }}
           >
             <div style={{
@@ -400,7 +420,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
       {initial && (
         <div style={{
           padding: '0.6rem 0.85rem', borderRadius: '6px', fontSize: '0.78rem',
-          background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)',
+          background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
           color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.5rem',
         }}>
           <span style={{ fontWeight: 600, color: 'var(--text)' }}>{t('pages.sso.spMetadataLabel')}</span>
@@ -475,9 +495,9 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
       {msg && (
         <div style={{
           padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.78rem',
-          background: msg.ok ? 'rgba(34,197,94,.08)' : 'color-mix(in srgb, #ef4444 8%, transparent)',
-          border: `1px solid ${msg.ok ? 'rgba(34,197,94,.25)' : 'color-mix(in srgb, #ef4444 25%, transparent)'}`,
-          color: msg.ok ? '#15803d' : '#ef4444',
+          background: msg.ok ? 'color-mix(in srgb, var(--pass) 8%, transparent)' : 'color-mix(in srgb, var(--fail) 8%, transparent)',
+          border: `1px solid ${msg.ok ? 'color-mix(in srgb, var(--pass) 25%, transparent)' : 'color-mix(in srgb, var(--fail) 25%, transparent)'}`,
+          color: msg.ok ? 'var(--pass-ink)' : 'var(--fail-ink)',
         }}>
           {msg.text}
         </div>
@@ -489,26 +509,42 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
           disabled={saving}
           style={{
             padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
-            background: saving ? 'var(--bg)' : 'var(--waf-brand)', color: saving ? 'var(--muted)' : '#fff',
-            border: '1px solid var(--waf-brand)', cursor: saving ? 'wait' : 'pointer',
+            background: saving ? 'var(--bg)' : 'var(--waf-brand-btn)', color: saving ? 'var(--muted)' : '#fff',
+            border: '1px solid var(--waf-brand-btn)', cursor: saving ? 'wait' : 'pointer',
           }}
         >
           {saving ? t('pages.sso.saving') : t('pages.sso.saveSaml2')}
         </button>
         {initial && (
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmRemove(true)}
             disabled={saving}
             style={{
               padding: '0.5rem 1.25rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
-              background: 'transparent', color: '#ef4444',
-              border: '1px solid color-mix(in srgb, #ef4444 40%, transparent)', cursor: 'pointer',
+              background: 'transparent', color: 'var(--fail-ink)',
+              border: '1px solid color-mix(in srgb, var(--fail) 40%, transparent)', cursor: 'pointer',
             }}
           >
             {t('pages.sso.removeBtn')}
           </button>
         )}
       </div>
+      {confirmRemove && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
+          padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)',
+          background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+        }}>
+          <span style={{ flex: 1 }}>{t('pages.sso.saml2RemoveConfirm')}</span>
+          <button onClick={handleDelete} disabled={saving} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: saving ? 'wait' : 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+            {t('pages.sso.removeBtn')}
+          </button>
+          <button onClick={() => setConfirmRemove(false)} style={{ padding: '0.3rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+            {t('common.cancel')}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -568,24 +604,30 @@ export default function SsoSettingsPage() {
   }
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-      <div className="spinner" />
+    <div aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {[0, 1].map(i => (
+        <div key={i} className="card" style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <Skeleton height={16} width="35%" />
+          <SkeletonText lines={6} />
+        </div>
+      ))}
     </div>
   )
 
   if (error) return (
-    <div style={{ padding: '1rem', color: '#ef4444', fontSize: '0.85rem' }}>{error}</div>
+    <div style={{ padding: '1rem', color: 'var(--fail-ink)', fontSize: '0.85rem' }}>{error}</div>
   )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.sso}</h1>
       <div style={{
         padding: '0.6rem 1rem', borderRadius: '8px',
-        background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)',
+        background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5,
       }}>
         <strong style={{ color: 'var(--text)' }}>{t('pages.sso.overviewTitle')}</strong> — {t('pages.sso.overviewText')}
-        <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, #000000 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, #000000 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>pip install "wombat-server[saml]"</code>).
+        <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, var(--text) 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, var(--text) 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>pip install "wombat-server[saml]"</code>).
       </div>
 
       {mandateOptions.length > 0 && (
@@ -601,7 +643,7 @@ export default function SsoSettingsPage() {
             <option value="">{t('pages.sso.scopeDefault')}</option>
             {mandateOptions.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{t('pages.sso.scopeHint')}</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.sso.scopeHint')}</span>
         </div>
       )}
 

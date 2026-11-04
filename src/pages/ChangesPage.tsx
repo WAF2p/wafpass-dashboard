@@ -6,6 +6,7 @@ import {
   ListIcon,
 } from './shared/SocComponents'
 import { severityColor } from '../severity'
+import { DataTable, EmptyState, Skeleton, type Column } from '../ui'
 
 interface Props { run: RunDetail; runs: RunSummary[] }
 
@@ -14,11 +15,11 @@ type Attrs = Record<string, unknown>
 // ─── Shared constants ─────────────────────────────────────────────────────────
 
 const ACTION_META: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  create:  { label: 'Add',     color: '#16a34a', bg: 'color-mix(in srgb, #16a34a 8%, transparent)',   icon: '+' },
-  update:  { label: 'Change',  color: '#d97706', bg: 'rgba(217,119,6,.08)',   icon: '~' },
-  delete:  { label: 'Destroy', color: '#dc2626', bg: 'rgba(220,38,38,.08)',   icon: '−' },
-  replace: { label: 'Replace', color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 8%, transparent)', icon: '⟳' },
-  'no-op': { label: 'No-op',   color: '#94a3b8', bg: 'transparent',           icon: '·' },
+  create:  { label: 'Add',     color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 8%, var(--surface))',   icon: '+' },
+  update:  { label: 'Change',  color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))',   icon: '~' },
+  delete:  { label: 'Destroy', color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 8%, var(--surface))',   icon: '−' },
+  replace: { label: 'Replace', color: 'var(--waf-info)', bg: 'color-mix(in srgb, var(--waf-info) 8%, var(--surface))', icon: '⟳' },
+  'no-op': { label: 'No-op',   color: 'var(--skip)', bg: 'transparent',           icon: '·' },
 }
 
 function actionMeta(action: string) {
@@ -96,18 +97,18 @@ function getTailbreakRisks(type: string): string[] {
 // ─── Plan Changes helpers ─────────────────────────────────────────────────────
 
 function renderAttrValue(val: unknown, isUnknown?: boolean): React.ReactNode {
-  if (isUnknown) return <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>(computed at apply)</span>
-  if (val === null || val === undefined) return <span style={{ color: '#94a3b8' }}>null</span>
-  if (val === true)  return <span style={{ color: '#16a34a', fontWeight: 700 }}>true</span>
-  if (val === false) return <span style={{ color: '#dc2626', fontWeight: 700 }}>false</span>
+  if (isUnknown) return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>(computed at apply)</span>
+  if (val === null || val === undefined) return <span style={{ color: 'var(--skip)' }}>null</span>
+  if (val === true)  return <span style={{ color: 'var(--pass-ink)', fontWeight: 700 }}>true</span>
+  if (val === false) return <span style={{ color: 'var(--fail-ink)', fontWeight: 700 }}>false</span>
   if (typeof val === 'number') return <span style={{ color: '#0ea5e9' }}>{val}</span>
   if (typeof val === 'string') {
-    if (val === '') return <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>(empty)</span>
+    if (val === '') return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>(empty)</span>
     const display = val.length > 160 ? val.slice(0, 160) + '…' : val
     return <span title={val.length > 160 ? val : undefined}>{display}</span>
   }
   if (Array.isArray(val)) {
-    if (val.length === 0) return <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>(empty list)</span>
+    if (val.length === 0) return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>(empty list)</span>
     if (val.length <= 5 && val.every(v => typeof v !== 'object' || v === null))
       return <span>{(val as unknown[]).map(v => v === null ? 'null' : String(v)).join(', ')}</span>
     const str = JSON.stringify(val, null, 2)
@@ -159,16 +160,16 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
     return x.key.localeCompare(y.key)
   })
 
-  if (!rows.length) return <div style={{ fontSize: '0.8rem', color: '#16a34a' }}>No attribute differences detected.</div>
+  if (!rows.length) return <div style={{ fontSize: '0.8rem', color: 'var(--pass-ink)' }}>No attribute differences detected.</div>
 
   const securityChanges = rows.filter(c => c.isSecurity && diffOnly)
-  const beforeColor = before == null ? '#94a3b8' : '#dc2626'
-  const afterColor  = after  == null ? '#94a3b8' : '#16a34a'
+  const beforeColor = before == null ? 'var(--skip)' : 'var(--fail-ink)'
+  const afterColor  = after  == null ? 'var(--skip)' : 'var(--pass-ink)'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
       {securityChanges.length > 0 && (
-        <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'rgba(217,119,6,.08)', border: '1px solid rgba(217,119,6,.2)', fontSize: '0.77rem', color: '#92400e' }}>
+        <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--waf-warn) 20%, transparent)', fontSize: '0.77rem', color: 'var(--score-mid-ink)' }}>
           <strong>⚠ Security-sensitive attributes changing:</strong>{' '}{securityChanges.map(c => c.key).join(', ')}
         </div>
       )}
@@ -182,15 +183,15 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
         </thead>
         <tbody>
           {rows.map(({ key, before: b, after: a, isUnknown, isSecurity }) => (
-            <tr key={key} style={{ background: isSecurity ? 'rgba(217,119,6,.04)' : undefined }}>
-              <td style={{ color: isSecurity ? '#d97706' : 'var(--muted)' }}>
+            <tr key={key} style={{ background: isSecurity ? 'color-mix(in srgb, var(--waf-warn) 4%, var(--surface))' : undefined }}>
+              <td style={{ color: isSecurity ? 'var(--score-mid-ink)' : 'var(--muted)' }}>
                 {isSecurity && <span style={{ marginRight: '0.2rem' }}>⚠</span>}{key}
               </td>
-              <td style={{ background: 'rgba(220,38,38,.04)', borderRight: '2px solid rgba(220,38,38,.12)' }}>
-                {b !== undefined ? renderAttrValue(b) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
+              <td style={{ background: 'color-mix(in srgb, var(--fail) 4%, var(--surface))', borderRight: '2px solid color-mix(in srgb, var(--fail) 12%, transparent)' }}>
+                {b !== undefined ? renderAttrValue(b) : <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>—</span>}
               </td>
-              <td style={{ background: 'rgba(22,163,74,.04)' }}>
-                {a !== undefined ? renderAttrValue(a, isUnknown) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>}
+              <td style={{ background: 'color-mix(in srgb, var(--pass) 4%, var(--surface))' }}>
+                {a !== undefined ? renderAttrValue(a, isUnknown) : <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>—</span>}
               </td>
             </tr>
           ))}
@@ -294,7 +295,7 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
               {change.module_address && <span className="changes-badge changes-badge--muted">module: {change.module_address}</span>}
             </div>
           </div>
-          <button className="changes-modal__close" onClick={onClose}>×</button>
+          <button className="changes-modal__close" onClick={onClose} aria-label={t('common.close')}>×</button>
         </div>
         <div className="changes-modal__body">
           {change.action === 'create'  && <CreateDetail  after={after} afterUnknown={afterUnknown} />}
@@ -310,43 +311,27 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
   )
 }
 
-function ChangeRow({ change, onClick }: { change: PlanChange; onClick: () => void }) {
-  const { color, bg, icon } = actionMeta(change.action)
-  return (
-    <tr onClick={onClick} className="changes-row">
-      <td style={{ width: '2.25rem', textAlign: 'center' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5rem', height: '1.5rem', borderRadius: '6px', background: bg, color, fontFamily: 'monospace', fontWeight: 800, fontSize: '0.8rem' }}>{icon}</span>
-      </td>
-      <td>
-        <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text)', fontWeight: 600 }}>{change.address}</div>
-        {change.module_address && <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.1rem' }}>module: {change.module_address}</div>}
-      </td>
-      <td style={{ whiteSpace: 'nowrap' }}><span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--muted)' }}>{change.type}</span></td>
-      <td style={{ whiteSpace: 'nowrap' }}>
-        {change.provider && <span className="changes-badge changes-badge--brand">{change.provider}</span>}
-      </td>
-      <td style={{ whiteSpace: 'nowrap' }}>
-        <span className="changes-badge" style={{ background: bg, color }}>{actionMeta(change.action).label}</span>
-      </td>
-    </tr>
-  )
-}
-
 function NoChanges({ plan }: { plan: PlanChanges }) {
   const { t } = useI18n()
   return (
-    <div className="changes-empty">
-      <div className="changes-empty__icon">
-        <svg style={{ width: '1.75rem', height: '1.75rem', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <EmptyState
+      icon={
+        <svg style={{ width: '1.75rem', height: '1.75rem', color: 'var(--pass)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
-      </div>
-      <div>
-        <div className="changes-empty__title">{t('pages.changes.noPlanChanges')}</div>
-        <div className="changes-empty__desc">{t('pages.changes.noPlanChangesDesc')}</div>
-      </div>
-      {plan.summary.no_op > 0 && <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t('pages.changes.resourcesUpToDate', { count: String(plan.summary.no_op), s: plan.summary.no_op !== 1 ? 's' : '' })}</div>}
-    </div>
+      }
+      title={t('pages.changes.noPlanChanges')}
+      description={
+        <>
+          {t('pages.changes.noPlanChangesDesc')}
+          {plan.summary.no_op > 0 && (
+            <span style={{ display: 'block', marginTop: '0.35rem' }}>
+              {t('pages.changes.resourcesUpToDate', { count: String(plan.summary.no_op), s: plan.summary.no_op !== 1 ? 's' : '' })}
+            </span>
+          )}
+        </>
+      }
+    />
   )
 }
 
@@ -421,9 +406,9 @@ function DriftCard({ item, direction }: { item: DriftItem; direction: 'regressed
   const [open, setOpen] = useState(false)
   const color = direction === 'regressed' ? severityColor(item.severity) : 'var(--score-high-ink)'
   return (
-    <div className="changes-drift-card" style={{ borderColor: `${color}33`, background: `${color}08` }}>
+    <div className="changes-drift-card" style={{ borderColor: `color-mix(in srgb, ${color} 20%, transparent)`, background: `color-mix(in srgb, ${color} 3%, transparent)` }}>
       <div className="changes-drift-card__header" onClick={() => setOpen(o => !o)}>
-        <span className="changes-sev-badge" style={{ color, borderColor: `${color}44`, background: `${color}22` }}>
+        <span className="changes-sev-badge" style={{ color, borderColor: `color-mix(in srgb, ${color} 27%, transparent)`, background: `color-mix(in srgb, ${color} 13%, transparent)` }}>
           {item.severity}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -433,7 +418,7 @@ function DriftCard({ item, direction }: { item: DriftItem; direction: 'regressed
         <span className="changes-drift-card__chevron">{open ? '▲' : '▼'}</span>
       </div>
       {open && (
-        <div className="changes-drift-card__body" style={{ borderTopColor: `${color}22` }}>
+        <div className="changes-drift-card__body" style={{ borderTopColor: `color-mix(in srgb, ${color} 13%, transparent)` }}>
           <div className="changes-drift-card__message">{item.message}</div>
           {item.remediation && (
             <div className="changes-drift-card__remediation">
@@ -479,7 +464,7 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
       <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" />
       {sorted.map((r, i) => {
         const isCur = r.id === currentId
-        const c = r.score >= 80 ? '#059669' : r.score >= 60 ? '#d97706' : '#dc2626'
+        const c = r.score >= 80 ? 'var(--score-high)' : r.score >= 60 ? 'var(--score-mid)' : 'var(--score-low)'
         return (
           <g key={r.id}>
             <circle cx={px(i)} cy={py(r.score)} r={isCur ? 5 : 3} fill={isCur ? c : 'var(--surface)'} stroke={c} strokeWidth={isCur ? 2 : 1.5} />
@@ -519,14 +504,14 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.15rem' }}>
                   <span style={{ fontSize: '0.72rem', color: 'var(--text)', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pillar}</span>
                   <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: delta > 0 ? '#059669' : delta < 0 ? '#dc2626' : 'var(--muted)' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: delta > 0 ? 'var(--score-high-ink)' : delta < 0 ? 'var(--score-low-ink)' : 'var(--muted)' }}>
                       {delta > 0 ? '+' : ''}{delta !== 0 ? delta.toFixed(0) : '—'}
                     </span>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text)', width: 24, textAlign: 'right' }}>{score.toFixed(0)}</span>
                   </div>
                 </div>
                 <div style={{ height: 4, background: 'var(--bg)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${score}%`, background: score >= 80 ? '#059669' : score >= 60 ? '#d97706' : '#dc2626', borderRadius: 2 }} />
+                  <div style={{ height: '100%', width: `${score}%`, background: score >= 80 ? 'var(--score-high)' : score >= 60 ? 'var(--score-mid)' : 'var(--score-low)', borderRadius: 2 }} />
                 </div>
               </div>
             )
@@ -540,7 +525,7 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
             {(Object.entries(run.plan_changes.summary) as [string, number][]).filter(([, v]) => v > 0).map(([key, val]) => {
               const meta = actionMeta(key === 'add' ? 'create' : key === 'change' ? 'update' : key === 'destroy' ? 'delete' : key)
               return (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', background: meta.bg, border: `1px solid ${meta.color}33` }}>
+                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', background: meta.bg, border: `1px solid color-mix(in srgb, ${meta.color} 20%, transparent)` }}>
                   <span style={{ fontWeight: 700, color: meta.color, fontSize: '0.75rem', fontFamily: 'monospace' }}>{meta.icon}</span>
                   <span style={{ fontWeight: 700, color: meta.color, fontSize: '0.75rem' }}>{val}</span>
                   <span style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'capitalize' }}>{key}</span>
@@ -593,6 +578,51 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
     return true
   })
 
+  const changeColumns: Column<PlanChange>[] = [
+    {
+      key: 'icon',
+      header: '',
+      width: '2.25rem',
+      align: 'center',
+      render: change => {
+        const { color, bg, icon } = actionMeta(change.action)
+        return (
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5rem', height: '1.5rem', borderRadius: '6px', background: bg, color, fontFamily: 'monospace', fontWeight: 800, fontSize: '0.8rem' }}>{icon}</span>
+        )
+      },
+    },
+    {
+      key: 'address',
+      header: t('pages.changes.colResource'),
+      render: change => (
+        <>
+          <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text)', fontWeight: 600 }}>{change.address}</div>
+          {change.module_address && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>module: {change.module_address}</div>}
+        </>
+      ),
+    },
+    {
+      key: 'type',
+      header: t('pages.changes.colType'),
+      render: change => <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{change.type}</span>,
+    },
+    {
+      key: 'provider',
+      header: t('pages.changes.colProvider'),
+      render: change => change.provider
+        ? <span className="changes-badge changes-badge--brand" style={{ whiteSpace: 'nowrap' }}>{change.provider}</span>
+        : null,
+    },
+    {
+      key: 'action',
+      header: t('pages.changes.colAction'),
+      render: change => {
+        const { color, bg } = actionMeta(change.action)
+        return <span className="changes-badge" style={{ background: bg, color, whiteSpace: 'nowrap' }}>{actionMeta(change.action).label}</span>
+      },
+    },
+  ]
+
   return (
     <div className="changes-tab-stack">
       {selected && <ChangeDetailModal change={selected} onClose={() => setSelected(null)} />}
@@ -600,7 +630,7 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
       <div className="changes-banner changes-banner--brand">
         <div><span style={{ fontWeight: 700, color: 'var(--text)' }}>{t('pages.changes.terraform')}</span>{plan.terraform_version && <span style={{ marginLeft: '0.35rem', fontFamily: 'monospace' }}>v{plan.terraform_version}</span>}</div>
         {plan.scanned_at && <div>{t('pages.changes.planCaptured')} <span style={{ color: 'var(--text)' }}>{new Date(plan.scanned_at).toLocaleString()}</span></div>}
-        <div style={{ marginLeft: 'auto', fontWeight: 700, color: totalChanges > 0 ? '#d97706' : '#16a34a' }}>
+        <div style={{ marginLeft: 'auto', fontWeight: 700, color: totalChanges > 0 ? 'var(--score-mid-ink)' : 'var(--pass-ink)' }}>
           {totalChanges === 0 ? t('pages.changes.noChanges') : t('pages.changes.resourceChanges', { count: String(totalChanges), s: totalChanges !== 1 ? 's' : '' })}
         </div>
       </div>
@@ -634,24 +664,16 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
                 </select>
               )}
             </div>
-            <div className="changes-table-wrap" style={{ marginTop: '0.75rem' }}>
-              <table className="changes-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '2.25rem' }} />
-                    <th>{t('pages.changes.colResource')}</th>
-                    <th>{t('pages.changes.colType')}</th>
-                    <th>{t('pages.changes.colProvider')}</th>
-                    <th>{t('pages.changes.colAction')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((c, i) => <ChangeRow key={i} change={c} onClick={() => setSelected(c)} />)}
-                  {filtered.length === 0 && (
-                    <tr><td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>{t('pages.changes.noMatchFilter')}</td></tr>
-                  )}
-                </tbody>
-              </table>
+            <div style={{ marginTop: '0.75rem' }}>
+              <DataTable
+                columns={changeColumns}
+                rows={filtered}
+                rowKey={change => change.address}
+                onRowClick={change => setSelected(change)}
+                caption={t('pages.changes.planChangesTitle')}
+                className="changes-table-wrap"
+                empty={<EmptyState compact title={t('pages.changes.noMatchFilter')} />}
+              />
             </div>
             {filtered.length > 0 && <div className="changes-table-hint">{t('pages.changes.clickForDetail')}</div>}
           </SectionCard>
@@ -716,15 +738,30 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
 
   const title = direction === 'regressed' ? t('pages.changes.regressed') : t('pages.changes.recovered')
 
-  if (loading) return <SectionCard title={title}><div className="scc-empty">{t('pages.changes.loadingBaseline')}</div></SectionCard>
+  if (loading) return (
+    <SectionCard title={title}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} aria-hidden="true">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', padding: '0.65rem 0.85rem', border: '1px solid var(--border)', borderRadius: 12 }}>
+            <Skeleton width={64} height={20} radius={6} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <Skeleton width="55%" height={12} />
+              <Skeleton width="35%" height={10} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  )
 
   if (!prevRun) return (
     <SectionCard title={title}>
-      <div className="changes-empty" style={{ padding: '2.5rem 1rem' }}>
-        <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
-        <strong>{t('pages.changes.noPreviousRun')}</strong>
-        <div style={{ marginTop: 6, fontSize: 12 }}>{t('pages.changes.needAtLeastTwo')}</div>
-      </div>
+      <EmptyState
+        icon={<span style={{ fontSize: 28 }}>🔍</span>}
+        title={t('pages.changes.noPreviousRun')}
+        description={t('pages.changes.needAtLeastTwo')}
+        compact
+      />
     </SectionCard>
   )
 
@@ -757,9 +794,7 @@ function ComplianceDriftTab({ items, direction, loading, prevRun }: {
       )}
 
       {filtered.length === 0 ? (
-        <div className="changes-empty" style={{ border: '1px dashed var(--border)', borderRadius: 12, padding: '2rem 1rem' }}>
-          {emptyMsg}
-        </div>
+        <EmptyState compact title={emptyMsg} />
       ) : (
         <div style={{ marginTop: '0.5rem' }}>
           {filtered.map((item, i) => <DriftCard key={i} item={item} direction={direction} />)}
@@ -1029,10 +1064,10 @@ const changesPageCss = `
   font-size: 0.77rem;
   line-height: 1.55;
 }
-.changes-alert--success { background: color-mix(in srgb, #16a34a 7%, transparent); border: 1px solid color-mix(in srgb, #16a34a 20%, transparent); color: #14532d; }
-.changes-alert--warn    { background: rgba(217,119,6,.07); border: 1px solid rgba(217,119,6,.2); color: #78350f; }
-.changes-alert--danger  { background: rgba(220,38,38,.06); border: 1px solid rgba(220,38,38,.22); color: #7f1d1d; }
-.changes-alert--info    { background: color-mix(in srgb, #7c3aed 7%, transparent); border: 1px solid color-mix(in srgb, #7c3aed 20%, transparent); color: #4c1d95; }
+.changes-alert--success { background: color-mix(in srgb, var(--pass) 7%, transparent); border: 1px solid color-mix(in srgb, var(--pass) 20%, transparent); color: var(--pass-ink); }
+.changes-alert--warn    { background: color-mix(in srgb, var(--waf-warn) 7%, transparent); border: 1px solid color-mix(in srgb, var(--waf-warn) 20%, transparent); color: var(--score-mid-ink); }
+.changes-alert--danger  { background: color-mix(in srgb, var(--fail) 6%, transparent); border: 1px solid color-mix(in srgb, var(--fail) 22%, transparent); color: var(--fail-ink); }
+.changes-alert--info    { background: color-mix(in srgb, var(--waf-info) 7%, transparent); border: 1px solid color-mix(in srgb, var(--waf-info) 20%, transparent); color: var(--waf-info); }
 .changes-alert__title { font-weight: 700; margin-bottom: 0.35rem; }
 .changes-alert ul { margin: 0; padding-left: 1.25rem; }
 .changes-alert li { font-size: 0.76rem; line-height: 1.55; }
@@ -1052,8 +1087,8 @@ const changesPageCss = `
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  background: color-mix(in srgb, #16a34a 10%, transparent);
-  border: 2px solid color-mix(in srgb, #16a34a 30%, transparent);
+  background: color-mix(in srgb, var(--pass) 10%, transparent);
+  border: 2px solid color-mix(in srgb, var(--pass) 30%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1061,7 +1096,7 @@ const changesPageCss = `
 .changes-empty__title {
   font-size: 1.2rem;
   font-weight: 800;
-  color: #16a34a;
+  color: var(--pass-ink);
 }
 .changes-empty__desc {
   font-size: 0.85rem;
@@ -1086,7 +1121,7 @@ const changesPageCss = `
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 6px;
-  color: #94a3b8;
+  color: var(--skip);
   font-size: 0.7rem;
   padding: 0.2rem 0.5rem;
   cursor: pointer;
@@ -1110,8 +1145,8 @@ const changesPageCss = `
   font-weight: 600;
 }
 .changes-badge--brand {
-  background: rgba(0,148,255,.08);
-  color: var(--waf-brand);
+  background: color-mix(in srgb, var(--waf-brand) 8%, var(--surface));
+  color: var(--waf-brand-ink);
 }
 
 .changes-breakdown-row {
@@ -1143,10 +1178,10 @@ const changesPageCss = `
   font-size: 0.68rem;
   font-weight: 700;
 }
-.changes-breakdown-row__badge--add    { background: color-mix(in srgb, #16a34a 10%, transparent);   color: #16a34a; }
-.changes-breakdown-row__badge--change { background: rgba(217,119,6,.1);  color: #d97706; }
-.changes-breakdown-row__badge--replace{ background: color-mix(in srgb, #7c3aed 10%, transparent); color: #7c3aed; }
-.changes-breakdown-row__badge--delete { background: rgba(220,38,38,.1);  color: #dc2626; }
+.changes-breakdown-row__badge--add    { background: color-mix(in srgb, var(--pass) 10%, transparent);   color: var(--pass-ink); }
+.changes-breakdown-row__badge--change { background: color-mix(in srgb, var(--waf-warn) 10%, transparent);  color: var(--score-mid-ink); }
+.changes-breakdown-row__badge--replace{ background: color-mix(in srgb, var(--waf-info) 10%, transparent); color: var(--waf-info); }
+.changes-breakdown-row__badge--delete { background: color-mix(in srgb, var(--fail) 10%, transparent);  color: var(--fail-ink); }
 .changes-breakdown-row__total {
   color: var(--muted);
   font-size: 0.7rem;
@@ -1230,7 +1265,7 @@ const changesPageCss = `
 }
 
 .changes-modal-portal { position: fixed; inset: 0; z-index: 99; }
-.changes-modal-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, #000000 40%, transparent); }
+.changes-modal-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, var(--text) 40%, transparent); }
 .changes-modal {
   position: fixed;
   top: 4rem;

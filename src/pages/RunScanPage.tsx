@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { getApiBase, fetchScanStatus, triggerScan, type ScanStatus, type RunSummary } from '../api'
 import { useI18n } from '../i18n'
+import { PageHeader, Skeleton } from '../ui'
+import { scoreColor } from '../severity'
 
 function getServerUrl(): string {
   const base = getApiBase().trim().replace(/\/$/, '')
@@ -22,17 +24,16 @@ function CopyBlock({ code, lang = '' }: { code: string; lang?: string }) {
         padding: lang ? '1.75rem 3.25rem 1rem 1rem' : '1rem 3.25rem 1rem 1rem',
         fontSize: '0.8rem', overflowX: 'auto', lineHeight: 1.7, margin: 0,
         whiteSpace: 'pre', border: '1px solid rgba(148,163,184,.15)',
-        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.2)',
       }}>
-        {lang && <span style={{ position: 'absolute', top: '0.55rem', left: '0.9rem', fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</span>}
+        {lang && <span style={{ position: 'absolute', top: '0.55rem', left: '0.9rem', fontSize: '0.7rem', color: 'var(--skip)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</span>}
         {code}
       </pre>
       <button onClick={copy} style={{
         position: 'absolute', top: '0.65rem', right: '0.65rem',
         background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)',
-        borderRadius: '6px', color: copied ? '#22c55e' : '#94a3b8',
-        fontSize: '0.68rem', fontWeight: 600, padding: '0.25rem 0.6rem', cursor: 'pointer',
-        transition: 'all .15s',
+        borderRadius: '6px', color: copied ? 'var(--pass)' : 'var(--skip)',
+        fontSize: '0.7rem', fontWeight: 600, padding: '0.25rem 0.6rem', cursor: 'pointer',
+        transition: 'background-color .15s ease, border-color .15s ease, color .15s ease',
       }}>
         {copied ? 'Copied!' : 'Copy'}
       </button>
@@ -66,7 +67,7 @@ function FrameworkSelect({ value, onChange, disabled = false }: { value: string;
 
 function StatusBadge({ status, t }: { status: ScanStatus | null; t: (key: string) => string }) {
   const ready = status?.enabled && status?.engine_available && status?.controls_dir_exists
-  const dotColor = status == null ? '#94a3b8' : ready ? '#22c55e' : '#f59e0b'
+  const dotColor = status == null ? 'var(--skip)' : ready ? 'var(--pass)' : 'var(--waf-warn)'
   const label = status == null ? t('pages.scan.checking') : ready ? t('pages.scan.ready') : t('pages.scan.unavailable')
   return (
     <div style={{
@@ -99,11 +100,12 @@ function PathCard({
         padding: '1.25rem 1.5rem', borderRadius: '16px',
         background: active ? 'var(--surface)' : 'var(--bg)',
         border: active ? '2px solid var(--waf-brand)' : '1px solid var(--border)',
-        boxShadow: active ? '0 8px 28px rgba(0,148,255,.12)' : 'var(--shadow-sm)',
-        cursor: 'pointer', textAlign: 'left', transition: 'all .15s',
+        boxShadow: 'none',
+        cursor: 'pointer', textAlign: 'left',
+        transition: 'border-color .15s ease, background-color .15s ease',
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
       }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = 'rgba(0,148,255,.4)' }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--waf-brand) 40%, transparent)' }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = 'var(--border)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -114,7 +116,7 @@ function PathCard({
           <span style={{
             fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
             padding: '0.15rem 0.45rem', borderRadius: '999px',
-            background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+            background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand-ink)',
           }}>{badge}</span>
         )}
       </div>
@@ -150,7 +152,7 @@ function Input({
           opacity: disabled ? 0.6 : 1,
         }}
       />
-      {hint && <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{hint}</div>}
+      {hint && <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{hint}</div>}
     </div>
   )
 }
@@ -202,12 +204,14 @@ function ServerScanPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <StatusBadge status={status} t={t} />
+        {status == null && !statusError
+          ? <Skeleton width={128} height={26} radius={999} />
+          : <StatusBadge status={status} t={t} />}
         {status && !ready && !statusError && (
           <div style={{
             flex: 1, minWidth: '240px', padding: '0.5rem 0.75rem', borderRadius: '8px',
-            background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.25)',
-            fontSize: '0.75rem', color: '#f59e0b',
+            background: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-warn) 25%, transparent)',
+            fontSize: '0.75rem', color: 'var(--sev-medium)',
           }}>
             {!status.enabled && 'Server-side scanning is disabled (WOMBAT_SCAN_ENABLED=false). '}
             {status.enabled && !status.engine_available && 'wombat-core is not installed on the server. Run: pip install wombat-core. '}
@@ -219,8 +223,8 @@ function ServerScanPanel() {
       {statusError && (
         <div style={{
           padding: '0.6rem 0.85rem', borderRadius: '8px',
-          background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
-          fontSize: '0.78rem', color: '#ef4444',
+          background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)',
+          fontSize: '0.78rem', color: 'var(--fail-ink)',
         }}>
           Could not reach server: {statusError}
         </div>
@@ -273,11 +277,11 @@ function ServerScanPanel() {
           disabled={!ready || running || !scanPath.trim()}
           style={{
             padding: '0.6rem 1.5rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700,
-            background: ready && !running && scanPath.trim() ? 'var(--waf-brand)' : 'var(--surface)',
-            color: ready && !running && scanPath.trim() ? '#fff' : 'var(--muted)',
-            border: '1px solid', borderColor: ready && !running && scanPath.trim() ? 'var(--waf-brand)' : 'var(--border)',
+            background: ready && !running && scanPath.trim() ? 'var(--waf-brand-btn)' : 'var(--surface)',
+            color: ready && !running && scanPath.trim() ? 'white' : 'var(--muted)',
+            border: '1px solid', borderColor: ready && !running && scanPath.trim() ? 'var(--waf-brand-btn)' : 'var(--border)',
             cursor: ready && !running && scanPath.trim() ? 'pointer' : 'default',
-            transition: 'all .15s', boxShadow: ready && !running && scanPath.trim() ? '0 4px 14px rgba(0,148,255,.25)' : 'none',
+            transition: 'background-color .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease', boxShadow: 'none',
           }}
         >
           {running ? t('pages.scan.scanning') : t('pages.scan.runScan')}
@@ -287,25 +291,25 @@ function ServerScanPanel() {
       {runError && (
         <div style={{
           padding: '0.75rem 1rem', borderRadius: '8px',
-          background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 20%, transparent)',
-          fontSize: '0.78rem', color: '#ef4444',
+          background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)',
+          fontSize: '0.78rem', color: 'var(--fail-ink)',
         }}>{runError}</div>
       )}
 
       {result && (
         <div style={{
           padding: '1rem 1.25rem', borderRadius: '12px',
-          background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.25)',
+          background: 'color-mix(in srgb, var(--pass) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <svg width="18" height="18" fill="none" stroke="#22c55e" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="var(--pass)" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#22c55e' }}>{t('pages.scan.scanComplete')}</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--pass-ink)' }}>{t('pages.scan.scanComplete')}</div>
           </div>
           <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontSize: '0.78rem', color: 'var(--muted)' }}>
             <div><span style={{ fontWeight: 700 }}>{t('pages.scan.scoreLabel')}</span>{' '}
-              <span style={{ color: result.score >= 80 ? '#22c55e' : result.score >= 50 ? '#f59e0b' : '#ef4444', fontWeight: 800 }}>{result.score}%</span>
+              <span style={{ color: scoreColor(result.score), fontWeight: 800 }}>{result.score}%</span>
             </div>
             <div><span style={{ fontWeight: 700 }}>{t('pages.scan.controlsRunLabel')}</span> {result.controls_run}</div>
             {result.project && <div><span style={{ fontWeight: 700 }}>Project:</span> {result.project}</div>}
@@ -316,7 +320,7 @@ function ServerScanPanel() {
 
       <div style={{
         padding: '0.85rem 1rem', borderRadius: '10px',
-        background: 'rgba(0,148,255,.05)', border: '1px solid rgba(0,148,255,.15)',
+        background: 'color-mix(in srgb, var(--waf-brand) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6,
       }}>
         The server runs <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>wombat-core</code> directly against a path on its filesystem.
@@ -393,7 +397,7 @@ function CliPanel() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: 26, height: 26, borderRadius: '50%',
-              background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+              background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand-ink)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.72rem', fontWeight: 800,
             }}>1</div>
@@ -406,7 +410,7 @@ function CliPanel() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: 26, height: 26, borderRadius: '50%',
-              background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+              background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand-ink)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.72rem', fontWeight: 800,
             }}>2</div>
@@ -419,7 +423,7 @@ function CliPanel() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: 26, height: 26, borderRadius: '50%',
-              background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+              background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand-ink)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.72rem', fontWeight: 800,
             }}>3</div>
@@ -441,7 +445,7 @@ function ApiPanel() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div style={{
         padding: '1rem 1.25rem', borderRadius: '12px',
-        background: 'rgba(0,148,255,.05)', border: '1px solid rgba(0,148,255,.15)',
+        background: 'color-mix(in srgb, var(--waf-brand) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
         fontSize: '0.78rem', color: 'var(--muted)', lineHeight: 1.6,
       }}>
         POST JSON results directly — generated automatically with <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>--output json --push</code>.
@@ -468,8 +472,8 @@ curl -X POST ${serverUrl}/runs \\
             <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem' }}>
               <span style={{
                 padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0,
-                background: method === 'POST' ? 'rgba(0,148,255,.12)' : 'rgba(34,197,94,.1)',
-                color: method === 'POST' ? 'var(--waf-brand)' : '#22c55e',
+                background: method === 'POST' ? 'color-mix(in srgb, var(--waf-brand) 12%, transparent)' : 'color-mix(in srgb, var(--pass) 10%, transparent)',
+                color: method === 'POST' ? 'var(--waf-brand-ink)' : 'var(--pass-ink)',
               }}>{method}</span>
               <code style={{ fontSize: '0.74rem', color: 'var(--text)', flexShrink: 0 }}>{p}</code>
               <span style={{ color: 'var(--muted)' }}>{desc}</span>
@@ -513,7 +517,7 @@ function FlagsShelf({ t }: { t: (key: string) => string }) {
               minWidth: '180px', flex: 1,
             }}
           >
-            <code style={{ fontSize: '0.76rem', color: 'var(--waf-brand)', fontWeight: 700, whiteSpace: 'nowrap' }}>{flag}</code>
+            <code style={{ fontSize: '0.76rem', color: 'var(--waf-brand-ink)', fontWeight: 700, whiteSpace: 'nowrap' }}>{flag}</code>
             <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{desc}</span>
           </div>
         ))}
@@ -530,49 +534,27 @@ export default function RunScanPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* Hero */}
-      <div style={{
-        padding: '2rem 2.25rem', borderRadius: '20px',
-        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, color-mix(in srgb, #7c3aed 6%, transparent) 100%)',
-        border: '1px solid rgba(0,148,255,.2)',
-        display: 'flex', flexDirection: 'column', gap: '0.75rem',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        <div style={{
-          position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px',
-          borderRadius: '50%', background: 'rgba(0,148,255,.08)', filter: 'blur(40px)', pointerEvents: 'none',
-        }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{
-            width: 46, height: 46, borderRadius: '12px',
-            background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-brand)',
-          }}>
-            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>{t('pages.scan.title')}</h1>
-            <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.scan.subtitle')}</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.4rem 0.8rem', borderRadius: '999px',
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            fontSize: '0.75rem', color: 'var(--muted)',
-          }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--waf-brand)', flexShrink: 0 }} />
-            <span style={{ fontWeight: 600 }}>{t('pages.scan.serverUrlLabel')}</span>
-            <code style={{ color: 'var(--waf-brand)', fontWeight: 700 }}>{serverUrl}</code>
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-            {t('pages.scan.serverUrlHint')}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={t('pages.scan.title')}
+        description={t('pages.scan.subtitle')}
+        actions={
+          <>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.4rem 0.8rem', borderRadius: '999px',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              fontSize: '0.75rem', color: 'var(--muted)',
+            }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--waf-brand)', flexShrink: 0 }} />
+              <span style={{ fontWeight: 600 }}>{t('pages.scan.serverUrlLabel')}</span>
+              <code style={{ color: 'var(--waf-brand-ink)', fontWeight: 700 }}>{serverUrl}</code>
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
+              {t('pages.scan.serverUrlHint')}
+            </div>
+          </>
+        }
+      />
 
       {/* Path selector */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>

@@ -14,6 +14,7 @@ import {
   type ControlPackOut,
   type UpdateInfo,
 } from '../api'
+import { EmptyState, Skeleton } from '../ui'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -30,12 +31,12 @@ function StatusBadge({ active }: { active: boolean }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '0.2rem 0.55rem', borderRadius: 999,
-      background: active ? 'color-mix(in srgb, #059669 10%, transparent)' : 'var(--bg)',
-      color: active ? '#059669' : 'var(--muted)',
-      border: active ? '1px solid color-mix(in srgb, #059669 20%, transparent)' : '1px solid var(--border)',
+      background: active ? 'color-mix(in srgb, var(--pass) 10%, transparent)' : 'var(--bg)',
+      color: active ? 'var(--pass-ink)' : 'var(--muted)',
+      border: active ? '1px solid color-mix(in srgb, var(--pass) 20%, transparent)' : '1px solid var(--border)',
       fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.04em', textTransform: 'uppercase',
     }}>
-      {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669', display: 'inline-block' }} />}
+      {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pass)', display: 'inline-block' }} />}
       {active ? 'Active' : 'Inactive'}
     </span>
   )
@@ -76,7 +77,7 @@ function Input({
           borderRadius: '10px', padding: '0.55rem 0.75rem', fontSize: '0.85rem', outline: 'none',
         }}
       />
-      {hint && <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{hint}</div>}
+      {hint && <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{hint}</div>}
     </div>
   )
 }
@@ -196,19 +197,19 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
       {/* ── Hero header ──────────────────────────────────────────────── */}
       <div style={{
         padding: '1.75rem 2rem', borderRadius: '20px',
-        background: 'linear-gradient(135deg, rgba(0,148,255,.10) 0%, color-mix(in srgb, #7c3aed 6%, transparent) 100%)',
-        border: '1px solid rgba(0,148,255,.2)',
+        background: 'linear-gradient(135deg, color-mix(in srgb, var(--waf-brand) 10%, transparent) 0%, color-mix(in srgb, var(--waf-info) 6%, transparent) 100%)',
+        border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: '-50px', right: '-40px', width: '200px', height: '200px',
-          borderRadius: '50%', background: 'rgba(0,148,255,.08)', filter: 'blur(45px)', pointerEvents: 'none',
+          borderRadius: '50%', background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)', filter: 'blur(45px)', pointerEvents: 'none',
         }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{
             width: 46, height: 46, borderRadius: '12px',
-            background: 'rgba(0,148,255,.15)', border: '1px solid rgba(0,148,255,.3)',
+            background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-brand)',
           }}>
             <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={22} />
@@ -235,7 +236,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
           }} />
           <div style={{
             width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-            background: 'rgba(0,148,255,0.12)', border: '1px solid rgba(0,148,255,0.25)',
+            background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-brand)',
           }}>
             <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={20} />
@@ -244,7 +245,12 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>
               {t('pages.controlspacks.activePack')}
             </div>
-            {activePack ? (
+            {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }} aria-busy="true">
+                <Skeleton width="45%" height={18} />
+                <Skeleton width="70%" height={10} />
+              </div>
+            ) : activePack ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
@@ -267,10 +273,10 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
 
         {/* Framework reference */}
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.1rem', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: '#0094FF' }} />
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'var(--waf-brand)' }} />
           <div style={{
             width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-            background: 'rgba(0,148,255,0.12)', border: '1px solid rgba(0,148,255,0.25)',
+            background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-brand)',
           }}>
             <Icon d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" size={20} />
@@ -280,13 +286,16 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
               {t('pages.controlspacks.frameworkReference')}
             </div>
             {updateLoading ? (
-              <div style={{ fontSize: '0.85rem', color: 'var(--text)' }}>{t('common.loading')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }} aria-busy="true">
+                <Skeleton width="45%" height={18} />
+                <Skeleton width="70%" height={10} />
+              </div>
             ) : updateError ? (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.5rem 0.75rem', borderRadius: 8,
-                background: 'color-mix(in srgb, #f97316 8%, transparent)', border: '1px solid color-mix(in srgb, #f97316 18%, transparent)',
-                color: '#c2410c', fontSize: '0.78rem',
+                background: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-warn) 18%, transparent)',
+                color: 'var(--score-mid-ink)', fontSize: '0.78rem',
               }}>
                 <Icon d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" size={16} />
                 {updateError}
@@ -297,7 +306,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                   <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>
                     {updateInfo.framework.version.display || updateInfo.version}
                   </span>
-                  <span style={{ padding: '0.15rem 0.55rem', borderRadius: '999px', background: 'rgba(0,148,255,.12)', color: '#0094FF', fontSize: '0.7rem', fontWeight: 700 }}>
+                  <span style={{ padding: '0.15rem 0.55rem', borderRadius: '999px', background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
                     {updateInfo.generated_at ? `Updated ${new Date(updateInfo.generated_at).toLocaleDateString()}` : ''}
                   </span>
                 </div>
@@ -340,7 +349,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             )}
             <div style={{
               width: 24, height: 24, borderRadius: '50%',
-              background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+              background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.72rem', fontWeight: 800,
             }}>{step.n}</div>
@@ -376,15 +385,15 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
               style={{
                 padding: '1.25rem', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
                 background: 'var(--bg)', border: '1px solid var(--border)',
-                display: 'flex', flexDirection: 'column', gap: '0.75rem', transition: 'all .15s',
+                display: 'flex', flexDirection: 'column', gap: '0.75rem', transition: 'border-color .15s, transform .15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,148,255,.4)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--waf-brand) 40%, transparent)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{
                   width: 38, height: 38, borderRadius: 10,
-                  background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+                  background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <Icon d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" size={20} />
@@ -400,15 +409,15 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
               style={{
                 padding: '1.25rem', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
                 background: 'var(--bg)', border: '1px solid var(--border)',
-                display: 'flex', flexDirection: 'column', gap: '0.75rem', transition: 'all .15s',
+                display: 'flex', flexDirection: 'column', gap: '0.75rem', transition: 'border-color .15s, transform .15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,148,255,.4)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--waf-brand) 40%, transparent)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{
                   width: 38, height: 38, borderRadius: 10,
-                  background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+                  background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <Icon d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" size={20} />
@@ -424,12 +433,12 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
           <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{
               padding: '1.25rem', borderRadius: '12px', border: `2px dashed ${uploadFile ? 'var(--waf-brand)' : 'var(--border)'}`,
-              background: uploadFile ? 'rgba(0,148,255,.04)' : 'var(--bg)', transition: 'all .15s',
+              background: uploadFile ? 'color-mix(in srgb, var(--waf-brand) 4%, transparent)' : 'var(--bg)', transition: 'border-color .15s, background-color .15s',
             }}>
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '1rem' }}>
                 <div style={{
                   width: 42, height: 42, borderRadius: '50%',
-                  background: uploadFile ? 'rgba(0,148,255,.15)' : 'var(--surface)', border: '1px solid var(--border)',
+                  background: uploadFile ? 'color-mix(in srgb, var(--waf-brand) 15%, transparent)' : 'var(--surface)', border: '1px solid var(--border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: uploadFile ? 'var(--waf-brand)' : 'var(--muted)',
                 }}>
                   <Icon d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 0v10m0-10a2 2 0 012 2h2a2 2 0 012-2" size={22} />
@@ -472,7 +481,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                   background: 'var(--waf-brand)', color: '#fff', border: 'none',
                   opacity: uploading || !uploadFile || !uploadVersion.trim() ? 0.6 : 1,
                   display: 'flex', alignItems: 'center', gap: 6,
-                  boxShadow: '0 4px 14px rgba(0,148,255,.25)',
+                  boxShadow: '0 4px 14px color-mix(in srgb, var(--waf-brand) 25%, transparent)',
                 }}
               >
                 {uploading ? (
@@ -489,7 +498,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
               </button>
             </div>
             {uploadError && (
-              <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)', color: '#dc2626', fontSize: '0.8rem' }}>
+              <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', color: 'var(--fail-ink)', fontSize: '0.8rem' }}>
                 {uploadError}
               </div>
             )}
@@ -500,7 +509,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
           <form onSubmit={handleSync} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{
               padding: '1rem 1.25rem', borderRadius: '12px',
-              background: 'rgba(0,148,255,.05)', border: '1px solid rgba(0,148,255,.15)',
+              background: 'color-mix(in srgb, var(--waf-brand) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
               fontSize: '0.78rem', color: 'var(--muted)', lineHeight: 1.6,
             }}
               dangerouslySetInnerHTML={{
@@ -533,7 +542,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                   background: 'var(--waf-brand)', color: '#fff', border: 'none',
                   opacity: syncing || !syncVersion.trim() ? 0.6 : 1,
                   display: 'flex', alignItems: 'center', gap: 6,
-                  boxShadow: '0 4px 14px rgba(0,148,255,.25)',
+                  boxShadow: '0 4px 14px color-mix(in srgb, var(--waf-brand) 25%, transparent)',
                 }}
               >
                 {syncing ? (
@@ -550,7 +559,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
               </button>
             </div>
             {syncError && (
-              <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)', color: '#dc2626', fontSize: '0.8rem' }}>
+              <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', color: 'var(--fail-ink)', fontSize: '0.8rem' }}>
                 {syncError}
               </div>
             )}
@@ -570,25 +579,44 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
         </div>
 
         {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem' }}>
-            <div className="spinner" />
+          <div style={{ display: 'flex', flexDirection: 'column' }} aria-busy="true">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                aria-hidden="true"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '1rem',
+                  padding: '1rem 1.5rem',
+                  borderTop: i === 0 ? 'none' : '1px solid var(--border)',
+                }}
+              >
+                <Skeleton width={40} height={40} radius={10} />
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <Skeleton width="28%" height={12} />
+                  <Skeleton width="52%" height={10} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                  <Skeleton width={52} height={26} />
+                  <Skeleton width={90} height={26} />
+                  <Skeleton width={90} height={26} />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {error && (
-          <div style={{ padding: '1rem 1.5rem', color: '#dc2626', fontSize: '0.85rem' }}>{error}</div>
+          <div style={{ padding: '1rem 1.5rem', color: 'var(--fail-ink)', fontSize: '0.85rem' }}>{error}</div>
         )}
 
         {actionError && (
-          <div style={{ margin: '0.75rem 1.5rem', padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)', color: '#dc2626', fontSize: '0.8rem' }}>
+          <div style={{ margin: '0.75rem 1.5rem', padding: '0.75rem 1rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', color: 'var(--fail-ink)', fontSize: '0.8rem' }}>
             {actionError}
           </div>
         )}
 
         {!loading && packs.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-            {t('pages.controlspacks.noPacks')}
-          </div>
+          <EmptyState title={t('pages.controlspacks.noPacks')} />
         )}
 
         {!loading && packs.length > 0 && (
@@ -600,14 +628,14 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                   display: 'flex', alignItems: 'center', gap: '1rem',
                   padding: '1rem 1.5rem',
                   borderTop: idx === 0 ? 'none' : '1px solid var(--border)',
-                  background: pack.is_active ? 'rgba(0,148,255,.03)' : 'transparent',
+                  background: pack.is_active ? 'color-mix(in srgb, var(--waf-brand) 3%, transparent)' : 'transparent',
                   transition: 'background .12s',
                 }}
               >
                 <div style={{
                   width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                  background: pack.is_active ? 'rgba(0,148,255,.12)' : 'var(--bg)',
-                  border: `1px solid ${pack.is_active ? 'rgba(0,148,255,.25)' : 'var(--border)'}`,
+                  background: pack.is_active ? 'color-mix(in srgb, var(--waf-brand) 12%, transparent)' : 'var(--bg)',
+                  border: `1px solid ${pack.is_active ? 'color-mix(in srgb, var(--waf-brand) 25%, transparent)' : 'var(--border)'}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: pack.is_active ? 'var(--waf-brand)' : 'var(--muted)',
                 }}>
@@ -654,7 +682,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                         border: '1px solid var(--border)',
                         background: 'var(--surface)', color: 'var(--text)',
                         opacity: activating === pack.version ? 0.6 : 1,
-                        transition: 'all 0.12s',
+                        transition: 'border-color 0.12s, opacity 0.12s',
                       }}
                       onMouseEnter={e => { if (activating !== pack.version) e.currentTarget.style.borderColor = 'var(--waf-brand)' }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
@@ -664,7 +692,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                   ) : (
                     <div style={{
                       padding: '0.45rem 1rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700,
-                      color: '#059669', background: 'color-mix(in srgb, #059669 8%, transparent)', border: '1px solid color-mix(in srgb, #059669 20%, transparent)',
+                      color: 'var(--pass-ink)', background: 'color-mix(in srgb, var(--pass) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 20%, transparent)',
                     }}>
                       {t('pages.controlspacks.currentActive')}
                     </div>
@@ -684,7 +712,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{
             width: 38, height: 38, borderRadius: 10,
-            background: 'rgba(0,148,255,.12)', color: 'var(--waf-brand)',
+            background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" size={20} />
@@ -701,7 +729,7 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             padding: '0.5rem 1rem', borderRadius: '8px',
             background: 'var(--surface)', border: '1px solid var(--border)',
             color: 'var(--text)', fontSize: '0.78rem', fontWeight: 700,
-            cursor: 'pointer', transition: 'all .12s',
+            cursor: 'pointer', transition: 'border-color .12s, background-color .12s',
           }}
         >
           {t('pages.controlspacks.catalogueLink')}

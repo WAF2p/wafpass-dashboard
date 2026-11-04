@@ -12,6 +12,8 @@ import { useState, useMemo, useRef } from 'react'
 import { RunDetail, Finding } from '../api'
 import { useI18n } from '../i18n'
 import { severityBg, severityBorder, severityColor } from '../severity'
+import { EmptyState } from '../ui'
+import { PAGE_TITLE } from '../routing'
 
 interface Props { run: RunDetail }
 
@@ -128,7 +130,7 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
       <defs>
         <marker id="mini-arr" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
-          <polygon points="0 0, 6 2.5, 0 5" fill="#94a3b8" opacity="0.8" />
+          <polygon points="0 0, 6 2.5, 0 5" fill="var(--skip)" opacity="0.8" />
         </marker>
       </defs>
 
@@ -143,14 +145,14 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
           : [CX + ux * 27, CY + uy * 27, n.x - ux * 20, n.y - uy * 20]
         return (
           <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-            stroke="#94a3b8" strokeWidth="1.4" strokeOpacity="0.55"
+            stroke="var(--skip)" strokeWidth="1.4" strokeOpacity="0.55"
             strokeDasharray={n.dir === 'up' ? '4 2' : undefined}
             markerEnd="url(#mini-arr)" />
         )
       })}
 
       {/* Center node */}
-      <circle cx={CX} cy={CY} r={27} fill={`${col}18`} stroke={col} strokeWidth="2.2" />
+      <circle cx={CX} cy={CY} r={27} fill={severityBg(center.severity, 9)} stroke={col} strokeWidth="2.2" />
       <text x={CX} y={CY - 5} textAnchor="middle" fontSize="9" fontWeight="700" fill={col}
         style={{ userSelect: 'none' }}>
         {trunc(center.rtypeLabel.split(' ').slice(0, 2).join(' '), 14)}
@@ -165,12 +167,12 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
         const nc = severityColor(n.severity)
         return (
           <g key={`nb${i}`} style={{ cursor: 'pointer' }} onClick={() => onNavigate(n.id)}>
-            <circle cx={n.x} cy={n.y} r={20} fill={`${nc}18`} stroke={nc} strokeWidth="1.5" />
+            <circle cx={n.x} cy={n.y} r={20} fill={severityBg(n.severity, 9)} stroke={nc} strokeWidth="1.5" />
             <text x={n.x} y={n.y - 3} textAnchor="middle" fontSize="7.5" fontWeight="600" fill={nc}
               style={{ userSelect: 'none', pointerEvents: 'none' }}>
               {trunc(humanType(n.rtype).split(' ')[0], 9)}
             </text>
-            <text x={n.x} y={n.y + 9} textAnchor="middle" fontSize="6.5" fill="#94a3b8"
+            <text x={n.x} y={n.y + 9} textAnchor="middle" fontSize="6.5" fill="var(--skip)"
               style={{ userSelect: 'none', pointerEvents: 'none' }}>
               {trunc(n.name, 10)}
             </text>
@@ -180,7 +182,7 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
       })}
 
       {/* Legend */}
-      <text x={8} y={H - 8} fontSize="7.5" fill="#94a3b8" style={{ userSelect: 'none' }}>
+      <text x={8} y={H - 8} fontSize="7.5" fill="var(--skip)" style={{ userSelect: 'none' }}>
         — — depends on  ——→ used by
       </text>
     </svg>
@@ -231,20 +233,22 @@ export default function BlastRadiusPage({ run }: Props) {
   // ── Empty state ────────────────────────────────────────────────────────────
   if (failFindings.length === 0) {
     return (
-      <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--muted)' }}>
-        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          style={{ margin: '0 auto 1rem', display: 'block', opacity: 0.25 }}>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{t('pages.blastRadius.noFailingResources')}</div>
-        <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>{t('pages.blastRadius.allPassing')}</div>
-      </div>
+      <EmptyState
+        title={t('pages.blastRadius.noFailingResources')}
+        description={t('pages.blastRadius.allPassing')}
+        icon={(
+          <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )}
+      />
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['blastradius']}</h1>
 
       {/* ── Stats strip ── */}
       <div className="card" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
@@ -304,12 +308,12 @@ export default function BlastRadiusPage({ run }: Props) {
 
           return (
             <div key={n.id} ref={el => { cardRefs.current[n.id] = el }}
-              className="card" style={{ padding: 0, overflow: 'hidden', borderColor: severityBorder(n.severity, 35), transition: 'box-shadow 0.2s', boxShadow: isOpen ? `0 0 0 1px ${severityBorder(n.severity, 25)}` : undefined }}>
+              className="card" style={{ padding: 0, overflow: 'hidden', borderColor: severityBorder(n.severity, isOpen ? 60 : 35), transition: 'border-color 0.2s' }}>
 
               {/* ── Card header (always visible) ── */}
               <div onClick={() => toggle(n.id)} style={{ cursor: 'pointer', padding: '0.875rem 1rem', display: 'flex', alignItems: 'center', gap: '0.875rem', userSelect: 'none' }}>
                 {/* Severity badge */}
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '0.22rem 0.6rem', borderRadius: '999px', background: `${col}20`, color: col, flexShrink: 0, letterSpacing: '.04em' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '0.22rem 0.6rem', borderRadius: '999px', background: severityBg(n.severity, 13), color: col, flexShrink: 0, letterSpacing: '.04em' }}>
                   {n.severity}
                 </span>
 
@@ -338,7 +342,7 @@ export default function BlastRadiusPage({ run }: Props) {
                   )}
                   <div style={{ textAlign: 'right' }}>
                     <span style={{ fontSize: '1rem', fontWeight: 800, color: col }}>{n.failCount}</span>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
                       {n.failCount === 1 ? 'control' : 'controls'}
                     </span>
                   </div>
@@ -355,7 +359,7 @@ export default function BlastRadiusPage({ run }: Props) {
                 overflow: 'hidden',
                 transition: 'max-height 0.38s ease, opacity 0.25s ease',
               }}>
-                <div style={{ borderTop: `1px solid ${col}30`, padding: '1.125rem 1rem 1rem', display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
+                <div style={{ borderTop: `1px solid ${severityBorder(n.severity, 19)}`, padding: '1.125rem 1rem 1rem', display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
 
                   {/* Left: details */}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -372,10 +376,10 @@ export default function BlastRadiusPage({ run }: Props) {
                           <div key={cid} style={{ padding: '0.5rem 0.625rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: ff[0]?.check_title ? '0.18rem' : 0 }}>
                               <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)' }}>{cid}</span>
-                              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.35rem', borderRadius: '999px', background: `${sc}22`, color: sc, flexShrink: 0 }}>{sev}</span>
+                              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.35rem', borderRadius: '999px', background: severityBg(sev, 13), color: sc, flexShrink: 0 }}>{sev}</span>
                             </div>
                             {ff[0]?.check_title && <div style={{ fontSize: '0.73rem', color: 'var(--muted)', lineHeight: 1.4 }}>{ff[0].check_title}</div>}
-                            {ff[0]?.message && <div style={{ fontSize: '0.7rem', color: '#dc2626', marginTop: '0.15rem', lineHeight: 1.35 }}>{ff[0].message}</div>}
+                            {ff[0]?.message && <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', marginTop: '0.15rem', lineHeight: 1.35 }}>{ff[0].message}</div>}
                           </div>
                         )
                       })}

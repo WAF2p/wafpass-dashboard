@@ -15,6 +15,7 @@ import {
   CheckIcon, DownloadIcon, ArrowRightIcon, TargetIcon, MapIcon,
   statusColor,
 } from './shared/SocComponents'
+import { EmptyState, PageHeader } from '../ui'
 import { severityBg, severityBorder, severityColor } from '../severity'
 
 // Group FRAMEWORKS by country, preserving declaration order
@@ -56,12 +57,12 @@ interface GapItem {
 
 const SEV_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
 
-const STATUS_META: Record<ControlStatus, { label: string; color: string; bg: string }> = {
-  PASS:    { label: 'Passing',  color: '#059669', bg: 'color-mix(in srgb, #059669 8%, transparent)'   },
-  FAIL:    { label: 'Failing',  color: '#dc2626', bg: 'rgba(220,38,38,.08)'   },
-  PARTIAL: { label: 'Partial',  color: '#d97706', bg: 'rgba(217,119,6,.08)'   },
-  WAIVED:  { label: 'Waived',   color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 8%, transparent)'  },
-  UNKNOWN: { label: 'No data',  color: '#94a3b8', bg: 'rgba(148,163,184,.08)' },
+const STATUS_META: Record<ControlStatus, { label: string; color: string; bg: string; border: string }> = {
+  PASS:    { label: 'Passing',  color: 'var(--pass-ink)',      bg: 'color-mix(in srgb, var(--pass) 8%, transparent)',      border: 'color-mix(in srgb, var(--pass) 25%, transparent)'      },
+  FAIL:    { label: 'Failing',  color: 'var(--fail-ink)',      bg: 'color-mix(in srgb, var(--fail) 8%, transparent)',      border: 'color-mix(in srgb, var(--fail) 25%, transparent)'      },
+  PARTIAL: { label: 'Partial',  color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--score-mid) 8%, transparent)', border: 'color-mix(in srgb, var(--score-mid) 25%, transparent)' },
+  WAIVED:  { label: 'Waived',   color: 'var(--waived)',        bg: 'color-mix(in srgb, var(--waived) 8%, transparent)',    border: 'color-mix(in srgb, var(--waived) 20%, transparent)'    },
+  UNKNOWN: { label: 'No data',  color: 'var(--skip-ink)',      bg: 'color-mix(in srgb, var(--skip) 8%, transparent)',      border: 'color-mix(in srgb, var(--skip) 20%, transparent)'      },
 }
 
 function loadWaivers(): Record<string, { owner?: string }> {
@@ -185,11 +186,11 @@ function RoadmapItem({ item, rank, cumulativeReqs, totalReqs }: {
             <span className="gap-item__title">{ctrl.title}</span>
           </div>
           <div className="gap-item__badges">
-            <span className="gap-item__badge gap-item__badge--status" style={{ color: sm.color, background: sm.bg, borderColor: `${sm.color}33` }}>{sm.label}</span>
+            <span className="gap-item__badge gap-item__badge--status" style={{ color: sm.color, background: sm.bg, borderColor: sm.border }}>{sm.label}</span>
             <span className="gap-item__badge gap-item__badge--severity" style={{ color: sevColor, background: severityBg(ctrl.severity, 9), borderColor: severityBorder(ctrl.severity, 20) }}>{ctrl.severity}</span>
             <span className="gap-item__badge gap-item__badge--pillar">{ctrl.pillar}</span>
             {item.requirements.map(req => (
-              <span key={req} className="gap-item__badge gap-item__badge--req" style={{ color: isActionable ? sm.color : '#059669', background: isActionable ? `${sm.color}10` : 'color-mix(in srgb, #059669 8%, transparent)', borderColor: isActionable ? `${sm.color}22` : 'color-mix(in srgb, #059669 15%, transparent)' }}>{req}</span>
+              <span key={req} className="gap-item__badge gap-item__badge--req" style={{ color: isActionable ? sm.color : 'var(--pass-ink)', background: isActionable ? sm.bg : 'color-mix(in srgb, var(--pass) 8%, transparent)', borderColor: isActionable ? sm.border : 'color-mix(in srgb, var(--pass) 15%, transparent)' }}>{req}</span>
             ))}
             {item.hasWaiver && <span className="gap-item__badge gap-item__badge--waiver">{t('pages.gapanalysis.waivedLabel', { owner: item.waiverOwner ?? '' })}</span>}
             {item.hasRisk && <span className="gap-item__badge gap-item__badge--risk">{t('pages.gapanalysis.riskAcceptedLabel', { approver: item.riskApprover ?? '' })}</span>}
@@ -282,7 +283,7 @@ function RequirementsMap({ items, framework }: { items: GapItem[]; framework: st
   return (
     <div>
       <div className="gap-reqs__summary">
-        {t('pages.gapanalysis.reqsMapped', { total: reqs.length, framework })} · <strong style={{ color: '#059669' }}>{t('pages.gapanalysis.reqsMet', { count: metCount })}</strong> · <strong style={{ color: '#dc2626' }}>{t('pages.gapanalysis.reqsGaps', { count: reqs.length - metCount })}</strong>
+        {t('pages.gapanalysis.reqsMapped', { total: reqs.length, framework })} · <strong style={{ color: 'var(--pass-ink)' }}>{t('pages.gapanalysis.reqsMet', { count: metCount })}</strong> · <strong style={{ color: 'var(--fail-ink)' }}>{t('pages.gapanalysis.reqsGaps', { count: reqs.length - metCount })}</strong>
       </div>
       <div className="gap-reqs__grid">
         {reqs.map(([req, { items: ri, met }]) => (
@@ -295,7 +296,7 @@ function RequirementsMap({ items, framework }: { items: GapItem[]; framework: st
               {ri.map(item => {
                 const sm = STATUS_META[item.status]
                 return (
-                  <span key={item.ctrl.id} className="gap-req__control" style={{ color: sm.color, background: `${sm.color}15`, borderColor: `${sm.color}33` }}>
+                  <span key={item.ctrl.id} className="gap-req__control" style={{ color: sm.color, background: sm.bg, borderColor: sm.border }}>
                     {item.ctrl.id}
                   </span>
                 )
@@ -428,18 +429,16 @@ export default function GapAnalysisPage({ run, navigate, frameworkId }: Props) {
       <style>{gapAnalysisCss}</style>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div className="gap-hero">
-        <div className="gap-hero__main">
-          <div className="gap-hero__badge"><TargetIcon /> GAP ANALYSIS</div>
-          <h1 className="gap-hero__title">{t('pages.gapanalysis.heroTitle')}</h1>
-          <p className="gap-hero__subtitle">{t('pages.gapanalysis.heroSubtitle')}</p>
-        </div>
-        {navigate && (
+      <PageHeader
+        eyebrow={<><TargetIcon /> GAP ANALYSIS</>}
+        title={t('pages.gapanalysis.heroTitle')}
+        description={t('pages.gapanalysis.heroSubtitle')}
+        actions={navigate && (
           <button className="gap-hero__back" onClick={() => navigate('compliance')}>
             <ArrowRightIcon style={{ transform: 'rotate(180deg)' }} /> {t('pages.gapanalysis.backToSoc')}
           </button>
         )}
-      </div>
+      />
 
       {/* ── Framework selector ───────────────────────────────────────────── */}
       <SectionCard title={t('pages.gapanalysis.frameworkSelectorTitle')} subtitle={t('pages.gapanalysis.frameworkSelectorSubtitle')}>
@@ -536,10 +535,7 @@ export default function GapAnalysisPage({ run, navigate, frameworkId }: Props) {
 
       {allItems.length === 0 ? (
         <SectionCard title={t('pages.gapanalysis.noControlsMapped', { framework })}>
-          <div className="gap-empty">
-            <div className="gap-empty__icon">🗺</div>
-            <div>{t('pages.gapanalysis.noControlsMappedDesc', { framework })}</div>
-          </div>
+          <EmptyState icon={<span>🗺</span>} title={t('pages.gapanalysis.noControlsMappedDesc', { framework })} />
         </SectionCard>
       ) : (
         <>
@@ -580,9 +576,10 @@ export default function GapAnalysisPage({ run, navigate, frameworkId }: Props) {
               </div>
 
               {roadmapItems.length === 0 ? (
-                <div className="gap-all-passing">
-                  <CheckIcon /> {t('pages.gapanalysis.allPassingGap', { framework: fw?.label ?? framework })}
-                </div>
+                <EmptyState
+                  icon={<CheckIcon />}
+                  title={t('pages.gapanalysis.allPassingGap', { framework: fw?.label ?? framework })}
+                />
               ) : (
                 <>
                   {roadmapItems.length > 0 && (
@@ -636,61 +633,19 @@ const gapAnalysisCss = `
   to { opacity: 1; transform: translateY(0); }
 }
 
-.gap-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  background:
-    radial-gradient(circle at 20% 50%, color-mix(in srgb, var(--waf-brand) 10%, transparent) 0%, transparent 40%),
-    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--waf-brand) 6%, transparent) 0%, transparent 35%),
-    linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 1.5rem 1.75rem;
-  position: relative;
-  flex-wrap: wrap;
-}
-.gap-hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
-  color: var(--waf-brand);
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  width: fit-content;
-  margin-bottom: 0.75rem;
-}
-.gap-hero__title {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--text);
-  line-height: 1.2;
-}
-.gap-hero__subtitle {
-  margin: 0.45rem 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-  max-width: 520px;
-}
 .gap-hero__back {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent);
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   border-radius: 6px;
   padding: 0.45rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 .gap-hero__back:hover {
   background: color-mix(in srgb, var(--waf-brand) 18%, transparent);
@@ -733,7 +688,6 @@ const gapAnalysisCss = `
   border-radius: 16px;
   padding: 1rem 1.25rem;
   flex-wrap: wrap;
-  box-shadow: var(--shadow-sm);
 }
 .gap-summary__card {
   display: flex;
@@ -750,7 +704,6 @@ const gapAnalysisCss = `
   padding: 6px;
   object-fit: contain;
   flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
 }
 .gap-summary__flag {
   font-size: 2rem;
@@ -816,7 +769,7 @@ const gapAnalysisCss = `
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   flex-shrink: 0;
 }
 .gap-summary__export:hover {
@@ -852,7 +805,7 @@ const gapAnalysisCss = `
   border: 1px solid var(--border);
   background: transparent;
   color: var(--muted);
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .gap-sort__btn:hover {
   color: var(--text);
@@ -861,7 +814,7 @@ const gapAnalysisCss = `
 .gap-sort__btn--active {
   border-color: var(--waf-brand);
   background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
 }
 .gap-passing-toggle {
   display: flex;
@@ -882,20 +835,6 @@ const gapAnalysisCss = `
   color: var(--text);
   line-height: 1.5;
 }
-.gap-all-passing {
-  text-align: center;
-  padding: 2rem;
-  border: 1px dashed color-mix(in srgb, #059669 30%, transparent);
-  border-radius: 10px;
-  color: var(--pass);
-  font-size: 0.9rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
 .gap-item {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -905,7 +844,7 @@ const gapAnalysisCss = `
   transition: background 0.2s ease;
 }
 .gap-item--actionable {
-  border-left: 3px solid var(--item-color);
+  border-color: color-mix(in srgb, var(--item-color) 40%, var(--border));
 }
 .gap-item__header {
   padding: 0.9rem 1rem;
@@ -945,7 +884,7 @@ const gapAnalysisCss = `
   font-size: 0.72rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
 }
 .gap-item__title {
   font-size: 0.88rem;
@@ -974,14 +913,14 @@ const gapAnalysisCss = `
   border-color: var(--border);
 }
 .gap-item__badge--waiver {
-  color: #7c3aed;
-  background: color-mix(in srgb, #7c3aed 8%, transparent);
-  border-color: color-mix(in srgb, #7c3aed 20%, transparent);
+  color: var(--waived);
+  background: color-mix(in srgb, var(--waived) 8%, transparent);
+  border-color: color-mix(in srgb, var(--waived) 20%, transparent);
 }
 .gap-item__badge--risk {
-  color: #d97706;
-  background: rgba(217,119,6,.08);
-  border-color: rgba(217,119,6,.2);
+  color: var(--score-mid-ink);
+  background: color-mix(in srgb, var(--score-mid) 8%, transparent);
+  border-color: color-mix(in srgb, var(--score-mid) 20%, transparent);
 }
 .gap-item__metrics {
   flex-shrink: 0;
@@ -1017,14 +956,14 @@ const gapAnalysisCss = `
 .gap-item__failing {
   margin-top: 0.75rem;
   padding: 0.75rem 0.9rem;
-  background: rgba(220,38,38,.04);
-  border: 1px solid rgba(220,38,38,.15);
+  background: color-mix(in srgb, var(--fail) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fail) 15%, transparent);
   border-radius: 8px;
 }
 .gap-item__failing-title {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #dc2626;
+  color: var(--fail-ink);
   margin-bottom: 0.25rem;
 }
 .gap-item__failing-msg {
@@ -1048,8 +987,8 @@ const gapAnalysisCss = `
   font-weight: 700;
   margin-bottom: 0.3rem;
 }
-.gap-item__checks-title--fail { color: #dc2626; }
-.gap-item__checks-title--pass { color: #059669; }
+.gap-item__checks-title--fail { color: var(--fail-ink); }
+.gap-item__checks-title--pass { color: var(--pass-ink); }
 .gap-item__check {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--muted);
@@ -1112,12 +1051,12 @@ const gapAnalysisCss = `
   border: 1px solid;
 }
 .gap-req--met {
-  background: rgba(5,150,105,.04);
-  border-color: color-mix(in srgb, #059669 25%, transparent);
+  background: color-mix(in srgb, var(--pass) 4%, transparent);
+  border-color: color-mix(in srgb, var(--pass) 25%, transparent);
 }
 .gap-req--gap {
-  background: rgba(220,38,38,.04);
-  border-color: rgba(220,38,38,.25);
+  background: color-mix(in srgb, var(--fail) 4%, transparent);
+  border-color: color-mix(in srgb, var(--fail) 25%, transparent);
 }
 .gap-req__header {
   display: flex;
@@ -1134,8 +1073,8 @@ const gapAnalysisCss = `
   font-weight: 700;
   font-size: 0.85rem;
 }
-.gap-req--met .gap-req__id { color: #059669; }
-.gap-req--gap .gap-req__id { color: #dc2626; }
+.gap-req--met .gap-req__id { color: var(--pass-ink); }
+.gap-req--gap .gap-req__id { color: var(--fail-ink); }
 .gap-req__controls {
   display: flex;
   flex-wrap: wrap;
@@ -1148,17 +1087,6 @@ const gapAnalysisCss = `
   border-radius: 4px;
   border: 1px solid;
   font-weight: 600;
-}
-
-.gap-empty {
-  text-align: center;
-  padding: 2.5rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-.gap-empty__icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
 }
 
 /* Smaller, denser KPI tiles so the 9-tile grid fits in two compact rows. */
@@ -1180,13 +1108,7 @@ const gapAnalysisCss = `
   transform: none;
 }
 
-/* Light-theme softness: reduce the neon / high-contrast glow on the Gap page. */
-[data-theme="light"] .gap-hero {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--waf-brand) 3%, var(--surface)) 0%, var(--bg) 100%);
-}
-[data-theme="light"] .gap-hero__badge {
-  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
-}
+/* Light-theme softness on the Gap page. */
 [data-theme="light"] .gap-hero__back {
   background: color-mix(in srgb, var(--waf-brand) 6%, transparent);
   border-color: color-mix(in srgb, var(--waf-brand) 15%, transparent);
@@ -1202,26 +1124,19 @@ const gapAnalysisCss = `
   background: color-mix(in srgb, var(--waf-brand) 3%, transparent);
   border-color: color-mix(in srgb, var(--waf-brand) 8%, transparent);
 }
-[data-theme="light"] .gap-all-passing {
-  border-color: color-mix(in srgb, #059669 18%, transparent);
-  background: rgba(5,150,105,.03);
-}
 [data-theme="light"] .gap-sort__btn--active {
   background: color-mix(in srgb, var(--waf-brand) 6%, transparent);
 }
 [data-theme="light"] .gap-root .scc-tab--active {
   background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
 }
-[data-theme="light"] .gap-item--actionable {
-  border-left-color: color-mix(in srgb, var(--item-color) 55%, transparent);
-}
 [data-theme="light"] .gap-req--met {
-  background: rgba(5,150,105,.03);
-  border-color: color-mix(in srgb, #059669 18%, transparent);
+  background: color-mix(in srgb, var(--pass) 3%, transparent);
+  border-color: color-mix(in srgb, var(--pass) 18%, transparent);
 }
 [data-theme="light"] .gap-req--gap {
-  background: rgba(220,38,38,.03);
-  border-color: rgba(220,38,38,.18);
+  background: color-mix(in srgb, var(--fail) 3%, transparent);
+  border-color: color-mix(in srgb, var(--fail) 18%, transparent);
 }
 
 @media (max-width: 800px) {

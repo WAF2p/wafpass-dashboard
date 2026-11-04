@@ -2,28 +2,31 @@ import { useEffect, useState } from 'react'
 import { fetchLeaderboard, LeaderboardEntry, LeaderboardOut } from '../api'
 import { useI18n } from '../i18n'
 import { scoreColor } from '../severity';
+import { DataTable, EmptyState, PageHeader, Skeleton } from '../ui'
 
 const TIER_COLORS: Record<number, string> = {
-  1: '#d97706', 2: '#0094FF', 3: '#0891b2', 4: '#7c3aed', 5: '#059669',
+  1: 'var(--score-mid-ink)', 2: 'var(--waf-brand-ink)', 3: '#0891b2', 4: 'var(--waf-info)', 5: 'var(--score-high-ink)',
 }
 
-const MEDAL: Record<number, { color: string; label: string; glow: string }> = {
-  1: { color: '#FFD700', label: '1st', glow: 'color-mix(in srgb, #ffd700 35%, transparent)' },
-  2: { color: '#C0C0C0', label: '2nd', glow: 'color-mix(in srgb, #c0c0c0 35%, transparent)' },
-  3: { color: '#CD7F32', label: '3rd', glow: 'color-mix(in srgb, #cd7f32 35%, transparent)' },
+const MEDAL: Record<number, { color: string; label: string }> = {
+  1: { color: '#FFD700', label: '1st' },
+  2: { color: '#C0C0C0', label: '2nd' },
+  3: { color: '#CD7F32', label: '3rd' },
 }
 
 const PODIUM_HEIGHT: Record<number, number> = { 1: 130, 2: 100, 3: 80 }
 const PODIUM_ORDER = [2, 1, 3]
 
+type RankedEntry = LeaderboardEntry & { rank: number }
+
 function TierBadge({ level, label }: { level: number; label: string }) {
-  const color = TIER_COLORS[level] ?? '#64748b'
+  const color = TIER_COLORS[level] ?? 'var(--muted)'
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-      background: `${color}18`, border: `1px solid ${color}40`,
+      background: `color-mix(in srgb, ${color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 25%, transparent)`,
       borderRadius: '999px', padding: '0.15rem 0.55rem',
-      fontSize: '0.68rem', fontWeight: 700, color,
+      fontSize: '0.7rem', fontWeight: 700, color,
     }}>
       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: color, flexShrink: 0 }} />
       L{level} · {label}
@@ -51,7 +54,6 @@ function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) 
         borderRadius: '12px',
         padding: '1rem 0.875rem',
         textAlign: 'center',
-        boxShadow: isFirst ? `0 0 32px ${medal.glow}, 0 4px 24px color-mix(in srgb, #000000 20%, transparent)` : `0 2px 12px rgba(0,0,0,0.15)`,
         marginBottom: '0.5rem',
       }}>
         {/* Crown for 1st */}
@@ -70,7 +72,6 @@ function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) 
           fontSize: isFirst ? '1.1rem' : '0.9rem',
           fontWeight: 900,
           color: medal.color,
-          boxShadow: `0 0 12px ${medal.glow}`,
         }}>
           {medal.label}
         </div>
@@ -86,7 +87,7 @@ function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) 
         </div>
         {/* Team */}
         <div style={{
-          fontSize: '0.68rem', color: 'var(--muted)',
+          fontSize: '0.7rem', color: 'var(--muted)',
           marginBottom: '0.6rem',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }} title={team}>
@@ -100,7 +101,7 @@ function PodiumCard({ entry, rank }: { entry: LeaderboardEntry; rank: number }) 
           color: 'var(--muted)',
         }}>
           {entry.tiers_gained != null
-            ? <><span style={{ color: '#22c55e', fontWeight: 700 }}>+{entry.tiers_gained}</span> {t('pages.leaderboard.tiersIn30d')}</>
+            ? <><span style={{ color: 'var(--pass-ink)', fontWeight: 700 }}>+{entry.tiers_gained}</span> {t('pages.leaderboard.tiersIn30d')}</>
             : <><span style={{ color: medal.color, fontWeight: 700 }}>{entry.days_held}</span> {t('pages.leaderboard.daysAtTier5')}</>
           }
         </div>
@@ -130,6 +131,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
 
   // Pad to 3 so layout is stable
   const ordered = PODIUM_ORDER.map(r => ({ rank: r, entry: top3[r - 1] ?? null }))
+  const ranked: RankedEntry[] = rest.map((entry, i) => ({ ...entry, rank: i + 4 }))
 
   return (
     <section style={{ marginBottom: '2.5rem' }}>
@@ -142,12 +144,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
       </div>
 
       {entries.length === 0 ? (
-        <div style={{
-          padding: '2.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.85rem',
-          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px',
-        }}>
-          {t('pages.leaderboard.noData')}
-        </div>
+        <EmptyState title={t('pages.leaderboard.noData')} />
       ) : (
         <>
           {/* Podium */}
@@ -162,7 +159,7 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
                 <div key={rank} style={{ flex: 1, maxWidth: '200px' }}>
                   <div style={{
                     height: `${PODIUM_HEIGHT[rank]}px`,
-                    background: 'rgba(255,255,255,0.02)',
+                    background: 'var(--row-hover)',
                     border: '1px dashed var(--border)',
                     borderBottom: 'none',
                     borderRadius: '8px 8px 0 0',
@@ -178,78 +175,74 @@ function Podium({ entries, label, color }: { entries: LeaderboardEntry[]; label:
               background: 'var(--surface)', border: '1px solid var(--border)',
               borderTop: 'none', borderRadius: '0 0 12px 12px', overflow: 'hidden',
             }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    <th style={thStyle}>#</th>
-                    <th style={thStyle}>Project</th>
-                    <th style={thStyle}>Team</th>
-                    <th style={thStyle}>Tier</th>
-                    <th style={thStyle}>Score</th>
-                    <th style={thStyle}>
-                      {rest[0]?.tiers_gained != null ? t('pages.leaderboard.colTiersGained') : t('pages.leaderboard.colDaysAtTier5')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rest.map((entry, i) => (
-                    <tr key={entry.project} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={tdStyle}>
-                        <span style={{ color: 'var(--muted)', fontWeight: 700, fontSize: '0.8rem' }}>
-                          #{i + 4}
-                        </span>
-                      </td>
-                      <td style={tdStyle}>
+              <DataTable<RankedEntry>
+                rows={ranked}
+                rowKey={row => row.project}
+                columns={[
+                  {
+                    key: 'rank',
+                    header: '#',
+                    width: '4rem',
+                    render: row => (
+                      <span style={{ color: 'var(--muted)', fontWeight: 700, fontSize: '0.8rem' }}>
+                        #{row.rank}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'project',
+                    header: 'Project',
+                    render: row => (
+                      <>
                         <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>
-                          {entry.display_name || entry.project}
+                          {row.display_name || row.project}
                         </div>
-                        {entry.display_name && (
-                          <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{entry.project}</div>
+                        {row.display_name && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{row.project}</div>
                         )}
-                      </td>
-                      <td style={tdStyle}>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-                          {entry.owner_team || entry.owner || '—'}
-                        </span>
-                      </td>
-                      <td style={tdStyle}>
-                        <TierBadge level={entry.tier_level} label={entry.tier_label} />
-                      </td>
-                      <td style={tdStyle}>
-                        <span style={{
-                          fontSize: '0.85rem', fontWeight: 700,
-                          color: scoreColor(entry.score),
-                        }}>
-                          {entry.score}
-                        </span>
-                      </td>
-                      <td style={tdStyle}>
-                        {entry.tiers_gained != null ? (
-                          <span style={{ color: '#22c55e', fontWeight: 700, fontSize: '0.85rem' }}>+{entry.tiers_gained}</span>
-                        ) : (
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600 }}>{entry.days_held}d</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </>
+                    ),
+                  },
+                  {
+                    key: 'team',
+                    header: 'Team',
+                    render: row => (
+                      <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                        {row.owner_team || row.owner || '—'}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'tier',
+                    header: 'Tier',
+                    render: row => <TierBadge level={row.tier_level} label={row.tier_label} />,
+                  },
+                  {
+                    key: 'score',
+                    header: 'Score',
+                    render: row => (
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: scoreColor(row.score) }}>
+                        {row.score}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'metric',
+                    header: rest[0]?.tiers_gained != null ? t('pages.leaderboard.colTiersGained') : t('pages.leaderboard.colDaysAtTier5'),
+                    render: row => row.tiers_gained != null ? (
+                      <span style={{ color: 'var(--pass-ink)', fontWeight: 700, fontSize: '0.85rem' }}>+{row.tiers_gained}</span>
+                    ) : (
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600 }}>{row.days_held}d</span>
+                    ),
+                  },
+                ]}
+              />
             </div>
           )}
         </>
       )}
     </section>
   )
-}
-
-const thStyle: React.CSSProperties = {
-  padding: '0.6rem 1rem', textAlign: 'left',
-  fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
-  textTransform: 'uppercase', letterSpacing: '0.06em',
-}
-
-const tdStyle: React.CSSProperties = {
-  padding: '0.65rem 1rem', verticalAlign: 'middle',
 }
 
 export default function LeaderboardPage() {
@@ -267,59 +260,44 @@ export default function LeaderboardPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-        <div className="spinner" />
+      <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }} aria-busy="true">
+        <Skeleton height={44} width="40%" />
+        <Skeleton height={16} width="60%" />
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', justifyContent: 'center', marginTop: '1rem' }}>
+          <Skeleton height={190} width={160} radius={12} />
+          <Skeleton height={240} width={180} radius={12} />
+          <Skeleton height={150} width={160} radius={12} />
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div style={{
-        padding: '1.5rem', borderRadius: '12px', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
-        background: 'color-mix(in srgb, #da2c38 8%, transparent)', color: '#f87171', fontSize: '0.85rem',
-      }}>
-        {t('pages.leaderboard.loadFailed')}: {error}
-      </div>
+      <EmptyState
+        title={t('pages.leaderboard.loadFailed')}
+        description={error}
+      />
     )
   }
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      {/* Header banner */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '1.25rem',
-        padding: '1.25rem 1.5rem', borderRadius: '12px', marginBottom: '2rem',
-        background: 'linear-gradient(135deg, color-mix(in srgb, #ffd700 15%, transparent) 0%, color-mix(in srgb, #059669 12%, transparent) 100%)',
-        border: '1px solid color-mix(in srgb, #ffd700 40%, transparent)',
-      }}>
-        <div style={{
-          flexShrink: 0, width: '44px', height: '44px', borderRadius: '12px',
-          background: 'color-mix(in srgb, #ffd700 25%, transparent)', border: '1px solid color-mix(in srgb, #ffd700 50%, transparent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem',
-        }}>
-          🏆
-        </div>
-        <div>
-          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>
-            {t('pages.leaderboard.title')}
-          </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-            {t('pages.leaderboard.subtitle')}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={t('pages.leaderboard.title')}
+        description={t('pages.leaderboard.subtitle')}
+      />
 
       <Podium
         entries={data?.top_sovereign ?? []}
         label={t('pages.leaderboard.topSovereign')}
-        color="#059669"
+        color="var(--score-high-ink)"
       />
 
       <Podium
         entries={data?.most_improved ?? []}
         label={t('pages.leaderboard.mostImproved')}
-        color="#22c55e"
+        color="var(--pass-ink)"
       />
 
     </div>

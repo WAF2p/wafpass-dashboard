@@ -10,31 +10,33 @@ import {
   type GroupRoleMappingOut, type GroupRoleMappingCreate,
 } from '../api'
 import { useI18n } from '../i18n'
+import { Card, EmptyState, Skeleton, SkeletonRows } from '../ui'
+import { PAGE_TITLE } from '../routing'
 
 const ALL_ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
 const ALL_PROVIDERS = ['*', 'oidc', 'saml2'] as const
 
 const ROLE_COLOR: Record<string, { accent: string; subtle: string; text: string }> = {
-  admin:    { accent: '#DA2C38', subtle: 'color-mix(in srgb, #da2c38 8%, transparent)',  text: '#DA2C38' },
-  engineer: { accent: '#16a34a', subtle: 'rgba(22,163,74,0.08)',  text: '#16a34a' },
-  architect:{ accent: '#7c3aed', subtle: 'color-mix(in srgb, #7c3aed 8%, transparent)', text: '#7c3aed' },
-  ciso:     { accent: '#0078d4', subtle: 'rgba(0,120,212,0.08)',  text: '#0078d4' },
-  clevel:   { accent: '#b45309', subtle: 'rgba(180,83,9,0.08)',   text: '#b45309' },
+  admin:    { accent: 'var(--fail)', subtle: 'color-mix(in srgb, var(--fail) 8%, var(--surface))',  text: 'var(--fail-ink)' },
+  engineer: { accent: 'var(--pass)', subtle: 'color-mix(in srgb, var(--pass) 8%, var(--surface))',  text: 'var(--pass-ink)' },
+  architect:{ accent: 'var(--waf-info)', subtle: 'color-mix(in srgb, var(--waf-info) 8%, var(--surface))', text: 'var(--waf-info)' },
+  ciso:     { accent: 'var(--waf-brand)', subtle: 'color-mix(in srgb, var(--waf-brand) 8%, var(--surface))',  text: 'var(--waf-brand-ink)' },
+  clevel:   { accent: 'var(--waf-warn)', subtle: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))',   text: 'var(--score-mid-ink)' },
 }
 
 const PROVIDER_COLOR: Record<string, { accent: string; subtle: string; text: string }> = {
-  '*':    { accent: '#64748b', subtle: 'rgba(100,116,139,0.08)', text: '#64748b' },
-  oidc:   { accent: '#0094ff', subtle: 'rgba(0,148,255,0.08)',   text: '#0094ff' },
-  saml2:  { accent: '#7c3aed', subtle: 'color-mix(in srgb, #7c3aed 8%, transparent)', text: '#7c3aed' },
+  '*':    { accent: 'var(--muted)', subtle: 'color-mix(in srgb, var(--muted) 8%, var(--surface))', text: 'var(--muted)' },
+  oidc:   { accent: 'var(--waf-brand)', subtle: 'color-mix(in srgb, var(--waf-brand) 8%, var(--surface))',   text: 'var(--waf-brand-ink)' },
+  saml2:  { accent: 'var(--waf-info)', subtle: 'color-mix(in srgb, var(--waf-info) 8%, var(--surface))', text: 'var(--waf-info)' },
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const c = ROLE_COLOR[role] ?? { subtle: 'rgba(100,116,139,0.08)', text: '#64748b' }
+  const c = ROLE_COLOR[role] ?? { subtle: 'color-mix(in srgb, var(--muted) 8%, var(--surface))', text: 'var(--muted)' }
   return (
     <span style={{
       display: 'inline-flex', padding: '0.15rem 0.55rem', borderRadius: '6px',
       background: c.subtle, color: c.text,
-      fontWeight: 700, fontSize: '0.68rem', letterSpacing: '0.03em',
+      fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.03em',
     }}>
       {role}
     </span>
@@ -48,7 +50,7 @@ function ProviderBadge({ provider }: { provider: string }) {
     <span style={{
       display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
       background: c.subtle, color: c.text,
-      fontWeight: 600, fontSize: '0.67rem', letterSpacing: '0.03em',
+      fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.03em',
     }}>
       {label}
     </span>
@@ -97,7 +99,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
           padding: '0.45rem 1rem', borderRadius: '8px',
           background: 'var(--waf-brand)', color: '#fff',
           border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem',
-          boxShadow: '0 2px 8px rgba(0,148,255,.25)',
+          boxShadow: '0 2px 8px color-mix(in srgb, var(--waf-brand) 25%, transparent)',
         }}
       >
         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +176,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
           onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
         />
       </label>
-      {err && <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#f87171' }}>{err}</div>}
+      {err && <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: 'var(--fail-ink)' }}>{err}</div>}
     </div>
   )
 }
@@ -231,7 +233,7 @@ function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut
         <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.descriptionLabel')}</span>
         <input style={inputStyle} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
       </label>
-      {err && <div style={{ marginBottom: '0.5rem', fontSize: '0.78rem', color: '#f87171' }}>{err}</div>}
+      {err && <div style={{ marginBottom: '0.5rem', fontSize: '0.78rem', color: 'var(--fail-ink)' }}>{err}</div>}
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <button
           onClick={handleSave} disabled={saving}
@@ -291,27 +293,43 @@ export default function GroupMappingsPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-        <div className="spinner" />
+      <div aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <Skeleton height={72} radius={10} />
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          {[0, 1, 2, 3].map(i => (
+            <Card key={i} style={{ flex: 1 }}>
+              <Skeleton width="45%" height={24} />
+              <Skeleton width="70%" height={10} />
+            </Card>
+          ))}
+        </div>
+        <Card padding="none">
+          <table className="data-table ui-table">
+            <tbody>
+              <SkeletonRows rows={4} columns={6} />
+            </tbody>
+          </table>
+        </Card>
       </div>
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['groupmappings']}</h1>
 
       {/* Info banner */}
       <div style={{
         display: 'flex', gap: '1rem', padding: '0.9rem 1.25rem',
-        background: 'rgba(0,148,255,0.06)', border: '1px solid rgba(0,148,255,0.2)',
+        background: 'color-mix(in srgb, var(--waf-brand) 6%, var(--surface))', border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
         borderRadius: '10px', alignItems: 'flex-start',
       }}>
-        <svg width="18" height="18" fill="none" stroke="#0094ff" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: '1px' }}>
+        <svg width="18" height="18" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: '1px' }}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div style={{ fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.6 }}>
           <strong>Centralized role resolution.</strong> During SSO login, group memberships from the IdP token are
-          matched against these mappings <em>before</em> the per-provider <code style={{ fontSize: '0.78rem', background: 'rgba(0,148,255,0.08)', padding: '0.05rem 0.3rem', borderRadius: '4px' }}>role_mapping</code> config.
+          matched against these mappings <em>before</em> the per-provider <code style={{ fontSize: '0.78rem', background: 'color-mix(in srgb, var(--waf-brand) 8%, var(--surface))', padding: '0.05rem 0.3rem', borderRadius: '4px' }}>role_mapping</code> config.
           Higher priority = evaluated first; the first match wins. Provider <strong>*</strong> matches both OIDC and SAML2.
         </div>
       </div>
@@ -320,9 +338,9 @@ export default function GroupMappingsPage() {
       <div style={{ display: 'flex', gap: '0.75rem' }}>
         {[
           { label: t('pages.groupMappings.statTotal'), value: mappings.length, color: 'var(--waf-brand)' },
-          { label: t('pages.groupMappings.statAny'), value: byProvider('*'), color: '#64748b' },
-          { label: t('pages.groupMappings.statOidc'), value: byProvider('oidc'), color: '#0094ff' },
-          { label: t('pages.groupMappings.statSaml2'), value: byProvider('saml2'), color: '#7c3aed' },
+          { label: t('pages.groupMappings.statAny'), value: byProvider('*'), color: 'var(--muted)' },
+          { label: t('pages.groupMappings.statOidc'), value: byProvider('oidc'), color: 'var(--waf-brand-ink)' },
+          { label: t('pages.groupMappings.statSaml2'), value: byProvider('saml2'), color: 'var(--waf-info)' },
         ].map(({ label, value, color }) => (
           <div key={label} style={{
             flex: 1, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px',
@@ -338,20 +356,16 @@ export default function GroupMappingsPage() {
       <CreateForm onCreated={handleCreated} />
 
       {err && (
-        <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: '#f87171' }}>
+        <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--fail-ink)' }}>
           {err}
         </div>
       )}
 
       {/* Table */}
       {mappings.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: '3rem 1rem',
-          color: 'var(--muted)', fontSize: '0.85rem',
-          background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px',
-        }}>
-          {t('pages.groupMappings.emptyState')}
-        </div>
+        <Card padding="none">
+          <EmptyState title={t('pages.groupMappings.emptyState')} />
+        </Card>
       ) : (
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
           {/* Table header */}
@@ -359,7 +373,7 @@ export default function GroupMappingsPage() {
             display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 60px 1fr 80px',
             gap: '1rem', padding: '0.6rem 1.25rem',
             borderBottom: '1px solid var(--border)',
-            fontSize: '0.68rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700,
+            fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700,
           }}>
             <span>{t('pages.groupMappings.colGroupName')}</span>
             <span>{t('pages.groupMappings.colProvider')}</span>
@@ -380,7 +394,7 @@ export default function GroupMappingsPage() {
                   borderBottom: idx < mappings.length - 1 || expandedId === m.id ? '1px solid var(--border)' : 'none',
                   alignItems: 'center',
                   cursor: 'pointer',
-                  background: expandedId === m.id ? 'rgba(0,148,255,0.03)' : 'transparent',
+                  background: expandedId === m.id ? 'color-mix(in srgb, var(--waf-brand) 3%, transparent)' : 'transparent',
                   transition: 'background 0.1s',
                 }}
               >
@@ -412,7 +426,7 @@ export default function GroupMappingsPage() {
                   <button
                     onClick={() => setDeletingId(m.id)}
                     title={t('pages.groupMappings.deleteBtn')}
-                    style={{ padding: '0.3rem 0.55rem', borderRadius: '6px', background: 'none', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)', color: '#f87171', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
+                    style={{ padding: '0.3rem 0.55rem', borderRadius: '6px', background: 'none', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)', color: 'var(--fail-ink)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}
                   >
                     {t('pages.groupMappings.deleteBtn')}
                   </button>
@@ -421,7 +435,7 @@ export default function GroupMappingsPage() {
 
               {/* Expanded panel */}
               {expandedId === m.id && (
-                <div style={{ padding: '0.75rem 1.25rem 1rem', borderBottom: idx < mappings.length - 1 ? '1px solid var(--border)' : 'none', background: 'rgba(0,0,0,0.015)' }}>
+                <div style={{ padding: '0.75rem 1.25rem 1rem', borderBottom: idx < mappings.length - 1 ? '1px solid var(--border)' : 'none', background: 'color-mix(in srgb, var(--text) 1.5%, transparent)' }}>
                   {editingId === m.id ? (
                     <EditForm
                       mapping={m}
@@ -429,13 +443,13 @@ export default function GroupMappingsPage() {
                       onCancel={() => setEditingId(null)}
                     />
                   ) : deletingId === m.id ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', borderRadius: '8px' }}>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>
                         {t('pages.groupMappings.deleteConfirmText', { group: m.group_name, role: m.role })}
                       </span>
                       <button
                         onClick={() => handleDelete(m.id)}
-                        style={{ padding: '0.35rem 0.8rem', borderRadius: '8px', background: '#DA2C38', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                        style={{ padding: '0.35rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap' }}
                       >
                         {t('pages.groupMappings.confirmDeleteBtn')}
                       </button>

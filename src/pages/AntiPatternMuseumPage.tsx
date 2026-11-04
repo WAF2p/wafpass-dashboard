@@ -1,20 +1,15 @@
-import { useTheme } from '../theme'
 import { useI18n } from '../i18n'
+import { PageHeader } from '../ui'
 
 export default function AntiPatternMuseumPage() {
-  const { themeName } = useTheme()
   const { t } = useI18n()
 
   return (
     <div style={{ maxWidth: 'none', width: '100%', margin: '0' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 0.5rem' }}>
-          {t('pages.antipattern.title')}
-        </h1>
-        <p style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-          Learn faster by seeing what goes wrong - side-by-side comparisons of anti-patterns vs. Wombat compliant best practices
-        </p>
-      </div>
+      <PageHeader
+        title={t('pages.antipattern.title')}
+        description="Learn faster by seeing what goes wrong - side-by-side comparisons of anti-patterns vs. Wombat compliant best practices"
+      />
 
       {/* Executive Summary */}
       <section style={{ marginBottom: '2.5rem' }}>
@@ -22,7 +17,7 @@ export default function AntiPatternMuseumPage() {
           The Anti-Pattern Museum
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -40,29 +35,29 @@ export default function AntiPatternMuseumPage() {
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'color-mix(in srgb, #da2c38 10%, transparent)' : 'rgba(218,44,56,0.05)',
-              border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)',
+              background: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: '#DA2C38' }}>Anti-Patterns</strong>
+              <strong style={{ color: 'var(--fail-ink)' }}>Anti-Patterns</strong>
               <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Common security flaws and misconfigurations</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(34,197,94,0.1)' : 'rgba(34,197,94,0.05)',
-              border: '1px solid rgba(34,197,94,0.2)',
+              background: 'color-mix(in srgb, var(--pass) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: '#22c55e' }}>Best Practices</strong>
+              <strong style={{ color: 'var(--pass-ink)' }}>Best Practices</strong>
               <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Wombat compliant alternatives</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.05)',
-              border: '1px solid rgba(251,191,36,0.2)',
+              background: 'color-mix(in srgb, var(--sev-medium) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--sev-medium) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: '#fbbf24' }}>74 Controls</strong>
+              <strong style={{ color: 'var(--sev-medium)' }}>74 Controls</strong>
               <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>All Wombat pillars covered (SEC, SOV, OPS, COST, PERF, REL, SUS)</p>
             </div>
           </div>
@@ -75,7 +70,7 @@ export default function AntiPatternMuseumPage() {
           1. IAM & Security Baseline
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -86,13 +81,13 @@ export default function AntiPatternMuseumPage() {
 
           {/* Anti-Pattern 1 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: Permissive IAM Password Policy (WAF-SEC-010)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -122,13 +117,13 @@ resource "aws_iam_account_password_policy" "weak" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Strict IAM Password Policy
             </div>
             <div style={{ padding: '1rem' }}>
@@ -159,13 +154,13 @@ resource "aws_iam_account_password_policy" "strict" {
 
           {/* Anti-Pattern 2 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: Root Access Keys & No MFA (WAF-SEC-010)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -198,13 +193,13 @@ data "aws_iam_access_key" "root" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: No Root Access, MFA Enforced
             </div>
             <div style={{ padding: '1rem' }}>
@@ -243,13 +238,13 @@ data "aws_iam_access_key" "root" {
 
           {/* Anti-Pattern 3 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: AdministratorAccess Policy (WAF-SEC-020)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -276,13 +271,13 @@ resource "aws_iam_role_policy_attachment" "admin" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Scoped Least-Privilege Policy
             </div>
             <div style={{ padding: '1rem' }}>
@@ -354,7 +349,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
           2. Encryption & Secrets Management
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -365,13 +360,13 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
 
           {/* Anti-Pattern 1 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: Unencrypted RDS Instance (WAF-SEC-030)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -420,13 +415,13 @@ resource "aws_db_instance" "non_compliant" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Encrypted RDS with Secrets Manager
             </div>
             <div style={{ padding: '1rem' }}>
@@ -510,7 +505,7 @@ resource "aws_db_instance" "compliant" {
           3. CI/CD Pipeline
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -521,13 +516,13 @@ resource "aws_db_instance" "compliant" {
 
           {/* Anti-Pattern 1 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: Local State & No Pipeline Gates (WAF-OPS-010, WAF-OPS-020)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -563,13 +558,13 @@ terraform {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Remote State with Full CI/CD Pipeline
             </div>
             <div style={{ padding: '1rem' }}>
@@ -686,7 +681,7 @@ jobs:
           4. Networking & Security Controls
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -697,13 +692,13 @@ jobs:
 
           {/* Anti-Pattern 1 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: Open Security Group (WAF-SEC-070)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -765,13 +760,13 @@ resource "aws_security_group" "open" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Restricted Security Group with VPC Endpoints
             </div>
             <div style={{ padding: '1rem' }}>
@@ -893,7 +888,7 @@ resource "aws_ecr_repository" "app" {
           5. Sovereignty & Data Residency
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -904,13 +899,13 @@ resource "aws_ecr_repository" "app" {
 
           {/* Anti-Pattern 1 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: No Region Validation (WAF-SOV-020)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -950,13 +945,13 @@ resource "aws_s3_bucket" "data" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Enforced Region Validation
             </div>
             <div style={{ padding: '1rem' }}>
@@ -1067,7 +1062,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
           6. Logging & Incident Response
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -1078,13 +1073,13 @@ resource "aws_s3_bucket_policy" "pii_data" {
 
           {/* Anti-Pattern 1 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: No Security Logging (WAF-SEC-100)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -1117,13 +1112,13 @@ resource "aws_cloudwatch_log_group" "no_retention" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Comprehensive Security Logging
             </div>
             <div style={{ padding: '1rem' }}>
@@ -1219,7 +1214,7 @@ resource "aws_cloudwatch_metric_alarm" "root_login" {
           7. Cost Optimization
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -1230,13 +1225,13 @@ resource "aws_cloudwatch_metric_alarm" "root_login" {
 
           {/* Anti-Pattern 1 */}
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#fff1f2',
-            border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
+            background: 'color-mix(in srgb, var(--fail) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#fee2e2', color: '#DA2C38', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 12%, var(--surface))', color: 'var(--fail-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Anti-Pattern: Unmanaged Resources (WAF-COST-010, WAF-COST-020)
             </div>
             <div style={{ padding: '1rem' }}>
@@ -1286,13 +1281,13 @@ resource "aws_db_instance" "dev" {
           </div>
 
           <div style={{
-            background: themeName === 'dark' ? '#1e293b' : '#ecfdf5',
-            border: '1px solid rgba(34,197,94,0.3)',
+            background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+            border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
             borderRadius: '8px',
             overflow: 'hidden',
             marginBottom: '1.5rem'
           }}>
-            <div style={{ padding: '0.75rem 1rem', background: themeName === 'dark' ? '#334155' : '#d1fae5', color: '#22c55e', fontSize: '0.7rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--pass) 12%, var(--surface))', color: 'var(--pass-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
               Wombat Compliant: Managed Resources with Cost Controls
             </div>
             <div style={{ padding: '1rem' }}>
@@ -1406,7 +1401,7 @@ resource "aws_db_instance" "main" {
           Anti-Pattern Museum Summary
         </h2>
         <div style={{
-          background: themeName === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '12px',
           padding: '1.5rem'
@@ -1429,29 +1424,29 @@ resource "aws_db_instance" "main" {
           }}>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'color-mix(in srgb, #da2c38 10%, transparent)' : 'rgba(218,44,56,0.05)',
-              border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)',
+              background: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#DA2C38', margin: '0 0 0.5rem' }}>Anti-Patterns</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--fail-ink)', margin: '0 0 0.5rem' }}>Anti-Patterns</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Common security flaws and misconfigurations that violate Wombat controls</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(34,197,94,0.1)' : 'rgba(34,197,94,0.05)',
-              border: '1px solid rgba(34,197,94,0.2)',
+              background: 'color-mix(in srgb, var(--pass) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#22c55e', margin: '0 0 0.5rem' }}>Best Practices</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--pass-ink)', margin: '0 0 0.5rem' }}>Best Practices</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Wombat compliant alternatives with explanations of why they work</p>
             </div>
             <div style={{
               padding: '1rem',
-              background: themeName === 'dark' ? 'rgba(0,148,255,0.1)' : 'rgba(0,148,255,0.05)',
-              border: '1px solid rgba(0,148,255,0.2)',
+              background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0094ff', margin: '0 0 0.5rem' }}>74 Controls</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--waf-brand-ink)', margin: '0 0 0.5rem' }}>74 Controls</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>WAF-SEC, WAF-SOV, WAF-OPS, WAF-COST, WAF-PERF, WAF-REL, WAF-SUS covered</p>
             </div>
           </div>

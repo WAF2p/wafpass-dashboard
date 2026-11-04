@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { appendAuditEvent } from '../audit'
 import { fetchRisks, upsertRisk, deleteRisk } from '../api'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
+import { Card, EmptyState, Skeleton, SkeletonText } from '../ui'
 
 export interface RiskAcceptance {
   id: string
@@ -40,11 +42,11 @@ const EMPTY: Omit<RiskAcceptance, 'id'> = {
 }
 
 const RESIDUAL_COLOR: Record<string, string> = {
-  low: '#22c55e', medium: '#eab308', high: '#DA2C38',
+  low: 'var(--pass)', medium: 'var(--waf-warn)', high: 'var(--fail)',
 }
 
 const LEVEL_COLOR: Record<string, string> = {
-  accepted: '#a78bfa', mitigated: '#22c55e',
+  accepted: 'var(--waived)', mitigated: 'var(--pass)',
 }
 
 type SyncStatus = 'loading' | 'synced' | 'offline' | 'saving' | 'error'
@@ -194,22 +196,23 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
   const isExpired = (expires: string) => expires && new Date(expires) < new Date()
 
   const syncPill = (() => {
-    if (syncStatus === 'loading') return { label: t('pages.waivers.syncLoading'), color: '#94a3b8' }
-    if (syncStatus === 'saving') return { label: t('pages.waivers.syncSaving'), color: '#0094ff' }
-    if (syncStatus === 'synced') return { label: t('pages.waivers.syncSynced'), color: '#22c55e' }
-    if (syncStatus === 'offline') return { label: t('pages.waivers.syncOffline'), color: '#eab308' }
-    return { label: t('pages.waivers.syncError'), color: '#DA2C38' }
+    if (syncStatus === 'loading') return { label: t('pages.waivers.syncLoading'), color: 'var(--skip)' }
+    if (syncStatus === 'saving') return { label: t('pages.waivers.syncSaving'), color: 'var(--waf-brand)' }
+    if (syncStatus === 'synced') return { label: t('pages.waivers.syncSynced'), color: 'var(--pass)' }
+    if (syncStatus === 'offline') return { label: t('pages.waivers.syncOffline'), color: 'var(--waf-warn)' }
+    return { label: t('pages.waivers.syncError'), color: 'var(--fail)' }
   })()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '900px' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.risk}</h1>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <button
           onClick={openAdd}
           disabled={syncStatus === 'offline'}
           style={{
-            background: syncStatus === 'offline' ? '#94a3b8' : 'var(--waf-brand)',
+            background: syncStatus === 'offline' ? 'var(--skip)' : 'var(--waf-brand)',
             color: '#fff', border: 'none', borderRadius: '8px',
             padding: '0.5rem 1.1rem', fontSize: '0.85rem', fontWeight: 700,
             cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer',
@@ -226,7 +229,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
         <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t('pages.risk.records', { count: entries.length })}</span>
         <span style={{
           marginLeft: 'auto', fontSize: '0.72rem', fontWeight: 600, color: syncPill.color,
-          background: `${syncPill.color}18`, border: `1px solid ${syncPill.color}40`,
+          background: `color-mix(in srgb, ${syncPill.color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${syncPill.color} 25%, transparent)`,
           borderRadius: '999px', padding: '0.2rem 0.7rem',
         }}>
           {syncPill.label}
@@ -236,48 +239,54 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
       {/* Sync error banner */}
       {syncError && !showModal && (
         <div style={{
-          background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
-          borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: '#DA2C38',
+          background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+          borderRadius: '8px', padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: 'var(--fail-ink)',
         }}>
           {syncError}
         </div>
       )}
 
       {syncStatus === 'loading' ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <div className="spinner" />
+        <div aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {[0, 1, 2].map(i => (
+            <Card key={i}>
+              <Skeleton width="34%" height={14} />
+              <SkeletonText lines={2} />
+              <Skeleton width="52%" height={10} />
+            </Card>
+          ))}
         </div>
       ) : entries.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-          <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>{t('pages.risk.noRecords')}</div>
-          <div style={{ fontSize: '0.78rem' }}>
-            {t('pages.risk.noRecordsHint')}
-          </div>
-        </div>
+        <Card padding="none">
+          <EmptyState
+            title={t('pages.risk.noRecords')}
+            description={t('pages.risk.noRecordsHint')}
+          />
+        </Card>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {entries.map(r => {
             const expired = isExpired(r.expires)
             return (
-              <div key={r.id} className="card" style={{ borderLeft: `3px solid ${expired ? '#DA2C38' : LEVEL_COLOR[r.risk_level] ?? '#94a3b8'}` }}>
+              <div key={r.id} className="card" style={{ borderLeft: `3px solid ${expired ? 'var(--fail)' : LEVEL_COLOR[r.risk_level] ?? 'var(--skip)'}` }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
                       <code style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--waf-brand)' }}>{r.id}</code>
                       <span style={{
                         padding: '0.08rem 0.45rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
-                        background: `${LEVEL_COLOR[r.risk_level]}22`, color: LEVEL_COLOR[r.risk_level],
+                        background: `color-mix(in srgb, ${LEVEL_COLOR[r.risk_level]} 13%, transparent)`, color: LEVEL_COLOR[r.risk_level],
                       }}>
                         {r.risk_level}
                       </span>
                       <span style={{
                         padding: '0.08rem 0.45rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
-                        background: `${RESIDUAL_COLOR[r.residual_risk]}22`, color: RESIDUAL_COLOR[r.residual_risk],
+                        background: `color-mix(in srgb, ${RESIDUAL_COLOR[r.residual_risk]} 13%, transparent)`, color: RESIDUAL_COLOR[r.residual_risk],
                       }}>
                         {t('pages.risk.residual')}: {r.residual_risk}
                       </span>
                       {expired && (
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#DA2C38', background: 'color-mix(in srgb, #da2c38 15%, transparent)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--fail-ink)', background: 'color-mix(in srgb, var(--fail) 15%, transparent)', padding: '0.08rem 0.4rem', borderRadius: '999px' }}>
                           {t('pages.risk.expired')}
                         </span>
                       )}
@@ -335,7 +344,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                     <button
                       onClick={() => void remove(r.id)}
                       disabled={syncStatus === 'offline'}
-                      style={{ background: 'none', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: '#DA2C38', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
+                      style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--fail-ink)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
                       Delete
                     </button>
@@ -350,10 +359,10 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
       {/* Modal */}
       {showModal && (
         <>
-          <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 25%, transparent)', zIndex: 99 }} />
+          <div onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 99 }} />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px color-mix(in srgb, #000000 20%, transparent)',
+            background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 20px 60px color-mix(in srgb, black 20%, transparent)',
             padding: '1.5rem', width: '520px', maxWidth: '92vw', maxHeight: '90vh', overflowY: 'auto',
             zIndex: 100, display: 'flex', flexDirection: 'column', gap: '0.875rem',
           }}>
@@ -437,8 +446,8 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
 
             {syncError && (
               <div style={{
-                background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
-                borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: '#DA2C38',
+                background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+                borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.75rem', color: 'var(--fail-ink)',
               }}>
                 {syncError}
               </div>
@@ -452,7 +461,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                 onClick={() => void submit()}
                 disabled={!idInput.trim() || syncStatus === 'saving'}
                 style={{
-                  background: idInput.trim() && syncStatus !== 'saving' ? 'var(--waf-brand)' : '#94a3b8', color: '#fff',
+                  background: idInput.trim() && syncStatus !== 'saving' ? 'var(--waf-brand)' : 'var(--skip)', color: '#fff',
                   border: 'none', borderRadius: '8px', padding: '0.45rem 1rem',
                   fontSize: '0.85rem', fontWeight: 700,
                   cursor: idInput.trim() && syncStatus !== 'saving' ? 'pointer' : 'not-allowed',

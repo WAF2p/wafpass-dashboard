@@ -1,17 +1,28 @@
 import { RunDetail } from '../api'
 import { useI18n } from '../i18n'
+import { Card, DataTable, EmptyState, type Column } from '../ui'
 
 interface Props { run: RunDetail | null }
+
+interface SkipRow {
+  id: string
+  title: string
+  type: string
+  reason: string
+  owner: string
+  expiry: string | null
+}
+
+const TYPE_TONE: Record<string, { bg: string; fg: string }> = {
+  Waiver: { bg: 'color-mix(in srgb, var(--waived) 15%, transparent)', fg: 'var(--waived)' },
+  'Risk Acceptance': { bg: 'color-mix(in srgb, var(--waf-warn) 15%, transparent)', fg: 'var(--waf-warn)' },
+}
 
 export default function SkippedControlsPage({ run }: Props) {
   const { t } = useI18n()
 
   if (!run) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--muted)', fontSize: '0.85rem' }}>
-        {t('pages.skippedControls.noRun')}
-      </div>
-    )
+    return <EmptyState title={t('pages.skippedControls.noRun')} />
   }
 
   const waivers = JSON.parse(localStorage.getItem('wombat_waivers') ?? '{}') as Record<string, any>
@@ -50,68 +61,58 @@ export default function SkippedControlsPage({ run }: Props) {
     }
   }
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-            {t('pages.skippedControls.title')}
-            <span style={{ marginLeft: '0.75rem', fontWeight: 400, fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'none', letterSpacing: 0 }}>
-              {t('pages.skippedControls.controlsOf', { skipped: String(skippedControls.length), total: String(run.controls_meta.length) })}
-            </span>
-          </h2>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-            <thead>
-              <tr style={{ background: 'var(--bg)' }}>
-                {[
-                  t('pages.skippedControls.colControl'),
-                  t('pages.skippedControls.colTitle'),
-                  t('pages.skippedControls.colSkipType'),
-                  t('pages.skippedControls.colReason'),
-                  t('pages.skippedControls.colOwner'),
-                  t('pages.skippedControls.colExpiry'),
-                ].map(h => (
-                  <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {skippedControls.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
-                    {t('pages.skippedControls.noSkipped')}
-                  </td>
-                </tr>
-              ) : (
-                skippedControls.map(ctrl => {
-                  const info = getSkipReason(ctrl.id)
-                  return (
-                    <tr key={ctrl.id} style={{ borderTop: '1px solid var(--border)' }}>
-                      <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text)' }}>{ctrl.id}</td>
-                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text)' }}>{ctrl.title}</td>
-                      <td style={{ padding: '0.75rem 1rem' }}>
-                        <span style={{
-                          padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700,
-                          background: info.type === 'Waiver' ? 'color-mix(in srgb, #a78bfa 15%, transparent)' : info.type === 'Risk Acceptance' ? 'color-mix(in srgb, #f97316 15%, transparent)' : 'rgba(148,163,184,0.15)',
-                          color: info.type === 'Waiver' ? '#a78bfa' : info.type === 'Risk Acceptance' ? '#f97316' : '#64748b',
-                        }}>
-                          {info.type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text)' }}>{info.reason}</td>
-                      <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{info.owner}</td>
-                      <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{info.expiry || '—'}</td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+  const rows: SkipRow[] = skippedControls.map(ctrl => {
+    const info = getSkipReason(ctrl.id)
+    return {
+      id: ctrl.id,
+      title: ctrl.title,
+      type: info.type,
+      reason: info.reason,
+      owner: info.owner,
+      expiry: info.expiry ?? null,
+    }
+  })
 
-      </div>
-    </div>
+  const columns: Column<SkipRow>[] = [
+    { key: 'id', header: t('pages.skippedControls.colControl'), mono: true },
+    { key: 'title', header: t('pages.skippedControls.colTitle') },
+    {
+      key: 'type',
+      header: t('pages.skippedControls.colSkipType'),
+      render: row => {
+        const tone = TYPE_TONE[row.type]
+        return (
+          <span className="pill" style={{ background: tone?.bg ?? 'var(--bg)', color: tone?.fg ?? 'var(--muted)' }}>
+            {row.type}
+          </span>
+        )
+      },
+    },
+    { key: 'reason', header: t('pages.skippedControls.colReason') },
+    { key: 'owner', header: t('pages.skippedControls.colOwner') },
+    {
+      key: 'expiry',
+      header: t('pages.skippedControls.colExpiry'),
+      render: row => row.expiry ?? '—',
+    },
+  ]
+
+  return (
+    <Card
+      padding="none"
+      title={t('pages.skippedControls.title')}
+      subtitle={t('pages.skippedControls.controlsOf', {
+        skipped: String(skippedControls.length),
+        total: String(run.controls_meta.length),
+      })}
+    >
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={row => row.id}
+        caption={t('pages.skippedControls.title')}
+        empty={<EmptyState compact title={t('pages.skippedControls.noSkipped')} />}
+      />
+    </Card>
   )
 }

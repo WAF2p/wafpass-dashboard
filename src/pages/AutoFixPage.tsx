@@ -10,8 +10,12 @@ import {
   RunDetail,
 } from '../api'
 import DiffViewer from '../components/DiffViewer'
+import { EmptyState, PageHeader, Skeleton, SkeletonText } from '../ui'
+import { scoreColor } from '../severity'
+import { useI18n } from '../i18n'
 
 function CopyButton({ text }: { text: string }) {
+  const { t } = useI18n()
   const [copied, setCopied] = useState(false)
   return (
     <button
@@ -23,13 +27,13 @@ function CopyButton({ text }: { text: string }) {
         background: 'rgba(255,255,255,.08)',
         border: '1px solid rgba(255,255,255,.12)',
         borderRadius: '6px',
-        color: copied ? '#22c55e' : '#94a3b8',
+        color: copied ? 'var(--pass)' : 'var(--skip)',
         fontSize: '0.72rem',
         padding: '0.2rem 0.55rem',
         cursor: 'pointer',
       }}
     >
-      {copied ? 'Copied!' : 'Copy'}
+      {copied ? t('pages.phase3.autofix.copied') : t('pages.phase3.autofix.copy')}
     </button>
   )
 }
@@ -42,22 +46,17 @@ interface AutoFixPageProps {
 type ScopeMode = 'all' | 'pillar' | 'control'
 type ViewMode = 'server' | 'local'
 
-const statusColors: Record<string, string> = {
-  PASS: '#22c55e',
-  FAIL: '#ef4444',
-  SKIP: '#f59e0b',
-}
-
 const tableColumns = [
-  { key: 'File', width: '18%' },
-  { key: 'Resource', width: '22%' },
-  { key: 'Attribute', width: '15%' },
-  { key: 'Kind', width: '10%' },
-  { key: 'New value', width: '25%' },
-  { key: 'Control', width: '10%' },
+  { key: 'colFile', width: '18%' },
+  { key: 'colResource', width: '22%' },
+  { key: 'colAttribute', width: '15%' },
+  { key: 'colKind', width: '10%' },
+  { key: 'colNewValue', width: '25%' },
+  { key: 'colControl', width: '10%' },
 ]
 
 export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
+  const { t } = useI18n()
   const [mode, setMode] = useState<ScopeMode>('all')
   const [pillar, setPillar] = useState<string>('')
   const [controlId, setControlId] = useState<string>('')
@@ -94,18 +93,14 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
 
   if (!run) {
     return (
-      <div style={{ padding: '2rem', color: 'var(--muted)', textAlign: 'center' }}>
-        Select a run to use the Auto-Fix wizard.
-      </div>
+      <EmptyState title={t('pages.phase3.autofix.selectRun')} />
     )
   }
 
   const iacPath = run.path || run.source_paths?.[0]
   if (!iacPath) {
     return (
-      <div style={{ padding: '2rem', color: 'var(--muted)', textAlign: 'center' }}>
-        This run does not have an associated IaC path, so auto-fix cannot be invoked.
-      </div>
+      <EmptyState title={t('pages.phase3.autofix.noIacPath')} />
     )
   }
 
@@ -141,12 +136,12 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
         address: f.resource || '',
         attribute: f.message?.split(' ')[0] || '',
         op: 'manual',
-        reason: errorMessage || 'Could not contact the classify endpoint.',
+        reason: errorMessage || t('pages.phase3.autofix.couldNotContactClassify'),
       })),
       diff_preview: {},
       warnings: errorMessage
-        ? [`Local preview unavailable: ${errorMessage}`]
-        : ['Local preview: no run_id was sent, so source snapshots cannot be used to generate diffs.'],
+        ? [t('pages.phase3.autofix.localPreviewUnavailable', { message: errorMessage })]
+        : [t('pages.phase3.autofix.localPreviewNoRunId')],
       delta: null,
     }
   }
@@ -174,7 +169,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           const res = await postAutoFixClassify(payload)
           setResponse(res)
         } catch (e) {
-          setResponse(buildLocalFallback(e instanceof Error ? e.message : 'classify endpoint failed'))
+          setResponse(buildLocalFallback(e instanceof Error ? e.message : t('pages.phase3.autofix.classifyFailed')))
         }
       } else {
         const payload: AutoFixRequest = {
@@ -187,7 +182,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
         setResponse(res)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Preview failed')
+      setError(e instanceof Error ? e.message : t('pages.phase3.autofix.previewFailed'))
     } finally {
       setLoading(false)
     }
@@ -208,7 +203,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
       setResponse(res)
       setShowApplyConfirm(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Apply failed')
+      setError(e instanceof Error ? e.message : t('pages.phase3.autofix.applyFailed'))
     } finally {
       setLoading(false)
     }
@@ -231,7 +226,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
       const res = await postAutoFixRollback(iacPath)
       setRollbackResult(res)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Rollback failed')
+      setError(e instanceof Error ? e.message : t('pages.phase3.autofix.rollbackFailed'))
     } finally {
       setLoading(false)
     }
@@ -265,29 +260,27 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem' }}>
-        <button
-          onClick={onBack}
-          style={{
-            padding: '0.55rem 1.1rem',
-            borderRadius: '8px',
-            border: '1px solid var(--border)',
-            background: 'var(--bg)',
-            color: 'var(--text)',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-          }}
-        >
-          ← Back to dashboard
-        </button>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text)' }}>Auto-Fix Wizard</h1>
-          <div style={{ fontSize: '0.88rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
-            {run.project} · {run.branch} · {run.git_sha.slice(0, 7)} · {run.iac_framework || 'terraform'}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={t('pages.phase3.autofix.title')}
+        description={`${run.project} · ${run.branch} · ${run.git_sha.slice(0, 7)} · ${run.iac_framework || 'terraform'}`}
+        actions={
+          <button
+            onClick={onBack}
+            style={{
+              padding: '0.55rem 1.1rem',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              background: 'var(--bg)',
+              color: 'var(--text)',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+            }}
+          >
+            {t('pages.phase3.autofix.backToDashboard')}
+          </button>
+        }
+      />
 
       <div
         style={{
@@ -298,9 +291,9 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
         }}
       >
         {[
-          { label: 'Failing findings', value: failCount, color: '#ef4444' },
-          { label: 'Selected scope', value: affectedCount, color: '#f59e0b' },
-          { label: 'Score', value: `${run.score ?? 0}%`, color: statusColors[run.score >= 80 ? 'PASS' : run.score >= 60 ? 'SKIP' : 'FAIL'] },
+          { label: t('pages.phase3.autofix.failingFindings'), value: failCount, color: 'var(--fail)' },
+          { label: t('pages.phase3.autofix.selectedScope'), value: affectedCount, color: 'var(--waf-warn)' },
+          { label: t('pages.phase3.autofix.score'), value: `${run.score ?? 0}%`, color: scoreColor(run.score ?? 0) },
         ].map(card => (
           <div
             key={card.label}
@@ -308,7 +301,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
               padding: '1.1rem 1.25rem',
               borderRadius: '10px',
               border: '1px solid var(--border)',
-              background: 'var(--card-bg, #fff)',
+              background: 'var(--surface)',
             }}
           >
             <div style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>{card.label}</div>
@@ -326,7 +319,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           padding: '1.25rem',
           borderRadius: '10px',
           border: '1px solid var(--border)',
-          background: 'var(--card-bg, #fff)',
+          background: 'var(--surface)',
           marginBottom: '1.5rem',
         }}
       >
@@ -339,14 +332,14 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                 padding: '0.55rem 1rem',
                 borderRadius: '6px',
                 border: '1px solid var(--border)',
-                background: mode === m ? 'rgba(0,148,255,.12)' : 'var(--bg)',
-                color: mode === m ? 'var(--waf-brand)' : 'var(--text)',
+                background: mode === m ? 'color-mix(in srgb, var(--waf-brand) 12%, transparent)' : 'var(--bg)',
+                color: mode === m ? 'var(--waf-brand-ink)' : 'var(--text)',
                 fontWeight: mode === m ? 700 : 500,
                 cursor: 'pointer',
                 fontSize: '0.88rem',
               }}
             >
-              {m === 'all' ? 'All failures' : m === 'pillar' ? 'By pillar' : 'By control'}
+              {m === 'all' ? t('pages.phase3.autofix.allFailures') : m === 'pillar' ? t('pages.phase3.autofix.byPillar') : t('pages.phase3.autofix.byControl')}
             </button>
           ))}
         </div>
@@ -390,15 +383,15 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   padding: '0.45rem 0.85rem',
                   borderRadius: '6px',
                   border: 'none',
-                  background: viewMode === v ? 'rgba(0,148,255,.12)' : 'transparent',
-                  color: viewMode === v ? 'var(--waf-brand)' : 'var(--muted)',
+                  background: viewMode === v ? 'color-mix(in srgb, var(--waf-brand) 12%, transparent)' : 'transparent',
+                  color: viewMode === v ? 'var(--waf-brand-ink)' : 'var(--muted)',
                   fontWeight: viewMode === v ? 700 : 500,
                   cursor: 'pointer',
                   fontSize: '0.85rem',
                 }}
-                title={v === 'server' ? 'Call wombat-server /api/auto-fix (the server must have direct filesystem access to the IaC path)' : 'Build a read-only plan from stored findings and source snapshots (no filesystem access needed)'}
+                title={v === 'server' ? t('pages.phase3.autofix.serverPreviewTitle') : t('pages.phase3.autofix.localPreviewTitle')}
               >
-                {v === 'server' ? 'Server preview' : 'Local preview'}
+                {v === 'server' ? t('pages.phase3.autofix.serverPreview') : t('pages.phase3.autofix.localPreview')}
               </button>
             ))}
           </div>
@@ -410,15 +403,15 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
               padding: '0.6rem 1.2rem',
               borderRadius: '8px',
               border: 'none',
-              background: 'rgba(0,148,255,.12)',
-              color: 'var(--waf-brand)',
+              background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)',
+              color: 'var(--waf-brand-ink)',
               fontWeight: 700,
               cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '0.9rem',
               opacity: loading ? 0.6 : 1,
             }}
           >
-            {loading && !response ? 'Previewing…' : 'Preview fixes'}
+            {loading && !response ? t('pages.phase3.autofix.previewing') : t('pages.phase3.autofix.previewFixes')}
           </button>
 
           {response && !response.applied && response.patches_count > 0 && viewMode === 'server' && (
@@ -429,15 +422,15 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                 padding: '0.6rem 1.2rem',
                 borderRadius: '8px',
                 border: 'none',
-                background: '#22c55e',
-                color: '#fff',
+                background: 'var(--waf-brand-btn)',
+                color: 'white',
                 fontWeight: 700,
                 cursor: loading ? 'not-allowed' : 'pointer',
                 fontSize: '0.9rem',
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              Apply fixes
+              {t('pages.phase3.autofix.applyFixes')}
             </button>
           )}
 
@@ -457,29 +450,46 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              Rollback
+              {t('pages.phase3.autofix.rollback')}
             </button>
           )}
         </div>
       </div>
+
+      {loading && !response && (
+        <div
+          style={{
+            padding: '1.1rem 1.25rem',
+            borderRadius: '8px',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            marginBottom: '1.25rem',
+          }}
+        >
+          <Skeleton height={16} width="28%" />
+          <div style={{ marginTop: '0.85rem' }}>
+            <SkeletonText lines={3} />
+          </div>
+        </div>
+      )}
 
       {error && (
         <div
           style={{
             padding: '1.1rem 1.25rem',
             borderRadius: '8px',
-            background: 'color-mix(in srgb, #ef4444 8%, transparent)',
-            border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)',
-            color: '#b91c1c',
+            background: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)',
+            color: 'var(--fail-ink)',
             fontSize: '0.88rem',
             marginBottom: '1.25rem',
             lineHeight: 1.5,
           }}
         >
-          <div style={{ fontWeight: 700, marginBottom: '0.35rem' }}>Server cannot apply fixes directly</div>
+          <div style={{ fontWeight: 700, marginBottom: '0.35rem' }}>{t('pages.phase3.autofix.serverCannotApply')}</div>
           {error}
           <div style={{ marginTop: '0.75rem', color: 'var(--text)', fontSize: '0.85rem' }}>
-            Server preview requires the wombat-server container to have direct filesystem access to the IaC path. If it does not, switch to <strong>Local preview</strong> or run the CLI locally from the repository root:
+            {t('pages.phase3.autofix.serverAccessBefore')} <strong>{t('pages.phase3.autofix.localPreview')}</strong> {t('pages.phase3.autofix.serverAccessAfter')}
           </div>
           <div style={{ position: 'relative', marginTop: '0.5rem' }}>
             <pre
@@ -504,20 +514,20 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           style={{
             padding: '1rem 1.25rem',
             borderRadius: '8px',
-            background: 'rgba(0,148,255,.08)',
-            border: '1px solid rgba(0,148,255,.2)',
+            background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
             color: 'var(--text)',
             fontSize: '0.86rem',
             marginBottom: '1.25rem',
             lineHeight: 1.5,
           }}
         >
-          <strong>Local preview mode</strong>
+          <strong>{t('pages.phase3.autofix.localPreviewMode')}</strong>
           <div style={{ marginTop: '0.4rem' }}>
-            This builds a read-only remediation plan from the stored scan findings. When the run has a stored source snapshot, unified diffs are generated directly from the database; otherwise only the patch list is shown. No filesystem access is required.
+            {t('pages.phase3.autofix.localPreviewDescription')}
           </div>
           <div style={{ marginTop: '0.5rem', color: 'var(--muted)' }}>
-            To store snapshots with a local CLI scan, run:{' '}
+            {t('pages.phase3.autofix.snapshotHint')}{' '}
             <code style={{ background: 'rgba(255,255,255,.1)', padding: '0.15rem 0.35rem', borderRadius: '4px' }}>
               wombat check ./infra --output json --push @ --upload-source
             </code>
@@ -530,16 +540,20 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           style={{
             padding: '1rem 1.25rem',
             borderRadius: '8px',
-            background: rollbackResult.restored.length ? 'rgba(34,197,94,.08)' : 'rgba(245,158,11,.08)',
-            border: `1px solid ${rollbackResult.restored.length ? 'rgba(34,197,94,.25)' : 'rgba(245,158,11,.25)'}`,
-            color: rollbackResult.restored.length ? '#15803d' : '#92400e',
+            background: rollbackResult.restored.length
+              ? 'color-mix(in srgb, var(--pass) 8%, transparent)'
+              : 'color-mix(in srgb, var(--waf-warn) 8%, transparent)',
+            border: `1px solid ${rollbackResult.restored.length
+              ? 'color-mix(in srgb, var(--pass) 25%, transparent)'
+              : 'color-mix(in srgb, var(--waf-warn) 25%, transparent)'}`,
+            color: rollbackResult.restored.length ? 'var(--pass-ink)' : 'var(--sev-medium)',
             fontSize: '0.88rem',
             marginBottom: '1.25rem',
           }}
         >
           {rollbackResult.restored.length
-            ? `Rollback complete: restored ${rollbackResult.restored.length} file(s).`
-            : `No backup files found to restore.`}
+            ? t('pages.phase3.autofix.rollbackComplete', { count: rollbackResult.restored.length })
+            : t('pages.phase3.autofix.noBackups')}
         </div>
       )}
 
@@ -554,9 +568,9 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
             }}
           >
             {[
-              { label: 'Patches', value: response.patches_count, color: '#22c55e' },
-              { label: 'Skipped', value: response.skipped_count, color: '#f59e0b' },
-              { label: 'Files modified', value: response.files_modified.length, color: 'var(--waf-brand)' },
+              { label: t('pages.phase3.autofix.patches'), value: response.patches_count, color: 'var(--pass-ink)' },
+              { label: t('pages.phase3.autofix.skipped'), value: response.skipped_count, color: 'var(--waf-warn)' },
+              { label: t('pages.phase3.autofix.filesModified'), value: response.files_modified.length, color: 'var(--waf-brand-ink)' },
             ].map(card => (
               <div
                 key={card.label}
@@ -564,7 +578,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   padding: '1rem 1.25rem',
                   borderRadius: '8px',
                   border: '1px solid var(--border)',
-                  background: 'var(--card-bg, #fff)',
+                  background: 'var(--surface)',
                 }}
               >
                 <div style={{ fontSize: '0.76rem', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: 700 }}>{card.label}</div>
@@ -583,9 +597,9 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
               }}
             >
               {[
-                { label: 'Resolved', value: response.delta.resolved.length, color: '#22c55e' },
-                { label: 'Still failing', value: response.delta.still_failing.length, color: '#ef4444' },
-                { label: 'Regressions', value: response.delta.regressions.length, color: '#7c3aed' },
+                { label: t('pages.phase3.autofix.resolved'), value: response.delta.resolved.length, color: 'var(--pass-ink)' },
+                { label: t('pages.phase3.autofix.stillFailing'), value: response.delta.still_failing.length, color: 'var(--fail-ink)' },
+                { label: t('pages.phase3.autofix.regressions'), value: response.delta.regressions.length, color: 'var(--waf-info)' },
               ].map(card => (
                 <div
                   key={card.label}
@@ -593,7 +607,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                     padding: '0.9rem 1rem',
                     borderRadius: '8px',
                     border: '1px solid var(--border)',
-                    background: 'var(--card-bg, #fff)',
+                    background: 'var(--surface)',
                     textAlign: 'center',
                   }}
                 >
@@ -609,14 +623,14 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
               style={{
                 padding: '1rem 1.25rem',
                 borderRadius: '8px',
-                background: 'rgba(245,158,11,.08)',
-                border: '1px solid rgba(245,158,11,.25)',
-                color: '#92400e',
+                background: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--waf-warn) 25%, transparent)',
+                color: 'var(--sev-medium)',
                 fontSize: '0.86rem',
                 marginBottom: '1.5rem',
               }}
             >
-              <strong>Warnings</strong>
+              <strong>{t('pages.phase3.autofix.warnings')}</strong>
               <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
                 {response.warnings.map((w, i) => <li key={i}>{w}</li>)}
               </ul>
@@ -625,7 +639,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
 
           {response.patches_count > 0 && response.diff_preview && Object.keys(response.diff_preview).length > 0 && (
             <section style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '0.9rem' }}>Diff preview</h2>
+              <h2 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '0.9rem' }}>{t('pages.phase3.autofix.diffPreview')}</h2>
               <DiffViewer diffPreview={response.diff_preview} />
             </section>
           )}
@@ -633,8 +647,8 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           {response.patches_count > 0 && (
             <section style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '0.9rem' }}>
-                Planned patches
-                <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: '0.5rem', fontWeight: 500 }}>(click a row to view diff)</span>
+                {t('pages.phase3.autofix.plannedPatches')}
+                <span style={{ fontSize: '0.78rem', color: 'var(--muted)', marginLeft: '0.5rem', fontWeight: 500 }}>{t('pages.phase3.autofix.clickRowForDiff')}</span>
               </h2>
               <div style={{ overflowX: 'auto' }}>
                 <table
@@ -647,7 +661,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   }}
                 >
                   <thead>
-                    <tr style={{ background: 'rgba(0,148,255,.08)' }}>
+                    <tr style={{ background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)' }}>
                       {tableColumns.map(col => (
                         <th
                           key={col.key}
@@ -661,7 +675,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                             fontSize: '0.78rem',
                           }}
                         >
-                          {col.key}
+                          {t(`pages.phase3.autofix.${col.key}`)}
                         </th>
                       ))}
                     </tr>
@@ -673,7 +687,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                         onClick={() => setSelectedPatchIndex(i)}
                         style={{
                           borderBottom: '1px solid var(--border)',
-                          background: selectedPatchIndex === i ? 'rgba(0,148,255,.06)' : 'transparent',
+                          background: selectedPatchIndex === i ? 'color-mix(in srgb, var(--waf-brand) 6%, transparent)' : 'transparent',
                           cursor: 'pointer',
                         }}
                       >
@@ -685,11 +699,11 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                             style={{
                               padding: '0.2rem 0.5rem',
                               borderRadius: '4px',
-                              fontSize: '0.68rem',
+                              fontSize: '0.7rem',
                               fontWeight: 700,
                               textTransform: 'uppercase',
-                              background: p.kind === 'ADD_BLOCK' ? 'color-mix(in srgb, #7c3aed 10%, transparent)' : 'rgba(0,148,255,.1)',
-                              color: p.kind === 'ADD_BLOCK' ? '#7c3aed' : 'var(--waf-brand)',
+                              background: p.kind === 'ADD_BLOCK' ? 'color-mix(in srgb, var(--waf-info) 10%, transparent)' : 'color-mix(in srgb, var(--waf-brand) 10%, transparent)',
+                              color: p.kind === 'ADD_BLOCK' ? 'var(--waf-info)' : 'var(--waf-brand-ink)',
                             }}
                           >
                             {p.kind}
@@ -725,7 +739,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   width: '900px',
                   maxWidth: '94vw',
                   maxHeight: '85vh',
-                  background: 'var(--card-bg, #fff)',
+                  background: 'var(--surface)',
                   borderRadius: '12px',
                   boxShadow: '0 24px 64px rgba(15,23,42,.25)',
                   zIndex: 100,
@@ -746,7 +760,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   }}
                 >
                   <div style={{ minWidth: 0 }}>
-                    <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text)' }}>Patch diff</h3>
+                    <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text)' }}>{t('pages.phase3.autofix.patchDiff')}</h3>
                     <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '0.25rem', overflowWrap: 'anywhere' }}>
                       {selectedPatch.address} · {selectedPatch.attribute} · {selectedPatch.file}
                     </div>
@@ -764,7 +778,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                       flexShrink: 0,
                     }}
                   >
-                    Close
+                    {t('pages.phase3.autofix.close')}
                   </button>
                 </div>
                 <div style={{ flex: 1, overflow: 'auto', background: '#0f172a' }}>
@@ -810,16 +824,16 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                     <div
                       style={{
                         padding: '2rem 1.25rem',
-                        color: '#94a3b8',
+                        color: 'var(--skip)',
                         fontSize: '0.85rem',
                         lineHeight: 1.6,
                       }}
                     >
-                      <strong>No diff preview available for this patch.</strong>
+                      <strong>{t('pages.phase3.autofix.noDiffForPatch')}</strong>
                       <div style={{ marginTop: '0.5rem' }}>
                         {viewMode === 'local'
-                          ? 'No unified diff is available for this patch. The source files are not stored for this run because it was pushed from a CI/CD pipeline (POST /api/v1/runs). Only runs created via a server-side scan (POST /api/v1/scan) keep a source snapshot. Switch to Server preview or run the CLI locally to see file-level changes.'
-                          : 'The server did not return a diff for this file. This can happen when the patch target file is outside the scanned path or no textual change could be derived.'}
+                          ? t('pages.phase3.autofix.noDiffLocal')
+                          : t('pages.phase3.autofix.noDiffServer')}
                       </div>
                     </div>
                   )}
@@ -830,19 +844,19 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
 
           {viewMode === 'local' && response.patches_count > 0 && (
             <section style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '0.9rem' }}>Apply locally</h2>
+              <h2 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '0.9rem' }}>{t('pages.phase3.autofix.applyLocally')}</h2>
               <div
                 style={{
                   padding: '1rem 1.25rem',
                   borderRadius: '8px',
-                  background: 'rgba(0,148,255,.08)',
-                  border: '1px solid rgba(0,148,255,.2)',
+                  background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
                   color: 'var(--text)',
                   fontSize: '0.86rem',
                   lineHeight: 1.5,
                 }}
               >
-                The local preview is read-only. To actually modify the source files, run this command where your IaC is checked out:
+                {t('pages.phase3.autofix.localReadOnly')}
               </div>
               <div style={{ position: 'relative', marginTop: '0.5rem' }}>
                 <pre
@@ -865,7 +879,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           {groupedSkipped && response.skipped_count > 0 && (
             <section>
               <h2 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '0.9rem' }}>
-                Manual remediation
+                {t('pages.phase3.autofix.manualRemediation')}
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)', marginLeft: '0.5rem', fontWeight: 500 }}>({response.skipped_count})</span>
               </h2>
               {Object.entries(groupedSkipped).map(([reason, items]) => {
@@ -884,7 +898,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                         textAlign: 'left',
                         fontSize: '0.85rem',
                         fontWeight: 700,
-                        color: '#b45309',
+                        color: 'var(--sev-medium)',
                         background: 'transparent',
                         border: 'none',
                         padding: '0.35rem 0',
@@ -906,8 +920,8 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                               fontSize: '0.8rem',
                               padding: '0.5rem 0.75rem',
                               borderRadius: '6px',
-                              background: 'rgba(245,158,11,.05)',
-                              border: '1px solid rgba(245,158,11,.12)',
+                              background: 'color-mix(in srgb, var(--waf-warn) 5%, transparent)',
+                              border: '1px solid color-mix(in srgb, var(--waf-warn) 12%, transparent)',
                             }}
                           >
                             <span style={{ fontFamily: 'monospace', color: 'var(--muted)', flexShrink: 0 }}>{s.control_id}</span>
@@ -919,7 +933,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                     )}
                     {!expanded && hiddenCount > 0 && (
                       <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '0.3rem', marginLeft: '1.3rem' }}>
-                        {items.length} item(s) — click to expand
+                        {t('pages.phase3.autofix.itemsClickToExpand', { count: items.length })}
                       </div>
                     )}
                   </div>
@@ -929,9 +943,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
           )}
 
           {response.patches_count === 0 && response.skipped_count === 0 && (
-            <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.9rem' }}>
-              No fixes could be derived for the selected scope.
-            </div>
+            <EmptyState compact title={t('pages.phase3.autofix.noFixes')} />
           )}
         </>
       )}
@@ -940,7 +952,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
         <>
           <div
             onClick={() => setShowApplyConfirm(false)}
-            style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 35%, transparent)', zIndex: 99 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', zIndex: 99 }}
           />
           <div
             style={{
@@ -950,17 +962,16 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
               transform: 'translate(-50%, -50%)',
               width: '520px',
               maxWidth: '92vw',
-              background: 'var(--card-bg, #fff)',
+              background: 'var(--surface)',
               borderRadius: '12px',
               boxShadow: '0 24px 64px rgba(15,23,42,.2)',
               padding: '1.5rem',
               zIndex: 100,
             }}
           >
-            <h3 style={{ margin: '0 0 0.6rem', fontSize: '1.2rem', color: 'var(--text)' }}>Apply fixes?</h3>
+            <h3 style={{ margin: '0 0 0.6rem', fontSize: '1.2rem', color: 'var(--text)' }}>{t('pages.phase3.autofix.applyFixesQuestion')}</h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-              This will write {response?.patches_count} patch(es) to {response?.files_modified.length} file(s).
-              A <code>.bak</code> backup is created for each modified file and can be restored with the rollback button.
+              {t('pages.phase3.autofix.applyConfirmBefore')} {response?.patches_count} {t('pages.phase3.autofix.applyConfirmMid')} {response?.files_modified.length} {t('pages.phase3.autofix.applyConfirmAfterFiles')} <code>.bak</code> {t('pages.phase3.autofix.applyConfirmAfterCode')}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '1.25rem' }}>
               <button
@@ -976,7 +987,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   fontSize: '0.9rem',
                 }}
               >
-                Cancel
+                {t('pages.phase3.autofix.cancel')}
               </button>
               <button
                 onClick={apply}
@@ -985,15 +996,15 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
                   padding: '0.55rem 1.1rem',
                   borderRadius: '8px',
                   border: 'none',
-                  background: '#22c55e',
-                  color: '#fff',
+                  background: 'var(--waf-brand-btn)',
+                  color: 'white',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   fontWeight: 700,
                   fontSize: '0.9rem',
                   opacity: loading ? 0.6 : 1,
                 }}
               >
-                {loading ? 'Applying…' : 'Confirm apply'}
+                {loading ? t('pages.phase3.autofix.applying') : t('pages.phase3.autofix.confirmApply')}
               </button>
             </div>
           </div>

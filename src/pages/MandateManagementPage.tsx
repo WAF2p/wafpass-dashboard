@@ -19,6 +19,7 @@ import { useI18n } from '../i18n'
 import { buildHash } from '../routing'
 import MandateLogo from '../components/MandateLogo'
 import MandateEditModal from '../components/MandateEditModal'
+import { PAGE_TITLE } from '../routing'
 
 const MANDATE_TYPE_COLORS: Record<MandateType, string> = {
   holding: '#7c3aed', subsidiary: '#0094FF', division: '#059669',
@@ -165,6 +166,7 @@ export default function MandateManagementPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<MandantOut | 'new' | null>(null)
+  const [toggleError, setToggleError] = useState<string | null>(null)
 
   function load() {
     setLoading(true)
@@ -205,11 +207,12 @@ export default function MandateManagementPage() {
   }, [mandants.length])
 
   async function handleToggleActive(m: MandantOut) {
+    setToggleError(null)
     try {
       await updateMandant(m.id, { is_active: !m.is_active })
       load()
     } catch (e) {
-      alert((e as Error).message)
+      setToggleError((e as Error).message)
     }
   }
 
@@ -238,6 +241,7 @@ export default function MandateManagementPage() {
         padding: '1rem 1.25rem', borderRadius: '10px',
         background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)',
       }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['mandates']}</h1>
         <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
@@ -262,10 +266,24 @@ export default function MandateManagementPage() {
         ))}
       </div>
 
+      {toggleError && (
+        <div role="alert" style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
+          padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--fail-ink)',
+          background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+        }}>
+          <span style={{ flex: 1 }}>{toggleError}</span>
+          <button onClick={() => setToggleError(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline' }}>
+            {t('common.close')}
+          </button>
+        </div>
+      )}
+
       {/* ── Mandate org chart ── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
             {t('pages.mandates.mandatesHeader')}
           </div>
           <button

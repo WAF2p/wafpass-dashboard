@@ -6,6 +6,7 @@ import { aggregateScore, companyTrend, JOURNEY_STAGES, latestRunByProject, nextS
 import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner, TwoColumnGrid } from './OperationsCenterShell'
 import StageBadge from './journey/components/StageBadge'
 import type { JourneyStage } from './journeyUtils'
+import { PAGE_TITLE } from '../routing'
 
 function stageColor(stage: JourneyStage): string {
   switch (stage.idx) {
@@ -142,7 +143,7 @@ export default function MaturityOperationsCenter({
         cursor: 'pointer',
         textAlign: 'left',
         width: '100%',
-        transition: 'all 0.15s',
+        transition: 'background-color 0.15s, border-color 0.15s',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = color
@@ -163,6 +164,7 @@ export default function MaturityOperationsCenter({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['maturity']}</h1>
       <CenterHero
         eyebrow="Operations Center"
         title={t('pages.maturityOps.title')}

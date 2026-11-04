@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTheme } from '../theme'
 import { UserPreferences, saveUserPrefs, DEFAULT_USER_PREFS } from './userPrefsUtils'
 import { LOCALES, useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 
 interface Props {
   prefs: UserPreferences
@@ -91,6 +92,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['userprefs']}</h1>
 
       {/* ── Identity banner ─────────────────────────────────────────────────── */}
       <div style={{
@@ -127,7 +129,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
 
         {/* ── Appearance ──────────────────────────────────────────────────── */}
         <div className="card" style={{ padding: '0.9rem 1rem' }}>
-          <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.appearance')}</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.appearance')}</div>
 
           <Row label={t('prefs.theme')}>
             <div style={{ display: 'flex', gap: '0.35rem' }}>
@@ -161,7 +163,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
-            <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.navigation')}</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.navigation')}</div>
 
             <SelectRow label={t('prefs.defaultPage')} desc={t('prefs.defaultPageDesc')}>
               <select value={p.defaultPage} onChange={e => update({ defaultPage: e.target.value })} style={sel}>
@@ -182,7 +184,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
           </div>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
-            <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.dates')}</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.dates')}</div>
 
             <SelectRow label={t('prefs.dateFormat')}>
               <select value={p.dateFormat} onChange={e => update({ dateFormat: e.target.value as UserPreferences['dateFormat'] })} style={sel}>
@@ -207,7 +209,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
-            <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.reports')}</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.reports')}</div>
 
             <Row label={t('prefs.autoPdf')} desc={t('prefs.autoPdfDesc')}>
               <Toggle checked={p.pdfAutoOpen} onChange={v => update({ pdfAutoOpen: v })} />
@@ -219,7 +221,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
           </div>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
-            <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>{t('prefs.resetSection')}</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>{t('prefs.resetSection')}</div>
             <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: '0 0 0.75rem', lineHeight: 1.5 }}>
               {t('prefs.resetDesc')}
             </p>
@@ -235,7 +237,7 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
           </div>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
-            <div style={{ fontSize: '0.67rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('onboarding.openHelp')}</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('onboarding.openHelp')}</div>
             <Row label={t('prefs.showOnboardingAgain')} desc={t('prefs.showOnboardingAgainDesc')}>
               <button
                 onClick={() => update({ hasSeenOnboarding: false })}

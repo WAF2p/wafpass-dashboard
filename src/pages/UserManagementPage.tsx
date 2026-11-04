@@ -10,14 +10,16 @@ import {
   fetchMandants, fetchMyMandate, type UserOut, type UserAuditLogEntry, type MandantOut,
 } from '../api'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 import { safeImageUrl } from '../safeUrl'
+import { scoreColor, scoreBg } from '../severity'
 
 const HOLDING_ROLES = ['', 'holding_admin', 'holding_viewer', 'group_admin', 'group_viewer'] as const
 
 const ALL_ROLES = ['clevel', 'ciso', 'architect', 'engineer', 'admin'] as const
 
-// Role accent: hue only — used for avatar dot, left accent stripe, and badge.
-// Everything else stays neutral so color doesn't dominate.
+// Role accent: hue only — used for the expand dot, avatar tile and badge.
+// No shared role tokens exist, so these identity hues stay page-local.
 const ROLE_COLOR: Record<string, { accent: string; subtle: string; text: string }> = {
   admin:    { accent: '#DA2C38', subtle: 'color-mix(in srgb, #da2c38 8%, transparent)',  text: '#DA2C38' },
   engineer: { accent: '#16a34a', subtle: 'rgba(22,163,74,0.08)',  text: '#16a34a' },
@@ -26,15 +28,21 @@ const ROLE_COLOR: Record<string, { accent: string; subtle: string; text: string 
   clevel:   { accent: '#b45309', subtle: 'rgba(180,83,9,0.08)',   text: '#b45309' },
 }
 
+const FALLBACK_ROLE = {
+  accent: 'var(--muted)',
+  subtle: 'color-mix(in srgb, var(--muted) 8%, transparent)',
+  text: 'var(--muted)',
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }: { role: string }) {
-  const c = ROLE_COLOR[role] ?? { accent: '#64748b', subtle: 'rgba(100,116,139,0.08)', text: '#64748b' }
+  const c = ROLE_COLOR[role] ?? FALLBACK_ROLE
   return (
     <span style={{
       display: 'inline-flex', padding: '0.15rem 0.55rem', borderRadius: '6px',
       background: c.subtle, color: c.text,
-      fontWeight: 700, fontSize: '0.68rem', letterSpacing: '0.03em',
+      fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.03em',
     }}>
       {role}
     </span>
@@ -63,12 +71,12 @@ function fmtDate(iso: string | null | undefined): string {
 // ── Action badge ──────────────────────────────────────────────────────────────
 
 const ACTION_STYLE: Record<string, { color: string; bg: string }> = {
-  'login':       { color: '#059669', bg: 'color-mix(in srgb, #059669 9%, transparent)' },
-  'logout':      { color: '#64748b', bg: 'rgba(100,116,139,0.09)' },
-  'run.push':    { color: '#0078d4', bg: 'color-mix(in srgb, #0078d4 9%, transparent)' },
+  'login':       { color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 9%, transparent)' },
+  'logout':      { color: 'var(--muted)', bg: 'color-mix(in srgb, var(--muted) 9%, transparent)' },
+  'run.push':    { color: 'var(--waf-brand-ink)', bg: 'color-mix(in srgb, var(--waf-brand-ink) 9%, transparent)' },
   'user.create': { color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 9%, transparent)' },
-  'user.update': { color: '#b45309', bg: 'rgba(180,83,9,0.09)' },
-  'user.delete': { color: '#DA2C38', bg: 'color-mix(in srgb, #da2c38 9%, transparent)' },
+  'user.update': { color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--score-mid-ink) 9%, transparent)' },
+  'user.delete': { color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 9%, transparent)' },
 }
 
 function ActionBadge({ action }: { action: string }) {
@@ -81,7 +89,7 @@ function ActionBadge({ action }: { action: string }) {
     'user.update': t('pages.users.actionUserUpdate'),
     'user.delete': t('pages.users.actionUserDelete'),
   }
-  const s = ACTION_STYLE[action] ?? { color: '#64748b', bg: 'rgba(100,116,139,0.08)' }
+  const s = ACTION_STYLE[action] ?? { color: 'var(--muted)', bg: 'color-mix(in srgb, var(--muted) 8%, transparent)' }
   return (
     <span style={{
       display: 'inline-flex', padding: '0.15rem 0.5rem', borderRadius: '6px',
@@ -107,9 +115,9 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
         {score != null && (
           <span style={{
             marginLeft: '0.4rem', padding: '0.1rem 0.35rem', borderRadius: '6px',
-            background: score >= 80 ? 'color-mix(in srgb, #059669 10%, transparent)' : score >= 60 ? 'rgba(180,83,9,.1)' : 'color-mix(in srgb, #da2c38 10%, transparent)',
-            color: score >= 80 ? '#059669' : score >= 60 ? '#b45309' : '#DA2C38',
-            fontWeight: 700, fontSize: '0.68rem',
+            background: scoreBg(score),
+            color: scoreColor(score),
+            fontWeight: 700, fontSize: '0.7rem',
           }}>
             {score}/100
           </span>
@@ -133,7 +141,7 @@ function ActionDetail({ action, detail }: { action: string; detail: Record<strin
         {fields?.length ? (
           <span style={{ marginLeft: '0.35rem' }}>
             {fields.map(f => (
-              <code key={f} style={{ marginLeft: '0.2rem', fontSize: '0.68rem', background: 'var(--bg)', color: 'var(--text)', padding: '0.05rem 0.3rem', borderRadius: '4px', border: '1px solid var(--border)' }}>{f}</code>
+              <code key={f} style={{ marginLeft: '0.2rem', fontSize: '0.7rem', background: 'var(--bg)', color: 'var(--text)', padding: '0.05rem 0.3rem', borderRadius: '4px', border: '1px solid var(--border)' }}>{f}</code>
             ))}
           </span>
         ) : null}
@@ -182,7 +190,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
       .finally(() => setLoading(false))
   }, [user.id])
 
-  const roleC = ROLE_COLOR[user.role] ?? { accent: '#64748b', subtle: 'rgba(100,116,139,0.08)', text: '#64748b' }
+  const roleC = ROLE_COLOR[user.role] ?? FALLBACK_ROLE
 
   return (
     <tr>
@@ -191,7 +199,6 @@ function UserDetailPanel({ user }: { user: UserOut }) {
           borderRadius: '12px',
           background: 'var(--surface)',
           border: '1px solid var(--border)',
-          boxShadow: '0 2px 8px rgba(15,23,42,0.06)',
           overflow: 'hidden',
         }}>
 
@@ -249,8 +256,8 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               <MetaTile label={t('pages.users.colStatus')}>
                 <span style={{
                   display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
-                  background: user.is_active ? 'color-mix(in srgb, #059669 10%, transparent)' : 'rgba(100,116,139,0.09)',
-                  color: user.is_active ? '#059669' : '#64748b',
+                  background: user.is_active ? 'color-mix(in srgb, var(--pass) 10%, transparent)' : 'color-mix(in srgb, var(--muted) 9%, transparent)',
+                  color: user.is_active ? 'var(--pass-ink)' : 'var(--muted)',
                   fontWeight: 600, fontSize: '0.7rem',
                 }}>
                   {user.is_active ? t('pages.users.active') : t('pages.users.inactive')}
@@ -260,8 +267,8 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               <MetaTile label={t('pages.users.colLastLogin')}>
                 {user.last_login_at ? (
                   <>
-                    <span style={{ color: '#059669', fontWeight: 600 }}>{timeAgo(user.last_login_at)}</span>
-                    <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(user.last_login_at)}</div>
+                    <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{timeAgo(user.last_login_at)}</span>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(user.last_login_at)}</div>
                   </>
                 ) : <span style={{ color: 'var(--muted)' }}>{t('pages.users.never')}</span>}
               </MetaTile>
@@ -270,7 +277,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
                 {user.created_at ? (
                   <>
                     <span>{timeAgo(user.created_at)}</span>
-                    <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(user.created_at)}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(user.created_at)}</div>
                   </>
                 ) : '—'}
               </MetaTile>
@@ -295,7 +302,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
             </span>
             {!loading && !error && (
               <span style={{
-                marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)',
+                marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)',
                 background: 'var(--surface)', border: '1px solid var(--border)',
                 padding: '0.1rem 0.5rem', borderRadius: '6px', fontWeight: 600,
               }}>
@@ -308,7 +315,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
           {loading ? (
             <div style={{ padding: '1.5rem', textAlign: 'center' }}><div className="spinner" /></div>
           ) : error ? (
-            <div style={{ padding: '0.875rem 1.25rem', color: '#DA2C38', fontSize: '0.78rem', background: 'rgba(218,44,56,0.04)' }}>{error}</div>
+            <div style={{ padding: '0.875rem 1.25rem', color: 'var(--fail-ink)', fontSize: '0.78rem', background: 'color-mix(in srgb, var(--fail) 4%, transparent)' }}>{error}</div>
           ) : logs.length === 0 ? (
             <div style={{ padding: '1.5rem 1.25rem', color: 'var(--muted)', fontSize: '0.8rem', textAlign: 'center' }}>
               {t('pages.users.noAuditEvents')}
@@ -333,7 +340,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
                   }}>
                     <td style={{ padding: '0.5rem 1.25rem', whiteSpace: 'nowrap' }}>
                       <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.timestamp)}</div>
-                      <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.timestamp)}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.timestamp)}</div>
                     </td>
                     <td style={{ padding: '0.5rem 1.25rem' }}>
                       <ActionBadge action={log.action} />
@@ -365,7 +372,7 @@ const inputStyle: React.CSSProperties = {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)',
+  fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
   textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem',
   display: 'block',
 }
@@ -406,6 +413,8 @@ export default function UserManagementPage() {
   const [saving, setSaving]         = useState(false)
   const [saveErr, setSaveErr]       = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<UserOut | null>(null)
+  const [actionError, setActionError]   = useState<string | null>(null)
 
   // Phase 3.4 — mandate name resolution. A holding_admin sees every user
   // across every mandate and can list all mandants; an ordinary admin only
@@ -497,25 +506,32 @@ export default function UserManagementPage() {
     }
   }
 
-  async function handleDelete(u: UserOut, e: React.MouseEvent) {
+  function requestDelete(u: UserOut, e: React.MouseEvent) {
     e.stopPropagation()
-    if (!confirm(t('pages.users.deleteConfirm', { username: u.username }))) return
+    setActionError(null)
+    setDeleteTarget(u)
+  }
+
+  async function handleDelete(u: UserOut) {
+    setDeleteTarget(null)
+    setActionError(null)
     try {
       await deleteUser(u.id)
       if (expandedId === u.id) setExpandedId(null)
       loadUsers()
     } catch (e) {
-      alert((e as Error).message)
+      setActionError((e as Error).message)
     }
   }
 
   async function handleToggleActive(u: UserOut, e: React.MouseEvent) {
     e.stopPropagation()
+    setActionError(null)
     try {
       await updateUser(u.id, { is_active: !u.is_active })
       loadUsers()
     } catch (e) {
-      alert((e as Error).message)
+      setActionError((e as Error).message)
     }
   }
 
@@ -528,24 +544,25 @@ export default function UserManagementPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.75rem',
         padding: '1rem 1.25rem', borderRadius: '10px',
-        background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)',
+        background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
       }}>
-        <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <svg width="16" height="16" fill="none" stroke="var(--fail-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.85rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.users.adminRequired')}</span>
+        <span style={{ fontSize: '0.85rem', color: 'var(--fail-ink)', fontWeight: 600 }}>{t('pages.users.adminRequired')}</span>
       </div>
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.users}</h1>
 
       {/* ── Stats strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
         {[
           { label: t('pages.users.totalUsers'), value: users.length, color: 'var(--text)' },
-          { label: t('pages.users.active'),     value: users.filter(u => u.is_active).length,  color: '#059669' },
+          { label: t('pages.users.active'),     value: users.filter(u => u.is_active).length,  color: 'var(--pass-ink)' },
           { label: t('pages.users.inactive'),   value: users.filter(u => !u.is_active).length, color: 'var(--muted)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -558,18 +575,18 @@ export default function UserManagementPage() {
       {/* ── Table ── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
             {t('pages.users.accountsHeader')}
             <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: '0.5rem', opacity: 0.7 }}>{t('pages.users.clickToInspect')}</span>
           </div>
           <button
             onClick={openCreate}
+            aria-label={t('pages.users.newUserBtn')}
             style={{
               display: 'flex', alignItems: 'center', gap: '0.35rem',
               padding: '0.35rem 0.75rem', borderRadius: '8px',
-              background: 'var(--waf-brand)', color: '#fff',
+              background: 'var(--waf-brand-btn)', color: '#fff',
               border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
-              boxShadow: '0 1px 4px rgba(0,148,255,0.25)',
             }}
           >
             <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -578,6 +595,39 @@ export default function UserManagementPage() {
             {t('pages.users.newUserBtn')}
           </button>
         </div>
+
+        {actionError && (
+          <div role="alert" style={{
+            display: 'flex', alignItems: 'center', gap: '0.75rem',
+            padding: '0.55rem 0.85rem', marginBottom: '0.75rem', borderRadius: '8px',
+            fontSize: '0.85rem', color: 'var(--fail-ink)',
+            background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+          }}>
+            <span style={{ flex: 1 }}>{actionError}</span>
+            <button onClick={() => setActionError(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline' }}>
+              {t('common.close')}
+            </button>
+          </div>
+        )}
+
+        {deleteTarget && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
+            padding: '0.55rem 0.85rem', marginBottom: '0.75rem', borderRadius: '8px',
+            fontSize: '0.85rem', color: 'var(--text)',
+            background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+          }}>
+            <span style={{ flex: 1 }}>{t('pages.users.deleteConfirm', { username: deleteTarget.username })}</span>
+            <button onClick={() => handleDelete(deleteTarget)} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+              {t('common.delete')}
+            </button>
+            <button onClick={() => setDeleteTarget(null)} style={{ padding: '0.3rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+              {t('common.cancel')}
+            </button>
+          </div>
+        )}
 
         {/* Create / Edit form */}
         {showForm && (
@@ -664,12 +714,12 @@ export default function UserManagementPage() {
               </div>
               <div>
                 <label style={labelStyle}>{editId ? t('pages.users.newPasswordLabel') : t('pages.users.passwordLabel')}</label>
-                <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 8 ? '#ef4444' : undefined }} type="password" value={form.password}
+                <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 8 ? 'var(--fail)' : undefined }} type="password" value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   autoComplete="new-password"
                   placeholder={editId ? '••••••••' : 'min. 8 characters'} />
                 {form.password && form.password.length < 8 && (
-                  <div style={{ fontSize: '0.68rem', color: '#ef4444', marginTop: '0.2rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', marginTop: '0.2rem' }}>
                     {t('pages.users.passwordTooShort')}
                   </div>
                 )}
@@ -686,7 +736,7 @@ export default function UserManagementPage() {
               )}
             </div>
             {saveErr && (
-              <div style={{ fontSize: '0.78rem', color: '#DA2C38', marginBottom: '0.65rem', padding: '0.45rem 0.75rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', borderRadius: '8px', border: '1px solid color-mix(in srgb, #da2c38 15%, transparent)' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--fail-ink)', marginBottom: '0.65rem', padding: '0.45rem 0.75rem', background: 'color-mix(in srgb, var(--fail) 6%, transparent)', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--fail) 15%, transparent)' }}>
                 {saveErr}
               </div>
             )}
@@ -696,7 +746,7 @@ export default function UserManagementPage() {
                 disabled={saving || (!editId && (!form.username || !form.password || form.password.length < 8)) || (!!form.password && form.password.length < 8)}
                 style={{
                   padding: '0.4rem 1rem', borderRadius: '8px',
-                  background: saving ? 'rgba(0,148,255,.4)' : 'var(--waf-brand)', color: '#fff',
+                  background: saving ? 'color-mix(in srgb, var(--waf-brand-btn) 40%, transparent)' : 'var(--waf-brand-btn)', color: '#fff',
                   border: 'none', cursor: saving ? 'default' : 'pointer', fontSize: '0.8rem', fontWeight: 600,
                 }}
               >
@@ -717,7 +767,7 @@ export default function UserManagementPage() {
           {loading ? (
             <div style={{ padding: '2.5rem', textAlign: 'center' }}><div className="spinner" /></div>
           ) : error ? (
-            <div style={{ padding: '1rem', color: '#DA2C38', fontSize: '0.85rem' }}>{error}</div>
+            <div style={{ padding: '1rem', color: 'var(--fail-ink)', fontSize: '0.85rem' }}>{error}</div>
           ) : users.length === 0 ? (
             <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem', textAlign: 'center' }}>No users found.</div>
           ) : (
@@ -738,7 +788,7 @@ export default function UserManagementPage() {
                 {users.map((u, i) => {
                   const isExpanded = expandedId === u.id
                   const isLast = i === users.length - 1
-                  const roleC = ROLE_COLOR[u.role] ?? { accent: '#64748b', subtle: 'rgba(100,116,139,0.08)', text: '#64748b' }
+                  const roleC = ROLE_COLOR[u.role] ?? FALLBACK_ROLE
                   return (
                     <Fragment key={u.id}>
                       <tr
@@ -747,15 +797,15 @@ export default function UserManagementPage() {
                           borderBottom: isExpanded ? 'none' : (isLast && !isExpanded ? undefined : '1px solid var(--border)'),
                           opacity: u.is_active ? 1 : 0.6,
                           cursor: 'pointer',
-                          transition: 'background 0.1s',
+                          transition: 'background-color 0.1s',
                         }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.018)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--row-hover)' }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
                       >
                         {/* Chevron + accent */}
                         <td style={{ padding: '0.6rem 0.5rem 0.6rem 0.875rem', width: '28px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <div style={{ width: '3px', height: '24px', borderRadius: '4px', background: isExpanded ? roleC.accent : 'var(--border)', flexShrink: 0, transition: 'background 0.15s' }} />
+                            <span style={{ width: '6px', height: '6px', borderRadius: '999px', background: isExpanded ? roleC.accent : 'var(--border)', flexShrink: 0, transition: 'background-color 0.15s' }} />
                             <svg
                               width="11" height="11" fill="none" stroke="var(--muted)" strokeWidth="2.5"
                               strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
@@ -803,7 +853,7 @@ export default function UserManagementPage() {
                           {u.holding_role && (
                             <span style={{
                               display: 'inline-flex', marginLeft: '0.3rem', padding: '0.12rem 0.5rem', borderRadius: '6px',
-                              background: 'color-mix(in srgb, #7c3aed 9%, transparent)', color: '#7c3aed', fontWeight: 700, fontSize: '0.68rem',
+                              background: 'color-mix(in srgb, #7c3aed 9%, transparent)', color: '#7c3aed', fontWeight: 700, fontSize: '0.7rem',
                             }}>
                               {u.holding_role}
                             </span>
@@ -817,8 +867,8 @@ export default function UserManagementPage() {
                         <td style={{ padding: '0.6rem 0.875rem' }}>
                           <span style={{
                             display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
-                            background: u.is_active ? 'color-mix(in srgb, #059669 9%, transparent)' : 'rgba(100,116,139,0.09)',
-                            color: u.is_active ? '#059669' : '#64748b',
+                            background: u.is_active ? 'color-mix(in srgb, var(--pass) 9%, transparent)' : 'color-mix(in srgb, var(--muted) 9%, transparent)',
+                            color: u.is_active ? 'var(--pass-ink)' : 'var(--muted)',
                             fontWeight: 600, fontSize: '0.69rem',
                           }}>
                             {u.is_active ? t('pages.users.active') : t('pages.users.inactive')}
@@ -828,8 +878,8 @@ export default function UserManagementPage() {
                         <td style={{ padding: '0.6rem 0.875rem', fontSize: '0.77rem' }}>
                           {u.last_login_at ? (
                             <div>
-                              <span style={{ color: '#059669', fontWeight: 600 }}>{timeAgo(u.last_login_at)}</span>
-                              <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(u.last_login_at)}</div>
+                              <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{timeAgo(u.last_login_at)}</span>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(u.last_login_at)}</div>
                             </div>
                           ) : (
                             <span style={{ color: 'var(--muted)', opacity: 0.6 }}>{t('pages.users.never')}</span>
@@ -840,10 +890,10 @@ export default function UserManagementPage() {
                           {u.id !== user?.id ? (
                             <div style={{ display: 'flex', gap: '0.3rem' }}>
                               <button onClick={e => openEdit(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.editBtn')}</button>
-                              <button onClick={e => handleToggleActive(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: u.is_active ? '#b45309' : '#059669', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
+                              <button onClick={e => handleToggleActive(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: u.is_active ? 'var(--score-mid-ink)' : 'var(--pass-ink)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
                                 {u.is_active ? t('pages.users.disableBtn') : t('pages.users.enableBtn')}
                               </button>
-                              <button onClick={e => handleDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: '#DA2C38', border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.delBtn')}</button>
+                              <button onClick={e => requestDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--fail-ink)', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.delBtn')}</button>
                             </div>
                           ) : (
                             <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>—</span>

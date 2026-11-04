@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "design:lint": "node scripts/design-lint.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.12.0",

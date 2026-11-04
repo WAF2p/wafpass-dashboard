@@ -3,6 +3,7 @@ import { fetchPipelineMetrics, fetchPipelineTrends, fetchRuns, PipelineMetrics, 
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
 import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard } from './OperationsCenterShell'
+import { PAGE_TITLE } from '../routing'
 
 const WAF_COLORS = [
   'var(--waf-brand)', 'var(--waf-info)', 'var(--score-high)', 'var(--waf-warn)',
@@ -213,7 +214,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         cursor: 'pointer',
         textAlign: 'left',
         width: '100%',
-        transition: 'all 0.15s',
+        transition: 'background-color 0.15s, border-color 0.15s',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = color
@@ -224,7 +225,8 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         e.currentTarget.style.background = 'var(--surface)'
       }}
     >
-      <div style={{ color, flexShrink: 0 }}><Icon path={icon} size={20} /></div>
+      <div style={{ color, flexShrink: 0 }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['pipelines']}</h1><Icon path={icon} size={20} /></div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('common.view')} →</div>

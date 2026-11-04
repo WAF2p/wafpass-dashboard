@@ -1,3 +1,4 @@
+// design-lint-disable hardcoded-hex — generated printable HTML report uses fixed colours outside the token system
 /**
  * Evidence Locker — locked, immutable evidence packages for audit handouts.
  *
@@ -19,6 +20,9 @@ import {
 } from '../api'
 import { loadAuditLog, AuditEvent } from '../audit'
 import { useAuth } from '../AuthContext'
+import { scoreColor, scoreBg, scoreBorder } from '../severity'
+import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -483,7 +487,7 @@ function QrCode({ evidenceId, size = 130 }: { evidenceId: string; size?: number 
 
   return (
     <div
-      style={{ width: size, height: size, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#fff', padding: 4, boxSizing: 'border-box' }}
+      style={{ width: size, height: size, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#fff', padding: 4, boxSizing: 'border-box' /* white is required behind the QR for scanner contrast */ }}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   )
@@ -494,6 +498,7 @@ function QrCode({ evidenceId, size = 130 }: { evidenceId: string; size?: number 
 function LockerCard({
   ev, onDelete, isAdmin,
 }: { ev: EvidenceOut; onDelete: (id: string) => void; isAdmin: boolean }) {
+  const { t } = useI18n()
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -533,21 +538,21 @@ function LockerCard({
 
   return (
     <div style={{
-      background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px',
+      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px',
       overflow: 'hidden',
     }}>
       {/* Locked banner strip */}
       <div style={{
-        background: 'linear-gradient(90deg,color-mix(in srgb, #2563eb 12%, transparent) 0%,transparent 100%)',
-        borderBottom: '1px solid rgba(37,99,235,.15)',
+        background: 'color-mix(in srgb, var(--waf-brand-ink) 8%, transparent)',
+        borderBottom: '1px solid color-mix(in srgb, var(--waf-brand-ink) 15%, transparent)',
         padding: '0.5rem 1.25rem',
         display: 'flex', alignItems: 'center', gap: '0.5rem',
       }}>
-        <svg width="12" height="12" fill="none" stroke="#60a5fa" viewBox="0 0 24 24">
+        <svg width="12" height="12" fill="none" stroke="var(--waf-brand-ink)" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
-        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Locked — Immutable Evidence
+        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand-ink)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {t('pages.phase3.evidence.card.lockedBadge')}
         </span>
         <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: 'auto' }}>
           {ev.created_at ? new Date(ev.created_at).toLocaleString() : '—'}
@@ -560,7 +565,7 @@ function LockerCard({
         {/* QR code */}
         <div style={{ flexShrink: 0 }}>
           <QrCode evidenceId={ev.id} size={130} />
-          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textAlign: 'center', marginTop: '4px' }}>Scan for public URL</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textAlign: 'center', marginTop: '4px' }}>{t('pages.phase3.evidence.card.scanQr')}</div>
         </div>
 
         {/* Metadata */}
@@ -568,23 +573,23 @@ function LockerCard({
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
-                {ev.title || 'Untitled Evidence Package'}
+                {ev.title || t('pages.phase3.evidence.card.untitled')}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.2rem' }}>
                 {ev.project && <span><strong style={{ color: 'var(--text)' }}>{ev.project}</strong> · </span>}
                 {ev.organization && <span>{ev.organization} · </span>}
-                {ev.prepared_by && <span>Prepared by {ev.prepared_by}</span>}
+                {ev.prepared_by && <span>{t('pages.phase3.evidence.card.preparedBy', { name: ev.prepared_by })}</span>}
               </div>
             </div>
             {scoreVal !== null && (
               <div style={{
                 flexShrink: 0, textAlign: 'center',
                 padding: '0.25rem 0.75rem', borderRadius: '8px',
-                background: scoreVal >= 80 ? 'color-mix(in srgb, #059669 10%, transparent)' : scoreVal >= 60 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.1)',
-                border: `1px solid ${scoreVal >= 80 ? 'color-mix(in srgb, #059669 25%, transparent)' : scoreVal >= 60 ? 'rgba(217,119,6,.25)' : 'rgba(220,38,38,.25)'}`,
+                background: scoreBg(scoreVal),
+                border: `1px solid ${scoreBorder(scoreVal)}`,
               }}>
-                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: scoreHex(scoreVal as number), lineHeight: 1 }}>{scoreVal}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>score</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: scoreColor(scoreVal), lineHeight: 1 }}>{scoreVal}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.phase3.evidence.card.score')}</div>
               </div>
             )}
           </div>
@@ -594,9 +599,9 @@ function LockerCard({
             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
               {ev.frameworks.map(fw => (
                 <span key={fw} style={{
-                  fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem',
-                  borderRadius: '999px', background: 'color-mix(in srgb, #2563eb 8%, transparent)',
-                  color: '#2563eb', border: '1px solid color-mix(in srgb, #2563eb 20%, transparent)',
+                  fontSize: '0.75rem', fontWeight: 700, padding: '0.15rem 0.5rem',
+                  borderRadius: '999px', background: 'color-mix(in srgb, var(--waf-brand-ink) 8%, transparent)',
+                  color: 'var(--waf-brand-ink)', border: '1px solid color-mix(in srgb, var(--waf-brand-ink) 20%, transparent)',
                 }}>
                   {fw}
                 </span>
@@ -607,26 +612,27 @@ function LockerCard({
           {/* Audit period */}
           {ev.audit_period && (
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.35rem' }}>
-              Period: <strong style={{ color: 'var(--text)' }}>{ev.audit_period}</strong>
+              {t('pages.phase3.evidence.card.period')} <strong style={{ color: 'var(--text)' }}>{ev.audit_period}</strong>
             </div>
           )}
 
           {/* Hash */}
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.35rem', opacity: 0.7 }}>
-            SHA-256: {ev.hash_digest.slice(0, 40)}…
+            {t('pages.phase3.evidence.card.sha256')} {ev.hash_digest.slice(0, 40)}…
           </div>
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
             <button
               onClick={copyLink}
+              aria-label={t('pages.phase3.evidence.card.copyAria')}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.3rem',
                 padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
-                background: copied ? 'color-mix(in srgb, #059669 12%, transparent)' : 'var(--bg)',
-                color: copied ? '#059669' : 'var(--muted)',
-                border: `1px solid ${copied ? 'color-mix(in srgb, #059669 30%, transparent)' : 'var(--border)'}`,
-                cursor: 'pointer', transition: 'all .15s',
+                background: copied ? 'color-mix(in srgb, var(--pass) 12%, transparent)' : 'var(--bg)',
+                color: copied ? 'var(--pass-ink)' : 'var(--muted)',
+                border: `1px solid ${copied ? 'color-mix(in srgb, var(--pass) 30%, transparent)' : 'var(--border)'}`,
+                cursor: 'pointer', transition: 'background-color .15s, border-color .15s, color .15s',
               }}
             >
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -635,12 +641,13 @@ function LockerCard({
                   : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
                 }
               </svg>
-              {copied ? 'Copied!' : 'Copy auditor link'}
+              {copied ? t('pages.phase3.evidence.card.copied') : t('pages.phase3.evidence.card.copyLink')}
             </button>
 
             <button
               onClick={handleDownloadHtml}
               disabled={downloading}
+              aria-label={t('pages.phase3.evidence.card.downloadAria')}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
                 padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
@@ -651,7 +658,7 @@ function LockerCard({
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              {downloading ? 'Downloading…' : 'Download HTML'}
+              {downloading ? t('pages.phase3.evidence.card.downloading') : t('pages.phase3.evidence.card.downloadHtml')}
             </button>
 
             <a
@@ -660,14 +667,14 @@ function LockerCard({
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
                 padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
-                background: 'rgba(0,148,255,.08)', color: 'var(--waf-brand)', border: '1px solid rgba(0,148,255,.25)',
+                background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)', color: 'var(--waf-brand-ink)', border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
                 textDecoration: 'none',
               }}
             >
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              Public view
+              {t('pages.phase3.evidence.card.publicView')}
             </a>
 
             <button
@@ -677,7 +684,7 @@ function LockerCard({
                 background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer',
               }}
             >
-              {expanded ? 'Less' : 'Details'}
+              {expanded ? t('pages.phase3.evidence.card.less') : t('pages.phase3.evidence.card.details')}
             </button>
 
             {isAdmin && !deleting && (
@@ -685,10 +692,10 @@ function LockerCard({
                 onClick={() => setDeleting(true)}
                 style={{
                   padding: '0.35rem 0.6rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600,
-                  background: 'none', color: '#f87171', border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)', cursor: 'pointer',
+                  background: 'none', color: 'var(--fail-ink)', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)', cursor: 'pointer',
                 }}
               >
-                Delete
+                {t('pages.phase3.evidence.card.delete')}
               </button>
             )}
           </div>
@@ -697,35 +704,35 @@ function LockerCard({
 
       {/* Delete confirmation */}
       {deleting && (
-        <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border)', background: 'rgba(218,44,56,.04)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border)', background: 'color-mix(in srgb, var(--fail) 4%, transparent)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{ fontSize: '0.85rem', color: 'var(--text)' }}>
-            Delete this locked evidence package? This action cannot be undone.
+            {t('pages.phase3.evidence.card.deleteConfirm')}
           </span>
-          <button onClick={() => onDelete(ev.id)} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: '#DA2C38', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
-            Confirm delete
+          <button onClick={() => onDelete(ev.id)} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+            {t('pages.phase3.evidence.card.confirmDelete')}
           </button>
           <button onClick={() => setDeleting(false)} style={{ padding: '0.3rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
-            Cancel
+            {t('pages.phase3.evidence.card.cancel')}
           </button>
         </div>
       )}
 
       {/* Expanded details */}
       {expanded && (
-        <div style={{ padding: '0.75rem 1.25rem 1rem', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,.015)' }}>
+        <div style={{ padding: '0.75rem 1.25rem 1rem', borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
-            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Evidence ID</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.id}</code></div>
-            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Run ID</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.run_id}</code></div>
-            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>Full SHA-256</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.hash_digest}</code></div>
+            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>{t('pages.phase3.evidence.card.evidenceId')}</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.id}</code></div>
+            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>{t('pages.phase3.evidence.card.runId')}</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.run_id}</code></div>
+            <div><div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem' }}>{t('pages.phase3.evidence.card.fullSha256')}</div><code style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>{ev.hash_digest}</code></div>
           </div>
           {ev.note && (
             <div style={{ marginTop: '0.75rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
-              <strong style={{ color: 'var(--text)' }}>Note:</strong> {ev.note}
+              <strong style={{ color: 'var(--text)' }}>{t('pages.phase3.evidence.card.note')}</strong> {ev.note}
             </div>
           )}
           <div style={{ marginTop: '0.75rem' }}>
-            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: '0.4rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Public auditor URL</div>
-            <code style={{ fontSize: '0.72rem', color: 'var(--waf-brand)', wordBreak: 'break-all' }}>{publicUrl}</code>
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: '0.4rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.phase3.evidence.card.publicAuditorUrl')}</div>
+            <code style={{ fontSize: '0.72rem', color: 'var(--waf-brand-ink)', wordBreak: 'break-all' }}>{publicUrl}</code>
           </div>
         </div>
       )}
@@ -751,6 +758,7 @@ function CheckRow({ label, sub, checked, onChange, readOnly }: { label: string; 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function EvidencePage({ run }: Props) {
+  const { t } = useI18n()
   const { role } = useAuth()
   const isAdmin = role === 'admin'
 
@@ -787,7 +795,7 @@ export default function EvidencePage({ run }: Props) {
     setLoadingPackages(true)
     fetchEvidence()
       .then(setPackages)
-      .catch(e => setLockerErr(e instanceof Error ? e.message : 'Failed to load evidence'))
+      .catch(e => setLockerErr(e instanceof Error ? e.message : t('pages.phase3.evidence.locker.loadError')))
       .finally(() => setLoadingPackages(false))
   }, [])
 
@@ -855,7 +863,7 @@ export default function EvidencePage({ run }: Props) {
       setPackages(prev => [ev, ...prev])
       setJustLocked(ev)
     } catch (e) {
-      setLockErr(e instanceof Error ? e.message : 'Failed to lock evidence')
+      setLockErr(e instanceof Error ? e.message : t('pages.phase3.evidence.create.lockError'))
     } finally {
       setLocking(false)
     }
@@ -866,7 +874,7 @@ export default function EvidencePage({ run }: Props) {
       await deleteEvidence(id)
       setPackages(prev => prev.filter(p => p.id !== id))
     } catch (e) {
-      setLockerErr(e instanceof Error ? e.message : 'Failed to delete')
+      setLockerErr(e instanceof Error ? e.message : t('pages.phase3.evidence.card.deleteError'))
     }
   }
 
@@ -880,31 +888,32 @@ export default function EvidencePage({ run }: Props) {
     color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem',
   }
   const cardStyle: React.CSSProperties = {
-    background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem 1.5rem',
+    background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem 1.5rem',
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['evidence']}</h1>
 
       {/* ── Section 1: Evidence Locker ─────────────────────────────────────── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <svg width="20" height="20" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
+          <svg width="20" height="20" fill="none" stroke="var(--waf-brand-ink)" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Evidence Locker</h2>
+            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.phase3.evidence.locker.heading')}</h2>
             <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--muted)' }}>
-              Immutable, server-stored audit packages · scan QR to share with auditors · data frozen at lock time
+              {t('pages.phase3.evidence.locker.subtitle')}
             </p>
           </div>
           <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--muted)', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '999px', padding: '0.15rem 0.6rem' }}>
-            {packages.length} locked
+            {t('pages.phase3.evidence.locker.count', { count: packages.length })}
           </span>
         </div>
 
         {lockerErr && (
-          <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: '#f87171', marginBottom: '0.75rem' }}>
+          <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--fail-ink)', marginBottom: '0.75rem' }}>
             {lockerErr}
           </div>
         )}
@@ -916,14 +925,14 @@ export default function EvidencePage({ run }: Props) {
         ) : packages.length === 0 ? (
           <div style={{
             ...cardStyle, textAlign: 'center', padding: '3rem 2rem',
-            background: 'linear-gradient(135deg,rgba(0,148,255,.03) 0%,rgba(124,58,237,.03) 100%)',
+            background: 'var(--bg)',
           }}>
             <svg width="32" height="32" fill="none" stroke="var(--muted)" viewBox="0 0 24 24" style={{ margin: '0 auto 0.75rem' }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.35rem' }}>No locked evidence yet</div>
+            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.35rem' }}>{t('pages.phase3.evidence.locker.emptyTitle')}</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--muted)', maxWidth: '400px', margin: '0 auto' }}>
-              Use "Lock to Server" below to create an immutable evidence package. Each package gets a unique QR code and auditor-accessible public URL.
+              {t('pages.phase3.evidence.locker.emptyBody')}
             </div>
           </div>
         ) : (
@@ -938,20 +947,20 @@ export default function EvidencePage({ run }: Props) {
       {/* ── Section 2: Create & Export ─────────────────────────────────────── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <svg width="20" height="20" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
+          <svg width="20" height="20" fill="none" stroke="var(--waf-brand-ink)" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Create Evidence Package</h2>
+            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.phase3.evidence.create.heading')}</h2>
             <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--muted)' }}>
-              Configure sign-off details, then export locally or lock permanently to the server
+              {t('pages.phase3.evidence.create.subtitle')}
             </p>
           </div>
         </div>
 
         {!run && (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--muted)', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-            Select a scan run first to generate an evidence package.
+          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--muted)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
+            {t('pages.phase3.evidence.create.selectRun')}
           </div>
         )}
 
@@ -959,21 +968,21 @@ export default function EvidencePage({ run }: Props) {
         {justLocked && (
           <div style={{
             padding: '1rem 1.25rem', marginBottom: '1rem', borderRadius: '10px',
-            background: 'color-mix(in srgb, #059669 6%, transparent)', border: '1px solid color-mix(in srgb, #059669 25%, transparent)',
+            background: 'color-mix(in srgb, var(--pass) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
             display: 'flex', alignItems: 'flex-start', gap: '1rem',
           }}>
-            <svg width="18" height="18" fill="none" stroke="#059669" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 2 }}>
+            <svg width="18" height="18" fill="none" stroke="var(--pass-ink)" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 2 }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669', marginBottom: '0.25rem' }}>
-                Evidence locked successfully
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pass-ink)', marginBottom: '0.25rem' }}>
+                {t('pages.phase3.evidence.create.lockedSuccess')}
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-                Public auditor URL: <code style={{ fontSize: '0.72rem', color: 'var(--waf-brand)' }}>{getEvidencePublicUrl(justLocked.public_token)}</code>
+                {t('pages.phase3.evidence.create.publicAuditorUrl')} <code style={{ fontSize: '0.72rem', color: 'var(--waf-brand-ink)' }}>{getEvidencePublicUrl(justLocked.public_token)}</code>
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.2rem' }}>
-                SHA-256: <code style={{ fontSize: '0.68rem' }}>{justLocked.hash_digest}</code>
+                {t('pages.phase3.evidence.card.sha256')} <code style={{ fontSize: '0.7rem' }}>{justLocked.hash_digest}</code>
               </div>
             </div>
             <QrCode evidenceId={justLocked.id} size={130} />
@@ -989,28 +998,28 @@ export default function EvidencePage({ run }: Props) {
                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    Sign-off Details
+                    {t('pages.phase3.evidence.create.signoff')}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <div><label style={labelStyle}>Prepared by</label><input style={inputStyle} value={cfg.preparedBy} onChange={e => setCfg(c => ({ ...c, preparedBy: e.target.value }))} placeholder="Full name / role" /></div>
-                    <div><label style={labelStyle}>Organization</label><input style={inputStyle} value={cfg.organization} onChange={e => setCfg(c => ({ ...c, organization: e.target.value }))} placeholder="Company or team name" /></div>
-                    <div><label style={labelStyle}>Audit period</label><input style={inputStyle} value={cfg.period} onChange={e => setCfg(c => ({ ...c, period: e.target.value }))} placeholder="e.g. Q2 2026 / Apr–Jun 2026" /></div>
+                    <div><label style={labelStyle}>{t('pages.phase3.evidence.create.preparedBy')}</label><input style={inputStyle} value={cfg.preparedBy} onChange={e => setCfg(c => ({ ...c, preparedBy: e.target.value }))} placeholder={t('pages.phase3.evidence.create.preparedByPlaceholder')} /></div>
+                    <div><label style={labelStyle}>{t('pages.phase3.evidence.create.organization')}</label><input style={inputStyle} value={cfg.organization} onChange={e => setCfg(c => ({ ...c, organization: e.target.value }))} placeholder={t('pages.phase3.evidence.create.organizationPlaceholder')} /></div>
+                    <div><label style={labelStyle}>{t('pages.phase3.evidence.create.auditPeriod')}</label><input style={inputStyle} value={cfg.period} onChange={e => setCfg(c => ({ ...c, period: e.target.value }))} placeholder={t('pages.phase3.evidence.create.periodPlaceholder')} /></div>
                     <div>
-                      <label style={labelStyle}>Notes (optional)</label>
-                      <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: '4rem' }} value={cfg.notes} onChange={e => setCfg(c => ({ ...c, notes: e.target.value }))} placeholder="Additional context for the auditor…" />
+                      <label style={labelStyle}>{t('pages.phase3.evidence.create.notes')}</label>
+                      <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: '4rem' }} value={cfg.notes} onChange={e => setCfg(c => ({ ...c, notes: e.target.value }))} placeholder={t('pages.phase3.evidence.create.notesPlaceholder')} />
                     </div>
                   </div>
                 </div>
 
                 <div style={cardStyle}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem' }}>Regulatory Frameworks</div>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem' }}>{t('pages.phase3.evidence.create.frameworks')}</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {ALL_FRAMEWORKS.map(fw => (
                       <button key={fw} onClick={() => toggleFramework(fw)} style={{
                         padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', border: '1px solid',
-                        background: cfg.frameworks.includes(fw) ? 'color-mix(in srgb, #2563eb 12%, transparent)' : 'transparent',
-                        borderColor: cfg.frameworks.includes(fw) ? 'rgba(37,99,235,.4)' : 'var(--border)',
-                        color: cfg.frameworks.includes(fw) ? '#2563eb' : 'var(--muted)',
+                        background: cfg.frameworks.includes(fw) ? 'color-mix(in srgb, var(--waf-brand-ink) 12%, transparent)' : 'transparent',
+                        borderColor: cfg.frameworks.includes(fw) ? 'color-mix(in srgb, var(--waf-brand-ink) 40%, transparent)' : 'var(--border)',
+                        color: cfg.frameworks.includes(fw) ? 'var(--waf-brand-ink)' : 'var(--muted)',
                       }}>{fw}</button>
                     ))}
                   </div>
@@ -1019,24 +1028,24 @@ export default function EvidencePage({ run }: Props) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div style={cardStyle}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem' }}>Package Contents</div>
-                  <CheckRow label={`Passing controls (${passingControlCount})`} sub="Core compliance evidence — always included" checked={true} onChange={() => {}} readOnly />
-                  <CheckRow label={`Failing controls (${run.controls_meta.filter(c => run.findings.some(f => f.control_id === c.id && f.status?.toUpperCase() === 'FAIL')).length})`} sub="Shows gaps — auditors expect full disclosure" checked={cfg.includeFailingControls} onChange={v => setCfg(c => ({ ...c, includeFailingControls: v }))} />
-                  <CheckRow label={`Active waivers (${waivers.length})`} sub="Suppressed controls with owner and expiry" checked={cfg.includeWaivers} onChange={v => setCfg(c => ({ ...c, includeWaivers: v }))} />
-                  <CheckRow label={`Risk acceptances (${risks.length})`} sub="Formally accepted risks with approver and RFC" checked={cfg.includeRisks} onChange={v => setCfg(c => ({ ...c, includeRisks: v }))} />
-                  <CheckRow label={`Audit log (${Math.min(auditEvents.length, 50)} events)`} sub="Tamper-evident event timeline" checked={cfg.includeAuditLog} onChange={v => setCfg(c => ({ ...c, includeAuditLog: v }))} />
-                  <CheckRow label="Embedded JSON manifest" sub="Machine-readable version — always included" checked={true} onChange={() => {}} readOnly />
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem' }}>{t('pages.phase3.evidence.create.contents')}</div>
+                  <CheckRow label={t('pages.phase3.evidence.create.passingControls', { count: passingControlCount })} sub={t('pages.phase3.evidence.create.passingControlsSub')} checked={true} onChange={() => {}} readOnly />
+                  <CheckRow label={t('pages.phase3.evidence.create.failingControls', { count: run.controls_meta.filter(c => run.findings.some(f => f.control_id === c.id && f.status?.toUpperCase() === 'FAIL')).length })} sub={t('pages.phase3.evidence.create.failingControlsSub')} checked={cfg.includeFailingControls} onChange={v => setCfg(c => ({ ...c, includeFailingControls: v }))} />
+                  <CheckRow label={t('pages.phase3.evidence.create.waivers', { count: waivers.length })} sub={t('pages.phase3.evidence.create.waiversSub')} checked={cfg.includeWaivers} onChange={v => setCfg(c => ({ ...c, includeWaivers: v }))} />
+                  <CheckRow label={t('pages.phase3.evidence.create.risks', { count: risks.length })} sub={t('pages.phase3.evidence.create.risksSub')} checked={cfg.includeRisks} onChange={v => setCfg(c => ({ ...c, includeRisks: v }))} />
+                  <CheckRow label={t('pages.phase3.evidence.create.auditLog', { count: Math.min(auditEvents.length, 50) })} sub={t('pages.phase3.evidence.create.auditLogSub')} checked={cfg.includeAuditLog} onChange={v => setCfg(c => ({ ...c, includeAuditLog: v }))} />
+                  <CheckRow label={t('pages.phase3.evidence.create.manifest')} sub={t('pages.phase3.evidence.create.manifestSub')} checked={true} onChange={() => {}} readOnly />
                 </div>
 
-                <div style={{ ...cardStyle, background: 'rgba(5,150,105,.04)', borderColor: 'color-mix(in srgb, #059669 20%, transparent)' }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>Run snapshot</div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.2rem' }}>{run.project || 'Unnamed'} · {run.branch || '—'}</div>
+                <div style={{ ...cardStyle, background: 'color-mix(in srgb, var(--pass) 4%, transparent)', borderColor: 'color-mix(in srgb, var(--pass) 20%, transparent)' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--pass-ink)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>{t('pages.phase3.evidence.create.runSnapshot')}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.2rem' }}>{run.project || t('pages.phase3.evidence.create.unnamed')} · {run.branch || '—'}</div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginBottom: '0.5rem' }}>{run.git_sha ? run.git_sha.slice(0, 12) : '—'} · {new Date(run.created_at).toLocaleString()}</div>
                   <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
                     {[
-                      { label: 'Score', value: `${run.score}/100`, color: scoreHex(run.score) },
-                      { label: 'Passing', value: `${passingFindings.length}`, color: '#059669' },
-                      { label: 'Failing', value: `${failingFindings.length}`, color: '#dc2626' },
+                      { label: t('pages.phase3.evidence.create.score'), value: `${run.score}/100`, color: scoreColor(run.score) },
+                      { label: t('pages.phase3.evidence.create.passing'), value: `${passingFindings.length}`, color: 'var(--pass-ink)' },
+                      { label: t('pages.phase3.evidence.create.failing'), value: `${failingFindings.length}`, color: 'var(--fail-ink)' },
                     ].map(({ label, value, color }) => (
                       <div key={label}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
@@ -1049,7 +1058,7 @@ export default function EvidencePage({ run }: Props) {
             </div>
 
             {lockErr && (
-              <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: '#f87171', marginTop: '0.75rem' }}>
+              <div style={{ padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--fail-ink)', marginTop: '0.75rem' }}>
                 {lockErr}
               </div>
             )}
@@ -1059,53 +1068,55 @@ export default function EvidencePage({ run }: Props) {
               <button
                 onClick={handleLock}
                 disabled={locking}
+                aria-label={t('pages.phase3.evidence.create.lockAria')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.65rem 1.5rem', borderRadius: '10px', border: 'none',
-                  background: locking ? 'rgba(0,148,255,.4)' : 'var(--waf-brand)', color: '#fff',
+                  background: locking ? 'color-mix(in srgb, var(--waf-brand-btn) 40%, transparent)' : 'var(--waf-brand-btn)', color: '#fff',
                   fontWeight: 700, fontSize: '0.88rem', cursor: locking ? 'wait' : 'pointer',
-                  boxShadow: locking ? 'none' : '0 2px 12px rgba(0,148,255,.35)',
                 }}
               >
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                {locking ? 'Locking…' : 'Lock to Server'}
+                {locking ? t('pages.phase3.evidence.create.locking') : t('pages.phase3.evidence.create.lockToServer')}
               </button>
 
               <button
                 onClick={handleExport}
+                aria-label={t('pages.phase3.evidence.create.exportHtmlAria')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.65rem 1.25rem', borderRadius: '10px',
-                  border: '1px solid var(--border)', background: 'var(--card)',
+                  border: '1px solid var(--border)', background: 'var(--surface)',
                   color: 'var(--text)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
                 }}
               >
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {exported ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />}
                 </svg>
-                {exported ? 'Downloaded!' : 'Export HTML'}
+                {exported ? t('pages.phase3.evidence.create.downloaded') : t('pages.phase3.evidence.create.exportHtml')}
               </button>
 
               <button
                 onClick={handleExportJson}
+                aria-label={t('pages.phase3.evidence.create.exportJsonAria')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.65rem 1rem', borderRadius: '10px',
-                  border: '1px solid var(--border)', background: 'var(--card)',
+                  border: '1px solid var(--border)', background: 'var(--surface)',
                   color: 'var(--text)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
                 }}
               >
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Export JSON
+                {t('pages.phase3.evidence.create.exportJson')}
               </button>
 
               <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                <strong>Lock to Server</strong> creates an immutable package with QR code + public URL.<br />
-                <strong>Export HTML</strong> generates a local file — open in browser → Print → Save as PDF.
+                <strong>{t('pages.phase3.evidence.create.lockToServer')}</strong> {t('pages.phase3.evidence.create.helpLock')}<br />
+                <strong>{t('pages.phase3.evidence.create.exportHtml')}</strong> {t('pages.phase3.evidence.create.helpExport')}
               </div>
             </div>
           </>

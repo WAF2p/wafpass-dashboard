@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { badgeApiBasePath, fetchBadgeStatus, fetchInstanceMode, fetchMyMandate, getApiBase, RunSummary } from '../api'
 import { useI18n } from '../i18n'
+import { EmptyState, Skeleton, buttonClass } from '../ui'
+import { PAGE_TITLE } from '../routing'
 
 interface Props {
   runs: RunSummary[]
 }
 
 const TIER_COLORS: Record<number, string> = {
-  1: '#d97706',
-  2: '#0094FF',
+  1: 'var(--score-mid-ink)',
+  2: 'var(--waf-brand-ink)',
   3: '#0891b2',
-  4: '#7c3aed',
-  5: '#059669',
+  4: 'var(--waf-info)',
+  5: 'var(--score-high-ink)',
 }
 
 const TIER_LABELS: Record<number, string> = {
@@ -63,11 +65,11 @@ function CodeBlock({ code, lang = '', t }: { code: string; lang?: string; t: (ke
         title="Copy to clipboard"
         style={{
           position: 'absolute', top: '0.4rem', right: '0.4rem',
-          background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.05)',
-          border: `1px solid ${copied ? 'rgba(34,197,94,0.35)' : '#1e293b'}`,
+          background: copied ? 'color-mix(in srgb, var(--pass) 12%, transparent)' : 'rgba(255,255,255,0.05)',
+          border: `1px solid ${copied ? 'color-mix(in srgb, var(--pass) 35%, transparent)' : '#1e293b'}`,
           borderRadius: '6px', cursor: 'pointer', padding: '0.25rem 0.45rem',
-          color: copied ? '#22c55e' : '#64748b',
-          fontSize: '0.7rem', fontWeight: 700, transition: 'all 0.15s',
+          color: copied ? 'var(--pass)' : 'var(--skip)',
+          fontSize: '0.7rem', fontWeight: 700, transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
           display: 'flex', alignItems: 'center', gap: '0.25rem',
         }}
       >
@@ -215,27 +217,28 @@ export default function BadgePage({ runs }: Props) {
   }
 
   const currentLevel = status?.level ?? 0
-  const currentColor = status?.color ?? '#64748b'
+  const currentColor = status?.color ?? 'var(--muted)'
   const currentLabel = status?.label ?? 'No Data'
 
   if (runs.length === 0) {
     return (
-      <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem' }}>
-        {t('pages.badgePage.noScansYet')}
-      </div>
+      <EmptyState
+        title={t('pages.badgePage.noScansYet')}
+      />
     )
   }
 
   if (mandateResolved && badgeBlocked) {
     return (
-      <div style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '4rem', fontSize: '0.85rem', maxWidth: '32rem', marginInline: 'auto' }}>
-        {t('pages.badgePage.noMandateForBadges')}
-      </div>
+      <EmptyState
+        title={t('pages.badgePage.noMandateForBadges')}
+      />
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['badge']}</h1>
 
       {/* ── Project selector + live/offline toggle ───────────────────────────── */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -284,13 +287,13 @@ export default function BadgePage({ runs }: Props) {
       {mode === 'offline' && (
         <div style={{
           display: 'flex', gap: '0.75rem', padding: '0.875rem 1.25rem', borderRadius: '10px',
-          background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.3)',
+          background: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-warn) 30%, transparent)',
         }}>
-          <svg width="18" height="18" fill="none" stroke="#d97706" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: '1px' }}>
+          <svg width="18" height="18" fill="none" stroke="var(--waf-warn)" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: '1px' }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#d97706', marginBottom: '0.2rem' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--score-mid-ink)', marginBottom: '0.2rem' }}>
               {t('pages.badgePage.offlineModeTitle')}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
@@ -304,11 +307,11 @@ export default function BadgePage({ runs }: Props) {
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.badgePage.badgePreview')}</div>
-          {statusLoading && <div className="spinner" style={{ width: '14px', height: '14px' }} />}
+          {statusLoading && <Skeleton width={130} height={14} radius={999} />}
           {!statusLoading && status && (
             <span style={{
-              fontSize: '0.68rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px',
-              background: `${currentColor}14`, color: currentColor, border: `1px solid ${currentColor}30`,
+              fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px',
+              background: `color-mix(in srgb, ${currentColor} 8%, transparent)`, color: currentColor, border: `1px solid color-mix(in srgb, ${currentColor} 19%, transparent)`,
             }}>
               Score {status.score} · {currentLabel}
             </span>
@@ -351,12 +354,8 @@ export default function BadgePage({ runs }: Props) {
                   href={badgeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem', alignSelf: 'flex-start',
-                    padding: '0.45rem 0.875rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600,
-                    background: 'var(--bg)', color: 'var(--waf-brand)',
-                    border: '1px solid rgba(0,148,255,0.3)', textDecoration: 'none',
-                  }}
+                  className={buttonClass('secondary', 'sm')}
+                  style={{ alignSelf: 'flex-start' }}
                 >
                   <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -373,12 +372,8 @@ export default function BadgePage({ runs }: Props) {
               <a
                 href={`${apiBase}${badgePath}/${encodeURIComponent(project)}/download`}
                 download
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem', alignSelf: 'flex-start',
-                  padding: '0.45rem 0.875rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600,
-                  background: 'var(--waf-brand)', color: '#fff',
-                  border: 'none', textDecoration: 'none', cursor: 'pointer',
-                }}
+                className={buttonClass('primary', 'sm')}
+                style={{ alignSelf: 'flex-start' }}
               >
                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -531,7 +526,7 @@ jobs:
               <div key={tier} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem',
                 padding: '0.875rem 1rem', background: 'var(--bg)',
-                borderRadius: '10px', border: `1px solid ${color}28`,
+                borderRadius: '10px', border: `1px solid color-mix(in srgb, ${color} 16%, transparent)`,
               }}>
                 <InlineBadgeSvg tierLevel={tier} tierLabel={label.replace(`L${tier} · `, '')} color={color} />
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
@@ -540,11 +535,7 @@ jobs:
                     target="_blank"
                     rel="noopener noreferrer"
                     download={`wombat-badge-l${tier}.svg`}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                      padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 600,
-                      background: `${color}12`, color, border: `1px solid ${color}30`, textDecoration: 'none',
-                    }}
+                    className={buttonClass('secondary', 'sm')}
                   >
                     <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

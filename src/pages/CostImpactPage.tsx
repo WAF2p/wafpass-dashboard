@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Finding, RunDetail } from '../api'
 import { useI18n } from '../i18n'
+import { DataTable, EmptyState, PageHeader } from '../ui'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface Props { run: RunDetail }
@@ -330,6 +331,7 @@ export default function CostImpactPage({ run }: Props) {
   const { t } = useI18n()
   const [catFilter, setCatFilter] = useState<CostCategory | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [exportNotice, setExportNotice] = useState(false)
 
   const controlItems = useMemo(() => buildControlItems(run.findings), [run.findings])
 
@@ -363,25 +365,37 @@ export default function CostImpactPage({ run }: Props) {
   const history = useMemo(() => fetchHistoricalSpendStub(run), [run])
   const budgetAlerts = useMemo(() => fetchBudgetAlertsStub(run), [run])
 
+  const topResources = useMemo(
+    () =>
+      filtered
+        .flatMap((item, itemIndex) =>
+          item.resourceBands.map((rb, rbIndex) => ({ item, rb, id: `${item.controlId}-${itemIndex}-${rbIndex}` })),
+        )
+        .sort((a, b) => (a.rb.band.min + a.rb.band.max) / 2 - (b.rb.band.min + b.rb.band.max) / 2)
+        .reverse()
+        .slice(0, 10),
+    [filtered],
+  )
+
   return (
     <div className="coc-root">
       <style>{costOperationsCenterCss}</style>
 
       {/* Hero */}
-      <div className="coc-hero">
-        <div className="coc-hero__content">
-          <div className="coc-hero__badge"><EuroIcon /> COST OPERATIONS CENTER</div>
-          <h1 className="coc-hero__title">{t('pages.costImpact.title')}</h1>
-          <p className="coc-hero__subtitle">Real-time financial exposure, savings runway, and burn-down projection across {run.findings.filter(f => f.pillar?.toLowerCase() === 'cost').length} cost checks.</p>
-        </div>
-        <div className="coc-hero__kpi">
-          <div className="coc-hero__kpi-label">MONTHLY EXPOSURE</div>
-          <div className="coc-hero__kpi-value" style={{ color: hasCostFindings ? 'var(--fail)' : 'var(--pass)' }}>
-            {hasCostFindings ? `~${fmtDollar(totals.allMid)}` : '$0'}
+      <PageHeader
+        eyebrow={<><EuroIcon /> COST OPERATIONS CENTER</>}
+        title={t('pages.costImpact.title')}
+        description={<>Real-time financial exposure, savings runway, and burn-down projection across {run.findings.filter(f => f.pillar?.toLowerCase() === 'cost').length} cost checks.</>}
+        actions={
+          <div className="coc-hero__kpi">
+            <div className="coc-hero__kpi-label">MONTHLY EXPOSURE</div>
+            <div className="coc-hero__kpi-value" style={{ color: hasCostFindings ? 'var(--fail)' : 'var(--pass)' }}>
+              {hasCostFindings ? `~${fmtDollar(totals.allMid)}` : '$0'}
+            </div>
+            <div className="coc-hero__kpi-range">{hasCostFindings ? `${fmtRange(totals.allMin, totals.allMax)} range` : 'No failing cost controls'}</div>
           </div>
-          <div className="coc-hero__kpi-range">{hasCostFindings ? `${fmtRange(totals.allMin, totals.allMax)} range` : 'No failing cost controls'}</div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Stubs notice */}
       <div className="coc-stub-banner">
@@ -493,11 +507,11 @@ export default function CostImpactPage({ run }: Props) {
       </div>
 
       {!hasCostFindings ? (
-        <div className="coc-empty">
-          <div className="coc-empty__icon">✅</div>
-          <div className="coc-empty__title">{t('pages.costImpact.noFailingCost')}</div>
-          <div className="coc-empty__desc">{t('pages.costImpact.allPassing')}</div>
-        </div>
+        <EmptyState
+          icon={<span>✅</span>}
+          title={t('pages.costImpact.noFailingCost')}
+          description={t('pages.costImpact.allPassing')}
+        />
       ) : (
         <>
           {/* Filter bar */}
@@ -528,9 +542,23 @@ export default function CostImpactPage({ run }: Props) {
             </div>
             <div className="coc-filter-actions">
               <button className="coc-btn-ghost" onClick={() => { setCatFilter('all'); setSearch('') }}><FilterIcon /> Reset</button>
-              <button className="coc-btn-ghost" onClick={() => alert('Export is a demo feature — vote on the GitHub RFC to prioritize it.')}><DownloadIcon /> Export</button>
+              <button className="coc-btn-ghost" onClick={() => setExportNotice(true)}><DownloadIcon /> Export</button>
             </div>
           </div>
+
+          {exportNotice && (
+            <div role="status" style={{
+              display: 'flex', alignItems: 'center', gap: '0.75rem',
+              padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)',
+              background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--waf-brand) 18%, transparent)',
+            }}>
+              <span style={{ flex: 1 }}>Export is a demo feature — vote on the GitHub RFC to prioritize it.</span>
+              <button onClick={() => setExportNotice(false)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline' }}>
+                {t('common.close')}
+              </button>
+            </div>
+          )}
 
           {/* Top resources table */}
           <div className="coc-section-card">
@@ -538,39 +566,61 @@ export default function CostImpactPage({ run }: Props) {
               <div className="coc-section-card__title">Top financial resources</div>
               <div className="coc-section-card__subtitle">Highest-impact failing resources by estimated monthly cost</div>
             </div>
-            <div className="coc-resource-table-wrap">
-              <table className="coc-resource-table coc-resource-table--top">
-                <thead>
-                  <tr>
-                    <th>Resource</th>
-                    <th>Control</th>
-                    <th>Category</th>
-                    <th>Est. $/mo</th>
-                    <th>Confidence</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.flatMap(item => item.resourceBands.map(rb => ({ item, rb })))
-                    .sort((a, b) => ((a.rb.band.min + a.rb.band.max) / 2) - ((b.rb.band.min + b.rb.band.max) / 2))
-                    .reverse()
-                    .slice(0, 10)
-                    .map(({ item, rb }, i) => {
-                      const mid = Math.round((rb.band.min + rb.band.max) / 2)
-                      const ccol = categoryColor(rb.band.category)
-                      const cm = CATEGORY_META[rb.band.category]
-                      return (
-                        <tr key={`${item.controlId}-${i}`}>
-                          <td title={rb.finding.resource || ''}>{rb.finding.resource || '—'}</td>
-                          <td>{item.controlId}</td>
-                          <td><span className="coc-tag" style={{ color: ccol, background: `color-mix(in srgb, ${ccol} 10%, transparent)`, borderColor: `color-mix(in srgb, ${ccol} 22%, transparent)` }}>{cm.icon} {cm.label}</span></td>
-                          <td style={{ color: ccol, fontWeight: 700 }}>{rb.band.min === 0 && rb.band.max === 0 ? '—' : `~${fmtDollar(mid)}`}</td>
-                          <td><span className="coc-tag coc-tag--conf" style={{ color: CONF_META[rb.band.confidence].color }}>{CONF_META[rb.band.confidence].label}</span></td>
-                        </tr>
-                      )
-                    })}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              rows={topResources}
+              rowKey={row => row.id}
+              columns={[
+                {
+                  key: 'resource',
+                  header: 'Resource',
+                  mono: true,
+                  render: row => (
+                    <span
+                      title={row.rb.finding.resource || ''}
+                      style={{ display: 'inline-block', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}
+                    >
+                      {row.rb.finding.resource || '—'}
+                    </span>
+                  ),
+                },
+                { key: 'control', header: 'Control', render: row => row.item.controlId },
+                {
+                  key: 'category',
+                  header: 'Category',
+                  render: row => {
+                    const ccol = categoryColor(row.rb.band.category)
+                    const cm = CATEGORY_META[row.rb.band.category]
+                    return (
+                      <span className="coc-tag" style={{ color: ccol, background: `color-mix(in srgb, ${ccol} 10%, transparent)`, borderColor: `color-mix(in srgb, ${ccol} 22%, transparent)` }}>
+                        {cm.icon} {cm.label}
+                      </span>
+                    )
+                  },
+                },
+                {
+                  key: 'cost',
+                  header: 'Est. $/mo',
+                  render: row => {
+                    const mid = Math.round((row.rb.band.min + row.rb.band.max) / 2)
+                    return (
+                      <span style={{ color: categoryColor(row.rb.band.category), fontWeight: 700 }}>
+                        {row.rb.band.min === 0 && row.rb.band.max === 0 ? '—' : `~${fmtDollar(mid)}`}
+                      </span>
+                    )
+                  },
+                },
+                {
+                  key: 'confidence',
+                  header: 'Confidence',
+                  render: row => (
+                    <span className="coc-tag coc-tag--conf" style={{ color: CONF_META[row.rb.band.confidence].color }}>
+                      {CONF_META[row.rb.band.confidence].label}
+                    </span>
+                  ),
+                },
+              ]}
+              empty={<EmptyState compact title="No resources match the current filter." />}
+            />
           </div>
 
           {/* Control cards */}
@@ -583,9 +633,7 @@ export default function CostImpactPage({ run }: Props) {
               <ControlCostCard key={item.controlId} item={item} maxMax={maxMax} />
             ))}
             {filtered.length === 0 && (
-              <div className="coc-empty coc-empty--inline">
-                <div className="coc-empty__desc">No controls match the current filter.</div>
-              </div>
+              <EmptyState compact title="No controls match the current filter." />
             )}
           </div>
 
@@ -616,63 +664,6 @@ const costOperationsCenterCss = `
 }
 
 /* Hero */
-.coc-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  background:
-    radial-gradient(circle at 15% 50%, color-mix(in srgb, var(--waf-brand) 10%, transparent) 0%, transparent 40%),
-    radial-gradient(circle at 85% 30%, color-mix(in srgb, var(--score-mid) 7%, transparent) 0%, transparent 35%),
-    linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 18%, transparent);
-  border-radius: 20px;
-  padding: 1.5rem 1.75rem;
-  box-shadow:
-    0 0 40px color-mix(in srgb, var(--waf-brand) 7%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
-  flex-wrap: wrap;
-  position: relative;
-  overflow: hidden;
-}
-.coc-hero__content {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-  z-index: 1;
-}
-.coc-hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent);
-  border-radius: 4px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--waf-brand);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.85rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 14%, transparent);
-}
-.coc-hero__title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text);
-  line-height: 1.15;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.coc-hero__subtitle {
-  margin: 0.45rem 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-  max-width: 520px;
-}
 .coc-hero__kpi {
   flex-shrink: 0;
   display: flex;
@@ -715,26 +706,8 @@ const costOperationsCenterCss = `
   align-items: flex-start;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s ease, border-color 0.2s ease;
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease;
 }
-.coc-kpi:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--waf-brand) 26%, transparent);
-}
-.coc-kpi::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-}
-.coc-kpi--waste::before { background: var(--fail); box-shadow: 0 0 12px color-mix(in srgb, var(--fail) 30%, transparent); }
-.coc-kpi--savings::before { background: var(--score-mid); box-shadow: 0 0 12px color-mix(in srgb, var(--score-mid) 30%, transparent); }
-.coc-kpi--risk::before { background: var(--waf-info); box-shadow: 0 0 12px color-mix(in srgb, var(--waf-info) 30%, transparent); }
-.coc-kpi--resources::before { background: var(--waf-brand); box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 30%, transparent); }
 .coc-kpi__icon {
   width: 38px;
   height: 38px;
@@ -793,14 +766,12 @@ const costOperationsCenterCss = `
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-md);
 }
 .coc-chart-card__header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
 }
 .coc-chart-card__title {
   font-size: 0.85rem;
@@ -860,7 +831,6 @@ const costOperationsCenterCss = `
   border-radius: 12px;
   background: color-mix(in srgb, var(--waf-warn) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-warn) 26%, transparent);
-  box-shadow: 0 0 24px color-mix(in srgb, var(--waf-warn) 10%, transparent);
 }
 .coc-stub-banner__icon {
   flex-shrink: 0;
@@ -923,8 +893,6 @@ const costOperationsCenterCss = `
   gap: 0.85rem;
   align-items: center;
   flex-wrap: wrap;
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-sm);
 }
 .coc-search {
   flex: 1 1 220px;
@@ -935,7 +903,7 @@ const costOperationsCenterCss = `
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   min-width: 0;
 }
 .coc-search input {
@@ -965,7 +933,7 @@ const costOperationsCenterCss = `
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 .coc-filter-chip:hover {
   border-color: color-mix(in srgb, var(--waf-brand) 25%, transparent);
@@ -975,7 +943,6 @@ const costOperationsCenterCss = `
   border-color: var(--chip-color, var(--waf-brand));
   background: color-mix(in srgb, var(--chip-color, var(--waf-brand)) 12%, transparent);
   color: var(--chip-color, var(--waf-brand));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color, var(--waf-brand)) 12%, transparent);
 }
 .coc-filter-actions {
   display: flex;
@@ -994,7 +961,7 @@ const costOperationsCenterCss = `
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 .coc-btn-ghost:hover {
   color: var(--text);
@@ -1027,13 +994,6 @@ const costOperationsCenterCss = `
   border-radius: 12px;
   margin-bottom: 0.65rem;
   overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.coc-control-card:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 6px 24px color-mix(in srgb, var(--text) 8%, transparent),
-    0 0 18px color-mix(in srgb, var(--cat-color) 8%, transparent);
 }
 .coc-control-header {
   padding: 0.85rem 1rem;
@@ -1091,7 +1051,7 @@ const costOperationsCenterCss = `
   border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent);
 }
 .coc-resource-count {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   color: var(--muted);
 }
 .coc-control-cost {
@@ -1170,9 +1130,6 @@ const costOperationsCenterCss = `
 .coc-resource-table td:nth-child(4) {
   font-weight: 700;
 }
-.coc-resource-table--top td:first-child {
-  max-width: 280px;
-}
 .coc-resource-range {
   font-size: 0.7rem;
   font-weight: 400;
@@ -1224,36 +1181,6 @@ const costOperationsCenterCss = `
 }
 .coc-message strong { color: var(--text); margin-right: 0.25rem; }
 
-/* Empty state */
-.coc-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 3.5rem 1.5rem;
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--pass) 18%, transparent);
-  border-radius: 16px;
-  box-shadow: var(--shadow-md);
-}
-.coc-empty--inline {
-  background: transparent;
-  border: none;
-  padding: 2rem;
-  box-shadow: none;
-}
-.coc-empty__icon { font-size: 2rem; }
-.coc-empty__title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--pass);
-}
-.coc-empty__desc {
-  font-size: 0.8rem;
-  color: var(--muted);
-  text-align: center;
-}
-
 /* Methodology */
 .coc-methodology {
   margin-top: 0.5rem;
@@ -1264,7 +1191,6 @@ const costOperationsCenterCss = `
   font-size: 0.72rem;
   color: var(--muted);
   line-height: 1.7;
-  box-shadow: var(--shadow-sm);
 }
 .coc-methodology strong {
   display: block;
@@ -1277,7 +1203,6 @@ const costOperationsCenterCss = `
   .coc-charts-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .coc-hero { flex-direction: column; align-items: flex-start; }
   .coc-hero__kpi { text-align: left; }
   .coc-kpi-grid { grid-template-columns: 1fr; }
   .coc-filter-bar { flex-direction: column; align-items: stretch; }

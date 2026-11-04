@@ -10,6 +10,7 @@ import {
   type ApiKeyOut, type ApiKeyCreateResponse, type ApiKeyUsageLogEntry, type MandantOut,
 } from '../api'
 import { scoreBg, scoreColor as scoreColorToken } from '../severity';
+import { PAGE_TITLE } from '../routing'
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -26,11 +27,6 @@ function fmtDate(iso: string): string {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
-}
-
-function scoreColor(s: number | null): { color: string; bg: string } {
-  if (s === null) return { color: 'var(--skip-ink)', bg: 'color-mix(in srgb, var(--skip) 9%, transparent)' }
-  return { color: scoreColorToken(s), bg: scoreBg(s, 9) }
 }
 
 // ── Usage log panel ───────────────────────────────────────────────────────────
@@ -78,7 +74,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
             <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 400 }}>— {keyName}</span>
             {!loading && !error && (
               <span style={{
-                marginLeft: 'auto', fontSize: '0.68rem', color: 'var(--muted)',
+                marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)',
                 background: 'var(--surface)', border: '1px solid var(--border)',
                 padding: '0.1rem 0.5rem', borderRadius: '6px', fontWeight: 600,
               }}>
@@ -91,7 +87,7 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
           {loading ? (
             <div style={{ padding: '1.5rem', textAlign: 'center' }}><div className="spinner" /></div>
           ) : error ? (
-            <div style={{ padding: '0.875rem 1.25rem', color: '#DA2C38', fontSize: '0.78rem' }}>{error}</div>
+            <div style={{ padding: '0.875rem 1.25rem', color: 'var(--fail-ink)', fontSize: '0.78rem' }}>{error}</div>
           ) : logs.length === 0 ? (
             <div style={{ padding: '1.5rem 1.25rem', color: 'var(--muted)', fontSize: '0.8rem', textAlign: 'center' }}>
               {t('pages.apikeys.noUsageYet')}
@@ -111,16 +107,18 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
               </thead>
               <tbody>
                 {logs.map((log, i) => {
-                  const sc = scoreColor(log.score)
+                  const sc = log.score === null
+                    ? { color: 'var(--skip-ink)', bg: 'color-mix(in srgb, var(--skip) 9%, transparent)' }
+                    : { color: scoreColorToken(log.score), bg: scoreBg(log.score, 9) }
                   return (
                     <tr key={log.id} style={{ borderBottom: i < logs.length - 1 ? '1px solid var(--border)' : undefined }}>
                       <td style={{ padding: '0.5rem 1.25rem', whiteSpace: 'nowrap' }}>
                         <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.used_at)}</div>
-                        <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.used_at)}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.used_at)}</div>
                       </td>
                       <td style={{ padding: '0.5rem 1.25rem' }}>
                         <code style={{
-                          background: 'color-mix(in srgb, #7c3aed 8%, transparent)', color: '#7c3aed',
+                          background: 'color-mix(in srgb, var(--waf-info) 8%, transparent)', color: 'var(--waf-info)',
                           padding: '0.12rem 0.4rem', borderRadius: '6px', fontSize: '0.71rem', fontWeight: 600,
                         }}>
                           {log.endpoint}
@@ -182,6 +180,8 @@ export default function ApiManagementPage() {
   const [newKey, setNewKey]       = useState<ApiKeyCreateResponse | null>(null)
   const [copied, setCopied]       = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null)
+  const [actionErr, setActionErr] = useState<string | null>(null)
   const rawKeyRef = useRef<HTMLInputElement>(null)
 
   // "Sending to a specific mandate" completeness — mirrors
@@ -234,13 +234,18 @@ export default function ApiManagementPage() {
   }
 
   async function handleRevoke(k: ApiKeyOut) {
-    if (!confirm(t('pages.apikeys.revokeConfirm', { name: k.name }))) return
+    if (confirmRevokeId !== k.id) {
+      setConfirmRevokeId(k.id)
+      setActionErr(null)
+      return
+    }
+    setConfirmRevokeId(null)
     try {
       await revokeApiKey(k.id)
       if (expandedId === k.id) setExpandedId(null)
       loadKeys()
     } catch (e) {
-      alert((e as Error).message)
+      setActionErr((e as Error).message)
     }
   }
 
@@ -266,12 +271,12 @@ export default function ApiManagementPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.75rem',
         padding: '1rem 1.25rem', borderRadius: '10px',
-        background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 18%, transparent)',
+        background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
       }}>
-        <svg width="16" height="16" fill="none" stroke="#DA2C38" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <svg width="16" height="16" fill="none" stroke="var(--fail)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span style={{ fontSize: '0.85rem', color: '#DA2C38', fontWeight: 600 }}>{t('pages.apikeys.adminRequired')}</span>
+        <span style={{ fontSize: '0.85rem', color: 'var(--fail-ink)', fontWeight: 600 }}>{t('pages.apikeys.adminRequired')}</span>
       </div>
     )
   }
@@ -281,12 +286,13 @@ export default function ApiManagementPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['apikeys']}</h1>
 
       {/* ── Stats strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
         {[
           { label: t('pages.apikeys.totalKeys'),  value: keys.length,         color: 'var(--text)' },
-          { label: t('common.active'),             value: activeKeys.length,   color: '#059669' },
+          { label: t('common.active'),             value: activeKeys.length,   color: 'var(--pass-ink)' },
           { label: t('pages.apikeys.statRevoked'), value: revokedKeys.length,  color: 'var(--muted)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -296,17 +302,24 @@ export default function ApiManagementPage() {
         ))}
       </div>
 
+      {actionErr && (
+        <div role="alert" style={{ padding: '0.6rem 0.875rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)', color: 'var(--fail-ink)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ flex: 1 }}>{actionErr}</span>
+          <button onClick={() => setActionErr(null)} aria-label={t('common.close')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fail-ink)', fontSize: '1rem', lineHeight: 1 }}>✕</button>
+        </div>
+      )}
+
       {/* ── New key reveal ── */}
       {newKey && (
         <div style={{
           padding: '1rem 1.25rem', borderRadius: '12px',
-          background: 'rgba(5,150,105,0.05)', border: '1px solid color-mix(in srgb, #059669 20%, transparent)',
+          background: 'color-mix(in srgb, var(--pass) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 20%, transparent)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
-            <svg width="14" height="14" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg width="14" height="14" fill="none" stroke="var(--pass)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
             </svg>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--pass-ink)' }}>
               {t('pages.apikeys.keyCreatedMsg', { name: newKey.name })}
             </span>
           </div>
@@ -317,7 +330,7 @@ export default function ApiManagementPage() {
               value={newKey.raw_key}
               style={{
                 flex: 1, padding: '0.45rem 0.75rem', borderRadius: '8px',
-                border: '1px solid color-mix(in srgb, #059669 25%, transparent)', background: 'var(--surface)',
+                border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)', background: 'var(--surface)',
                 color: 'var(--text)', fontSize: '0.79rem', fontFamily: 'ui-monospace,monospace',
                 outline: 'none',
               }}
@@ -325,8 +338,8 @@ export default function ApiManagementPage() {
             />
             <button onClick={copyKey} style={{
               padding: '0.42rem 0.875rem', borderRadius: '8px', flexShrink: 0,
-              background: copied ? 'color-mix(in srgb, #059669 18%, transparent)' : 'color-mix(in srgb, #059669 10%, transparent)',
-              color: '#059669', border: '1px solid color-mix(in srgb, #059669 25%, transparent)',
+              background: copied ? 'color-mix(in srgb, var(--pass) 18%, transparent)' : 'color-mix(in srgb, var(--pass) 10%, transparent)',
+              color: 'var(--pass-ink)', border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
               cursor: 'pointer', fontSize: '0.79rem', fontWeight: 600,
             }}>
               {copied ? t('common.copied') : t('common.copy')}
@@ -340,7 +353,7 @@ export default function ApiManagementPage() {
             </button>
           </div>
           <div style={{ marginTop: '0.65rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '0.69rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.apikeys.quickStart')}</div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.apikeys.quickStart')}</div>
             <code style={{ fontSize: '0.74rem', color: 'var(--text)' }}>
               WOMBAT_API_KEY={newKey.raw_key.slice(0, 20)}… wombat check ./iac --push https://your-server/api/v1/runs
             </code>
@@ -350,13 +363,13 @@ export default function ApiManagementPage() {
 
       {/* ── Create new key ── */}
       <section>
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
           {t('pages.apikeys.createHeader')}
         </div>
         <div className="card" style={{ padding: '0.875rem 1rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.28rem', display: 'block' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.28rem', display: 'block' }}>
                 {t('pages.apikeys.keyNameLabel')}
               </label>
               <input
@@ -373,7 +386,7 @@ export default function ApiManagementPage() {
             </div>
             {isHoldingAdmin && mandants.length > 0 && (
               <div style={{ width: '220px', flexShrink: 0 }}>
-                <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.28rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.28rem', display: 'block' }}>
                   {t('pages.apikeys.targetMandateLabel')}
                 </label>
                 <select
@@ -395,14 +408,15 @@ export default function ApiManagementPage() {
             <button
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
+              aria-label={creating ? t('pages.apikeys.creating') : t('pages.apikeys.generateBtn')}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.35rem',
                 padding: '0.42rem 0.875rem', borderRadius: '8px',
-                background: creating || !newName.trim() ? 'rgba(0,148,255,.35)' : 'var(--waf-brand)',
-                color: '#fff', border: 'none',
+                background: creating || !newName.trim() ? 'color-mix(in srgb, var(--waf-brand-btn) 35%, transparent)' : 'var(--waf-brand-btn)',
+                color: 'white', border: 'none',
                 cursor: creating || !newName.trim() ? 'default' : 'pointer',
                 fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap',
-                boxShadow: creating || !newName.trim() ? 'none' : '0 1px 4px rgba(0,148,255,0.25)',
+                boxShadow: creating || !newName.trim() ? 'none' : 'var(--shadow-sm)',
               }}
             >
               <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -412,7 +426,7 @@ export default function ApiManagementPage() {
             </button>
           </div>
           {createErr && (
-            <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#DA2C38', padding: '0.4rem 0.65rem', background: 'color-mix(in srgb, #da2c38 6%, transparent)', borderRadius: '8px', border: '1px solid color-mix(in srgb, #da2c38 15%, transparent)' }}>
+            <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: 'var(--fail-ink)', padding: '0.4rem 0.65rem', background: 'color-mix(in srgb, var(--fail) 6%, transparent)', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--fail) 15%, transparent)' }}>
               {createErr}
             </div>
           )}
@@ -421,7 +435,7 @@ export default function ApiManagementPage() {
 
       {/* ── Active keys ── */}
       <section>
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
           {t('pages.apikeys.activeKeysHeader')}
           <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: '0.5rem', opacity: 0.7 }}>{t('pages.apikeys.clickToInspect')}</span>
         </div>
@@ -429,7 +443,7 @@ export default function ApiManagementPage() {
           {loading ? (
             <div style={{ padding: '2.5rem', textAlign: 'center' }}><div className="spinner" /></div>
           ) : error ? (
-            <div style={{ padding: '1rem', color: '#DA2C38', fontSize: '0.85rem' }}>{error}</div>
+            <div style={{ padding: '1rem', color: 'var(--fail-ink)', fontSize: '0.85rem' }}>{error}</div>
           ) : activeKeys.length === 0 ? (
             <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem', textAlign: 'center' }}>
               {t('pages.apikeys.noActiveKeys')}
@@ -460,13 +474,13 @@ export default function ApiManagementPage() {
                           cursor: 'pointer',
                           transition: 'background 0.1s',
                         }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.018)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--row-hover)' }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
                       >
                         <td style={{ padding: '0.6rem 0.875rem', fontWeight: 600, color: 'var(--text)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <div style={{ width: '3px', height: '22px', borderRadius: '4px', background: isExpanded ? '#7c3aed' : 'var(--border)', flexShrink: 0, transition: 'background 0.15s' }} />
+                              <div style={{ width: '3px', height: '22px', borderRadius: '4px', background: isExpanded ? 'var(--waf-info)' : 'var(--border)', flexShrink: 0, transition: 'background 0.15s' }} />
                               <svg
                                 width="11" height="11" fill="none" stroke="var(--muted)" strokeWidth="2.5"
                                 strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
@@ -477,8 +491,8 @@ export default function ApiManagementPage() {
                             </div>
                             <div style={{
                               width: '26px', height: '26px', borderRadius: '8px', flexShrink: 0,
-                              background: 'color-mix(in srgb, #7c3aed 8%, transparent)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed',
+                              background: 'color-mix(in srgb, var(--waf-info) 8%, transparent)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--waf-info)',
                             }}>
                               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
@@ -501,30 +515,58 @@ export default function ApiManagementPage() {
                         </td>
                         <td style={{ padding: '0.6rem 0.875rem', color: 'var(--muted)', fontSize: '0.76rem' }}>
                           {timeAgo(k.created_at)}
-                          <div style={{ fontSize: '0.67rem', marginTop: '0.05rem' }}>{fmtDate(k.created_at)}</div>
+                          <div style={{ fontSize: '0.7rem', marginTop: '0.05rem' }}>{fmtDate(k.created_at)}</div>
                         </td>
                         <td style={{ padding: '0.6rem 0.875rem', fontSize: '0.76rem' }}>
                           {k.last_used_at ? (
                             <div>
-                              <span style={{ color: '#059669', fontWeight: 600 }}>{timeAgo(k.last_used_at)}</span>
-                              <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{fmtDate(k.last_used_at)}</div>
+                              <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{timeAgo(k.last_used_at)}</span>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{fmtDate(k.last_used_at)}</div>
                             </div>
                           ) : (
                             <span style={{ color: 'var(--muted)', opacity: 0.6 }}>{t('pages.apikeys.never')}</span>
                           )}
                         </td>
                         <td style={{ padding: '0.6rem 0.875rem' }} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => handleRevoke(k)}
-                            style={{
-                              padding: '0.22rem 0.55rem', borderRadius: '6px',
-                              background: 'var(--bg)', color: '#DA2C38',
-                              border: '1px solid color-mix(in srgb, #da2c38 25%, transparent)',
-                              cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
-                            }}
-                          >
-                            {t('pages.apikeys.revokeBtn')}
-                          </button>
+                          {confirmRevokeId === k.id ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--fail-ink)' }}>{t('pages.apikeys.revokeConfirm', { name: k.name })}</span>
+                              <button
+                                onClick={() => handleRevoke(k)}
+                                style={{
+                                  padding: '0.22rem 0.55rem', borderRadius: '6px',
+                                  background: 'color-mix(in srgb, var(--fail) 12%, transparent)', color: 'var(--fail-ink)',
+                                  border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+                                  cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700,
+                                }}
+                              >
+                                {t('common.confirm')}
+                              </button>
+                              <button
+                                onClick={() => setConfirmRevokeId(null)}
+                                style={{
+                                  padding: '0.22rem 0.55rem', borderRadius: '6px',
+                                  background: 'var(--bg)', color: 'var(--muted)',
+                                  border: '1px solid var(--border)',
+                                  cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
+                                }}
+                              >
+                                {t('common.cancel')}
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleRevoke(k)}
+                              style={{
+                                padding: '0.22rem 0.55rem', borderRadius: '6px',
+                                background: 'var(--bg)', color: 'var(--fail-ink)',
+                                border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)',
+                                cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600,
+                              }}
+                            >
+                              {t('pages.apikeys.revokeBtn')}
+                            </button>
+                          )}
                         </td>
                       </tr>
 
@@ -541,7 +583,7 @@ export default function ApiManagementPage() {
       {/* ── Revoked keys ── */}
       {revokedKeys.length > 0 && (
         <section>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
             {t('pages.apikeys.revokedKeysHeader', { count: revokedKeys.length })}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden', opacity: 0.55 }}>
@@ -574,7 +616,7 @@ export default function ApiManagementPage() {
 
       {/* ── Usage reference ── */}
       <section>
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>
           {t('pages.apikeys.usageRefHeader')}
         </div>
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>

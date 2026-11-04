@@ -12,14 +12,21 @@
 import { useState, useMemo, useRef } from 'react'
 import { RunDetail, Finding } from '../api'
 import { useI18n } from '../i18n'
-import { severityColor } from '../severity'
+import { severityBg, severityColor } from '../severity'
+import { EmptyState } from '../ui'
 
 interface Props { run: RunDetail }
 
 const SEV_RANK: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
 
+// Graph-node status palette. Kept semantic so nodes stay legible in both themes.
 const STATUS_COLOR: Record<string, string> = {
-  fail: '#DA2C38', mixed: '#d97706', pass: '#059669', skip: '#94a3b8',
+  fail: 'var(--fail)', mixed: 'var(--waf-warn)', pass: 'var(--pass)', skip: 'var(--skip)',
+}
+
+/** Alpha over a token or var() colour without string-concatenating hex. */
+function withAlpha(color: string, percent: number): string {
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`
 }
 const STATUS_LABEL: Record<string, string> = {
   fail: 'FAILING', mixed: 'MIXED', pass: 'PASSING', skip: 'SKIP / WAIVED',
@@ -138,9 +145,9 @@ function computeNodes(findings: Finding[]): DepNode[] {
 }
 
 function nodeColor(n: DepNode): string {
-  if (n.status === 'pass')  return '#059669'
-  if (n.status === 'skip')  return '#94a3b8'
-  if (n.status === 'mixed') return '#d97706'
+  if (n.status === 'pass')  return 'var(--pass)'
+  if (n.status === 'skip')  return 'var(--skip)'
+  if (n.status === 'mixed') return 'var(--waf-warn)'
   return severityColor(n.worstSev)
 }
 
@@ -166,12 +173,12 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
   const passFindings = node.findings.filter(f => f.status?.toUpperCase() === 'PASS')
 
   return (
-    <div style={{ borderRadius: '10px', overflow: 'hidden', border: `1px solid ${isOpen ? col + '50' : 'var(--border)'}`, background: 'var(--surface)', transition: 'border-color 0.2s' }}>
+    <div style={{ borderRadius: '10px', overflow: 'hidden', border: `1px solid ${isOpen ? withAlpha(col, 30) : 'var(--border)'}`, background: 'var(--surface)', transition: 'border-color 0.2s' }}>
 
       {/* Card header */}
       <div onClick={onToggle} style={{ cursor: 'pointer', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', userSelect: 'none', borderLeft: `4px solid ${col}` }}>
         {/* Status dot */}
-        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: col, flexShrink: 0, boxShadow: isOpen ? `0 0 0 3px ${col}25` : undefined }} />
+        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: col, flexShrink: 0, boxShadow: isOpen ? `0 0 0 3px ${withAlpha(col, 15)}` : undefined }} />
 
         {/* Type + name */}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -190,14 +197,14 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
           {/* Mini ratio bar */}
           <div style={{ width: '60px', height: '5px', borderRadius: '4px', background: 'var(--border)', overflow: 'hidden' }}>
-            {passRatio > 0 && <div style={{ width: `${passRatio * 100}%`, height: '100%', background: '#059669', borderRadius: '4px', opacity: 0.8 }} />}
+            {passRatio > 0 && <div style={{ width: `${passRatio * 100}%`, height: '100%', background: 'var(--pass)', borderRadius: '4px', opacity: 0.8 }} />}
           </div>
           {/* Counts */}
           <div style={{ display: 'flex', gap: '0.4rem', fontSize: '0.72rem', fontWeight: 700 }}>
-            {node.passCount > 0 && <span style={{ color: '#059669' }}>✓{node.passCount}</span>}
-            {node.failCount > 0 && <span style={{ color: '#DA2C38' }}>✗{node.failCount}</span>}
+            {node.passCount > 0 && <span style={{ color: 'var(--pass-ink)' }}>✓{node.passCount}</span>}
+            {node.failCount > 0 && <span style={{ color: 'var(--fail-ink)' }}>✗{node.failCount}</span>}
             {node.skipCount > 0 && node.passCount === 0 && node.failCount === 0 && (
-              <span style={{ color: '#94a3b8' }}>{node.skipCount} skip</span>
+              <span style={{ color: 'var(--muted)' }}>{node.skipCount} skip</span>
             )}
           </div>
           {hasLinks && (
@@ -218,16 +225,16 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
         overflow: 'hidden',
         transition: 'max-height 0.38s ease, opacity 0.25s ease',
       }}>
-        <div style={{ padding: '1rem', borderTop: `1px solid ${col}25`, display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
+        <div style={{ padding: '1rem', borderTop: `1px solid ${withAlpha(col, 15)}`, display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
 
           {/* Control counts */}
           <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.125rem' }}>
             {[
-              { label: t('pages.dependencyGraph.passingLabel'), value: node.passCount, color: '#059669' },
-              { label: t('pages.dependencyGraph.failingLabel'), value: node.failCount, color: '#DA2C38' },
-              { label: t('pages.dependencyGraph.skippedLabel'), value: node.skipCount, color: '#94a3b8' },
+              { label: t('pages.dependencyGraph.passingLabel'), value: node.passCount, color: 'var(--pass)' },
+              { label: t('pages.dependencyGraph.failingLabel'), value: node.failCount, color: 'var(--fail)' },
+              { label: t('pages.dependencyGraph.skippedLabel'), value: node.skipCount, color: 'var(--skip)' },
             ].map(({ label, value, color }) => (
-              <div key={label} style={{ borderRadius: '8px', padding: '0.4rem 0.6rem', background: `${color}0d`, border: `1px solid ${color}20`, textAlign: 'center' }}>
+              <div key={label} style={{ borderRadius: '8px', padding: '0.4rem 0.6rem', background: withAlpha(color, 5), border: `1px solid ${withAlpha(color, 13)}`, textAlign: 'center' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color, letterSpacing: '.05em' }}>{label}</div>
                 <div style={{ fontSize: '1rem', fontWeight: 800, color }}>{value}</div>
               </div>
@@ -237,7 +244,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {/* Failing checks */}
           {failFindings.length > 0 && (
             <div style={{ width: '100%' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#DA2C38', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--fail-ink)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
                 {t('pages.dependencyGraph.failingChecks', { count: String(failFindings.length) })}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -245,9 +252,9 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
                   const sev = (f.severity ?? 'LOW').toUpperCase()
                   const sc = severityColor(sev)
                   return (
-                    <div key={i} style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', background: 'color-mix(in srgb, #da2c38 6%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 16%, transparent)' }}>
+                    <div key={i} style={{ padding: '0.4rem 0.6rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 16%, transparent)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: f.check_title ? '0.12rem' : 0 }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, borderRadius: '4px', padding: '0.05rem 0.3rem', background: `${sc}20`, color: sc, flexShrink: 0 }}>{sev[0]}</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 800, borderRadius: '4px', padding: '0.05rem 0.3rem', background: severityBg(sev, 12), color: sc, flexShrink: 0 }}>{sev[0]}</span>
                         <span style={{ fontSize: '0.7rem', fontFamily: 'monospace', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.control_id}</span>
                       </div>
                       {f.check_title && <div style={{ fontSize: '0.73rem', color: 'var(--text)', lineHeight: 1.35 }}>{f.check_title}</div>}
@@ -264,12 +271,12 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
           {/* Sample passing (only when mixed) */}
           {node.status === 'mixed' && passFindings.length > 0 && (
             <div style={{ width: '100%' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#059669', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--pass-ink)', letterSpacing: '.06em', marginBottom: '0.4rem' }}>
                 {t('pages.dependencyGraph.passingSample')}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                 {passFindings.slice(0, 5).map((f, i) => (
-                  <span key={i} style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: 'color-mix(in srgb, #059669 8%, transparent)', border: '1px solid color-mix(in srgb, #059669 20%, transparent)', color: '#059669', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span key={i} style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: 'color-mix(in srgb, var(--pass) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 20%, transparent)', color: 'var(--pass-ink)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <span style={{ fontWeight: 700 }}>✓</span>
                     {f.check_title || f.control_id}
                   </span>
@@ -291,7 +298,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                     {upstream.map(dep => (
                       <button key={dep.id} onClick={e => { e.stopPropagation(); onNavigate(dep.id) }}
-                        style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: `${nodeColor(dep)}18`, border: `1px solid ${nodeColor(dep)}40`, color: nodeColor(dep), cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
+                        style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: withAlpha(nodeColor(dep), 9), border: `1px solid ${withAlpha(nodeColor(dep), 25)}`, color: nodeColor(dep), cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
                         {dep.name || dep.rtypeLabel}
                       </button>
                     ))}
@@ -304,7 +311,7 @@ function ResourceCard({ node, edges, nodeMap, isOpen, onToggle, onNavigate }: {
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                     {downstream.map(dep => (
                       <button key={dep.id} onClick={e => { e.stopPropagation(); onNavigate(dep.id) }}
-                        style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: `${nodeColor(dep)}18`, border: `1px solid ${nodeColor(dep)}40`, color: nodeColor(dep), cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
+                        style={{ fontSize: '0.7rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: withAlpha(nodeColor(dep), 9), border: `1px solid ${withAlpha(nodeColor(dep), 25)}`, color: nodeColor(dep), cursor: 'pointer', fontFamily: 'ui-monospace, monospace' }}>
                         {dep.name || dep.rtypeLabel}
                       </button>
                     ))}
@@ -380,9 +387,10 @@ export default function DependencyGraphPage({ run }: Props) {
 
   if (run.findings.filter(f => f.resource).length === 0) {
     return (
-      <div className="card" style={{ padding: '4rem', textAlign: 'center', color: 'var(--muted)' }}>
-        {t('pages.dependencyGraph.noResources')}
-      </div>
+      <>
+        <h1 className="ui-sr-only">{t('pages.dependencyGraph.title')}</h1>
+        <EmptyState title={t('pages.dependencyGraph.noResources')} />
+      </>
     )
   }
 
@@ -393,6 +401,7 @@ export default function DependencyGraphPage({ run }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{t('pages.dependencyGraph.title')}</h1>
 
       {/* ── Stats strip ── */}
       <div className="card" style={{ padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
@@ -403,10 +412,10 @@ export default function DependencyGraphPage({ run }: Props) {
         <div style={{ width: '1px', height: '32px', background: 'var(--border)', flexShrink: 0 }} />
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {STATUS_ORDER.filter(s => counts[s] > 0).map(s => (
-            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.65rem', borderRadius: '999px', background: `${STATUS_COLOR[s]}18`, border: `1px solid ${STATUS_COLOR[s]}40` }}>
+            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.65rem', borderRadius: '999px', background: withAlpha(STATUS_COLOR[s], 9), border: `1px solid ${withAlpha(STATUS_COLOR[s], 25)}` }}>
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: STATUS_COLOR[s], display: 'inline-block', flexShrink: 0 }} />
               <span style={{ fontSize: '0.7rem', fontWeight: 700, color: STATUS_COLOR[s] }}>{counts[s]}</span>
-              <span style={{ fontSize: '0.68rem', color: STATUS_COLOR[s], opacity: 0.85 }}>{STATUS_LABEL[s]}</span>
+              <span style={{ fontSize: '0.7rem', color: STATUS_COLOR[s], opacity: 0.85 }}>{STATUS_LABEL[s]}</span>
             </div>
           ))}
         </div>
@@ -447,7 +456,7 @@ export default function DependencyGraphPage({ run }: Props) {
               {/* Group header */}
               <button
                 onClick={() => toggleGroup(status)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.875rem', borderRadius: '10px', border: `1px solid ${col}35`, background: `${col}0a`, cursor: 'pointer', marginBottom: isCollapsed ? 0 : '0.5rem', transition: 'background 0.15s' }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.875rem', borderRadius: '10px', border: `1px solid ${withAlpha(col, 21)}`, background: withAlpha(col, 4), cursor: 'pointer', marginBottom: isCollapsed ? 0 : '0.5rem', transition: 'background-color 0.15s ease' }}
               >
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: col, flexShrink: 0 }} />
                 <span style={{ fontSize: '0.78rem', fontWeight: 800, color: col, textTransform: 'uppercase', letterSpacing: '.05em' }}>
@@ -457,7 +466,7 @@ export default function DependencyGraphPage({ run }: Props) {
                   ({groupNodes.length})
                 </span>
                 {status === 'fail' && groupNodes.length > 0 && (
-                  <span style={{ fontSize: '0.68rem', color: col, opacity: 0.7, fontStyle: 'italic' }}>
+                  <span style={{ fontSize: '0.7rem', color: col, opacity: 0.7, fontStyle: 'italic' }}>
                     {t('pages.dependencyGraph.groupFailingSummary', { count: String(groupNodes.reduce((sum, n) => sum + n.failCount, 0)) })}
                   </span>
                 )}

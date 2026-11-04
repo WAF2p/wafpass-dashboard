@@ -7,7 +7,7 @@
  * conflict), Audit & Metadata. holding_admin only — the page that renders
  * this already gates on that.
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   createMandant, updateMandant,
   type MandantOut, type MandantCreatePayload, type MandantUpdatePayload,
@@ -15,6 +15,7 @@ import {
 } from '../api'
 import { useI18n } from '../i18n'
 import MandateLogo from './MandateLogo'
+import { useDialog } from '../ui/useDialog'
 
 interface Props {
   mandant: MandantOut | null // null = create mode
@@ -34,7 +35,7 @@ const inputStyle: React.CSSProperties = {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)',
+  fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
   textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem', display: 'block',
 }
 
@@ -66,6 +67,8 @@ type Tab = 'general' | 'governance' | 'policy' | 'audit'
 
 export default function MandateEditModal({ mandant, allMandants, onClose, onSaved }: Props) {
   const { t } = useI18n()
+  const panelRef = useRef<HTMLDivElement>(null)
+  useDialog(onClose, panelRef)
   const isEdit = mandant !== null
 
   const [tab, setTab] = useState<Tab>('general')
@@ -135,7 +138,13 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 60%, transparent)', zIndex: 9999, backdropFilter: 'blur(4px)' }} />
 
-      <div style={{
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEdit ? 'Edit mandate' : 'New mandate'}
+        tabIndex={-1}
+        style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         zIndex: 10000, width: '740px', maxWidth: '95vw',
         background: 'var(--surface)', borderRadius: '16px',
@@ -150,7 +159,7 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
           <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
             {isEdit ? t('pages.mandates.editMandateTitle') : t('pages.mandates.newMandateTitle')}
           </div>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} aria-label="Close" style={{
             background: 'none', border: '1px solid var(--border)', borderRadius: '8px',
             color: 'var(--muted)', cursor: 'pointer', padding: '0.3rem 0.65rem', fontSize: '0.85rem',
           }}>✕</button>
@@ -211,7 +220,7 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
                         }}
                       />
                     </label>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
                       {logoUrl.startsWith('data:') ? t('pages.mandates.logoLoaded') : t('pages.mandates.logoSizeHint')}
                     </span>
                   </div>
@@ -229,7 +238,7 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
                 <label style={labelStyle}>{t('pages.mandates.slugLabel')}</label>
                 <input style={{ ...inputStyle, opacity: isEdit ? 0.6 : 1 }} value={slug} disabled={isEdit}
                   onChange={e => { setSlugTouched(true); setSlug(e.target.value) }} placeholder="acme-corp" />
-                {!isEdit && <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.slugHint')}</div>}
+                {!isEdit && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.slugHint')}</div>}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
@@ -263,7 +272,7 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
               <div>
                 <label style={labelStyle}>{t('pages.mandates.editModal.jurisdictionLabel')}</label>
                 <input style={inputStyle} value={jurisdiction} onChange={e => setJurisdiction(e.target.value)} placeholder="EU, DE, US-CA…" />
-                <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.editModal.jurisdictionHint')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.editModal.jurisdictionHint')}</div>
               </div>
               <div>
                 <label style={labelStyle}>{t('pages.mandates.editModal.riskTierLabel')}</label>
@@ -275,7 +284,7 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
               <div>
                 <label style={labelStyle}>{t('pages.mandates.editModal.dataResidencyLabel')}</label>
                 <input style={inputStyle} value={dataResidency} onChange={e => setDataResidency(e.target.value)} placeholder="eu-central-1, on-prem-de…" />
-                <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.editModal.dataResidencyHint')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.editModal.dataResidencyHint')}</div>
               </div>
               <div style={{ height: '1px', background: 'var(--border)' }} />
               <div>
@@ -283,9 +292,9 @@ export default function MandateEditModal({ mandant, allMandants, onClose, onSave
                 <select id="mandate-auth-mode" style={{ ...inputStyle, cursor: 'pointer' }} value={authMode} onChange={e => setAuthMode(e.target.value as AuthMode)}>
                   {AUTH_MODES.map(am => <option key={am} value={am}>{t(`pages.mandates.editModal.authMode.${am}`)}</option>)}
                 </select>
-                <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.editModal.authModeHint')}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>{t('pages.mandates.editModal.authModeHint')}</div>
                 {authMode !== 'local_only' && (
-                  <div style={{ fontSize: '0.67rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.mandates.editModal.authModeSsoConfigHint')}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.15rem' }}>{t('pages.mandates.editModal.authModeSsoConfigHint')}</div>
                 )}
               </div>
             </div>

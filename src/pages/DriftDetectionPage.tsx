@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRun, Finding, PlanChange, RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
-import { severityColor } from '../severity'
+import { scoreColor, severityBg, severityColor } from '../severity'
+import { EmptyState, SkeletonText } from '../ui'
 
 interface Props {
   run: RunDetail
@@ -29,11 +30,16 @@ const SEV_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low
 const sevOrder = (s: string) => SEV_ORDER[s?.toLowerCase()] ?? 9
 
 const ACTION_META: Record<string, { label: string; color: string; bg: string; glyph: string }> = {
-  update:  { label: 'Changed',  color: '#d97706', bg: 'rgba(217,119,6,.10)',   glyph: '~' },
-  replace: { label: 'Replaced', color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 10%, transparent)', glyph: '⟳' },
-  delete:  { label: 'Destroyed',color: '#dc2626', bg: 'rgba(220,38,38,.10)',   glyph: '−' },
-  create:  { label: 'Created',  color: '#16a34a', bg: 'color-mix(in srgb, #16a34a 8%, transparent)',   glyph: '+' },
-  'no-op': { label: 'No-op',    color: '#94a3b8', bg: 'transparent',           glyph: '·' },
+  update:  { label: 'Changed',  color: 'var(--sev-medium)', bg: 'color-mix(in srgb, var(--waf-warn) 10%, transparent)', glyph: '~' },
+  replace: { label: 'Replaced', color: 'var(--waf-info)', bg: 'color-mix(in srgb, var(--waf-info) 10%, transparent)', glyph: '⟳' },
+  delete:  { label: 'Destroyed',color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 10%, transparent)', glyph: '−' },
+  create:  { label: 'Created',  color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 8%, transparent)', glyph: '+' },
+  'no-op': { label: 'No-op',    color: 'var(--muted)', bg: 'transparent', glyph: '·' },
+}
+
+/** Alpha over a token or var() colour without string-concatenating hex. */
+function withAlpha(color: string, percent: number): string {
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`
 }
 const actionMeta = (a: string) => ACTION_META[a] ?? ACTION_META['no-op']
 
@@ -109,7 +115,7 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
 
   if (sorted.length < 2) {
     return (
-      <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>
+      <div style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center', padding: '16px 0' }}>
         {t('pages.driftDetection.complianceRequires')}
       </div>
     )
@@ -128,13 +134,13 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
   return (
     <svg width={W} height={H} style={{ overflow: 'visible', display: 'block', margin: '0 auto' }}>
       {/* Fill */}
-      <polygon points={fillPoints} fill="color-mix(in srgb, #2563eb 10%, transparent)" />
+      <polygon points={fillPoints} fill="color-mix(in srgb, var(--waf-brand) 10%, transparent)" />
       {/* Line */}
-      <polyline points={points} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round" />
+      <polyline points={points} fill="none" stroke="var(--waf-brand-ink)" strokeWidth="2" strokeLinejoin="round" />
       {/* Dots */}
       {sorted.map((r, i) => {
         const isCurrent = r.id === currentId
-        const c = r.score >= 80 ? '#059669' : r.score >= 60 ? '#d97706' : '#dc2626'
+        const c = scoreColor(r.score)
         return (
           <g key={r.id}>
             <circle cx={px(i)} cy={py(r.score)} r={isCurrent ? 5 : 3}
@@ -147,8 +153,8 @@ function ScoreTrend({ projectRuns, currentId }: { projectRuns: RunSummary[]; cur
         )
       })}
       {/* Axis labels */}
-      <text x={PAD} y={H} fontSize={8} fill="var(--text-muted)">{sorted[0].score}</text>
-      <text x={W - PAD} y={H} fontSize={8} fill="var(--text-muted)" textAnchor="end">
+      <text x={PAD} y={H} fontSize={8} fill="var(--muted)">{sorted[0].score}</text>
+      <text x={W - PAD} y={H} fontSize={8} fill="var(--muted)" textAnchor="end">
         {sorted[sorted.length - 1].score}
       </text>
     </svg>
@@ -161,12 +167,12 @@ function DriftCard({ item, direction }: { item: ComplianceDriftItem; direction: 
   const [open, setOpen] = useState(false)
   const color = direction === 'regressed' ? severityColor(item.severity) : 'var(--score-high-ink)'
   const bg    = direction === 'regressed'
-    ? `rgba(${item.severity?.toLowerCase() === 'critical' ? '220,38,38' : item.severity?.toLowerCase() === 'high' ? '217,119,6' : '37,99,235'},.06)`
-    : 'color-mix(in srgb, #059669 6%, transparent)'
+    ? severityBg(item.severity, 6)
+    : 'color-mix(in srgb, var(--pass) 6%, transparent)'
 
   return (
     <div style={{
-      border: `1px solid ${color}33`, borderRadius: 8, marginBottom: 8,
+      border: `1px solid ${withAlpha(color, 20)}`, borderRadius: 8, marginBottom: 8,
       background: bg, overflow: 'hidden',
     }}>
       <div
@@ -174,8 +180,8 @@ function DriftCard({ item, direction }: { item: ComplianceDriftItem; direction: 
         onClick={() => setOpen(o => !o)}
       >
         <span style={{
-          fontSize: 10, fontWeight: 700, color, background: `${color}22`,
-          border: `1px solid ${color}44`, borderRadius: 4, padding: '2px 6px',
+          fontSize: '0.7rem', fontWeight: 700, color, background: withAlpha(color, 13),
+          border: `1px solid ${withAlpha(color, 27)}`, borderRadius: 4, padding: '2px 6px',
           textTransform: 'uppercase', flexShrink: 0, marginTop: 1,
         }}>
           {item.severity}
@@ -184,14 +190,14 @@ function DriftCard({ item, direction }: { item: ComplianceDriftItem; direction: 
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
             {item.check_title || item.control_id}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>
             {item.resource}
           </div>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: 12, color: 'var(--muted)', flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
       </div>
       {open && (
-        <div style={{ padding: '0 14px 12px', borderTop: `1px solid ${color}22` }}>
+        <div style={{ padding: '0 14px 12px', borderTop: `1px solid ${withAlpha(color, 13)}` }}>
           <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             {item.message}
           </div>
@@ -199,16 +205,16 @@ function DriftCard({ item, direction }: { item: ComplianceDriftItem; direction: 
             <div style={{
               marginTop: 8, padding: '8px 10px',
               background: 'var(--bg-secondary)', borderRadius: 6,
-              fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5,
+              fontSize: 11, color: 'var(--muted)', lineHeight: 1.5,
             }}>
               <strong style={{ color: 'var(--text-secondary)' }}>Remediation:</strong> {item.remediation}
             </div>
           )}
           <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderRadius: 4, padding: '2px 6px' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: 4, padding: '2px 6px' }}>
               {item.pillar}
             </span>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderRadius: 4, padding: '2px 6px', fontFamily: 'monospace' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: 4, padding: '2px 6px', fontFamily: 'monospace' }}>
               {item.check_id}
             </span>
           </div>
@@ -228,7 +234,7 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
 
   return (
     <div style={{
-      border: `1px solid ${meta.color}44`, borderRadius: 8, marginBottom: 8,
+      border: `1px solid ${withAlpha(meta.color, 27)}`, borderRadius: 8, marginBottom: 8,
       background: meta.bg, overflow: 'hidden',
     }}>
       <div
@@ -237,7 +243,7 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
       >
         <span style={{
           fontSize: 13, fontWeight: 700, color: meta.color,
-          background: `${meta.color}22`, border: `1px solid ${meta.color}44`,
+          background: withAlpha(meta.color, 13), border: `1px solid ${withAlpha(meta.color, 27)}`,
           borderRadius: 4, padding: '2px 8px', flexShrink: 0,
         }}>
           {meta.glyph} {meta.label}
@@ -247,11 +253,11 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
             {change.address}
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{change.type}</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>{change.type}</span>
             {secAttrs.length > 0 && (
               <span style={{
-                fontSize: 10, fontWeight: 700, color: '#dc2626',
-                background: 'rgba(220,38,38,.10)', border: '1px solid rgba(220,38,38,.3)',
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--fail-ink)',
+                background: 'color-mix(in srgb, var(--fail) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
                 borderRadius: 4, padding: '1px 6px',
               }}>
                 security attrs changed: {secAttrs.join(', ')}
@@ -259,8 +265,8 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
             )}
             {isNonCompliant && (
               <span style={{
-                fontSize: 10, fontWeight: 700, color: '#7c3aed',
-                background: 'color-mix(in srgb, #7c3aed 10%, transparent)', border: '1px solid color-mix(in srgb, #7c3aed 30%, transparent)',
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-info)',
+                background: 'color-mix(in srgb, var(--waf-info) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-info) 30%, transparent)',
                 borderRadius: 4, padding: '1px 6px',
               }}>
                 non-compliant
@@ -268,10 +274,10 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
             )}
           </div>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: 12, color: 'var(--muted)', flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
       </div>
       {open && change.before && change.after && (
-        <div style={{ padding: '0 14px 12px', borderTop: `1px solid ${meta.color}22` }}>
+        <div style={{ padding: '0 14px 12px', borderTop: `1px solid ${withAlpha(meta.color, 13)}` }}>
           <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {['before', 'after'].map(side => {
               const attrs = side === 'before' ? change.before! : change.after!
@@ -282,19 +288,19 @@ function StateDriftCard({ change, failingResources }: { change: PlanChange; fail
               }).slice(0, 8)
               return (
                 <div key={side}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 4 }}>
                     {side}
                   </div>
                   {changedKeys.length === 0 ? (
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>—</div>
                   ) : changedKeys.map(k => (
                     <div key={k} style={{
                       fontSize: 11, fontFamily: 'monospace', marginBottom: 3,
                       padding: '3px 6px', borderRadius: 4,
                       background: secAttrs.includes(k)
-                        ? 'rgba(220,38,38,.08)'
+                        ? 'color-mix(in srgb, var(--fail) 8%, transparent)'
                         : 'var(--bg-secondary)',
-                      color: secAttrs.includes(k) ? '#dc2626' : 'var(--text-secondary)',
+                      color: secAttrs.includes(k) ? 'var(--fail-ink)' : 'var(--text-secondary)',
                     }}>
                       <strong>{k}:</strong>{' '}
                       {String(attrs[k]).length > 60
@@ -406,14 +412,15 @@ export default function DriftDetectionPage({ run, runs }: Props) {
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 1200, margin: '0 auto' }}>
+      <h1 className="ui-sr-only">{t('pages.driftDetection.title')}</h1>
 
       {/* ── Header banner ───────────────────────────────────────────────── */}
       <div style={{
         borderRadius: 12, padding: '20px 24px', marginBottom: 24,
         background: hasDrift
-          ? 'linear-gradient(135deg, rgba(220,38,38,.08) 0%, rgba(217,119,6,.05) 100%)'
-          : 'linear-gradient(135deg, color-mix(in srgb, #059669 8%, transparent) 0%, rgba(16,185,129,.05) 100%)',
-        border: `1px solid ${hasDrift ? 'rgba(220,38,38,.2)' : 'color-mix(in srgb, #059669 20%, transparent)'}`,
+          ? 'color-mix(in srgb, var(--fail) 6%, transparent)'
+          : 'color-mix(in srgb, var(--pass) 6%, transparent)',
+        border: `1px solid ${hasDrift ? 'color-mix(in srgb, var(--fail) 20%, transparent)' : 'color-mix(in srgb, var(--pass) 20%, transparent)'}`,
         display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
       }}>
         <div style={{ fontSize: 32 }}>{hasDrift ? '⚠️' : '✅'}</div>
@@ -434,41 +441,41 @@ export default function DriftDetectionPage({ run, runs }: Props) {
             <div style={{ textAlign: 'center' }}>
               <div style={{
                 fontSize: 24, fontWeight: 800,
-                color: scoreDelta > 0 ? '#059669' : scoreDelta < 0 ? '#dc2626' : 'var(--text-muted)',
+                color: scoreDelta > 0 ? 'var(--pass-ink)' : scoreDelta < 0 ? 'var(--fail-ink)' : 'var(--muted)',
               }}>
                 {scoreDelta > 0 ? '+' : ''}{scoreDelta}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.scoreDeltaLabel')}</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('pages.driftDetection.scoreDeltaLabel')}</div>
             </div>
           )}
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: regressed.length > 0 ? '#dc2626' : '#059669' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: regressed.length > 0 ? 'var(--fail-ink)' : 'var(--pass-ink)' }}>
               {regressed.length}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.regressionsLabel')}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('pages.driftDetection.regressionsLabel')}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: recovered.length > 0 ? '#059669' : 'var(--text-muted)' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: recovered.length > 0 ? 'var(--pass-ink)' : 'var(--muted)' }}>
               {recovered.length}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.recoveredLabel')}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('pages.driftDetection.recoveredLabel')}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: filteredStateDrift.length > 0 ? '#d97706' : 'var(--text-muted)' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: filteredStateDrift.length > 0 ? 'var(--sev-medium)' : 'var(--muted)' }}>
               {filteredStateDrift.length}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.stateChangesLabel')}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('pages.driftDetection.stateChangesLabel')}</div>
           </div>
           {secStateChanges > 0 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#dc2626' }}>{secStateChanges}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.securityAttrsLabel')}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--fail-ink)' }}>{secStateChanges}</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('pages.driftDetection.securityAttrsLabel')}</div>
             </div>
           )}
           {nonCompliantDrift > 0 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#7c3aed' }}>{nonCompliantDrift}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('pages.driftDetection.driftNonCompliant')}</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--waf-info)' }}>{nonCompliantDrift}</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('pages.driftDetection.driftNonCompliant')}</div>
             </div>
           )}
         </div>
@@ -482,14 +489,14 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {/* Tab bar */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid var(--card-border)' }}>
             {([
-              ['regressed', t('pages.driftDetection.tabRegressions', { count: String(regressed.length) }), '#dc2626'],
-              ['recovered', t('pages.driftDetection.tabRecovered',   { count: String(recovered.length) }), '#059669'],
-              ['state',     t('pages.driftDetection.tabStateDrift',  { count: String(filteredStateDrift.length) }), '#d97706'],
+              ['regressed', t('pages.driftDetection.tabRegressions', { count: String(regressed.length) }), 'var(--fail-ink)'],
+              ['recovered', t('pages.driftDetection.tabRecovered',   { count: String(recovered.length) }), 'var(--pass-ink)'],
+              ['state',     t('pages.driftDetection.tabStateDrift',  { count: String(filteredStateDrift.length) }), 'var(--sev-medium)'],
             ] as [string, string, string][]).map(([key, label, color]) => (
               <button key={key} onClick={() => setTab(key as typeof tab)} style={{
                 padding: '8px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
                 background: 'none', borderBottom: tab === key ? `2px solid ${color}` : '2px solid transparent',
-                color: tab === key ? color : 'var(--text-muted)',
+                color: tab === key ? color : 'var(--muted)',
                 marginBottom: -1,
               }}>
                 {label}
@@ -512,7 +519,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
               </select>
               {(pillarFilter || sevFilter) && (
                 <button onClick={() => { setPillarFilter(''); setSevFilter('') }}
-                  style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'none', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>
+                  style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--card-border)', background: 'none', color: 'var(--muted)', fontSize: 12, cursor: 'pointer' }}>
                   {t('pages.driftDetection.clear')}
                 </button>
               )}
@@ -525,9 +532,9 @@ export default function DriftDetectionPage({ run, runs }: Props) {
               {(['all', 'update', 'replace', 'delete', 'create'] as const).map(a => (
                 <button key={a} onClick={() => setActionFilter(a)} style={{
                   padding: '5px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
-                  border: `1px solid ${actionFilter === a ? (ACTION_META[a]?.color ?? '#94a3b8') : 'var(--card-border)'}`,
-                  background: actionFilter === a ? `${ACTION_META[a]?.color ?? '#94a3b8'}18` : 'none',
-                  color: actionFilter === a ? (ACTION_META[a]?.color ?? 'var(--text-primary)') : 'var(--text-muted)',
+                  border: `1px solid ${actionFilter === a ? (ACTION_META[a]?.color ?? 'var(--muted)') : 'var(--card-border)'}`,
+                  background: actionFilter === a ? withAlpha(ACTION_META[a]?.color ?? 'var(--muted)', 9) : 'none',
+                  color: actionFilter === a ? (ACTION_META[a]?.color ?? 'var(--text-primary)') : 'var(--muted)',
                   fontWeight: actionFilter === a ? 700 : 400,
                 }}>
                   {a === 'all' ? t('pages.driftDetection.allFilter') : (ACTION_META[a]?.label ?? a)}
@@ -538,38 +545,30 @@ export default function DriftDetectionPage({ run, runs }: Props) {
 
           {/* Loading state */}
           {prevLoading && (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: 14 }}>
-              {t('pages.driftDetection.loadingPrev')}
+            <div style={{ padding: '20px 0' }}>
+              <SkeletonText lines={5} />
             </div>
           )}
 
           {/* No previous run */}
           {!prevLoading && !prevRun && (tab === 'regressed' || tab === 'recovered') && (
-            <div style={{
-              textAlign: 'center', padding: '40px 20px',
-              border: '1px dashed var(--card-border)', borderRadius: 10,
-              color: 'var(--text-muted)', fontSize: 14,
-            }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-              <strong>{t('pages.driftDetection.noPrevRunProject', { project: run.project })}</strong>
-              <div style={{ marginTop: 6, fontSize: 12 }}>
-                {t('pages.driftDetection.complianceRequires')} {t('pages.driftDetection.complianceRequiresDetail')}
-              </div>
-            </div>
+            <EmptyState
+              icon={<span style={{ fontSize: 32 }}>🔍</span>}
+              title={t('pages.driftDetection.noPrevRunProject', { project: run.project })}
+              description={`${t('pages.driftDetection.complianceRequires')} ${t('pages.driftDetection.complianceRequiresDetail')}`}
+            />
           )}
 
           {/* Regressions tab */}
           {!prevLoading && tab === 'regressed' && prevRun && (
             filteredRegressed.length === 0 ? (
-              <div style={{
-                textAlign: 'center', padding: '32px', border: '1px dashed var(--card-border)',
-                borderRadius: 10, color: '#059669', fontSize: 14,
-              }}>
-                {t('pages.driftDetection.noRegressions')}
-              </div>
+              <EmptyState
+                compact
+                title={<span style={{ color: 'var(--pass-ink)' }}>{t('pages.driftDetection.noRegressions')}</span>}
+              />
             ) : (
               <>
-                <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
+                <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--muted)' }}>
                   {t('pages.driftDetection.regressionSummary', { count: String(filteredRegressed.length), s: filteredRegressed.length !== 1 ? 's' : '' })}
                 </div>
                 {filteredRegressed.map((item, i) => (
@@ -582,15 +581,10 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {/* Recovered tab */}
           {!prevLoading && tab === 'recovered' && prevRun && (
             filteredRecovered.length === 0 ? (
-              <div style={{
-                textAlign: 'center', padding: '32px', border: '1px dashed var(--card-border)',
-                borderRadius: 10, color: 'var(--text-muted)', fontSize: 14,
-              }}>
-                {t('pages.driftDetection.noRecoveredRun')}
-              </div>
+              <EmptyState compact title={t('pages.driftDetection.noRecoveredRun')} />
             ) : (
               <>
-                <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
+                <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--muted)' }}>
                   {t('pages.driftDetection.recoveredSummary', { count: String(filteredRecovered.length), s: filteredRecovered.length !== 1 ? 's' : '' })}
                 </div>
                 {filteredRecovered.map((item, i) => (
@@ -603,29 +597,21 @@ export default function DriftDetectionPage({ run, runs }: Props) {
           {/* State drift tab */}
           {tab === 'state' && (
             !run.plan_changes ? (
-              <div style={{
-                textAlign: 'center', padding: '40px 20px',
-                border: '1px dashed var(--card-border)', borderRadius: 10,
-                color: 'var(--text-muted)', fontSize: 14,
-              }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-                <strong>{t('pages.driftDetection.noTerraformPlan')}</strong>
-                <div style={{ marginTop: 6, fontSize: 12 }}>
-                  {t('pages.driftDetection.noTerraformPlanDesc')}
-                </div>
-              </div>
+              <EmptyState
+                icon={<span style={{ fontSize: 32 }}>📋</span>}
+                title={t('pages.driftDetection.noTerraformPlan')}
+                description={t('pages.driftDetection.noTerraformPlanDesc')}
+              />
             ) : filteredStateDrift.length === 0 ? (
-              <div style={{
-                textAlign: 'center', padding: '32px', border: '1px dashed var(--card-border)',
-                borderRadius: 10, color: '#059669', fontSize: 14,
-              }}>
-                {t('pages.driftDetection.noStateChanges')}
-              </div>
+              <EmptyState
+                compact
+                title={<span style={{ color: 'var(--pass-ink)' }}>{t('pages.driftDetection.noStateChanges')}</span>}
+              />
             ) : (
               <>
-                <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--text-muted)' }}>
-                  {t('pages.driftDetection.stateDriftSummary', { count: String(filteredStateDrift.length), s: filteredStateDrift.length !== 1 ? 's' : '' })} — <strong style={{ color: '#dc2626' }}>{secStateChanges}</strong> {t('pages.driftDetection.securityAttr').toLowerCase()}
-                  {nonCompliantDrift > 0 && <>, <strong style={{ color: '#7c3aed' }}>{nonCompliantDrift}</strong> {t('pages.driftDetection.driftNonCompliant')}</>}.
+                <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--muted)' }}>
+                  {t('pages.driftDetection.stateDriftSummary', { count: String(filteredStateDrift.length), s: filteredStateDrift.length !== 1 ? 's' : '' })} — <strong style={{ color: 'var(--fail-ink)' }}>{secStateChanges}</strong> {t('pages.driftDetection.securityAttr').toLowerCase()}
+                  {nonCompliantDrift > 0 && <>, <strong style={{ color: 'var(--waf-info)' }}>{nonCompliantDrift}</strong> {t('pages.driftDetection.driftNonCompliant')}</>}.
                 </div>
                 {filteredStateDrift.map((c, i) => (
                   <StateDriftCard key={i} change={c} failingResources={failingResources} />
@@ -644,7 +630,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
               {t('pages.driftDetection.scoreTrend')} · {run.project}
             </div>
             <ScoreTrend projectRuns={projectRuns} currentId={run.id} />
-            <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)' }}>
+            <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)' }}>
               <span>{t('pages.driftDetection.oldest')}</span>
               <span>{t('pages.driftDetection.runsLabel', { count: String(projectRuns.length), s: projectRuns.length !== 1 ? 's' : '' })}</span>
               <span>{t('pages.driftDetection.latest')}</span>
@@ -666,8 +652,8 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                       <span style={{ fontSize: 11, color: 'var(--text-secondary)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pillar}</span>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{
-                          fontSize: 10, fontWeight: 700,
-                          color: delta > 0 ? '#059669' : delta < 0 ? '#dc2626' : 'var(--text-muted)',
+                          fontSize: '0.7rem', fontWeight: 700,
+                          color: delta > 0 ? 'var(--pass-ink)' : delta < 0 ? 'var(--fail-ink)' : 'var(--muted)',
                         }}>
                           {delta > 0 ? '+' : ''}{delta !== 0 ? delta.toFixed(0) : '—'}
                         </span>
@@ -679,7 +665,7 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                     <div style={{ height: 4, background: 'var(--bg-secondary)', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{
                         height: '100%', width: `${score}%`,
-                        background: score >= 80 ? '#059669' : score >= 60 ? '#d97706' : '#dc2626',
+                        background: scoreColor(score),
                         borderRadius: 2, transition: 'width .3s',
                       }} />
                     </div>
@@ -704,16 +690,16 @@ export default function DriftDetectionPage({ run, runs }: Props) {
                       <div key={key} style={{
                         display: 'flex', alignItems: 'center', gap: 6,
                         padding: '6px 12px', borderRadius: 6,
-                        background: meta.bg, border: `1px solid ${meta.color}33`,
+                        background: meta.bg, border: `1px solid ${withAlpha(meta.color, 20)}`,
                       }}>
                         <span style={{ fontWeight: 700, color: meta.color, fontSize: 15 }}>{meta.glyph}</span>
                         <span style={{ fontWeight: 700, color: meta.color, fontSize: 14 }}>{val}</span>
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{key}</span>
+                        <span style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'capitalize' }}>{key}</span>
                       </div>
                     )
                   })}
               </div>
-              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-muted)' }}>
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--muted)' }}>
                 {t('pages.driftDetection.terraform')} {run.plan_changes.terraform_version} · scanned {new Date(run.plan_changes.scanned_at).toLocaleString()}
               </div>
             </div>

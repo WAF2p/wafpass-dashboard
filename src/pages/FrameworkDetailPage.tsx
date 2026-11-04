@@ -3,6 +3,7 @@ import { RunDetail, ControlMeta } from '../api'
 import { FRAMEWORKS, PILLAR_COLOR } from '../controls-data'
 import { useControlsCatalogue } from '../useControlsCatalogue'
 import { useI18n } from '../i18n'
+import { EmptyState } from '../ui'
 import type { FilterState, Page } from '../routing'
 import { scoreColor } from '../severity';
 
@@ -27,7 +28,7 @@ function CircularScore({ value, size = 96, stroke = 8, color, track = 'var(--tra
   const c = 2 * Math.PI * r
   const offset = c - (pct / 100) * c
   return (
-    <div style={{ position: 'relative', width: size, height: size, filter: `drop-shadow(0 0 8px ${color})` }}>
+    <div style={{ position: 'relative', width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         <defs>
           <linearGradient id={`fdgGrad-${value}`} x1="0" y1="0" x2="1" y2="1">
@@ -135,7 +136,7 @@ function FrameworkLogo({ framework, onChange }: { framework: typeof FRAMEWORKS[n
 function SectionCard({ title, subtitle, children, style = {} }: { title: string; subtitle?: string; children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
-      background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem', ...style,
+      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem', ...style,
     }}>
       <div style={{ marginBottom: '1rem' }}>
         <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text)' }}>{title}</div>
@@ -243,12 +244,14 @@ export default function FrameworkDetailPage({ run, navigate, frameworkId }: Prop
 
   if (!framework) {
     return (
-      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
-        <p>{t('frameworkDetail.notFound')}</p>
-        <button className="scc-btn" onClick={() => navigate('compliance')}>
-          <ArrowLeftIcon /> {t('frameworkDetail.back')}
-        </button>
-      </div>
+      <EmptyState
+        title={t('frameworkDetail.notFound')}
+        action={(
+          <button className="scc-btn" onClick={() => navigate('compliance')}>
+            <ArrowLeftIcon /> {t('frameworkDetail.back')}
+          </button>
+        )}
+      />
     )
   }
 
@@ -317,9 +320,10 @@ export default function FrameworkDetailPage({ run, navigate, frameworkId }: Prop
         </div>
 
         {filteredControls.length === 0 && !groupByRequirement ? (
-          <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '2rem', fontSize: '0.85rem' }}>
-            {search ? t('frameworkDetail.noSearchMatch') : t('frameworkDetail.noMappedControls')}
-          </div>
+          <EmptyState
+            compact
+            title={search ? t('frameworkDetail.noSearchMatch') : t('frameworkDetail.noMappedControls')}
+          />
         ) : groupByRequirement ? (
           <div className="fdg-groups">
             {groupedByRequirement
@@ -422,10 +426,7 @@ const frameworkDetailCss = `
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  background:
-    radial-gradient(circle at 20% 50%, color-mix(in srgb, var(--fw-color) 12%, transparent) 0%, transparent 40%),
-    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--waf-brand) 8%, transparent) 0%, transparent 35%),
-    linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+  background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--fw-color) 22%, transparent);
   border-radius: 20px;
   padding: 1.5rem 1.75rem;
@@ -441,7 +442,7 @@ const frameworkDetailCss = `
   gap: 0.4rem;
   background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent);
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   border-radius: 6px;
   padding: 0.35rem 0.65rem;
   font-size: 0.72rem;
@@ -477,7 +478,6 @@ const frameworkDetailCss = `
   border-radius: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 0 20px color-mix(in srgb, var(--fw-color) 18%, transparent);
 }
 .fdg-hero__logo {
   width: 100%;
@@ -500,14 +500,14 @@ const frameworkDetailCss = `
   background: var(--surface);
   color: var(--muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   padding: 0;
 }
 .fdg-hero__logo-upload:hover,
 .fdg-hero__logo-reset:hover {
-  background: var(--waf-brand);
-  color: white;
-  border-color: var(--waf-brand);
+  background: var(--waf-brand-btn);
+  color: #fff;
+  border-color: var(--waf-brand-btn);
 }
 .fdg-hero__logo-upload input {
   position: absolute;
@@ -644,12 +644,12 @@ const frameworkDetailCss = `
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .fdg-toggle--active {
   background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
   border-color: color-mix(in srgb, var(--waf-brand) 30%, transparent);
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
 }
 
 .fdg-groups {
@@ -733,7 +733,7 @@ const frameworkDetailCss = `
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   flex-shrink: 0;
 }
 .fdg-control__title {
@@ -769,7 +769,7 @@ const frameworkDetailCss = `
 .fdg-control__req {
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent);
   border-radius: 4px;

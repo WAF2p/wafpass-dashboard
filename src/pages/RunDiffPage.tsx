@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { RunSummary, RunDetail, Finding, fetchRun } from '../api'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 import { severityBg, severityColor, scoreColor } from '../severity'
+import { PILLARS } from '../pillars'
+import { EmptyState, Skeleton } from '../ui'
 
 interface Props {
   runs: RunSummary[]
@@ -10,16 +13,7 @@ interface Props {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 }
-const PILLAR_META: { key: string; label: string; color: string }[] = [
-  { key: 'security',       label: 'Security',       color: '#DA2C38' },
-  { key: 'cost',           label: 'Cost',            color: '#0094FF' },
-  { key: 'operations',     label: 'Operations',      color: '#8b5cf6' },
-  { key: 'performance',    label: 'Performance',     color: '#f97316' },
-  { key: 'reliability',    label: 'Reliability',     color: '#22c55e' },
-  { key: 'sovereign',      label: 'Sovereignty',     color: '#eab308' },
-  { key: 'sustainability', label: 'Sustainability',  color: '#14b8a6' },
-  { key: 'agentic',        label: 'Agentic',        color: '#ec4899' },
-]
+const PILLAR_META = PILLARS
 
 // Normalize pillar names: database uses "operational", dashboard uses "operations"
 function normalizePillarName(pillar: string): string {
@@ -28,7 +22,7 @@ function normalizePillarName(pillar: string): string {
 }
 
 function deltaColor(d: number) {
-  return d > 0 ? '#059669' : d < 0 ? '#DA2C38' : '#94a3b8'
+  return d > 0 ? 'var(--pass-ink)' : d < 0 ? 'var(--fail-ink)' : 'var(--muted)'
 }
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -114,8 +108,8 @@ function PillarChip({ pillar }: { pillar: string }) {
   return (
     <span style={{
       fontSize: '0.7rem', fontWeight: 600, borderRadius: '4px', padding: '0.1rem 0.4rem',
-      background: meta ? `${meta.color}18` : 'rgba(148,163,184,.12)',
-      color: meta?.color ?? '#94a3b8', flexShrink: 0,
+      background: meta ? `color-mix(in srgb, ${meta.color} 10%, transparent)` : 'var(--bg)',
+      color: meta?.color ?? 'var(--muted)', flexShrink: 0,
     }}>{meta?.label ?? pillar ?? '—'}</span>
   )
 }
@@ -125,9 +119,9 @@ function DiffCard({ item }: { item: DiffItem }) {
   const [open, setOpen] = useState(false)
   const finding = item.headFinding ?? item.baseFinding
 
-  const leftAccent = item.status === 'newly_failed' ? '#DA2C38'
-    : item.status === 'fixed' ? '#059669'
-    : '#d97706'
+  const leftAccent = item.status === 'newly_failed' ? 'var(--fail)'
+    : item.status === 'fixed' ? 'var(--pass)'
+    : 'var(--waf-warn)'
 
   return (
     <div
@@ -191,11 +185,12 @@ function DiffSection({ items, status }: { items: DiffItem[]; status: DiffStatus 
   if (sorted.length === 0) {
     const label = status === 'newly_failed' ? t('pages.diff.noNewFailures') : status === 'fixed' ? t('pages.diff.nothingFixed') : t('pages.diff.noPersistent')
     return (
-      <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-        {status === 'fixed'
-          ? <span style={{ color: '#059669', fontWeight: 600 }}>{label}</span>
+      <EmptyState
+        compact
+        title={status === 'fixed'
+          ? <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{label}</span>
           : label}
-      </div>
+      />
     )
   }
 
@@ -281,18 +276,10 @@ export default function RunDiffPage({ runs }: Props) {
   }, [headId])
 
   if (runs.length === 0) {
-    return (
-      <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        {t('pages.diff.needTwoRuns')}
-      </div>
-    )
+    return <EmptyState title={t('pages.diff.needTwoRuns')} />
   }
   if (runs.length === 1) {
-    return (
-      <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-        {t('pages.diff.onlyOneRun')}
-      </div>
-    )
+    return <EmptyState title={t('pages.diff.onlyOneRun')} />
   }
 
   const diff = useMemo(() => {
@@ -340,13 +327,14 @@ export default function RunDiffPage({ runs }: Props) {
   const sameRun = baseId === headId
 
   const TAB_CONFIG: { status: Tab; label: string; color: string; bg: string }[] = [
-    { status: 'newly_failed',  label: t('pages.diff.newlyFailed'),   color: '#DA2C38', bg: 'color-mix(in srgb, #da2c38 10%, transparent)' },
-    { status: 'fixed',         label: t('pages.diff.fixed'),          color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)' },
-    { status: 'still_failing', label: t('pages.diff.stillFailing'),   color: '#d97706', bg: 'rgba(217,119,6,.10)' },
+    { status: 'newly_failed',  label: t('pages.diff.newlyFailed'),   color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 10%, transparent)' },
+    { status: 'fixed',         label: t('pages.diff.fixed'),          color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 10%, transparent)' },
+    { status: 'still_failing', label: t('pages.diff.stillFailing'),   color: 'var(--sev-medium)', bg: 'color-mix(in srgb, var(--waf-warn) 10%, transparent)' },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.diff}</h1>
 
       {/* ── Run selectors ── */}
       <div className="card" style={{ padding: '1rem 1.25rem' }}>
@@ -363,7 +351,7 @@ export default function RunDiffPage({ runs }: Props) {
           <RunSelector label={t('pages.diff.headLabel')} value={headId} runs={sortedRuns} onChange={id => { setHeadId(id); setActiveTab('newly_failed') }} />
         </div>
         {sameRun && (
-          <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'color-mix(in srgb, #eab308 10%, transparent)', border: '1px solid color-mix(in srgb, #eab308 30%, transparent)', borderRadius: '8px', fontSize: '0.78rem', color: '#d97706' }}>
+          <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'color-mix(in srgb, var(--waf-warn) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-warn) 30%, transparent)', borderRadius: '8px', fontSize: '0.78rem', color: 'var(--sev-medium)' }}>
             {t('pages.diff.sameRunWarning')}
           </div>
         )}
@@ -394,7 +382,7 @@ export default function RunDiffPage({ runs }: Props) {
                   {scoreDelta > 0 ? '+' : ''}{scoreDelta} pts
                 </div>
               )}
-              <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.2rem' }}>
                 {scoreDelta !== null && scoreDelta > 0 ? t('pages.diff.scoreImproved') : scoreDelta !== null && scoreDelta < 0 ? t('pages.diff.scoreRegressed') : t('pages.diff.noChange')}
               </div>
             </div>
@@ -417,8 +405,8 @@ export default function RunDiffPage({ runs }: Props) {
                 {pillarDeltas.map(p => (
                   <div key={p.key} style={{
                     borderRadius: '8px', padding: '0.5rem 0.625rem',
-                    background: p.delta == null ? 'var(--bg)' : p.delta > 0 ? 'color-mix(in srgb, #059669 6%, transparent)' : p.delta < 0 ? 'color-mix(in srgb, #da2c38 6%, transparent)' : 'var(--bg)',
-                    border: `1px solid ${p.delta == null ? 'var(--border)' : p.delta > 0 ? 'color-mix(in srgb, #059669 25%, transparent)' : p.delta < 0 ? 'color-mix(in srgb, #da2c38 25%, transparent)' : 'var(--border)'}`,
+                    background: p.delta == null ? 'var(--bg)' : p.delta > 0 ? 'color-mix(in srgb, var(--pass) 6%, transparent)' : p.delta < 0 ? 'color-mix(in srgb, var(--fail) 6%, transparent)' : 'var(--bg)',
+                    border: `1px solid ${p.delta == null ? 'var(--border)' : p.delta > 0 ? 'color-mix(in srgb, var(--pass) 25%, transparent)' : p.delta < 0 ? 'color-mix(in srgb, var(--fail) 25%, transparent)' : 'var(--border)'}`,
                   }}>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, color: p.color, marginBottom: '0.2rem' }}>{p.label}</div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
@@ -447,9 +435,10 @@ export default function RunDiffPage({ runs }: Props) {
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {/* Loading overlay */}
           {(loadingBase || loadingHead) && (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
-              <div className="spinner" style={{ margin: '0 auto 0.75rem' }} />
-              {t('pages.diff.loadingRuns')}
+            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} height={64} radius={10} />
+              ))}
             </div>
           )}
 
@@ -486,17 +475,17 @@ export default function RunDiffPage({ runs }: Props) {
               <div style={{ padding: '1rem' }}>
                 {/* Summary sentence */}
                 {activeTab === 'newly_failed' && byStatus.newly_failed.length > 0 && (
-                  <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, #da2c38 7%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', fontSize: '0.78rem', color: '#DA2C38', fontWeight: 600 }}>
+                  <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', fontSize: '0.78rem', color: 'var(--fail-ink)', fontWeight: 600 }}>
                     {byStatus.newly_failed.length} check{byStatus.newly_failed.length !== 1 ? 's' : ''} newly failing in the head run — these regressions need attention before merge.
                   </div>
                 )}
                 {activeTab === 'fixed' && byStatus.fixed.length > 0 && (
-                  <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, #059669 7%, transparent)', border: '1px solid color-mix(in srgb, #059669 20%, transparent)', fontSize: '0.78rem', color: '#059669', fontWeight: 600 }}>
+                  <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--pass) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 20%, transparent)', fontSize: '0.78rem', color: 'var(--pass-ink)', fontWeight: 600 }}>
                     {byStatus.fixed.length} check{byStatus.fixed.length !== 1 ? 's' : ''} resolved since the base run.
                   </div>
                 )}
                 {activeTab === 'still_failing' && byStatus.still_failing.length > 0 && (
-                  <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(217,119,6,.07)', border: '1px solid rgba(217,119,6,.20)', fontSize: '0.78rem', color: '#d97706', fontWeight: 600 }}>
+                  <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--waf-warn) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-warn) 20%, transparent)', fontSize: '0.78rem', color: 'var(--sev-medium)', fontWeight: 600 }}>
                     {byStatus.still_failing.length} check{byStatus.still_failing.length !== 1 ? 's' : ''} failing in both runs — pre-existing issues, not introduced by this change.
                   </div>
                 )}
@@ -508,9 +497,7 @@ export default function RunDiffPage({ runs }: Props) {
 
           {/* No data yet */}
           {!loadingBase && !loadingHead && !diff && !sameRun && (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              {t('pages.diff.selectTwo')}
-            </div>
+            <EmptyState compact title={t('pages.diff.selectTwo')} />
           )}
         </div>
       )}

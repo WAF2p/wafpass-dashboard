@@ -302,7 +302,7 @@ Both themes are first-class. The page uses light by default and switches through
 ## Layout
 
 - Fixed top navigation; page content lives in `main` and is 90% wide, centred, with a 1.5rem/2rem padding on desktop. Do not stack a second full page gutter on mobile.
-- Maximum content width 1680px.
+- Maximum content width 1680px, enforced in `src/index.css`.
 - **Widget board:** 12-column grid, 1rem gap. Widget sizes: small = 3 columns, medium = 4, large = 6. At ≤1360px: 4/6/12. At ≤900px: every widget spans 12. Use `minmax(0, 1fr)` so long values never force horizontal scroll.
 - Breakpoints in use: 1360px (tablet grid), 900px (single column + mobile headers), 760px (page-level mobile), 640px (compact overlays).
 - On narrow screens widget headers wrap: the title takes a full row and the edit controls sit below it. Never let controls squeeze the title to zero width.
@@ -310,20 +310,20 @@ Both themes are first-class. The page uses light by default and switches through
 
 ## Elevation & Depth
 
-- Flat, tonal surfaces. Depth comes from `--surface` on `--bg`, a 1px `--border`, and `--shadow-sm` / `--shadow-md`.
+- Flat, tonal surfaces. Cards use `--surface` on `--bg` with a 1px `--border` and **no shadow**; `--shadow-sm` / `--shadow-md` are reserved for floating overlays (menus, popovers, modals).
 - No coloured glow shadows, no radial halos, no gradient text, no two-axis grid overlays. Cards do not use a thick accent border on one side.
 - Modals use a single strong elevation (`0 24px 70px rgba(0,0,0,.3)`) and a dim backdrop.
 
 ## Shapes
 
-- Radius scale: 6px (small controls), 8px (buttons, inputs), 10px (inner surfaces), 14px (cards, modals), 999px (pills, chips).
+- Radius scale: 8px (controls, buttons, inputs), 10px (inner surfaces), 12px (cards, panels), 16px (hero/media panels), 999px (pills, chips).
 - Status is expressed with a small dot, a pill, a tinted full border or the status text — never a 3–4px bar on the left or right edge of a rounded card.
 - Icon buttons are square with the same radius as their container; do not mix circular and square icon buttons in one row.
 
 ## Components
 
 - **Top navigation:** fixed, translucent `--nav-bg`, 1px `--nav-border`, logo left, run selector and utility actions right. The 9-dot launcher replaces category dropdowns when the beta feature is enabled.
-- **Cards:** `--surface`, 1px `--border`, 14px radius, `--shadow-sm`. Header is title + optional meta; card actions stay in a single row on desktop and wrap below the title on mobile.
+- **Cards:** `--surface`, 1px `--border`, 12px radius, no shadow. Header is title + optional meta; card actions stay in a single row on desktop and wrap below the title on mobile. Prefer `ui/Card`.
 - **Buttons:** primary uses `--waf-brand-btn` + white; secondary uses surface + border; danger states use `--fail-ink`. Focus ring is a 2px `--waf-brand-ink` outline with 2px offset. Every icon-only button needs an `aria-label`.
 - **Forms:** every input/select/textarea has a visible or programmatic label. Selects share the themed appearance from `src/index.css`; do not opt out unless the control draws its own arrow.
 - **Modals:** `role="dialog"`, `aria-modal="true"`, labelled by the heading. On open, move focus into the panel; trap Tab; close on Escape; restore focus to the trigger; lock background scroll.
@@ -331,6 +331,22 @@ Both themes are first-class. The page uses light by default and switches through
 - **Widget board:** widgets are product-specific data cards or user content. Catalogue, default layout and instance ids live in `src/widgets/types.ts`; renderers in `src/widgets/DashboardWidgets.tsx`; the page in `src/pages/MyDashboardPage.tsx`.
 - **Content widgets:** text is plain text (2,000 char cap); logo accepts an http(s) image URL or an uploaded image (180 KB cap); iframe accepts http(s) only and renders sandboxed without `allow-same-origin`.
 - **Sharing:** a share link encodes layout, text and embed/image URLs only. It never carries run data or identity, and importing it grants no access — recipients see their own RBAC-scoped data.
+
+## Primitives
+
+Shared UI lives in `src/ui/`. New pages compose these; do not re-implement page shells, tables or dialogs.
+
+| Primitive | Purpose |
+|---|---|
+| `PageHeader` | The page's only `<h1>`: title, description, eyebrow, actions |
+| `Card` | Padded panel with optional title/subtitle/actions; `padding="none"` for edge-to-edge tables |
+| `DataTable` | Typed columns/rows, skeleton loading, empty state, horizontal scroll |
+| `EmptyState` | Composed empty state with title, description and action |
+| `Skeleton` / `SkeletonText` / `SkeletonRows` | Layout-shaped loading placeholders |
+| `Button` / `buttonClass` | Variants (primary, secondary, ghost, danger) for buttons and links |
+| `Modal` | `role="dialog"`, focus trap, Escape, scroll lock, focus restore |
+
+Rules: import from `src/ui`; style with the `.ui-*` classes in `src/index.css`; never restyle a primitive inline. Progress against this standard is tracked in [`DESIGN-AUDIT.md`](./DESIGN-AUDIT.md).
 
 ## Do's and Don'ts
 

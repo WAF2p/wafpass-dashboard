@@ -1,9 +1,20 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, type CSSProperties, type MouseEvent as ReactMouseEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useI18n } from '../i18n'
 import { fetchProjectPassports, fetchProjectPassport, getApiBase, upsertProjectPassport, deleteProject, ProjectPassport, ProjectPassportUpsert, RunSummary } from '../api'
 import { MATURITY_META } from './settingsUtils'
 import { scoreColor } from '../severity';
 import { safeImageUrl } from '../safeUrl'
+import { EmptyState, Skeleton } from '../ui'
+
+/** Offset of a trigger from the viewport centre — lets an overlay grow out of it. */
+function stampOriginFromEvent(event: ReactMouseEvent<HTMLElement>): { dx: number; dy: number } {
+  const rect = event.currentTarget.getBoundingClientRect()
+  return {
+    dx: rect.left + rect.width / 2 - window.innerWidth / 2,
+    dy: rect.top + rect.height / 2 - window.innerHeight / 2,
+  }
+}
 
 interface Props {
   runs: RunSummary[]
@@ -17,17 +28,17 @@ interface Props {
 const MATURITY_THRESHOLDS: Record<number, number> = { 1: 0, 2: 40, 3: 60, 4: 75, 5: 90 }
 
 const CRITICALITY_META: Record<string, { label: string; color: string; bg: string; code: string }> = {
-  critical: { label: 'Critical', color: '#DA2C38', bg: 'color-mix(in srgb, #da2c38 12%, transparent)',  code: 'C' },
-  high:     { label: 'High',     color: '#f97316', bg: 'color-mix(in srgb, #f97316 12%, transparent)', code: 'H' },
-  medium:   { label: 'Medium',   color: '#eab308', bg: 'color-mix(in srgb, #eab308 12%, transparent)',  code: 'M' },
-  low:      { label: 'Low',      color: '#22c55e', bg: 'rgba(34,197,94,0.12)',  code: 'L' },
+  critical: { label: 'Critical', color: 'var(--fail)', bg: 'color-mix(in srgb, var(--fail) 12%, transparent)',  code: 'C' },
+  high:     { label: 'High',     color: 'var(--waf-warn)', bg: 'color-mix(in srgb, var(--waf-warn) 12%, transparent)', code: 'H' },
+  medium:   { label: 'Medium',   color: 'var(--score-mid)', bg: 'color-mix(in srgb, var(--score-mid) 12%, transparent)',  code: 'M' },
+  low:      { label: 'Low',      color: 'var(--pass)', bg: 'color-mix(in srgb, var(--pass) 12%, transparent)',  code: 'L' },
 }
 
 const ENV_META: Record<string, { label: string; color: string }> = {
-  production:  { label: 'Production',  color: '#DA2C38' },
-  staging:     { label: 'Staging',     color: '#f97316' },
-  development: { label: 'Development', color: '#22c55e' },
-  mixed:       { label: 'Mixed',       color: '#8b5cf6' },
+  production:  { label: 'Production',  color: 'var(--fail)' },
+  staging:     { label: 'Staging',     color: 'var(--waf-warn)' },
+  development: { label: 'Development', color: 'var(--pass)' },
+  mixed:       { label: 'Mixed',       color: 'var(--waived)' },
 }
 
 const CLOUD_META: Record<string, { label: string; color: string }> = {
@@ -113,6 +124,7 @@ function LinkIconButton({ href, title, children }: { href: string; title: string
       target="_blank"
       rel="noopener noreferrer"
       title={title}
+      aria-label={title}
       onClick={e => e.stopPropagation()}
       className="pp-link-btn"
     >
@@ -239,8 +251,6 @@ function MaturitySeal({ level, color, textColor, size = 54 }: { level: number; c
 
 // ── Stamp / achievement data ──────────────────────────────────────────────────
 
-const STAMP_ROTATIONS = [-7, 5, -3, 8, -5, 4, -6, 3, -4, 7, -8, 5, -2, 6]
-
 interface StampAchievement {
   id: string; title: string; desc: string
   category: 'coverage' | 'quality' | 'consistency' | 'depth'
@@ -261,46 +271,41 @@ const STAMP_ACHIEVEMENTS: StampAchievement[] = [
 ]
 
 const STAMP_CATEGORY_COLOR: Record<string, string> = {
-  coverage: '#0094FF', quality: '#22c55e', consistency: '#f97316', depth: '#8b5cf6',
+  coverage: 'var(--waf-brand)', quality: 'var(--pass)', consistency: 'var(--waf-warn)', depth: 'var(--waived)',
 }
 
 // ── Passport stamp ────────────────────────────────────────────────────────────
 
-function PassportStamp({ color, icon, title, subtitle, earned, rotation, size = 84 }: {
-  color: string; icon: string; title: string; subtitle?: string
-  earned: boolean; rotation: number; size?: number
+function PassportStamp({ color, icon, title, subtitle, earned, index = 0 }: {
+  color: string; icon: string; title: string; subtitle?: string; earned: boolean; index?: number
 }) {
-  const r = size / 2
+  // Stamps wait for the booklet cover to start swinging open, then cascade.
+  const delay = `calc(var(--pp-stamp-start, 0ms) + ${index * 55}ms)`
+  const rotation = index % 2 === 0 ? -5 : 4
   return (
     <div
-      className="pp-stamp"
-      style={{
-        transform: `rotate(${rotation}deg)`,
-        opacity: earned ? 1 : 0.14,
-      }}
+      className={`pp-stamp${earned ? ' pp-stamp--earned' : ''}`}
+      style={{ animationDelay: delay, '--pp-stamp-delay': delay } as CSSProperties}
     >
-      <div className="pp-stamp-ring" style={{ width: size, height: size }}>
-        <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ position: 'absolute', inset: 0 }}>
-          <circle cx={r} cy={r} r={r - 3} fill={`${color}12`} stroke={color} strokeWidth="2.5" />
-          <circle cx={r} cy={r} r={r - 10} fill="none" stroke={color} strokeWidth="1" strokeDasharray="3 2" opacity="0.6" />
+      <span
+        className="pp-stamp-disc"
+        style={{ color, '--stamp-color': color, '--stamp-rot': `${rotation}deg` } as CSSProperties}
+      >
+        <svg className="pp-stamp-icon" width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={icon} />
         </svg>
-        <div className="pp-stamp-icon">
-          <svg width={size * 0.32} height={size * 0.32} fill="none" stroke={color} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={icon} />
-          </svg>
-        </div>
         {earned && (
-          <div className="pp-stamp-check" style={{ background: color }}>
-            <svg width="8" height="8" fill="none" stroke="#fff" viewBox="0 0 24 24">
+          <span className="pp-stamp-check" style={{ background: color }} aria-hidden="true">
+            <svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
             </svg>
-          </div>
+          </span>
         )}
-      </div>
-      <div className="pp-stamp-text" style={{ maxWidth: size + 12 }}>
-        <div className="pp-stamp-title" style={{ color: earned ? 'var(--text)' : 'var(--muted)' }}>{title}</div>
-        {subtitle && <div className="pp-stamp-sub">{subtitle}</div>}
-      </div>
+      </span>
+      <span className="pp-stamp-body">
+        <span className="pp-stamp-title">{title}</span>
+        {subtitle && <span className="pp-stamp-sub">{subtitle}</span>}
+      </span>
     </div>
   )
 }
@@ -313,7 +318,7 @@ function AccessDeniedOverlay({
   onClose: () => void
   project: string
 }) {
-  return (
+  return createPortal(
     <div className="pp-overlay-backdrop" onClick={onClose}>
       <div className="pp-modal pp-modal--access" onClick={e => e.stopPropagation()}>
         <div className="pp-modal-header pp-modal-header--danger">
@@ -321,7 +326,7 @@ function AccessDeniedOverlay({
             <div className="pp-modal-kicker">Wombat · PROJECT PASSPORT</div>
             <div className="pp-modal-title" style={{ maxWidth: 280 }}>{project}</div>
           </div>
-          <button className="pp-modal-close" onClick={onClose}>
+          <button className="pp-modal-close" onClick={onClose} aria-label="Close">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -342,21 +347,45 @@ function AccessDeniedOverlay({
           {`PP<NO ACCESS FOR<PROJECT`.padEnd(44, '<')}
         </div>
       </div>
+    </div>,
+    document.body,
+  )
+}
+
+// ── Achievements booklet ──────────────────────────────────────────────────────
+
+function DataField({ n, label, value, mono, strong }: {
+  n: string; label: string; value: string | number; mono?: boolean; strong?: boolean
+}) {
+  return (
+    <div className="pp-data-field">
+      <span className="pp-data-field-n">{n}</span>
+      <span className="pp-data-field-label">{label}</span>
+      <span className={`pp-data-field-value${mono ? ' pp-data-field-value--mono' : ''}${strong ? ' is-strong' : ''}`}>{value}</span>
     </div>
   )
 }
 
-// ── Achievements overlay ──────────────────────────────────────────────────────
-
 function AchievementsOverlay({
-  onClose, projectRuns, bestScore, displayName,
+  onClose, project, passport, projectRuns, bestScore, displayName, origin,
 }: {
   onClose: () => void
+  project: string
+  passport?: ProjectPassport | null
   projectRuns: RunSummary[]
   bestScore: number
   displayName: string
+  origin?: { dx: number; dy: number } | null
 }) {
-  const [stampPage, setStampPage] = useState<0 | 1>(0)
+  const [page, setPage] = useState(0)
+  const [coverOpen, setCoverOpen] = useState(false)
+  const [opened, setOpened] = useState(false)
+  // The opening cascade only applies once, after the cover is opened.
+  useEffect(() => {
+    if (!coverOpen) return
+    const timer = window.setTimeout(() => setOpened(true), 800)
+    return () => window.clearTimeout(timer)
+  }, [coverOpen])
 
   const maturityBadges = MATURITY_META.map(m => ({
     ...m, earned: bestScore >= (MATURITY_THRESHOLDS[m.level] ?? 0),
@@ -364,84 +393,221 @@ function AchievementsOverlay({
   const achievementBadges = STAMP_ACHIEVEMENTS.map(a => ({
     ...a, earned: a.check(projectRuns),
   }))
-
-  const earnedMaturity     = maturityBadges.filter(b => b.earned).length
+  const earnedMaturity = maturityBadges.filter(b => b.earned).length
   const earnedAchievements = achievementBadges.filter(b => b.earned).length
 
-  return (
-    <div className="pp-overlay-backdrop" onClick={onClose}>
-      <div className="pp-modal pp-modal--stamps" onClick={e => e.stopPropagation()}>
-        <div className="pp-modal-header pp-modal-header--brand">
-          <div>
-            <div className="pp-modal-kicker">Wombat · STAMP COLLECTION</div>
-            <div className="pp-modal-title" style={{ maxWidth: 340 }}>{displayName}</div>
+  // Page 0 details, page 1 maturity, then achievements six per page.
+  const ACHIEVEMENTS_PER_PAGE = 6
+  const achievementPageCount = Math.max(1, Math.ceil(achievementBadges.length / ACHIEVEMENTS_PER_PAGE))
+  const pageCount = 2 + achievementPageCount
+  const achievementOffset = Math.max(0, page - 2) * ACHIEVEMENTS_PER_PAGE
+  const achievementSlice = achievementBadges.slice(achievementOffset, achievementOffset + ACHIEVEMENTS_PER_PAGE)
+
+  const sortedRuns = [...projectRuns].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  const latestRun = sortedRuns[sortedRuns.length - 1]
+  const latestScore = latestRun?.score ?? 0
+  const avgScore = projectRuns.length > 0
+    ? Math.round(projectRuns.reduce((sum, r) => sum + r.score, 0) / projectRuns.length)
+    : 0
+  const coverage = latestRun && latestRun.controls_loaded > 0
+    ? Math.round((latestRun.controls_run / latestRun.controls_loaded) * 100)
+    : null
+  const maturity = getMaturityForScore(bestScore)
+  const criticality = passport?.criticality ? CRITICALITY_META[passport.criticality] : null
+  const env = passport?.environment ? ENV_META[passport.environment] : null
+  const cloud = passport?.cloud_provider ? CLOUD_META[passport.cloud_provider] : null
+
+  const issuedLabel = passport?.created_at
+    ? new Date(passport.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : latestRun
+      ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
+      : '—'
+  const lastScanLabel = latestRun
+    ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })
+    : '—'
+  const docNo = !project.trim() || project === '(unnamed)'
+    ? '—'
+    : (project.replace(/[^A-Z0-9]/gi, '').slice(0, 8).toUpperCase() || '—')
+
+  const prev = () => setPage(p => (p > 0 ? p - 1 : p))
+  const next = () => setPage(p => (p < pageCount - 1 ? p + 1 : p))
+
+  return createPortal(
+    <div className="pp-overlay-backdrop pp-overlay-backdrop--book" onClick={onClose}>
+      <div
+        className={`pp-book${coverOpen ? ' is-open' : ''}`}
+        data-opened={opened || undefined}
+        onClick={e => e.stopPropagation()}
+        style={{
+          '--pp-origin-dx': `${origin?.dx ?? 0}px`,
+          '--pp-origin-dy': `${origin?.dy ?? 0}px`,
+        } as CSSProperties}
+      >
+        {/* Front cover — the "country" page. */}
+        <div
+          className={`pp-passport-cover${coverOpen ? ' is-open' : ''}`}
+          aria-hidden={coverOpen || undefined}
+          onClick={() => setCoverOpen(true)}
+        >
+          <div className="pp-passport-cover-inner">
+            <img src="/logo.png" alt="" className="pp-passport-cover-logo" />
+            <div className="pp-passport-cover-country">WOMBAT</div>
+            <div className="pp-passport-cover-doc">Passport</div>
+            <div className="pp-passport-cover-rule" />
+            <div className="pp-passport-cover-sub">Stamp Collection · {displayName}</div>
+            <button
+              type="button"
+              className="pp-passport-open"
+              onClick={e => { e.stopPropagation(); setCoverOpen(true) }}
+            >
+              Open passport
+            </button>
           </div>
-          <button className="pp-modal-close" onClick={onClose}>
+        </div>
+
+        <div className="pp-book-top">
+          <div>
+            <div className="pp-modal-kicker">WOMBATpass · STAMP COLLECTION</div>
+            <div className="pp-book-title">{displayName}</div>
+          </div>
+          <button className="pp-modal-close" onClick={onClose} aria-label="Close">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="pp-modal-tabs">
-          {[
-            { label: `Maturity Levels`, sub: `${earnedMaturity} / ${MATURITY_META.length} earned`, index: 0 },
-            { label: `Achievements`,    sub: `${earnedAchievements} / ${STAMP_ACHIEVEMENTS.length} earned`, index: 1 },
-          ].map(tab => (
-            <button
-              key={tab.index}
-              onClick={() => setStampPage(tab.index as 0 | 1)}
-              className={`pp-modal-tab ${stampPage === tab.index ? 'active' : ''}`}
-            >
-              <div className="pp-modal-tab-label">{tab.label}</div>
-              <div className="pp-modal-tab-sub">{tab.sub}</div>
-            </button>
-          ))}
-        </div>
+        <div className="pp-book-sheet" key={page}>
+          {page === 0 && (
+            <section className="pp-book-page pp-book-page--details" aria-label="Project details">
+              <header className="pp-data-head">
+                <img src="/logo.png" alt="" className="pp-data-emblem" />
+                <div>
+                  <div className="pp-data-country">WOMBAT</div>
+                  <div className="pp-data-doctype">Project Passport · Reisepass</div>
+                </div>
+                <div className="pp-data-docno">
+                  <span>Pass No.</span>
+                  <strong>{docNo}</strong>
+                </div>
+              </header>
 
-        <div className="pp-modal-body">
-          {stampPage === 0 ? (
-            <div className="pp-stamp-grid">
-              {maturityBadges.map((m, i) => (
-                <PassportStamp
-                  key={m.level}
-                  color={m.color}
-                  icon={i === 0 ? 'M13 10V3L4 14h7v7l9-11h-7z'
-                      : i === 1 ? 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10'
-                      : i === 2 ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                      : i === 3 ? 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'
-                      : 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'}
-                  title={`L${m.level} · ${m.short}`}
-                  subtitle={`Score ${MATURITY_THRESHOLDS[m.level]}+`}
-                  earned={m.earned}
-                  rotation={STAMP_ROTATIONS[i % STAMP_ROTATIONS.length]}
-                  size={90}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="pp-stamp-grid pp-stamp-grid--achievements">
-              {achievementBadges.map((a, i) => (
-                <PassportStamp
-                  key={a.id}
-                  color={STAMP_CATEGORY_COLOR[a.category]}
-                  icon={a.icon}
-                  title={a.title}
-                  subtitle={a.desc}
-                  earned={a.earned}
-                  rotation={STAMP_ROTATIONS[(i + 3) % STAMP_ROTATIONS.length]}
-                  size={84}
-                />
-              ))}
-            </div>
+              <div className="pp-data-body">
+                <div className="pp-data-photo">
+                  {safeImageUrl(passport?.image_url, { allowSvgData: true })
+                    ? <img src={safeImageUrl(passport?.image_url, { allowSvgData: true }) ?? undefined} alt="" />
+                    : <span className="pp-data-photo-initial">{displayName[0]?.toUpperCase() ?? '?'}</span>}
+                  <span className="pp-data-photo-caption">{maturity.short}</span>
+                </div>
+
+                <div className="pp-data-fields">
+                  <DataField n="01" label="Project / Name" value={displayName} strong />
+                  <DataField n="02" label="Identifier" value={!project.trim() || project === '(unnamed)' ? '—' : project} mono />
+                  <DataField n="03" label="Owner" value={passport?.owner ?? '—'} />
+                  <DataField n="04" label="Team" value={passport?.owner_team ?? '—'} />
+                  <DataField n="05" label="Contact" value={passport?.contact_email ?? '—'} />
+                  <DataField n="06" label="Criticality" value={criticality?.label ?? '—'} />
+                  <DataField n="07" label="Environment" value={env?.label ?? '—'} />
+                  <DataField n="08" label="Cloud" value={cloud?.label ?? '—'} />
+                  <DataField n="09" label="Issued" value={issuedLabel} />
+                  <DataField n="10" label="Last scan" value={lastScanLabel} />
+                  <DataField n="11" label="Score" value={bestScore > 0 ? `${bestScore} / 100` : '—'} />
+                  <DataField n="12" label="Maturity" value={maturity.short} />
+                </div>
+              </div>
+
+              <footer className="pp-data-foot">
+                <div className="pp-data-stats">
+                  <span><strong>{latestScore > 0 ? latestScore : '—'}</strong>latest</span>
+                  <span><strong>{avgScore > 0 ? avgScore : '—'}</strong>avg</span>
+                  <span><strong>{projectRuns.length}</strong>scans</span>
+                  <span><strong>{coverage != null ? `${coverage}%` : '—'}</strong>coverage</span>
+                </div>
+                <div className="pp-data-sig">
+                  <span className="pp-data-sig-name">{displayName}</span>
+                  <span className="pp-data-sig-line">Authorised signature</span>
+                </div>
+              </footer>
+            </section>
+          )}
+
+          {page === 1 && (
+            <section className="pp-book-page" aria-label="Maturity levels">
+              <header className="pp-book-page-head">
+                <span className="pp-book-page-kicker">Maturity Levels</span>
+                <span className="pp-book-page-meta">{earnedMaturity} / {MATURITY_META.length} earned · Page 2 of {pageCount}</span>
+              </header>
+              <div className="pp-stamp-grid">
+                {maturityBadges.map((m, i) => (
+                  <PassportStamp
+                    key={m.level}
+                    color={m.color}
+                    icon={i === 0 ? 'M13 10V3L4 14h7v7l9-11h-7z'
+                        : i === 1 ? 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10'
+                        : i === 2 ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+                        : i === 3 ? 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'
+                        : 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'}
+                    title={`L${m.level} · ${m.short}`}
+                    subtitle={`Score ${MATURITY_THRESHOLDS[m.level]}+`}
+                    earned={m.earned}
+                    index={i}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {page >= 2 && (
+            <section className="pp-book-page" aria-label="Achievements">
+              <header className="pp-book-page-head">
+                <span className="pp-book-page-kicker">Achievements</span>
+                <span className="pp-book-page-meta">
+                  {earnedAchievements} / {achievementBadges.length} earned · Page {page + 1} of {pageCount}
+                </span>
+              </header>
+              <div className="pp-stamp-grid pp-stamp-grid--achievements">
+                {achievementSlice.map((a, i) => (
+                  <PassportStamp
+                    key={a.id}
+                    color={STAMP_CATEGORY_COLOR[a.category]}
+                    icon={a.icon}
+                    title={a.title}
+                    subtitle={a.desc}
+                    earned={a.earned}
+                    index={i}
+                  />
+                ))}
+              </div>
+            </section>
           )}
         </div>
 
-        <div className="pp-modal-mrz">
-          {`PP<WAF${mrzPad(displayName, 18)}<<STAMP<COLLECTION<<<<<<<<<<<<<<<<<`.slice(0, 44).padEnd(44, '<')}
+        <div className="pp-book-nav">
+          <button className="pp-book-arrow" onClick={prev} disabled={page === 0} aria-label="Previous page">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div className="pp-book-dots" aria-hidden="true">
+            {Array.from({ length: pageCount }, (_, i) => (
+              <span key={i} className={`pp-book-dot${page === i ? ' is-active' : ''}`} />
+            ))}
+          </div>
+          <button className="pp-book-arrow" onClick={next} disabled={page >= pageCount - 1} aria-label="Next page">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="pp-book-footer">
+          <div className="pp-modal-mrz">
+            {`PP<WAF${mrzPad(displayName, 18)}<<STAMP<COLLECTION<<<<<<<<<<<<<<<<<`.slice(0, 44).padEnd(44, '<')}
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -466,7 +632,8 @@ function usePassportCardData(project: string, passport: ProjectPassport | null, 
   const criticality  = passport?.criticality ? CRITICALITY_META[passport.criticality] : null
   const env          = passport?.environment  ? ENV_META[passport.environment]          : null
   const cloud        = passport?.cloud_provider ? CLOUD_META[passport.cloud_provider]  : null
-  const displayName  = passport?.display_name || project
+  const isUnnamedProject = !project.trim() || project === '(unnamed)'
+  const displayName  = passport?.display_name || (isUnnamedProject ? 'Untitled project' : project)
   const achievementCount = [
     projectRuns.length >= 1,
     projectRuns.some(r => r.score >= 60),
@@ -503,7 +670,6 @@ function PassportRow({
   return (
     <button onClick={onClick} className="pp-row">
       <div className="pp-row-main">
-        <div className="pp-row-accent" style={{ background: maturity.color }} />
         <div className="pp-row-seal">
           {safeImageUrl(passport?.image_url, { allowSvgData: true }) ? (
             <img src={safeImageUrl(passport?.image_url, { allowSvgData: true }) ?? undefined} alt="" />
@@ -542,9 +708,9 @@ function PassportRow({
         </div>
 
         <div className="pp-row-badges">
-          {criticality && <span className="pp-pill" style={{ background: criticality.bg, color: criticality.color, borderColor: `${criticality.color}33` }}>{criticality.label}</span>}
-          {env && <span className="pp-pill" style={{ background: `${env.color}10`, color: env.color, borderColor: `${env.color}30` }}>{env.label}</span>}
-          {cloud && <span className="pp-pill" style={{ background: `${cloud.color}10`, color: cloud.color, borderColor: `${cloud.color}30` }}>{cloud.label}</span>}
+          {criticality && <span className="pp-pill" style={{ background: criticality.bg, color: criticality.color, borderColor: `color-mix(in srgb, ${criticality.color} 20%, transparent)` }}>{criticality.label}</span>}
+          {env && <span className="pp-pill" style={{ background: `color-mix(in srgb, ${env.color} 6%, transparent)`, color: env.color, borderColor: `color-mix(in srgb, ${env.color} 19%, transparent)` }}>{env.label}</span>}
+          {cloud && <span className="pp-pill" style={{ background: `color-mix(in srgb, ${cloud.color} 6%, transparent)`, color: cloud.color, borderColor: `color-mix(in srgb, ${cloud.color} 19%, transparent)` }}>{cloud.label}</span>}
           {!criticality && !env && !cloud && <span className="pp-row-desc--empty">—</span>}
         </div>
 
@@ -598,137 +764,125 @@ function PassportCard({
   passport: ProjectPassport | null
   runs: RunSummary[]
   onClick: () => void
-  onOpenStamps: () => void
+  onOpenStamps: (origin?: { dx: number; dy: number }) => void
 }) {
-  const { projectRuns, latestRun, bestScore, latestScore, scoreDelta, avgScore, sparkRuns, latestControls, maturity, criticality, env, cloud, displayName, achievementCount, mrz1, mrz2 } =
+  const { projectRuns, latestRun, bestScore, latestScore, scoreDelta, avgScore, sparkRuns, latestControls, maturity, criticality, env, cloud, displayName, achievementCount, mrz1 } =
     usePassportCardData(project, passport, runs)
+
+  const isUnnamed = !project.trim() || project === '(unnamed)'
+  const issuedDate = passport?.created_at
+    ? new Date(passport.created_at)
+    : latestRun ? new Date(latestRun.created_at) : null
+  const issuedLabel = issuedDate
+    ? issuedDate.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '—'
+  const lastScanLabel = latestRun
+    ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })
+    : '—'
 
   return (
     <button onClick={onClick} className="pp-card">
-      <div className="pp-card-banner" style={{ background: `linear-gradient(135deg, ${maturity.color}22 0%, ${maturity.color}08 100%)` }}>
-        <div className="pp-card-score">
-          <div className="pp-score-big" style={{ color: scoreColor(bestScore) }}>{bestScore > 0 ? bestScore : '—'}</div>
-          <div className="pp-score-label">/ 100</div>
-        </div>
-        <div className="pp-card-seal">
+      <div className="pp-card-top">
+        <div className="pp-card-seal pp-card-seal--inline">
           {safeImageUrl(passport?.image_url, { allowSvgData: true }) ? (
             <img src={safeImageUrl(passport?.image_url, { allowSvgData: true }) ?? undefined} alt="" />
           ) : (
-            <MaturitySeal level={maturity.level} color={maturity.color} textColor={maturity.textColor} size={58} />
+            <MaturitySeal level={maturity.level} color={maturity.color} textColor={maturity.textColor} size={44} />
           )}
         </div>
-        <div className="pp-card-maturity" style={{ background: maturity.color, color: '#fff' }}>
-          {maturity.short?.toUpperCase() ?? `L${maturity.level}`}
-        </div>
-        {achievementCount > 0 && (
-          <div className="pp-card-achievements">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-            {achievementCount}
+
+        <div className="pp-card-identity">
+          <div className="pp-card-kicker">PROJECT PASSPORT</div>
+          <div className="pp-card-name">{displayName}</div>
+          {!isUnnamed && <div className="pp-card-project">{project}</div>}
+          <div className="pp-card-tags-inline">
+            <span
+              className="pp-card-maturity"
+              style={{
+                background: `color-mix(in srgb, ${maturity.color} 12%, var(--surface))`,
+                color: `color-mix(in srgb, ${maturity.color} 72%, var(--text))`,
+                borderColor: `color-mix(in srgb, ${maturity.color} 32%, transparent)`,
+              }}
+            >
+              {maturity.short?.toUpperCase() ?? `L${maturity.level}`}
+            </span>
+            {achievementCount > 0 && (
+              <span className="pp-card-stars">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                {achievementCount}
+              </span>
+            )}
+            {criticality && (
+              <span className="pp-pill" style={{ background: criticality.bg, color: criticality.color, borderColor: `color-mix(in srgb, ${criticality.color} 20%, transparent)` }}>
+                {criticality.label}
+              </span>
+            )}
+            {env && (
+              <span className="pp-pill" style={{ background: `color-mix(in srgb, ${env.color} 6%, transparent)`, color: env.color, borderColor: `color-mix(in srgb, ${env.color} 19%, transparent)` }}>
+                {env.label}
+              </span>
+            )}
+            {cloud && (
+              <span className="pp-pill" style={{ background: `color-mix(in srgb, ${cloud.color} 6%, transparent)`, color: cloud.color, borderColor: `color-mix(in srgb, ${cloud.color} 19%, transparent)` }}>
+                {cloud.label}
+              </span>
+            )}
           </div>
-        )}
+        </div>
+
+        <div className="pp-card-score-block">
+          <div className="pp-score-big" style={{ color: scoreColor(bestScore) }}>{bestScore > 0 ? bestScore : '—'}</div>
+          <div className="pp-score-label">/ 100</div>
+        </div>
       </div>
 
-      <div className="pp-card-doc-header">
-        <div>
-          <div className="pp-card-doc-title">PROJECT PASSPORT</div>
-          <div className="pp-card-doc-sub">WOMBATpass SECURITY PLATFORM</div>
+      <div className="pp-card-meta">
+        <PassportDataField label="Owner" value={passport?.owner ?? '—'} />
+        <PassportDataField label="Team" value={passport?.owner_team ?? '—'} />
+        <PassportDataField label="Contact" value={passport?.contact_email ?? '—'} small />
+        <PassportDataField label="Criticality" value={criticality?.label ?? '—'} valueColor={criticality?.color} />
+        <PassportDataField label="Environment" value={env?.label ?? '—'} valueColor={env?.color} />
+        <PassportDataField label="Cloud" value={cloud?.label ?? '—'} valueColor={cloud?.color} />
+        <PassportDataField label="Issued" value={issuedLabel} small />
+        <PassportDataField label="Last scan" value={lastScanLabel} small />
+      </div>
+
+      <div className="pp-card-performance">
+        {sparkRuns.length > 1 ? (
+          <svg width={sparkRuns.length * 8} height="24" className="pp-sparkline" aria-hidden="true">
+            {sparkRuns.map((r, i) => {
+              const h = Math.max(3, Math.round((r.score / 100) * 18))
+              return <rect key={r.id} x={i * 8} y={24 - h} width="6" height={h} rx="2" fill={scoreColor(r.score)} />
+            })}
+          </svg>
+        ) : (
+          <span className="pp-card-no-trend">No trend yet</span>
+        )}
+        <div className="pp-card-latest">
+          <span className="pp-score-mid" style={{ color: scoreColor(latestScore) }}>{latestScore > 0 ? latestScore : '—'}</span>
+          <span className="pp-score-label">latest</span>
+          {scoreDelta !== null && scoreDelta !== 0 && (
+            <span className="pp-card-delta" style={{ color: scoreDelta > 0 ? 'var(--pass)' : 'var(--fail)' }}>
+              {scoreDelta > 0 ? `↑${scoreDelta}` : `↓${Math.abs(scoreDelta)}`}
+            </span>
+          )}
         </div>
-        <div className="pp-card-doc-fields">
-          {[{ label: 'Type', value: 'PP' }, { label: 'Code', value: 'WAF' }, { label: 'No.', value: project.replace(/[^A-Z0-9]/gi, '').slice(0, 7).toUpperCase() || '—' }].map(f => (
-            <div key={f.label}>
-              <div className="pp-card-doc-label">{f.label}</div>
-              <div className="pp-card-doc-value">{f.value}</div>
+        <div className="pp-card-divider" />
+        <div className="pp-card-stats">
+          {[
+            { label: 'avg', value: avgScore > 0 ? String(avgScore) : '—' },
+            { label: 'scans', value: String(projectRuns.length) },
+            { label: 'coverage', value: latestControls && latestControls.loaded > 0 ? `${Math.round((latestControls.run / latestControls.loaded) * 100)}%` : '—' },
+          ].map(s => (
+            <div key={s.label} className="pp-mini-stat">
+              <span className="pp-mini-stat-value">{s.value}</span>
+              <span className="pp-mini-stat-label">{s.label}</span>
             </div>
           ))}
         </div>
       </div>
-
-      <div className="pp-card-body">
-        <div className="pp-card-photo">
-          {safeImageUrl(passport?.image_url, { allowSvgData: true }) ? (
-            <img src={safeImageUrl(passport?.image_url, { allowSvgData: true }) ?? undefined} alt="" />
-          ) : (
-            <div className="pp-card-photo-placeholder">
-              <span>{displayName[0]?.toUpperCase() ?? '?'}</span>
-              <small>L{maturity.level}</small>
-            </div>
-          )}
-        </div>
-        <div className="pp-card-fields">
-          <PassportDataField label="Project / Name" value={displayName} bold />
-          <PassportDataField label="Owner" value={passport?.owner ?? '—'} />
-          {passport?.owner_team && <PassportDataField label="Team" value={passport.owner_team} />}
-          {passport?.contact_email && <PassportDataField label="Contact" value={passport.contact_email} small />}
-          <div className="pp-card-field-row">
-            <PassportDataField label="Criticality" value={criticality?.label ?? '—'} valueColor={criticality?.color} />
-            <PassportDataField label="Environment" value={env?.label ?? '—'} valueColor={env?.color} />
-          </div>
-          <div className="pp-card-field-row">
-            <PassportDataField label="Cloud" value={cloud?.label ?? '—'} valueColor={cloud?.color} />
-            <PassportDataField
-              label="Issued"
-              value={passport?.created_at
-                ? new Date(passport.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
-                : latestRun
-                  ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })
-                  : '—'
-              }
-              small
-            />
-          </div>
-          <div className="pp-card-field-row pp-card-field-row--end">
-            <PassportDataField
-              label="Last scan"
-              value={latestRun
-                ? new Date(latestRun.created_at).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' })
-                : '—'
-              }
-              small
-            />
-            {(passport?.repository_url || passport?.documentation_url) && (
-              <div className="pp-card-links">
-                {passport.repository_url && <RepoIcon url={passport.repository_url} />}
-                {passport.documentation_url && <DocsIcon url={passport.documentation_url} />}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {projectRuns.length > 0 && (
-        <div className="pp-card-performance">
-          {sparkRuns.length > 1 && (
-            <svg width={sparkRuns.length * 8} height="24" className="pp-sparkline">
-              {sparkRuns.map((r, i) => {
-                const h = Math.max(3, Math.round((r.score / 100) * 18))
-                return <rect key={r.id} x={i * 8} y={24 - h} width="6" height={h} rx="2" fill={scoreColor(r.score)} />
-              })}
-            </svg>
-          )}
-          <div className="pp-card-latest">
-            <span className="pp-score-mid" style={{ color: scoreColor(latestScore) }}>{latestScore > 0 ? latestScore : '—'}</span>
-            <span className="pp-score-label">latest</span>
-            {scoreDelta !== null && scoreDelta !== 0 && (
-              <span className="pp-card-delta" style={{ color: scoreDelta > 0 ? '#16a34a' : '#dc2626' }}>
-                {scoreDelta > 0 ? `↑${scoreDelta}` : `↓${Math.abs(scoreDelta)}`}
-              </span>
-            )}
-          </div>
-          <div className="pp-card-divider" />
-          <div className="pp-card-stats">
-            {[
-              { label: 'avg', value: avgScore > 0 ? String(avgScore) : '—' },
-              { label: 'scans', value: String(projectRuns.length) },
-              ...(latestControls && latestControls.loaded > 0 ? [{ label: 'coverage', value: `${Math.round((latestControls.run / latestControls.loaded) * 100)}%` }] : []),
-            ].map(s => (
-              <div key={s.label} className="pp-mini-stat">
-                <span className="pp-mini-stat-value">{s.value}</span>
-                <span className="pp-mini-stat-label">{s.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {passport?.tags && passport.tags.length > 0 && (
         <div className="pp-card-tags">
@@ -741,11 +895,14 @@ function PassportCard({
       )}
 
       <div className="pp-card-footer">
-        <div className="pp-card-mrz">
-          <div>{mrz1}</div>
-          <div>{mrz2}</div>
-        </div>
+        <div className="pp-card-mrz" title={mrz1}>{mrz1}</div>
         <div className="pp-card-footer-actions">
+          {(passport?.repository_url || passport?.documentation_url) && (
+            <div className="pp-card-links">
+              {passport.repository_url && <RepoIcon url={passport.repository_url} />}
+              {passport.documentation_url && <DocsIcon url={passport.documentation_url} />}
+            </div>
+          )}
           <a
             href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
             download={`wombat-badge-${project}.svg`}
@@ -759,7 +916,7 @@ function PassportCard({
             <span>Badge</span>
           </a>
           <button
-            onClick={e => { e.stopPropagation(); onOpenStamps() }}
+            onClick={e => { e.stopPropagation(); onOpenStamps(stampOriginFromEvent(e)) }}
             title="View stamps & achievements"
             className="pp-btn-ghost pp-btn-ghost--sm"
           >
@@ -815,7 +972,7 @@ function PassportEditModal({
             <div className="pp-modal-title">Edit Passport</div>
             <div className="pp-modal-subtitle">{project}</div>
           </div>
-          <button className="pp-modal-close" onClick={onClose}>
+          <button className="pp-modal-close" onClick={onClose} aria-label="Close">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -937,7 +1094,7 @@ function PassportEditModal({
                 {form.tags.map(tag => (
                   <span key={tag} className="pp-tag-chip">
                     {tag}
-                    <button onClick={() => set('tags', form.tags.filter(t => t !== tag))}>×</button>
+                    <button onClick={() => set('tags', form.tags.filter(t => t !== tag))} aria-label={`Remove ${tag}`}>×</button>
                   </span>
                 ))}
               </div>
@@ -972,7 +1129,7 @@ function PassportEditModal({
 }
 
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--muted)',
+  display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)',
   textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem',
 }
 
@@ -1026,12 +1183,16 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
   const [loading, setLoading] = useState(true)
   const [editingProject, setEditingProject] = useState<string | null>(null)
   const [stampsProject, setStampsProject] = useState<string | null>(null)
+  const [stampsOrigin, setStampsOrigin] = useState<{ dx: number; dy: number } | null>(null)
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem('wombat_passport_view')
     return (saved === 'grid' || saved === 'wide' || saved === 'list') ? saved : 'grid'
   })
   const [accessDeniedProject, setAccessDeniedProject] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [toolbarNotice, setToolbarNotice] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProjectPassports()
@@ -1089,15 +1250,15 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
   }
 
   async function handleDelete(project: string) {
-    const projectRuns = runs.filter(r => r.project === project)
-    if (!confirm(`Delete project "${project}" and all ${projectRuns.length} run(s)? This action cannot be undone.`)) return
+    setDeleteTarget(null)
+    setDeleteError(null)
     try {
       await deleteProject(project)
       await fetchProjectPassports().then(setPassports).catch(() => {})
       onRefetchRuns?.()
     } catch (err) {
       console.error('Failed to delete project:', err)
-      alert(`Failed to delete project: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setDeleteError(`Failed to delete project: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
@@ -1113,6 +1274,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
 
   return (
     <div className="pp-root">
+      <h1 className="ui-sr-only">{t('pages.passportDashboard.title')}</h1>
       <style>{passportCss}</style>
 
       <div className="pp-toolbar">
@@ -1137,6 +1299,8 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
             <button
               key={vm.id}
               title={vm.label}
+              aria-label={vm.label}
+              aria-pressed={viewMode === vm.id}
               onClick={() => { setViewMode(vm.id); localStorage.setItem('wombat_passport_view', vm.id) }}
               className={viewMode === vm.id ? 'active' : ''}
             >
@@ -1149,7 +1313,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: 'auto' }}>
           <button
-            onClick={() => alert(t('pages.passports.bulkImportRfc'))}
+            onClick={() => setToolbarNotice(t('pages.passports.bulkImportRfc'))}
             className="pp-btn-ghost pp-btn-ghost--sm"
             title={t('pages.passports.bulkImport')}
           >
@@ -1159,7 +1323,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
             <span>{t('pages.passports.bulkImport')}</span>
           </button>
           <button
-            onClick={() => alert(t('pages.passports.bulkExportRfc'))}
+            onClick={() => setToolbarNotice(t('pages.passports.bulkExportRfc'))}
             className="pp-btn-ghost pp-btn-ghost--sm"
             title={t('pages.passports.bulkExport')}
           >
@@ -1169,7 +1333,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
             <span>{t('pages.passports.bulkExport')}</span>
           </button>
           <button
-            onClick={() => alert(t('pages.passports.auditLogRfc'))}
+            onClick={() => setToolbarNotice(t('pages.passports.auditLogRfc'))}
             className="pp-btn-ghost pp-btn-ghost--sm"
             title={t('pages.passports.auditLog')}
           >
@@ -1181,28 +1345,73 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
         </div>
       </div>
 
+      {toolbarNotice && (
+        <div role="status" style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
+          padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)',
+          background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--waf-brand) 18%, transparent)',
+        }}>
+          <span style={{ flex: 1 }}>{toolbarNotice}</span>
+          <button onClick={() => setToolbarNotice(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline' }}>
+            {t('common.close')}
+          </button>
+        </div>
+      )}
+
+      {deleteError && (
+        <div role="alert" style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
+          padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--fail-ink)',
+          background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+        }}>
+          <span style={{ flex: 1 }}>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline' }}>
+            {t('common.close')}
+          </button>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
+          padding: '0.55rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text)',
+          background: 'color-mix(in srgb, var(--fail) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
+        }}>
+          <span style={{ flex: 1 }}>
+            Delete project "{deleteTarget}" and all {runs.filter(r => r.project === deleteTarget).length} run(s)? This action cannot be undone.
+          </span>
+          <button onClick={() => handleDelete(deleteTarget)} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+            {t('common.delete')}
+          </button>
+          <button onClick={() => setDeleteTarget(null)} style={{ padding: '0.3rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
+            {t('common.cancel')}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="pp-skeleton-grid">
-          <div className="pp-skeleton" />
-          <div className="pp-skeleton" />
-          <div className="pp-skeleton" />
-          <div className="pp-skeleton" />
-          <div className="pp-skeleton wide" />
-          <div className="pp-skeleton wide" />
+          <Skeleton className="pp-skeleton" height={380} radius={20} />
+          <Skeleton className="pp-skeleton" height={380} radius={20} />
+          <Skeleton className="pp-skeleton" height={380} radius={20} />
+          <Skeleton className="pp-skeleton" height={380} radius={20} />
+          <Skeleton className="pp-skeleton wide" height={380} radius={20} />
+          <Skeleton className="pp-skeleton wide" height={380} radius={20} />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="pp-empty">
-          <div className="pp-empty-icon">
+        <EmptyState
+          icon={(
             <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4h16v16H4z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 9h6v6H9z" />
             </svg>
-          </div>
-          <div className="pp-empty-title">{search ? 'No projects match your search.' : 'No projects found'}</div>
-          <div className="pp-empty-text">
-            {search ? 'Try a different keyword or clear the filter.' : 'Push a scan to create the first project passport.'}
-          </div>
-        </div>
+          )}
+          title={search ? 'No projects match your search.' : 'No projects found'}
+          description={search ? 'Try a different keyword or clear the filter.' : 'Push a scan to create the first project passport.'}
+        />
       ) : viewMode === 'list' ? (
         <>
           <div className="pp-list">
@@ -1216,12 +1425,12 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                 />
                 {canEdit(role) && (
                   <div className="pp-item-actions">
-                    <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" className="pp-action-edit">
+                    <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" aria-label="Edit passport" className="pp-action-edit">
                       <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
-                    <button onClick={e => { e.stopPropagation(); handleDelete(project) }} title="Delete project" className="pp-action-delete">
+                    <button onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(project) }} title="Delete project" aria-label="Delete project" className="pp-action-delete">
                       <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
@@ -1262,7 +1471,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
               const pp = passportMap[project] ?? null
               const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
               const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
-              const displayName = pp?.display_name || project
+              const displayName = pp?.display_name || (!project.trim() || project === '(unnamed)' ? 'Untitled project' : project)
               return (
                 <div key={project} className="pp-grid-item">
                   <PassportCard
@@ -1270,16 +1479,16 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                     passport={pp}
                     runs={runs}
                     onClick={() => { setStampsProject(null); onOpenProject(project) }}
-                    onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
+                    onOpenStamps={origin => { setStampsOrigin(origin ?? null); setStampsProject(prev => prev === project ? null : project) }}
                   />
                   {canEdit(role) && (
                     <div className="pp-item-actions pp-item-actions--card">
-                      <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" className="pp-action-edit">
+                      <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" aria-label="Edit passport" className="pp-action-edit">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </button>
-                      <button onClick={e => { e.stopPropagation(); handleDelete(project) }} title="Delete project" className="pp-action-delete">
+                      <button onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(project) }} title="Delete project" aria-label="Delete project" className="pp-action-delete">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
@@ -1288,10 +1497,13 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                   )}
                   {stampsProject === project && (
                     <AchievementsOverlay
-                      onClose={() => setStampsProject(null)}
+                      onClose={() => { setStampsProject(null); setStampsOrigin(null) }}
                       projectRuns={ppRuns}
                       bestScore={bestScore}
                       displayName={displayName}
+                      origin={stampsOrigin}
+                      project={project}
+                      passport={pp}
                     />
                   )}
                 </div>
@@ -1304,7 +1516,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                 const pp = passportMap[project] ?? null
                 const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
                 const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
-                const displayName = pp?.display_name || project
+                const displayName = pp?.display_name || (!project.trim() || project === '(unnamed)' ? 'Untitled project' : project)
                 return (
                   <div key={project} className="pp-grid-item pp-grid-item--locked">
                     <PassportCard
@@ -1312,7 +1524,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                       passport={pp}
                       runs={runs}
                       onClick={() => { setStampsProject(null); setAccessDeniedProject(project) }}
-                      onOpenStamps={() => setStampsProject(prev => prev === project ? null : project)}
+                      onOpenStamps={origin => { setStampsOrigin(origin ?? null); setStampsProject(prev => prev === project ? null : project) }}
                     />
                     <div
                       className="pp-lock-overlay"
@@ -1325,10 +1537,13 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                     </div>
                     {stampsProject === project && (
                       <AchievementsOverlay
-                        onClose={() => setStampsProject(null)}
+                        onClose={() => { setStampsProject(null); setStampsOrigin(null) }}
                         projectRuns={ppRuns}
                         bestScore={bestScore}
                         displayName={displayName}
+                        origin={stampsOrigin}
+                        project={project}
+                        passport={pp}
                       />
                     )}
                   </div>
@@ -1402,12 +1617,10 @@ const passportCss = `
   border-radius: 12px;
   font-size: 0.85rem;
   outline: none;
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s;
 }
 .pp-search input:focus {
   border-color: var(--waf-brand);
-  box-shadow: 0 0 0 3px rgba(0,148,255,0.12);
 }
 .pp-count {
   font-size: 0.78rem;
@@ -1416,7 +1629,7 @@ const passportCss = `
 }
 .pp-count-hidden {
   margin-left: 0.5rem;
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   font-weight: 700;
 }
 .pp-segment {
@@ -1426,7 +1639,6 @@ const passportCss = `
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
 }
 .pp-segment button {
   padding: 0.45rem 0.65rem;
@@ -1442,8 +1654,8 @@ const passportCss = `
 }
 .pp-segment button:last-child { border-right: none; }
 .pp-segment button.active {
-  background: rgba(0,148,255,0.12);
-  color: var(--waf-brand);
+  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
+  color: var(--waf-brand-ink);
 }
 .pp-segment button:hover:not(.active) {
   background: var(--bg);
@@ -1465,9 +1677,9 @@ const passportCss = `
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .pp-link-btn:hover {
-  background: rgba(0,148,255,0.08);
-  border-color: rgba(0,148,255,0.25);
-  color: var(--waf-brand);
+  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
+  border-color: color-mix(in srgb, var(--waf-brand) 25%, transparent);
+  color: var(--waf-brand-ink);
 }
 
 /* Field */
@@ -1579,7 +1791,7 @@ const passportCss = `
   background: rgba(15,23,42,0.45);
 }
 .pp-action-delete {
-  background: color-mix(in srgb, #da2c38 50%, transparent);
+  background: color-mix(in srgb, var(--fail) 50%, transparent);
 }
 .pp-action-edit:hover,
 .pp-action-delete:hover {
@@ -1621,13 +1833,10 @@ const passportCss = `
   overflow: hidden;
   cursor: pointer;
   text-align: left;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
 }
 .pp-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--waf-brand) 28%, var(--border));
 }
 .pp-card-banner {
   position: relative;
@@ -1655,7 +1864,6 @@ const passportCss = `
   object-fit: cover;
   border: 3px solid var(--surface);
   background: var(--surface);
-  box-shadow: 0 4px 14px color-mix(in srgb, #000000 12%, transparent);
 }
 .pp-card-maturity {
   position: absolute;
@@ -1679,7 +1887,7 @@ const passportCss = `
   color: var(--muted);
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(255,255,255,0.75);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   border: 1px solid var(--border);
   backdrop-filter: blur(4px);
 }
@@ -1857,9 +2065,9 @@ const passportCss = `
   font-size: 0.7rem;
   padding: 0.12rem 0.45rem;
   border-radius: 999px;
-  background: rgba(0,148,255,0.08);
-  color: var(--waf-brand);
-  border: 1px solid rgba(0,148,255,0.18);
+  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
+  color: var(--waf-brand-ink);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 18%, transparent);
   font-weight: 600;
 }
 .pp-card-tags-more {
@@ -1931,13 +2139,10 @@ const passportCss = `
   overflow: hidden;
   cursor: pointer;
   text-align: left;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
   position: relative;
 }
 .pp-row:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--waf-brand) 28%, var(--border));
 }
 .pp-row-main {
   display: flex;
@@ -1947,10 +2152,11 @@ const passportCss = `
   gap: 0.85rem;
 }
 .pp-row-accent {
-  width: 5px;
+  width: 8px;
+  height: 8px;
   flex-shrink: 0;
-  border-radius: 999px;
-  align-self: stretch;
+  border-radius: 50%;
+  align-self: center;
 }
 .pp-row-seal {
   flex-shrink: 0;
@@ -2088,51 +2294,89 @@ const passportCss = `
   user-select: none;
 }
 
-/* Seal */
-.pp-seal { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15)); }
-
 /* Stamp */
 .pp-stamp {
+  --pp-stamp-opacity: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  transition: opacity 0.3s;
+  gap: 0.55rem;
+  padding: 0.35rem 0.25rem 0.5rem;
+  text-align: center;
+  opacity: var(--pp-stamp-opacity);
   user-select: none;
+  animation: ppStampIn .3s cubic-bezier(.2, .8, .2, 1) both;
 }
-.pp-stamp-ring {
+.pp-stamp-disc {
   position: relative;
-}
-.pp-stamp-icon {
-  position: absolute;
-  inset: 0;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--stamp-color, var(--muted));
+  background: radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--stamp-color, var(--muted)) 12%, var(--surface)), var(--surface) 72%);
+  border: 2px solid color-mix(in srgb, var(--stamp-color, var(--muted)) 72%, transparent);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 4px color-mix(in srgb, var(--stamp-color, var(--muted)) 28%, transparent);
+  transform: rotate(var(--stamp-rot, 0deg));
+}
+.pp-stamp-disc::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--stamp-color, var(--muted)) 55%, transparent);
+}
+.pp-stamp-icon { position: relative; z-index: 1; }
+.pp-stamp:not(.pp-stamp--earned) .pp-stamp-disc { opacity: 0.42; filter: grayscale(0.6); }
+.pp-stamp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.pp-stamp-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+.pp-stamp-sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1.3;
 }
 .pp-stamp-check {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
+  right: -3px;
+  bottom: -3px;
   width: 18px;
   height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 3px color-mix(in srgb, #000000 20%, transparent);
+  border: 2px solid var(--surface);
 }
-.pp-stamp-text { text-align: center; }
-.pp-stamp-title {
-  font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 1.2;
+.pp-stamp--earned .pp-stamp-check {
+  animation: ppStampCheck .2s ease-out both;
+  animation-delay: calc(var(--pp-stamp-delay, 0ms) + 120ms);
 }
-.pp-stamp-sub {
-  font-size: 0.7rem;
-  color: var(--muted);
-  margin-top: 0.1rem;
-  line-height: 1.2;
+
+/* Stamps land in sequence, like a document being stamped. */
+@keyframes ppStampIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to { opacity: var(--pp-stamp-opacity); transform: translateY(0) scale(1); }
+}
+@keyframes ppStampCheck {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pp-stamp,
+  .pp-stamp--earned .pp-stamp-check { animation: none; }
 }
 
 /* Modal */
@@ -2188,10 +2432,10 @@ const passportCss = `
   flex-shrink: 0;
 }
 .pp-modal-header--brand {
-  background: linear-gradient(135deg, rgba(0,148,255,0.12) 0%, rgba(0,148,255,0.04) 100%);
+  background: color-mix(in srgb, var(--waf-brand) 8%, var(--surface));
 }
 .pp-modal-header--danger {
-  background: linear-gradient(135deg, color-mix(in srgb, #da2c38 12%, transparent) 0%, rgba(218,44,56,0.04) 100%);
+  background: color-mix(in srgb, var(--fail) 8%, var(--surface));
 }
 .pp-modal-kicker {
   font-size: 0.7rem;
@@ -2251,7 +2495,7 @@ const passportCss = `
   border-bottom-color: var(--waf-brand);
 }
 .pp-modal-tab-label {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: var(--muted);
   letter-spacing: 0.06em;
@@ -2306,8 +2550,8 @@ const passportCss = `
   height: 64px;
   margin: 0 auto 1rem;
   border-radius: 50%;
-  background: color-mix(in srgb, #da2c38 10%, transparent);
-  color: var(--waf-danger);
+  background: color-mix(in srgb, var(--fail) 10%, transparent);
+  color: var(--fail-ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2362,14 +2606,14 @@ const passportCss = `
 }
 .pp-image-toggle.active {
   border-color: var(--waf-brand);
-  background: rgba(0,148,255,0.1);
-  color: var(--waf-brand);
+  background: color-mix(in srgb, var(--waf-brand) 10%, transparent);
+  color: var(--waf-brand-ink);
 }
 .pp-image-clear {
   margin-left: auto;
-  border: 1px solid color-mix(in srgb, #da2c38 35%, transparent);
-  background: color-mix(in srgb, #da2c38 7%, transparent);
-  color: #f87171;
+  border: 1px solid color-mix(in srgb, var(--fail) 35%, transparent);
+  background: color-mix(in srgb, var(--fail) 7%, transparent);
+  color: var(--fail-ink);
 }
 .pp-file-upload {
   display: flex;
@@ -2426,9 +2670,9 @@ const passportCss = `
   font-size: 0.74rem;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(0,148,255,0.08);
-  color: var(--waf-brand);
-  border: 1px solid rgba(0,148,255,0.2);
+  background: color-mix(in srgb, var(--waf-brand) 8%, transparent);
+  color: var(--waf-brand-ink);
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent);
   font-weight: 600;
 }
 .pp-tag-chip button {
@@ -2436,17 +2680,17 @@ const passportCss = `
   border: none;
   cursor: pointer;
   padding: 0;
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   line-height: 1;
   font-size: 0.9rem;
 }
 .pp-form-error {
   font-size: 0.78rem;
-  color: #f87171;
+  color: var(--fail-ink);
   padding: 0.5rem 0.75rem;
-  background: color-mix(in srgb, #da2c38 8%, transparent);
+  background: color-mix(in srgb, var(--fail) 8%, transparent);
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, #da2c38 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fail) 25%, transparent);
 }
 .pp-btn-secondary {
   border: 1px solid var(--border);
@@ -2459,12 +2703,11 @@ const passportCss = `
 }
 .pp-btn-primary {
   border: none;
-  background: var(--waf-brand);
+  background: var(--waf-brand-btn);
   color: #fff;
 }
 .pp-btn-primary:hover:not(:disabled) {
-  background: var(--waf-brand-h);
-  transform: translateY(-1px);
+  background: var(--waf-brand-btn-h);
 }
 .pp-btn-primary:active:not(:disabled) {
   transform: scale(0.98);
@@ -2474,32 +2717,6 @@ const passportCss = `
   cursor: default;
 }
 
-/* Empty state */
-.pp-empty {
-  text-align: center;
-  padding: 4rem 1rem;
-  color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: var(--shadow-sm);
-}
-.pp-empty-icon {
-  color: var(--waf-brand);
-  opacity: 0.35;
-  margin-bottom: 1rem;
-}
-.pp-empty-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 0.4rem;
-}
-.pp-empty-text {
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
 /* Skeleton */
 .pp-skeleton-grid {
   display: grid;
@@ -2507,21 +2724,8 @@ const passportCss = `
   gap: 1.25rem;
   animation: ppFadeIn 0.3s ease;
 }
-.pp-skeleton {
-  height: 380px;
-  border-radius: 20px;
-  background: linear-gradient(90deg, var(--surface) 25%, var(--bg) 50%, var(--surface) 75%);
-  background-size: 200% 100%;
-  animation: ppShimmer 1.4s infinite;
-  border: 1px solid var(--border);
-}
-.pp-skeleton.wide {
-  grid-column: span 2;
-}
-@keyframes ppShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
+.pp-skeleton { border: 1px solid var(--border); }
+.pp-skeleton.wide { grid-column: span 2; }
 
 /* Responsive */
 @media (max-width: 1200px) {
@@ -2553,5 +2757,648 @@ const passportCss = `
   .pp-overlay-backdrop,
   .pp-modal-backdrop { padding-left: 0; }
   .pp-modal { width: calc(100vw - 2rem); }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Passport theme v2 — credential document
+   Flat tonal surfaces, hairline borders and monospace document detail.
+   This layer intentionally overrides the legacy travel-document skin.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Toolbar */
+.pp-search {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.pp-search:focus-within {
+  border-color: var(--waf-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--waf-brand) 20%, transparent);
+}
+.pp-search input { color: var(--text); font-size: 0.85rem; }
+.pp-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* View switch */
+.pp-segment { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 0.25rem; }
+.pp-segment button {
+  border-radius: 7px; color: var(--muted); font-size: 0.75rem; font-weight: 600;
+  transition: background-color .15s ease, color .15s ease;
+}
+.pp-segment button:hover:not(.active) { background: var(--row-hover); color: var(--text); }
+.pp-segment button.active { background: var(--surface); color: var(--text); box-shadow: none; }
+
+/* Credential card */
+.pp-card { border-radius: 14px; box-shadow: none; transition: border-color .15s ease; }
+.pp-card:hover { border-color: color-mix(in srgb, var(--waf-brand) 35%, var(--border)); box-shadow: none; }
+.pp-card-banner { background: var(--bg); }
+.pp-score-big { font-variant-numeric: tabular-nums; }
+.pp-score-label { font-size: 0.7rem; color: var(--muted); }
+.pp-card-maturity {
+  border: 1px solid transparent; border-radius: 6px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+}
+.pp-card-seal img { border-width: 1px; border-color: var(--border); }
+.pp-card-doc-header { background: var(--surface); padding: 0.85rem 1.15rem; }
+.pp-card-doc-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem; letter-spacing: 0.14em; color: var(--text);
+}
+.pp-card-doc-sub {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem; letter-spacing: 0.08em; color: var(--muted);
+}
+.pp-card-doc-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.04em; }
+.pp-card-doc-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem; color: var(--text);
+}
+.pp-card-photo img, .pp-card-photo-placeholder {
+  border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+}
+.pp-field-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.pp-field-value { font-size: 0.85rem; color: var(--text); }
+.pp-mini-stat-value { font-variant-numeric: tabular-nums; }
+.pp-card-tags { border-top: 1px solid var(--border); }
+.pp-tag { border-radius: 6px; font-size: 0.7rem; }
+.pp-pill { border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
+
+/* MRZ is data, not a dark novelty band */
+.pp-card-footer { background: var(--input-bg); border-top: 1px solid var(--border); }
+.pp-card-mrz, .pp-row-mrz, .pp-modal-mrz {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase;
+}
+.pp-card-mrz > div { white-space: nowrap; overflow: hidden; text-overflow: clip; }
+
+/* List row */
+.pp-row { box-shadow: none; transition: border-color .15s ease; }
+.pp-row:hover { box-shadow: none; }
+.pp-row-accent { display: none; }
+.pp-row-name { font-size: 0.9rem; font-weight: 700; }
+.pp-row-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.7rem; color: var(--muted); }
+.pp-row-desc { font-size: 0.78rem; color: var(--muted); }
+.pp-row-mrz { background: var(--input-bg); border-top: 1px solid var(--border); }
+.pp-row-badge { border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--muted); }
+.pp-row-badge:hover { border-color: var(--waf-brand); color: var(--waf-brand-ink); }
+
+/* Buttons */
+.pp-btn-primary, .pp-btn-secondary, .pp-btn-ghost {
+  border-radius: 8px; font-size: 0.78rem; font-weight: 600; box-shadow: none;
+  text-transform: none; letter-spacing: 0;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.pp-btn-primary { background: var(--waf-brand-btn); color: white; border: 1px solid transparent; }
+.pp-btn-primary:hover:not(:disabled) { background: var(--waf-brand-btn-h); }
+.pp-btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.pp-btn-secondary:hover { background: var(--row-hover); }
+.pp-btn-ghost { background: transparent; color: var(--muted); border: 1px solid transparent; }
+.pp-btn-ghost:hover { background: var(--row-hover); color: var(--text); }
+
+/* Dialogs */
+.pp-overlay-backdrop, .pp-modal-backdrop { background: rgba(2, 6, 23, 0.55); }
+.pp-modal { border-radius: 14px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3); }
+.pp-modal-header--brand, .pp-modal-header--danger { background: var(--surface); }
+.pp-modal-kicker { font-size: 0.7rem; letter-spacing: 0.1em; }
+.pp-modal-title { font-size: 1.05rem; font-weight: 800; }
+.pp-modal-close { background: transparent; }
+.pp-modal-tab { border-radius: 7px; }
+.pp-modal-mrz { background: var(--input-bg); border-top: 1px solid var(--border); }
+
+.pp-overlay-backdrop { animation: ppFadeIn .6s ease; }
+
+/* ── Passport booklet ────────────────────────────────────────────────
+   A central two-page spread behind a front cover. On narrow screens the
+   pages become a horizontal snap track so they can be swiped. */
+.pp-book {
+  position: relative;
+  width: min(1040px, calc(100vw - 3rem));
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+  perspective: 2200px;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  --pp-stamp-start: 450ms;
+  animation: ppPassportGrow .45s cubic-bezier(.2, .8, .2, 1) both;
+  overflow: visible;
+}
+.pp-book-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--waf-brand) 5%, var(--surface));
+  border-radius: 16px 16px 0 0;
+}
+.pp-book-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+.pp-book-pages { display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+.pp-book-page { padding: 1.1rem 1.35rem 1.25rem; overflow-y: auto; max-height: 60vh; }
+.pp-book-page--left {
+  border-right: 1px solid var(--border);
+  box-shadow: inset -14px 0 24px -20px color-mix(in srgb, var(--text) 40%, transparent);
+}
+.pp-book-page--right {
+  box-shadow: inset 14px 0 24px -20px color-mix(in srgb, var(--text) 40%, transparent);
+}
+.pp-book-page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.pp-book-page-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.pp-book-page-meta { font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pp-book-footer {
+  border-top: 1px solid var(--border);
+  background: var(--input-bg);
+  padding: 0.5rem 1.25rem;
+  border-radius: 0 0 16px 16px;
+}
+.pp-book-footer .pp-modal-mrz { border: none; background: none; padding: 0; }
+.pp-book .pp-passport-cover { border-radius: 16px; }
+
+/* Book binding shares the cover colour so all pages read as one passport. */
+.pp-book { border-color: color-mix(in srgb, var(--waf-danger) 45%, var(--border)); }
+.pp-book-top {
+  background: color-mix(in srgb, var(--waf-danger) 6%, var(--surface));
+  border-bottom-color: color-mix(in srgb, var(--waf-danger) 22%, var(--border));
+}
+.pp-book-page-head { border-bottom-color: color-mix(in srgb, var(--waf-danger) 20%, var(--border)); }
+.pp-book-footer { border-top-color: color-mix(in srgb, var(--waf-danger) 20%, var(--border)); }
+.pp-book-arrow { border-color: color-mix(in srgb, var(--waf-danger) 25%, var(--border)); }
+.pp-book-dot.is-active { background: var(--waf-accent); }
+
+/* Every page keeps the exact same footprint so the booklet never resizes. */
+.pp-book-sheet { height: 420px; min-height: 0; }
+.pp-book-page { height: 100%; min-height: 0; box-sizing: border-box; }
+
+/* ── Passport data page ───────────────────────────────────────────── */
+.pp-book-page--details {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 11px, color-mix(in srgb, var(--waf-brand) 6%, transparent) 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 11px, color-mix(in srgb, var(--waf-brand) 4%, transparent) 11px 12px),
+    var(--surface);
+}
+.pp-book-page--details::after {
+  content: 'WOMBAT';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: color-mix(in srgb, var(--waf-brand) 7%, transparent);
+  transform: rotate(-24deg);
+  pointer-events: none;
+  z-index: 0;
+}
+.pp-data-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 1.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--waf-brand) 18%, var(--border));
+  background: color-mix(in srgb, var(--waf-brand) 4%, transparent);
+}
+.pp-data-emblem { width: 30px; height: 30px; border-radius: 999px; background: #fff; padding: 3px; }
+.pp-data-country { font-size: 1.05rem; font-weight: 800; letter-spacing: 0.18em; color: var(--waf-brand-ink); }
+.pp-data-doctype { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.pp-data-docno { margin-left: auto; text-align: right; }
+.pp-data-docno span { display: block; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.pp-data-docno strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9rem; color: var(--text); }
+.pp-data-body { position: relative; z-index: 1; display: flex; gap: 1rem; padding: 1rem 1.1rem; }
+.pp-data-photo {
+  width: 108px;
+  height: 132px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--waf-brand) 22%, var(--border));
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--waf-brand) 6%, transparent) 6px 7px),
+    var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.pp-data-photo img { width: 100%; height: 100%; object-fit: cover; }
+.pp-data-photo-initial { font-size: 2rem; font-weight: 800; color: var(--waf-brand-ink); }
+.pp-data-photo-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.pp-data-fields { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.9rem; }
+.pp-data-field {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 0.35rem;
+  padding: 0.26rem 0;
+  border-bottom: 1px dotted color-mix(in srgb, var(--text) 18%, transparent);
+}
+.pp-data-field-n { grid-row: 1 / span 2; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pp-data-field-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pp-data-field-value {
+  font-size: 0.82rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-data-field-value--mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; }
+.pp-data-field-value.is-strong { font-weight: 700; }
+.pp-data-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1.1rem;
+  border-top: 1px solid color-mix(in srgb, var(--waf-brand) 15%, var(--border));
+}
+.pp-data-stats { display: flex; gap: 1.2rem; }
+.pp-data-stats span { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.pp-data-stats strong { display: block; font-size: 0.9rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.pp-data-sig {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  min-width: 160px;
+}
+.pp-data-sig-name {
+  font-family: 'Snell Roundhand', 'Apple Chancery', 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text);
+  transform: rotate(-3deg);
+  padding: 0 0.25rem;
+}
+.pp-data-sig-line {
+  font-size: 0.7rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 0.15rem;
+  min-width: 160px;
+  text-align: right;
+}
+
+/* The booklet overlay must never clip at the top: scroll the backdrop and
+   let auto margins centre the book only when it fits. */
+.pp-overlay-backdrop--book {
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 1.5rem 1rem;
+}
+.pp-overlay-backdrop--book .pp-book { margin: auto; max-height: none; }
+.pp-book[data-opened] { --pp-stamp-start: 0ms; }
+
+/* Paginated sheet + flip-in */
+.pp-book-sheet { animation: ppPageIn .22s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes ppPageIn {
+  from { opacity: 0; transform: translateX(14px) rotateY(7deg); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Page navigation */
+.pp-book-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.5rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.pp-book-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.pp-book-arrow:hover:not(:disabled) { background: var(--row-hover); color: var(--text); }
+.pp-book-arrow:disabled { opacity: .35; cursor: default; }
+.pp-book-dots { display: flex; align-items: center; gap: 0.35rem; }
+.pp-book-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background-color .15s ease; }
+.pp-book-dot.is-active { background: var(--waf-brand); }
+
+/* Details page */
+.pp-book-page--details { display: flex; flex-direction: column; gap: 1rem; }
+.pp-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem 1.25rem; }
+.pp-detail-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.15rem; }
+.pp-detail-value { font-size: 0.875rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-detail-value--mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.78rem; }
+.pp-detail-stats { display: flex; align-items: flex-end; gap: 1.6rem; flex-wrap: wrap; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+.pp-detail-score { display: flex; align-items: baseline; gap: 0.3rem; }
+.pp-detail-score span { font-size: 2.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.pp-detail-score small { font-size: 0.72rem; color: var(--muted); }
+.pp-detail-stat { display: flex; flex-direction: column; }
+.pp-detail-stat span { font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.pp-detail-stat small { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Colourful country cover */
+.pp-passport-cover {
+  background:
+    radial-gradient(72% 58% at 10% 6%, color-mix(in srgb, var(--waf-accent) 58%, transparent), transparent 58%),
+    radial-gradient(72% 62% at 94% 96%, color-mix(in srgb, var(--waf-info) 58%, transparent), transparent 62%),
+    repeating-linear-gradient(135deg, transparent 0 26px, color-mix(in srgb, var(--waf-accent) 9%, transparent) 26px 27px),
+    linear-gradient(180deg, transparent 0 93%, color-mix(in srgb, var(--waf-accent) 22%, transparent) 93% 100%),
+    linear-gradient(155deg,
+      color-mix(in srgb, var(--waf-brand) 92%, #06121f) 0%,
+      color-mix(in srgb, var(--waf-brand) 45%, #06121f) 58%,
+      #071322 100%);
+  border-color: color-mix(in srgb, var(--waf-accent) 45%, transparent);
+  color: #f7fbff;
+}
+.pp-passport-cover::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid color-mix(in srgb, var(--waf-accent) 32%, transparent);
+  border-radius: 10px;
+  pointer-events: none;
+}
+.pp-passport-cover-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 2rem;
+  text-align: center;
+}
+.pp-passport-cover-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--waf-accent) 65%, transparent);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.25);
+}
+.pp-passport-cover-country { font-size: 2rem; font-weight: 800; letter-spacing: 0.16em; color: #fbf3e6; }
+.pp-passport-cover-doc {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--waf-accent);
+}
+.pp-passport-cover-sub { font-size: 0.78rem; color: color-mix(in srgb, #f7ead9 80%, transparent); }
+.pp-passport-open {
+  margin-top: 1.1rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--waf-accent) 65%, transparent);
+  background: color-mix(in srgb, #000000 18%, transparent);
+  color: var(--waf-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+.pp-passport-open:hover {
+  background: color-mix(in srgb, var(--waf-accent) 18%, transparent);
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .pp-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  .pp-book { width: calc(100vw - 1.5rem); }
+  .pp-book-pages { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; }
+  .pp-book-page { flex: 0 0 100%; scroll-snap-align: start; max-height: 56vh; }
+  .pp-book-page--left { border-right: none; box-shadow: none; }
+  .pp-book-page--right { box-shadow: none; }
+}
+
+.pp-passport-cover {
+  position: absolute;
+  inset: -2px;
+  z-index: 8;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--waf-accent) 55%, transparent);
+  color: #f7ead9;
+  background:
+    radial-gradient(120% 90% at 28% 8%, color-mix(in srgb, #ffffff 10%, transparent), transparent 55%),
+    repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, #000000 7%, transparent) 3px 4px),
+    linear-gradient(155deg,
+      color-mix(in srgb, var(--waf-danger) 52%, #240811) 0%,
+      color-mix(in srgb, var(--waf-danger) 32%, #1a050b) 55%,
+      #170509 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #ffffff 8%, transparent),
+    0 18px 40px rgba(2, 6, 23, 0.22);
+}
+.pp-book.is-open .pp-passport-cover {
+  animation: ppPassportOpen .75s cubic-bezier(.22, .75, .2, 1) forwards;
+  pointer-events: none;
+}
+/* Page block removed: it read as a stray white bar on the closed cover. */
+.pp-passport-cover-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 2rem;
+  text-align: center;
+}
+.pp-passport-cover-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--waf-brand-ink);
+}
+.pp-passport-cover-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.pp-passport-cover-rule {
+  width: 56px;
+  height: 1px;
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+}
+.pp-passport-cover-sub { font-size: 0.8rem; color: var(--muted); }
+
+@keyframes ppPassportOpen {
+  0%   { transform: rotateY(0deg) translateZ(0); opacity: 1; }
+  62%  { opacity: 1; }
+  100% { transform: rotateY(-118deg) translateZ(0); opacity: 0; }
+}
+@keyframes ppPassportGrow {
+  from {
+    opacity: 0;
+    transform: translate(var(--pp-origin-dx, 0px), var(--pp-origin-dy, 0px)) scale(0.86);
+  }
+  to { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pp-book { animation: none; }
+  .pp-book .pp-passport-cover { animation: none; }
+  .pp-book.is-open .pp-passport-cover { display: none; }
+  .pp-modal--stamps { animation: none; }
+  .pp-passport-cover { animation: none; display: none; }
+  .pp-stamp { animation: none; }
+}
+
+/* ── Passport card v3 ─────────────────────────────────────────────────
+   Identity header → metadata grid → performance strip → technical footer. */
+.pp-grid { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+.pp-grid--wide { grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); }
+
+.pp-card { min-height: 0; }
+.pp-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem 0.9rem;
+  padding-right: 4.6rem;
+}
+.pp-card-seal--inline { position: static; left: auto; top: auto; transform: none; flex-shrink: 0; }
+.pp-card-tags-inline .pp-card-maturity { position: static; bottom: auto; left: auto; }
+.pp-card-seal--inline img {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.pp-card-identity { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.pp-card-kicker {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.pp-card-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-card-project {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pp-card-tags-inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; }
+.pp-card-maturity {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.pp-card-stars { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.72rem; font-weight: 600; color: var(--muted); }
+.pp-card-score-block { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.pp-card-score-block .pp-score-big { font-size: 2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.pp-card-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem 1rem;
+  padding: 0 1.15rem 1rem;
+}
+.pp-card-meta .pp-field-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-card-performance { margin-top: auto; }
+.pp-card-no-trend { font-size: 0.7rem; color: var(--muted); }
+.pp-card-mrz { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-card-footer-actions .pp-card-links { display: flex; gap: 0.3rem; margin-right: 0.25rem; }
+
+/* Floating card actions: quiet, revealed on hover/focus. */
+.pp-item-actions--card {
+  top: 0.6rem;
+  right: 0.6rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease;
+}
+.pp-grid-item:hover .pp-item-actions--card,
+.pp-grid-item:focus-within .pp-item-actions--card { opacity: 1; pointer-events: auto; }
+.pp-action-edit,
+.pp-action-delete {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  backdrop-filter: none;
+}
+.pp-action-edit:hover { background: var(--row-hover); color: var(--text); }
+.pp-action-delete { color: var(--fail-ink); border-color: color-mix(in srgb, var(--fail) 30%, var(--border)); }
+.pp-action-delete:hover { background: color-mix(in srgb, var(--fail) 10%, var(--surface)); }
+.pp-action-edit:hover,
+.pp-action-delete:hover { transform: none; }
+
+@media (max-width: 640px) {
+  .pp-card-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-card-top { padding-right: 1.15rem; }
 }
 `

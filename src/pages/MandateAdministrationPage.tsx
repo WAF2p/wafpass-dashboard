@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../AuthContext'
 import { fetchInstanceMode, activateMultiMandant, type InstanceModeOut } from '../api'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 
 function HelpCircleIcon({ size = 14 }: { size?: number }) {
   return (
@@ -141,6 +142,7 @@ export default function MandateAdministrationPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.mandateadmin}</h1>
       <section className="card">
         {loading ? (
           <div style={{ padding: '0.5rem 0' }}><div className="spinner" /></div>

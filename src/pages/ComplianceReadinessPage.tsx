@@ -19,7 +19,9 @@ import {
   fetchRisks,
   fetchWaivers,
 } from '../api'
-import { scoreColor } from '../severity';
+import { scoreBg, scoreBorder, scoreColor } from '../severity';
+import { Card, EmptyState, PageHeader, Skeleton, SkeletonText } from '../ui';
+import { useI18n } from '../i18n';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +45,7 @@ function isExpiringSoon(dateStr: string | undefined): boolean {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function ComplianceReadinessPage({ run }: Props) {
+  const { t } = useI18n()
   const [data, setData] = useState<ComplianceReadinessData | null>(null)
   const [waivers, setWaivers] = useState<WaiverRecord[]>([])
   const [risks, setRisks] = useState<RiskRecord[]>([])
@@ -68,7 +71,7 @@ export default function ComplianceReadinessPage({ run }: Props) {
         // Fallback to in-memory calculation if server is unreachable
         setData(calculateReadinessFromRun(run))
         setUsingFallback(true)
-        setError(err instanceof Error ? err.message : 'Server unavailable. Showing offline estimate.')
+        setError(err instanceof Error ? err.message : t('pages.phase3.readiness.serverUnavailable'))
       } finally {
         setLoading(false)
       }
@@ -96,8 +99,12 @@ export default function ComplianceReadinessPage({ run }: Props) {
 
   if (!run) {
     return (
-      <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
-        <p>Select a scan run to view compliance readiness metrics.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        <PageHeader
+          title={t('pages.phase3.readiness.pageTitle')}
+          description={t('pages.phase3.readiness.pageDescription')}
+        />
+        <EmptyState title={t('pages.phase3.readiness.selectRun')} />
       </div>
     )
   }
@@ -107,35 +114,31 @@ export default function ComplianceReadinessPage({ run }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       {/* ── Header Section ────────────────────────────────────────────────────── */}
-      <div>
-        <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)' }}>
-          Compliance Readiness
-        </h1>
-        <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--muted)' }}>
-          Evidence collection status and audit readiness scores — prepare for compliance audits
-        </p>
-      </div>
+      <PageHeader
+        title={t('pages.phase3.readiness.pageTitle')}
+        description={t('pages.phase3.readiness.pageDescription')}
+      />
 
       {usingFallback && (
         <div style={{
           padding: '0.75rem 1rem',
-          background: 'rgba(217,119,6,.08)',
-          border: '1px solid rgba(217,119,6,.3)',
+          background: 'color-mix(in srgb, var(--score-mid) 8%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--score-mid) 30%, transparent)',
           borderRadius: '8px',
-          color: '#d97706',
+          color: 'var(--score-mid-ink)',
           fontSize: '0.75rem',
         }}>
-          <strong>Offline estimate:</strong> evidence metrics require a server connection. Framework coverage and remediation gaps are calculated from the local run data.
+          <strong>{t('pages.phase3.readiness.offlineEstimateLabel')}</strong> {t('pages.phase3.readiness.offlineEstimateBody')}
         </div>
       )}
 
       {error && !usingFallback && (
         <div style={{
           padding: '0.75rem 1rem',
-          background: 'rgba(220,38,38,.08)',
-          border: '1px solid rgba(220,38,38,.3)',
+          background: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
           borderRadius: '8px',
-          color: '#dc2626',
+          color: 'var(--fail-ink)',
           fontSize: '0.75rem',
         }}>
           {error}
@@ -143,61 +146,66 @@ export default function ComplianceReadinessPage({ run }: Props) {
       )}
 
       {loading ? (
-        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem' }}>
-          Loading compliance readiness metrics…
+        <div aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          <span className="ui-sr-only">Loading compliance readiness metrics…</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ padding: '1.25rem', border: '1px solid var(--border)', borderRadius: '12px' }}>
+                <Skeleton height={28} width="60%" style={{ margin: '0 auto 0.5rem' }} />
+                <Skeleton height={10} width="80%" style={{ margin: '0 auto' }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ padding: '1.5rem', border: '1px solid var(--border)', borderRadius: '12px' }}>
+            <SkeletonText lines={4} />
+          </div>
         </div>
       ) : (
         <>
           {/* ── Stats Dashboard ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
         <StatCard
-          label="Controls Mapped"
+          label={t('pages.phase3.readiness.statControlsMapped')}
           value={`${readinessData.totalFrameworkCoverage}%`}
-          color="#059669"
-          bg="color-mix(in srgb, #059669 8%, transparent)"
-          border="color-mix(in srgb, #059669 20%, transparent)"
+          color="var(--pass-ink)"
+          bg="color-mix(in srgb, var(--pass) 8%, transparent)"
+          border="color-mix(in srgb, var(--pass) 20%, transparent)"
         />
         <StatCard
-          label="Frameworks"
+          label={t('pages.phase3.readiness.statFrameworks')}
           value={String(readinessData.frameworkCount)}
-          color="#0094ff"
-          bg="rgba(0,148,255,.08)"
-          border="rgba(0,148,255,.2)"
+          color="var(--waf-brand-ink)"
+          bg="color-mix(in srgb, var(--waf-brand) 8%, transparent)"
+          border="color-mix(in srgb, var(--waf-brand) 20%, transparent)"
         />
         <StatCard
-          label="Evidence Ready"
+          label={t('pages.phase3.readiness.statEvidenceReady')}
           value={`${readinessData.evidenceCompleteness}%`}
-          color="#d97706"
-          bg="rgba(217,119,6,.08)"
-          border="rgba(217,119,6,.2)"
+          color="var(--score-mid-ink)"
+          bg="color-mix(in srgb, var(--score-mid) 8%, transparent)"
+          border="color-mix(in srgb, var(--score-mid) 20%, transparent)"
         />
         <StatCard
-          label="Missing Remediation"
+          label={t('pages.phase3.readiness.statMissingRemediation')}
           value={String(readinessData.findingsWithoutRemediation)}
-          color="#dc2626"
-          bg="rgba(220,38,38,.08)"
-          border="rgba(220,38,38,.2)"
+          color="var(--fail-ink)"
+          bg="color-mix(in srgb, var(--fail) 8%, transparent)"
+          border="color-mix(in srgb, var(--fail) 20%, transparent)"
         />
         <StatCard
-          label="Ready for Audit"
+          label={t('pages.phase3.readiness.statReadyForAudit')}
           value={`${readinessData.readinessScore}/100`}
-          color="#7c3aed"
-          bg="color-mix(in srgb, #7c3aed 8%, transparent)"
-          border="color-mix(in srgb, #7c3aed 20%, transparent)"
+          color={scoreColor(readinessData.readinessScore)}
+          bg={scoreBg(readinessData.readinessScore, 8)}
+          border={scoreBorder(readinessData.readinessScore, 20)}
           highlight
         />
       </div>
 
       {/* ── Audit Readiness Indicator ──────────────────────────────────────────── */}
-      <div style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '1.5rem',
-      }}>
+      <Card title={t('pages.phase3.readiness.auditReadinessScore')}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Audit Readiness Score</h2>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.5rem' }}>
               <span style={{ fontSize: '2.5rem', fontWeight: 800, color: scoreColor(readinessData.readinessScore) }}>
                 {readinessData.readinessScore}
@@ -210,25 +218,25 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 fontWeight: 700,
                 padding: '0.15rem 0.6rem',
                 borderRadius: '999px',
-                background: readinessData.readinessScore >= 70 ? 'color-mix(in srgb, #059669 15%, transparent)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.15)' : 'rgba(220,38,38,.15)',
-                border: `1px solid ${readinessData.readinessScore >= 70 ? 'color-mix(in srgb, #059669 30%, transparent)' : readinessData.readinessScore >= 50 ? 'rgba(217,119,6,.3)' : 'rgba(220,38,38,.3)'}`,
-                color: readinessData.readinessScore >= 70 ? '#059669' : readinessData.readinessScore >= 50 ? '#d97706' : '#dc2626',
+                background: readinessData.readinessScore >= 70 ? 'color-mix(in srgb, var(--pass) 15%, transparent)' : readinessData.readinessScore >= 50 ? 'color-mix(in srgb, var(--score-mid) 15%, transparent)' : 'color-mix(in srgb, var(--fail) 15%, transparent)',
+                border: `1px solid ${readinessData.readinessScore >= 70 ? 'color-mix(in srgb, var(--pass) 30%, transparent)' : readinessData.readinessScore >= 50 ? 'color-mix(in srgb, var(--score-mid) 30%, transparent)' : 'color-mix(in srgb, var(--fail) 30%, transparent)'}`,
+                color: readinessData.readinessScore >= 70 ? 'var(--pass-ink)' : readinessData.readinessScore >= 50 ? 'var(--score-mid-ink)' : 'var(--fail-ink)',
               }}>
-                {readinessData.readinessScore >= 70 ? 'Ready for Audit' : readinessData.readinessScore >= 50 ? 'Near Ready' : 'Needs Work'}
+                {readinessData.readinessScore >= 70 ? t('pages.phase3.readiness.statusReadyForAudit') : readinessData.readinessScore >= 50 ? t('pages.phase3.readiness.statusNearReady') : t('pages.phase3.readiness.statusNeedsWork')}
               </span>
             </div>
             <p style={{ margin: '0.75rem 0 0', fontSize: '0.7rem', color: 'var(--muted)' }}>
-              Based on: <strong style={{ color: 'var(--text)' }}>Framework Coverage</strong>, <strong style={{ color: 'var(--text)' }}>Evidence Completeness</strong>, and <strong style={{ color: 'var(--text)' }}>Remediation Documentation</strong>
+              {t('pages.phase3.readiness.basedOn')} <strong style={{ color: 'var(--text)' }}>{t('pages.phase3.readiness.basedOnFrameworkCoverage')}</strong>, <strong style={{ color: 'var(--text)' }}>{t('pages.phase3.readiness.basedOnEvidenceCompleteness')}</strong>, and <strong style={{ color: 'var(--text)' }}>{t('pages.phase3.readiness.basedOnRemediationDocumentation')}</strong>
             </p>
           </div>
           {/* Visual circular indicator */}
           <div style={{ flexShrink: 0 }}>
             <svg width="120" height="120" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#f1f5f9" strokeWidth="8" />
+              <circle cx="50" cy="50" r="45" fill="none" stroke="var(--track)" strokeWidth="8" />
               <circle
                 cx="50" cy="50" r="45"
                 fill="none"
-                stroke="#7c3aed"
+                stroke={scoreColor(readinessData.readinessScore)}
                 strokeWidth="8"
                 strokeDasharray="283"
                 strokeDashoffset={Math.max(0, 283 - (readinessData.readinessScore / 100) * 283)}
@@ -237,28 +245,26 @@ export default function ComplianceReadinessPage({ run }: Props) {
             </svg>
             <div style={{ textAlign: 'center', marginTop: '-90px' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>{readinessData.readinessScore}</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>Ready Score</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.phase3.readiness.readyScore')}</div>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* ── Evidence Collection by Framework ───────────────────────────────────── */}
-      <div style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '1.5rem',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <svg width="20" height="20" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Evidence Collection by Framework</h2>
-        </div>
+      <Card
+        title={
+          <>
+            <svg width="20" height="20" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {' '}{t('pages.phase3.readiness.evidenceByFramework')}
+          </>
+        }
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {readinessData.frameworks.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem' }}>No framework mappings found in control library.</p>
+            <EmptyState compact title={t('pages.phase3.readiness.noFrameworkMappings')} />
           ) : (
             readinessData.frameworks.map((fw, idx) => (
               <div key={fw.name} style={{
@@ -275,18 +281,18 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     <div style={{
                       fontSize: '0.9rem',
                       fontWeight: 700,
-                      color: fw.pct >= 80 ? '#059669' : fw.pct >= 50 ? '#d97706' : '#dc2626',
+                      color: fw.pct >= 80 ? 'var(--pass-ink)' : fw.pct >= 50 ? 'var(--score-mid-ink)' : 'var(--fail-ink)',
                     }}>
-                      {fw.pct}% complete
+                      {t('pages.phase3.readiness.frameworkPercentComplete', { pct: fw.pct })}
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{fw.controls} controls</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.phase3.readiness.frameworkControls', { count: fw.controls })}</div>
                   </div>
                 </div>
-                <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '999px', overflow: 'hidden' }}>
+                <div style={{ height: '8px', background: 'var(--track)', borderRadius: '999px', overflow: 'hidden' }}>
                   <div
                     style={{
                       height: '100%',
-                      background: fw.pct >= 80 ? '#059669' : fw.pct >= 50 ? '#d97706' : '#dc2626',
+                      background: fw.pct >= 80 ? 'var(--pass)' : fw.pct >= 50 ? 'var(--score-mid)' : 'var(--fail)',
                       width: `${fw.pct}%`,
                       borderRadius: '999px',
                       transition: 'width 0.5s ease-out',
@@ -297,37 +303,25 @@ export default function ComplianceReadinessPage({ run }: Props) {
             ))
           )}
         </div>
-      </div>
+      </Card>
 
       {/* ── Expiring Waivers & Risk Acceptances ────────────────────────────────── */}
-      <div style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '1.5rem',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <svg width="20" height="20" fill="none" stroke="#d97706" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>Waivers & Risk Acceptances Expiring (30 days)</h2>
-        </div>
-
+      <Card
+        title={
+          <>
+            <svg width="20" height="20" fill="none" stroke="var(--score-mid)" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {' '}{t('pages.phase3.readiness.waiversExpiringTitle')}
+          </>
+        }
+      >
         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1rem' }}>
-          Review items that need attention before your audit.
+          {t('pages.phase3.readiness.waiversExpiringHint')}
         </div>
 
         {waivers.length === 0 && risks.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '2rem',
-            color: 'var(--muted)',
-            fontSize: '0.8rem',
-            background: 'rgba(255,255,255,0.5)',
-            borderRadius: '8px',
-          }}>
-            No waivers or risk acceptances configured.
-          </div>
+          <EmptyState compact title={t('pages.phase3.readiness.noWaiversOrRisks')} />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {/* Waivers */}
@@ -337,17 +331,17 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
-                background: 'rgba(251,191,36,.08)',
-                border: '1px solid rgba(217,119,6,.2)',
+                background: 'color-mix(in srgb, var(--score-mid) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--score-mid) 20%, transparent)',
                 borderRadius: '8px',
               }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#d97706', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--score-mid-ink)', fontFamily: 'monospace' }}>
                     {w.id}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#d97706', marginTop: '0.2rem' }}>{w.reason}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--score-mid-ink)', marginTop: '0.2rem' }}>{w.reason}</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
-                    Expires: {w.expires || 'Not set'}
+                    {t('pages.phase3.readiness.expires')} {w.expires || t('pages.phase3.readiness.notSet')}
                   </div>
                 </div>
                 {w.expires && isExpiringSoon(w.expires) && (
@@ -356,10 +350,10 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     fontWeight: 700,
                     padding: '0.2rem 0.6rem',
                     borderRadius: '999px',
-                    background: 'rgba(251,191,36,.2)',
-                    color: '#d97706',
+                    background: 'color-mix(in srgb, var(--score-mid) 20%, transparent)',
+                    color: 'var(--score-mid-ink)',
                   }}>
-                    EXPIRING SOON
+                    {t('pages.phase3.readiness.expiringSoon')}
                   </span>
                 )}
               </div>
@@ -371,17 +365,17 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
-                background: 'color-mix(in srgb, #0ea5e9 8%, transparent)',
-                border: '1px solid color-mix(in srgb, #0ea5e9 20%, transparent)',
+                background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)',
                 borderRadius: '8px',
               }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0094ff', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--waf-brand-ink)', fontFamily: 'monospace' }}>
                     {ra.id}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#0094ff', marginTop: '0.2rem' }}>{ra.reason}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--waf-brand-ink)', marginTop: '0.2rem' }}>{ra.reason}</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
-                    Expires: {ra.expires || 'Not set'} | Risk: {ra.residual_risk || 'medium'}
+                    {t('pages.phase3.readiness.expires')} {ra.expires || t('pages.phase3.readiness.notSet')} | {t('pages.phase3.readiness.riskLabel')} {ra.residual_risk || 'medium'}
                   </div>
                 </div>
                 {ra.expires && isExpiringSoon(ra.expires) && (
@@ -390,46 +384,31 @@ export default function ComplianceReadinessPage({ run }: Props) {
                     fontWeight: 700,
                     padding: '0.2rem 0.6rem',
                     borderRadius: '999px',
-                    background: 'color-mix(in srgb, #0ea5e9 20%, transparent)',
-                    color: '#0094ff',
+                    background: 'color-mix(in srgb, var(--waf-brand) 20%, transparent)',
+                    color: 'var(--waf-brand-ink)',
                   }}>
-                    EXPIRING SOON
+                    {t('pages.phase3.readiness.expiringSoon')}
                   </span>
                 )}
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* ── Findings Missing Remediation ───────────────────────────────────────── */}
-      <div style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-        padding: '1.5rem',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <svg width="20" height="20" fill="none" stroke="#dc2626" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
-            Findings Missing Remediation Documentation
-          </h2>
-        </div>
-
+      <Card
+        title={
+          <>
+            <svg width="20" height="20" fill="none" stroke="var(--fail)" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {' '}{t('pages.phase3.readiness.findingsMissingRemediation')}
+          </>
+        }
+      >
         {readinessData.controlsWithoutRemediation.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '1.5rem',
-            color: 'var(--muted)',
-            fontSize: '0.8rem',
-            background: 'rgba(5,150,105,.04)',
-            border: '1px solid color-mix(in srgb, #059669 20%, transparent)',
-            borderRadius: '8px',
-          }}>
-            All controls have remediation documentation.
-          </div>
+          <EmptyState compact title={t('pages.phase3.readiness.allControlsDocumented')} />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {readinessData.controlsWithoutRemediation.slice(0, 10).map((control, i) => (
@@ -438,32 +417,32 @@ export default function ComplianceReadinessPage({ run }: Props) {
                 alignItems: 'flex-start',
                 gap: '0.75rem',
                 padding: '0.75rem 1rem',
-                background: 'rgba(220,38,38,.05)',
-                border: '1px solid rgba(220,38,38,.15)',
+                background: 'color-mix(in srgb, var(--fail) 5%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--fail) 15%, transparent)',
                 borderRadius: '8px',
               }}>
-                <svg width="20" height="20" fill="none" stroke="#fca5a5" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: '2px' }}>
+                <svg width="20" height="20" fill="none" stroke="var(--fail)" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: '2px' }} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#dc2626', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--fail-ink)', fontFamily: 'monospace' }}>
                     {control.id}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#dc2626' }}>{control.title}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--fail-ink)' }}>{control.title}</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem' }}>
-                    {control.category} | severity: {control.severity}
+                    {t('pages.phase3.readiness.controlCategorySeverity', { category: control.category, severity: control.severity })}
                   </div>
                 </div>
               </div>
             ))}
             {readinessData.controlsWithoutRemediation.length > 10 && (
               <div style={{ textAlign: 'center', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                +{readinessData.controlsWithoutRemediation.length - 10} more controls missing remediation
+                {t('pages.phase3.readiness.moreControlsMissing', { count: readinessData.controlsWithoutRemediation.length - 10 })}
               </div>
             )}
           </div>
         )}
-      </div>
+      </Card>
       </>)}
     </div>
   )

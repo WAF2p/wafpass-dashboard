@@ -1,6 +1,9 @@
+import { useI18n } from '../i18n'
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LegalPage() {
+  const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
@@ -15,10 +18,10 @@ export default function LegalPage() {
         </svg>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text)' }}>
-            Legal Notice
+            {t('pages.phase3.legal.title')}
           </h1>
           <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--muted)' }}>
-            Liability disclaimer, terms of use, and open source notice
+            {t('pages.phase3.legal.subtitle')}
           </p>
         </div>
       </div>
@@ -26,7 +29,7 @@ export default function LegalPage() {
       {/* ── Open Source Nature ──────────────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          Open Source Framework - No Commercial Sale
+          {t('pages.phase3.legal.openSourceHeading')}
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '1rem' }}>
@@ -44,7 +47,7 @@ export default function LegalPage() {
       {/* ── Future Certification Service ──────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          Future Certification Service
+          {t('pages.phase3.legal.certificationHeading')}
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '1rem' }}>
@@ -67,7 +70,7 @@ export default function LegalPage() {
       {/* ── Liability Disclaimer ──────────────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          Liability Disclaimer
+          {t('pages.phase3.legal.disclaimerHeading')}
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '1rem' }}>
@@ -88,7 +91,7 @@ export default function LegalPage() {
       {/* ── External Links ──────────────────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          External Links
+          {t('pages.phase3.legal.externalLinksHeading')}
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '0' }}>
@@ -100,7 +103,7 @@ export default function LegalPage() {
       {/* ── Contact ─────────────────────────────────────────────────────────── */}
       <div className="card">
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          Questions or Concerns?
+          {t('pages.phase3.legal.contactHeading')}
         </h2>
         <div style={{ fontSize: '0.85rem', lineHeight: 1.8, color: 'var(--text)' }}>
           <p style={{ marginBottom: '1rem' }}>

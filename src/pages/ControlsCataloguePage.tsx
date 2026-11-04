@@ -4,30 +4,32 @@ import { useAuth, hasMinRole } from '../AuthContext'
 import SavedViewsControl from '../components/SavedViewsControl'
 import { parseHash } from '../routing'
 import { severityColor } from '../severity'
+import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 
 const PILLAR_COLOR: Record<string, string> = {
-  security: '#DA2C38', cost: '#f97316', reliability: '#0094FF',
-  operational: '#8b5cf6', operations: '#8b5cf6',
-  sovereign: '#06b6d4', sovereignty: '#06b6d4',
-  sustainability: '#22c55e', performance: '#eab308', governance: '#94a3b8',
-  agentic: '#ec4899',
+  security: 'var(--fail)', cost: 'var(--waf-warn)', reliability: 'var(--pass)',
+  operational: 'var(--waived)', operations: 'var(--waived)',
+  sovereign: 'var(--waf-brand)', sovereignty: 'var(--waf-brand)',
+  sustainability: 'var(--score-high)', performance: 'var(--waf-warn)', governance: 'var(--skip)',
+  agentic: 'var(--waf-info)',
 }
 const ENGINE_COLOR: Record<string, string> = {
-  terraform: '#7c3aed', checkov: '#0ea5e9', manual: '#94a3b8',
+  terraform: 'var(--waf-info)', checkov: 'var(--waf-brand)', manual: 'var(--skip)',
 }
 
-const PILLAR_DESC: Record<string, string> = {
-  security:       'Threat protection, encryption, access control, and attack-surface reduction',
-  cost:           'Resource efficiency, budget guardrails, and cloud spend governance',
-  performance:    'Latency, throughput, auto-scaling, and resource right-sizing',
-  reliability:    'Fault tolerance, backups, multi-region, and disaster recovery',
-  operational:    'Observability, automation, deployment hygiene, and runbook coverage',
-  operations:     'Observability, automation, deployment hygiene, and runbook coverage',
-  sustainability: 'Carbon footprint, energy efficiency, and sustainable architecture',
-  sovereign:      'Data residency, jurisdictional controls, and regulatory locality',
-  agentic:        'AI-driven infrastructure, autonomous remediation, and self-healing systems',
+const PILLAR_DESC_KEY: Record<string, string> = {
+  security:       'pillarDescSecurity',
+  cost:           'pillarDescCost',
+  performance:    'pillarDescPerformance',
+  reliability:    'pillarDescReliability',
+  operational:    'pillarDescOperational',
+  operations:     'pillarDescOperations',
+  sustainability: 'pillarDescSustainability',
+  sovereign:      'pillarDescSovereign',
+  agentic:        'pillarDescAgentic',
 }
 
 const ALL_PILLARS   = ['security', 'cost', 'performance', 'reliability', 'operations', 'sustainability', 'sovereign', 'agentic']
@@ -39,14 +41,14 @@ const PILLAR_PREFIX: Record<string, string> = {
   operations: 'OPS', sustainability: 'SUS', sovereign: 'SOV', agentic: 'AGT',
 }
 const TYPE_COLOR: Record<string, string> = {
-  governance: '#0094FF', configuration: '#f97316', iac: '#7c3aed',
-  network: '#06b6d4', identity: '#eab308', data: '#22c55e', cost: '#f97316',
+  governance: 'var(--waf-brand)', configuration: 'var(--waf-warn)', iac: 'var(--waf-info)',
+  network: 'var(--waf-brand)', identity: 'var(--waf-warn)', data: 'var(--pass)', cost: 'var(--waf-warn)',
 }
 
 const sevColor = severityColor
-function pillarColor(p: string) { return PILLAR_COLOR[p?.toLowerCase()] ?? '#94a3b8' }
-function typeColor(t: string)   { return TYPE_COLOR[t?.toLowerCase()]   ?? '#94a3b8' }
-function engineColor(e: string) { return ENGINE_COLOR[e?.toLowerCase()] ?? '#94a3b8' }
+function pillarColor(p: string) { return PILLAR_COLOR[p?.toLowerCase()] ?? 'var(--skip)' }
+function typeColor(t: string)   { return TYPE_COLOR[t?.toLowerCase()]   ?? 'var(--skip)' }
+function engineColor(e: string) { return ENGINE_COLOR[e?.toLowerCase()] ?? 'var(--skip)' }
 
 // ── Shared components ─────────────────────────────────────────────────────────
 
@@ -55,7 +57,7 @@ function Pill({ label, color }: { label: string; color: string }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center',
       padding: '0.15rem 0.55rem', borderRadius: '999px',
-      background: `${color}22`, color,
+      background: `color-mix(in srgb, ${color} 13%, transparent)`, color,
       fontSize: '0.72rem', fontWeight: 700, whiteSpace: 'nowrap',
     }}>{label}</span>
   )
@@ -66,7 +68,7 @@ function Tag({ label }: { label: string }) {
     <span style={{
       display: 'inline-flex', padding: '0.1rem 0.4rem', borderRadius: '4px',
       fontSize: '0.7rem', fontWeight: 600,
-      background: 'rgba(15,23,42,.07)', color: 'var(--muted)',
+      background: 'color-mix(in srgb, var(--text) 7%, transparent)', color: 'var(--muted)',
     }}>{label}</span>
   )
 }
@@ -77,9 +79,9 @@ function TogglePill({ label, color, active, onClick }: { label: string; color: s
       display: 'inline-flex', alignItems: 'center',
       padding: '0.2rem 0.6rem', borderRadius: '999px', cursor: 'pointer',
       fontSize: '0.72rem', fontWeight: 700,
-      background: active ? color : `${color}18`,
+      background: active ? color : `color-mix(in srgb, ${color} 9%, transparent)`,
       color: active ? '#fff' : color,
-      border: `1px solid ${color}44`,
+      border: `1px solid color-mix(in srgb, ${color} 27%, transparent)`,
       whiteSpace: 'nowrap',
       flex: '0 0 auto',
       minWidth: 'auto',
@@ -87,10 +89,11 @@ function TogglePill({ label, color, active, onClick }: { label: string; color: s
   )
 }
 
-function sourceBadge(isCustom: boolean) {
+function SourceBadge({ isCustom }: { isCustom: boolean }) {
+  const { t } = useI18n()
   return isCustom
-    ? <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'color-mix(in srgb, #7c3aed 15%, transparent)', color: '#7c3aed', border: '1px solid color-mix(in srgb, #7c3aed 25%, transparent)', whiteSpace: 'nowrap' }}>custom</span>
-    : <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'rgba(0,148,255,.12)', color: '#0094FF', border: '1px solid rgba(0,148,255,.25)', whiteSpace: 'nowrap' }}>wombat</span>
+    ? <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'color-mix(in srgb, var(--waf-info) 15%, transparent)', color: 'var(--waf-info)', border: '1px solid color-mix(in srgb, var(--waf-info) 25%, transparent)', whiteSpace: 'nowrap' }}>{t('pages.phase3.catalogue.sourceCustom')}</span>
+    : <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand-ink)', border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)', whiteSpace: 'nowrap' }}>{t('pages.phase3.catalogue.sourceWombat')}</span>
 }
 
 // ── Unified row shape ─────────────────────────────────────────────────────────
@@ -373,13 +376,13 @@ function buildPackFiles(controls: UnifiedControl[]): { name: string; content: st
 // ── Wizard ────────────────────────────────────────────────────────────────────
 
 const WIZARD_STEPS = [
-  { label: 'Describe',  sub: 'Requirement'   },
-  { label: 'Pillar',    sub: 'Security pillar'},
-  { label: 'Classify',  sub: 'ID & severity'  },
-  { label: 'Types',     sub: 'Control types'  },
-  { label: 'Checks',    sub: 'Define checks'  },
-  { label: 'Preview',   sub: 'YAML review'    },
-  { label: 'Save',      sub: 'Export & push'  },
+  { labelKey: 'stepDescribe', subKey: 'stepDescribeSub' },
+  { labelKey: 'stepPillar',   subKey: 'stepPillarSub'   },
+  { labelKey: 'stepClassify', subKey: 'stepClassifySub' },
+  { labelKey: 'stepTypes',    subKey: 'stepTypesSub'    },
+  { labelKey: 'stepChecks',   subKey: 'stepChecksSub'   },
+  { labelKey: 'stepPreview',  subKey: 'stepPreviewSub'  },
+  { labelKey: 'stepSave',     subKey: 'stepSaveSub'     },
 ]
 
 const EMPTY_CHECK: CatalogueCheck = { id: '', engine: 'terraform', description: '', expected: '' }
@@ -396,6 +399,7 @@ interface WizardState {
 // ── Step stream ───────────────────────────────────────────────────────────────
 
 function StepStream({ step }: { step: number }) {
+  const { t } = useI18n()
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', padding: '1rem 1.5rem 0.875rem',
@@ -404,29 +408,29 @@ function StepStream({ step }: { step: number }) {
       {WIZARD_STEPS.map((s, i) => {
         const done   = i < step
         const active = i === step
-        const clr    = done ? '#059669' : active ? '#0094FF' : '#94a3b8'
+        const clr    = done ? 'var(--score-high)' : active ? 'var(--waf-brand-ink)' : 'var(--skip)'
         return (
           <Fragment key={i}>
             {i > 0 && (
               <div style={{
                 flex: 1, height: '2px', marginTop: '13px',
-                background: done ? '#059669' : '#e2e8f0',
+                background: done ? 'var(--score-high)' : 'var(--border)',
               }} />
             )}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', minWidth: '56px' }}>
               <div style={{
                 width: '28px', height: '28px', borderRadius: '50%',
-                background: (done || active) ? clr : 'transparent',
+                background: done ? 'var(--score-high)' : active ? 'var(--waf-brand-btn)' : 'transparent',
                 border: `2px solid ${clr}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.68rem', fontWeight: 800,
+                fontSize: '0.7rem', fontWeight: 800,
                 color: (done || active) ? '#fff' : clr,
-                flexShrink: 0, transition: 'all 0.2s',
+                flexShrink: 0, transition: 'background-color 0.2s, border-color 0.2s, color 0.2s',
               }}>
                 {done ? '✓' : i + 1}
               </div>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: clr, textAlign: 'center', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{s.label}</span>
-              <span style={{ fontSize: '0.7rem', color: active ? clr : '#94a3b8', textAlign: 'center', lineHeight: 1.1, whiteSpace: 'nowrap' }}>{s.sub}</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: clr, textAlign: 'center', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{t(`pages.phase3.catalogue.${s.labelKey}`)}</span>
+              <span style={{ fontSize: '0.7rem', color: active ? clr : 'var(--skip)', textAlign: 'center', lineHeight: 1.1, whiteSpace: 'nowrap' }}>{t(`pages.phase3.catalogue.${s.subKey}`)}</span>
             </div>
           </Fragment>
         )
@@ -450,6 +454,7 @@ const labelStyle: React.CSSProperties = {
 }
 
 function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const { t } = useI18n()
   const [isFocused, setIsFocused] = useState(false)
   const charCount = state.description.trim().length
   const isShort = charCount < 20
@@ -457,38 +462,38 @@ function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ background: 'rgba(0,148,255,.06)', border: '1px solid rgba(0,148,255,.2)', borderRadius: '10px', padding: '0.875rem 1rem', fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-        Describe in plain language what your infrastructure must enforce. This becomes the control description that engineers will read in scan results.
+      <div style={{ background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)', borderRadius: '10px', padding: '0.875rem 1rem', fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+        {t('pages.phase3.catalogue.step1Intro')}
       </div>
       <div>
-        <label style={labelStyle}>Requirement description</label>
+        <label style={labelStyle}>{t('pages.phase3.catalogue.requirementDescription')}</label>
         <textarea
           value={state.description}
           onChange={e => onChange({ description: e.target.value })}
           rows={5}
-          placeholder={`E.g. "All S3 buckets must have server-side encryption enabled using AES-256 or KMS. Unencrypted buckets must not be deployable in any environment."`}
-          style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, outline: isFocused && isShort ? '2px solid #f97316' : 'none' }}
+          placeholder={t('pages.phase3.catalogue.descriptionPlaceholder')}
+          style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, outline: isFocused && isShort ? '2px solid var(--waf-warn)' : 'none' }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           autoFocus
         />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.3rem', fontSize: '0.68rem' }}>
-          <span style={{ color: isLongEnough ? '#059669' : '#DA2C38', fontWeight: 700 }}>
-            {isLongEnough ? '✓' : isFocused ? '✏' : '•'} {isLongEnough ? `${charCount} characters` : `${20 - charCount} more needed`}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.3rem', fontSize: '0.7rem' }}>
+          <span style={{ color: isLongEnough ? 'var(--score-high)' : 'var(--fail)', fontWeight: 700 }}>
+            {isLongEnough ? '✓' : isFocused ? '✏' : '•'} {isLongEnough ? t('pages.phase3.catalogue.charactersCount', { count: charCount }) : t('pages.phase3.catalogue.moreNeeded', { count: 20 - charCount })}
           </span>
           <div style={{ flex: 1, height: 3, borderRadius: 999, background: 'var(--border)', overflow: 'hidden', flexShrink: 0 }}>
-            <div style={{ height: '100%', width: `${Math.min(100, (charCount / 500) * 100)}%`, background: isLongEnough ? '#059669' : '#f97316', transition: 'width 0.3s ease' }} />
+            <div style={{ height: '100%', width: `${Math.min(100, (charCount / 500) * 100)}%`, background: isLongEnough ? 'var(--score-high)' : 'var(--waf-warn)', transition: 'width 0.3s ease' }} />
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
-          <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
-          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-            Custom controls use <strong>CUS-</strong> prefix (e.g., CUS-001)
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--waf-brand-ink)' }}>{t('pages.phase3.catalogue.noteLabel')}</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--skip)' }}>
+            {t('pages.phase3.catalogue.customControlsUse')} <strong>CUS-</strong> {t('pages.phase3.catalogue.cusPrefixNote')}
           </span>
         </div>
         {isFocused && isShort && (
-          <div style={{ marginTop: '0.25rem', fontSize: '0.68rem', color: '#f97316', background: 'color-mix(in srgb, #f97316 8%, transparent)', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
-            Tip: Aim for 30-100 characters for clear control descriptions
+          <div style={{ marginTop: '0.25rem', fontSize: '0.7rem', color: 'var(--waf-warn)', background: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)', padding: '0.4rem 0.6rem', borderRadius: '6px' }}>
+            {t('pages.phase3.catalogue.tipLength')}
           </div>
         )}
       </div>
@@ -497,10 +502,11 @@ function Step1Describe({ state, onChange }: { state: WizardState; onChange: (p: 
 }
 
 function Step2Pillar({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const { t } = useI18n()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '0.25rem', lineHeight: 1.5 }}>
-        Choose the security pillar this control belongs to. It determines the control ID prefix and how findings are categorised.
+        {t('pages.phase3.catalogue.step2Intro')}
       </div>
       {ALL_PILLARS.map(p => {
         const active = state.pillar === p
@@ -513,19 +519,19 @@ function Step2Pillar({ state, onChange }: { state: WizardState; onChange: (p: Pa
               display: 'flex', alignItems: 'center', gap: '0.875rem',
               padding: '0.75rem 1rem', borderRadius: '10px', cursor: 'pointer', textAlign: 'left',
               border: `2px solid ${active ? color : 'var(--border)'}`,
-              background: active ? `${color}10` : 'var(--bg)',
-              transition: 'all 0.15s',
+              background: active ? `color-mix(in srgb, ${color} 6%, transparent)` : 'var(--bg)',
+              transition: 'border-color 0.15s, background-color 0.15s, color 0.15s, box-shadow 0.15s',
             }}
           >
             <div style={{
               width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
-              background: color, boxShadow: active ? `0 0 0 3px ${color}30` : 'none',
+              background: color, boxShadow: active ? `0 0 0 3px color-mix(in srgb, ${color} 19%, transparent)` : 'none',
             }} />
             <div style={{ flex: 1 }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: active ? color : 'var(--text)', display: 'block', textTransform: 'capitalize' }}>
                 {PILLAR_PREFIX[p]} — {p}
               </span>
-              <span style={{ fontSize: '0.73rem', color: 'var(--muted)', lineHeight: 1.4 }}>{PILLAR_DESC[p]}</span>
+              <span style={{ fontSize: '0.73rem', color: 'var(--muted)', lineHeight: 1.4 }}>{t(`pages.phase3.catalogue.${PILLAR_DESC_KEY[p]}`)}</span>
             </div>
             {active && <span style={{ fontSize: '0.9rem', color }}>✓</span>}
           </button>
@@ -536,6 +542,7 @@ function Step2Pillar({ state, onChange }: { state: WizardState; onChange: (p: Pa
 }
 
 function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const { t } = useI18n()
   const [customNum, setCustomNum] = useState(state.id.replace('CUS-', ''))
   const isIdValid = /^[0-9]+$/.test(customNum)
 
@@ -560,33 +567,33 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div>
-        <label style={labelStyle}>Control ID</label>
+        <label style={labelStyle}>{t('pages.phase3.catalogue.controlId')}</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <code style={{ fontSize: '0.85rem', color: '#0094FF', padding: '0.45rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontFamily: 'monospace' }}>
+          <code style={{ fontSize: '0.85rem', color: 'var(--waf-brand-ink)', padding: '0.45rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontFamily: 'monospace' }}>
             CUS-
           </code>
           <input
             value={customNum}
             onChange={handleChange}
             placeholder="001"
-            style={{ ...inputStyle, width: '100px', outline: !isIdValid ? '2px solid #f97316' : 'none', fontFamily: 'monospace' }}
+            style={{ ...inputStyle, width: '100px', outline: !isIdValid ? '2px solid var(--waf-warn)' : 'none', fontFamily: 'monospace' }}
             autoFocus
           />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.3rem', fontSize: '0.68rem' }}>
-          <span style={{ color: isIdValid ? '#059669' : '#94a3b8', fontWeight: 700 }}>
-            {isIdValid ? '✓' : '•'} Format: CUS-001 to CUS-999
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.3rem', fontSize: '0.7rem' }}>
+          <span style={{ color: isIdValid ? 'var(--score-high)' : 'var(--skip)', fontWeight: 700 }}>
+            {isIdValid ? '✓' : '•'} {t('pages.phase3.catalogue.formatCus')}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
-          <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Note:</span>
-          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-            Custom controls use <strong>CUS-</strong> prefix (fixed - only the number changes)
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.35rem 0.5rem', background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--waf-brand-ink)' }}>{t('pages.phase3.catalogue.noteLabel')}</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--skip)' }}>
+            {t('pages.phase3.catalogue.customControlsUse')} <strong>CUS-</strong> {t('pages.phase3.catalogue.cusPrefixFixed')}
           </span>
         </div>
       </div>
       <div>
-        <label style={labelStyle}>Severity</label>
+        <label style={labelStyle}>{t('pages.phase3.catalogue.severity')}</label>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {ALL_SEVERITIES.map(s => {
             const active = state.severity === s
@@ -598,17 +605,17 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
                 style={{
                   padding: '0.45rem 1.1rem', borderRadius: '8px', cursor: 'pointer',
                   border: `2px solid ${active ? color : 'var(--border)'}`,
-                  background: active ? `${color}15` : 'var(--bg)',
+                  background: active ? `color-mix(in srgb, ${color} 8%, transparent)` : 'var(--bg)',
                   color: active ? color : 'var(--muted)',
                   fontWeight: 700, fontSize: '0.85rem', textTransform: 'capitalize',
-                  transition: 'all 0.15s',
+                  transition: 'border-color 0.15s, background-color 0.15s, color 0.15s, box-shadow 0.15s',
                 }}
               >{s}</button>
             )
           })}
         </div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem' }}>
-          <span style={{ fontWeight: 600 }}>Tip:</span> Critical & High block CI/CD, Medium & Low are advisory-only
+          <span style={{ fontWeight: 600 }}>{t('pages.phase3.catalogue.tipLabel')}</span> {t('pages.phase3.catalogue.severityTip')}
         </div>
       </div>
     </div>
@@ -616,13 +623,14 @@ function Step3Classify({ state, onChange }: { state: WizardState; onChange: (p: 
 }
 
 function Step4Types({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const { t } = useI18n()
   function toggle(t: string) {
     onChange({ types: state.types.includes(t) ? state.types.filter(x => x !== t) : [...state.types, t] })
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-        Select one or more control types that describe how this control is enforced. Choose all that apply.
+        {t('pages.phase3.catalogue.step4Intro')}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
         {ALL_TYPES.map(t => {
@@ -634,32 +642,33 @@ function Step4Types({ state, onChange }: { state: WizardState; onChange: (p: Par
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.6rem',
                 padding: '0.65rem 0.875rem', borderRadius: '8px', cursor: 'pointer',
-                border: `2px solid ${active ? '#0094FF' : 'var(--border)'}`,
-                background: active ? 'rgba(0,148,255,.08)' : 'var(--bg)',
-                transition: 'all 0.15s',
+                border: `2px solid ${active ? 'var(--waf-brand-ink)' : 'var(--border)'}`,
+                background: active ? 'color-mix(in srgb, var(--waf-brand) 8%, transparent)' : 'var(--bg)',
+                transition: 'border-color 0.15s, background-color 0.15s, color 0.15s, box-shadow 0.15s',
               }}
             >
               <div style={{
                 width: '16px', height: '16px', borderRadius: '4px', flexShrink: 0,
-                border: `2px solid ${active ? '#0094FF' : 'var(--border)'}`,
-                background: active ? '#0094FF' : 'transparent',
+                border: `2px solid ${active ? 'var(--waf-brand-ink)' : 'var(--border)'}`,
+                background: active ? 'var(--waf-brand-btn)' : 'transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {active && <span style={{ color: '#fff', fontSize: '0.7rem', lineHeight: 1 }}>✓</span>}
               </div>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: active ? '#0094FF' : 'var(--text)', textTransform: 'capitalize' }}>{t}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: active ? 'var(--waf-brand-ink)' : 'var(--text)', textTransform: 'capitalize' }}>{t}</span>
             </button>
           )
         })}
       </div>
       {state.types.length === 0 && (
-        <div style={{ fontSize: '0.75rem', color: '#DA2C38' }}>Select at least one type to continue.</div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--fail)' }}>{t('pages.phase3.catalogue.selectAtLeastOneType')}</div>
       )}
     </div>
   )
 }
 
 function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Partial<WizardState>) => void }) {
+  const { t } = useI18n()
   function update(i: number, field: keyof CatalogueCheck, value: string) {
     onChange({ checks: state.checks.map((c, idx) => idx === i ? { ...c, [field]: value } : c) })
   }
@@ -676,10 +685,10 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-          Define the individual checks that implement this control. Each check maps to a specific engine assertion.
+          {t('pages.phase3.catalogue.step5Intro')}
         </div>
-        <button onClick={add} style={{ fontSize: '0.75rem', color: '#0094FF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap', marginLeft: '0.75rem' }}>
-          + Add check
+        <button onClick={add} style={{ fontSize: '0.75rem', color: 'var(--waf-brand-ink)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap', marginLeft: '0.75rem' }}>
+          {t('pages.phase3.catalogue.addCheck')}
         </button>
       </div>
       {state.checks.map((ch, i) => {
@@ -690,13 +699,13 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
         const allOk = idOk && engineOk && descOk && expectedOk
 
         return (
-          <div key={i} style={{ background: 'var(--bg)', borderRadius: '10px', border: `1px solid ${allOk ? 'rgba(0,148,255,.2)' : 'var(--border)'}`, padding: '0.875rem', transition: 'border-color 0.2s' }}>
+          <div key={i} style={{ background: 'var(--bg)', borderRadius: '10px', border: `1px solid ${allOk ? 'color-mix(in srgb, var(--waf-brand) 20%, transparent)' : 'var(--border)'}`, padding: '0.875rem', transition: 'border-color 0.2s' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Check {i + 1}</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.phase3.catalogue.checkN', { n: i + 1 })}</span>
               {state.checks.length > 1 && (
-                <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA2C38', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
+                <button aria-label={t('pages.phase3.catalogue.removeCheck', { n: i + 1 })} onClick={() => remove(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fail)', fontSize: '0.8rem', lineHeight: 1 }}>✕</button>
               )}
-              <span style={{ fontSize: '0.7rem', color: allOk ? '#059669' : '#f97316', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.7rem', color: allOk ? 'var(--score-high)' : 'var(--waf-warn)', fontWeight: 700 }}>
                 {allOk ? '✓' : '✏'}
               </span>
             </div>
@@ -705,59 +714,59 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
                 <input
                   value={ch.id}
                   onChange={e => update(i, 'id', e.target.value)}
-                  placeholder="Check ID — e.g. tf.s3_encryption"
-                  style={{ ...inputStyle, outline: ch.id && !idOk ? '2px solid #f97316' : 'none' }}
+                  placeholder={t('pages.phase3.catalogue.checkIdPlaceholder')}
+                  style={{ ...inputStyle, outline: ch.id && !idOk ? '2px solid var(--waf-warn)' : 'none' }}
                 />
                 {ch.id && !idOk && (
-                  <div style={{ position: 'absolute', bottom: '-1.15rem', left: 0, right: 0, fontSize: '0.7rem', color: '#f97316' }}>
-                    Use format: engine.resource_type (e.g., tf.s3_encryption)
+                  <div style={{ position: 'absolute', bottom: '-1.15rem', left: 0, right: 0, fontSize: '0.7rem', color: 'var(--waf-warn)' }}>
+                    {t('pages.phase3.catalogue.idFormatHelp')}
                   </div>
                 )}
-                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.2rem' }}>
-                  {ch.id ? (idOk ? 'Valid ✓' : 'Invalid format') : 'Auto-suggested: tf.'}
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.2rem' }}>
+                  {ch.id ? (idOk ? t('pages.phase3.catalogue.valid') : t('pages.phase3.catalogue.invalidFormat')) : t('pages.phase3.catalogue.autoSuggested')}
                 </div>
               </div>
-              <select value={ch.engine} onChange={e => update(i, 'engine', e.target.value)} style={{ ...inputStyle, outline: ch.engine && !engineOk ? '2px solid #f97316' : 'none' }}>
+              <select value={ch.engine} onChange={e => update(i, 'engine', e.target.value)} style={{ ...inputStyle, outline: ch.engine && !engineOk ? '2px solid var(--waf-warn)' : 'none' }}>
                 {ALL_ENGINES.map(e => (
                   <option key={e} value={e}>{e}</option>
                 ))}
               </select>
               {ch.engine && !engineOk && (
-                <div style={{ position: 'absolute', bottom: '-1.2rem', left: 0, right: 0, fontSize: '0.7rem', color: '#f97316' }}>
-                  Select a valid engine
+                <div style={{ position: 'absolute', bottom: '-1.2rem', left: 0, right: 0, fontSize: '0.7rem', color: 'var(--waf-warn)' }}>
+                  {t('pages.phase3.catalogue.selectValidEngine')}
                 </div>
               )}
             </div>
             <input
               value={ch.description}
               onChange={e => update(i, 'description', e.target.value)}
-              placeholder="What this check verifies"
-              style={{ ...inputStyle, marginBottom: '0.5rem', outline: ch.description && !descOk ? '2px solid #f97316' : 'none' }}
+              placeholder={t('pages.phase3.catalogue.checkDescriptionPlaceholder')}
+              style={{ ...inputStyle, marginBottom: '0.5rem', outline: ch.description && !descOk ? '2px solid var(--waf-warn)' : 'none' }}
             />
-            <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.2rem' }}>
-              {ch.description ? (descOk ? 'Good length ✓' : 'Too short') : 'Describe the check requirement'}
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.2rem' }}>
+              {ch.description ? (descOk ? t('pages.phase3.catalogue.goodLength') : t('pages.phase3.catalogue.tooShort')) : t('pages.phase3.catalogue.describeCheckRequirement')}
             </div>
             <input
               value={ch.expected}
               onChange={e => update(i, 'expected', e.target.value)}
-              placeholder="Expected — what a passing configuration looks like"
-              style={{ ...inputStyle, outline: ch.expected && !expectedOk ? '2px solid #f97316' : 'none' }}
+              placeholder={t('pages.phase3.catalogue.expectedPlaceholder')}
+              style={{ ...inputStyle, outline: ch.expected && !expectedOk ? '2px solid var(--waf-warn)' : 'none' }}
             />
-            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-              {ch.expected ? (expectedOk ? 'Valid ✓' : 'Too short') : 'Describe expected state'}
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
+              {ch.expected ? (expectedOk ? t('pages.phase3.catalogue.valid') : t('pages.phase3.catalogue.tooShort')) : t('pages.phase3.catalogue.describeExpectedState')}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(0,148,255,.08)', borderRadius: '6px' }}>
-              <span style={{ fontSize: '0.7rem', color: '#60a5fa' }}>Schema hint:</span>
-              <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                engine: {ALL_ENGINES.join(' | ')}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem', padding: '0.4rem 0.6rem', background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)', borderRadius: '6px' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--waf-brand-ink)' }}>{t('pages.phase3.catalogue.schemaHint')}</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--skip)' }}>
+                {t('pages.phase3.catalogue.engineHint', { engines: ALL_ENGINES.join(' | ') })}
               </span>
             </div>
           </div>
         )
       })}
       {state.checks.length === 0 && (
-        <div style={{ fontSize: '0.7rem', color: '#f97316', padding: '0.5rem', background: 'color-mix(in srgb, #f97316 8%, transparent)', borderRadius: '8px', textAlign: 'center' }}>
-          Add at least one check to define how this control is verified
+        <div style={{ fontSize: '0.7rem', color: 'var(--waf-warn)', padding: '0.5rem', background: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)', borderRadius: '8px', textAlign: 'center' }}>
+          {t('pages.phase3.catalogue.addAtLeastOneCheck')}
         </div>
       )}
     </div>
@@ -765,6 +774,7 @@ function Step5Checks({ state, onChange }: { state: WizardState; onChange: (p: Pa
 }
 
 function Step6Preview({ state }: { state: WizardState }) {
+  const { t } = useI18n()
   const preview = toYaml({
     id: state.id, pillar: state.pillar, severity: state.severity,
     type: state.types as CatalogueControl['type'],
@@ -775,7 +785,7 @@ function Step6Preview({ state }: { state: WizardState }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       <div style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-        Review the generated YAML before saving. Use <strong>Previous</strong> to go back and make edits.
+        {t('pages.phase3.catalogue.step6IntroBefore')} <strong>{t('pages.phase3.catalogue.previous')}</strong> {t('pages.phase3.catalogue.step6IntroAfter')}
       </div>
       <pre style={{
         margin: 0, background: '#0f172a', borderRadius: '10px', padding: '1rem 1.1rem',
@@ -794,20 +804,20 @@ function Step6Preview({ state }: { state: WizardState }) {
       </pre>
       {/* Validation summary */}
       <div style={{ background: 'var(--bg)', borderRadius: '10px', border: '1px solid var(--border)', padding: '0.875rem 1rem' }}>
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>Validation</div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>{t('pages.phase3.catalogue.validation')}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
           {[
-            ['Description',  state.description.trim().length >= 20],
-            ['Pillar',       ALL_PILLARS.includes(state.pillar)],
-            ['Control ID',   /^[A-Z]+-\d+$/.test(state.id)],
-            ['Severity',     ALL_SEVERITIES.includes(state.severity)],
-            ['Types',        state.types.length > 0],
-            ['Checks',       state.checks.length > 0 && state.checks.every(c => c.id && c.description && c.expected)],
-          ].map(([label, ok]) => (
-            <div key={label as string} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem' }}>
-              <span style={{ color: ok ? '#059669' : '#DA2C38', fontWeight: 700 }}>{ok ? '✓' : '✗'}</span>
-              <span style={{ color: ok ? 'var(--text)' : '#DA2C38' }}>{label as string}</span>
-              {!ok && <span style={{ color: '#DA2C38', fontSize: '0.7rem' }}>· required</span>}
+            ['description', state.description.trim().length >= 20],
+            ['pillar',      ALL_PILLARS.includes(state.pillar)],
+            ['controlId',   /^[A-Z]+-\d+$/.test(state.id)],
+            ['severity',    ALL_SEVERITIES.includes(state.severity)],
+            ['types',       state.types.length > 0],
+            ['checks',      state.checks.length > 0 && state.checks.every(c => c.id && c.description && c.expected)],
+          ].map(([labelKey, ok]) => (
+            <div key={labelKey as string} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem' }}>
+              <span style={{ color: ok ? 'var(--score-high)' : 'var(--fail)', fontWeight: 700 }}>{ok ? '✓' : '✗'}</span>
+              <span style={{ color: ok ? 'var(--text)' : 'var(--fail)' }}>{t(`pages.phase3.catalogue.${labelKey as string}`)}</span>
+              {!ok && <span style={{ color: 'var(--fail)', fontSize: '0.7rem' }}>{t('pages.phase3.catalogue.required')}</span>}
             </div>
           ))}
         </div>
@@ -825,34 +835,35 @@ function Step7Save({
   savedControl: CatalogueControl | null
   onSave: () => void
 }) {
+  const { t } = useI18n()
   if (savedControl) {
     const yaml = toYaml(savedControl)
     const ckv  = toCheckov(savedControl)
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* Success */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'color-mix(in srgb, #059669 8%, transparent)', border: '1px solid color-mix(in srgb, #059669 25%, transparent)', borderRadius: '10px', padding: '0.875rem 1rem' }}>
-          <span style={{ fontSize: '1.5rem', color: '#059669' }}>✓</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'color-mix(in srgb, var(--score-high) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--score-high) 25%, transparent)', borderRadius: '10px', padding: '0.875rem 1rem' }}>
+          <span style={{ fontSize: '1.5rem', color: 'var(--score-high)' }}>✓</span>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#059669' }}>Control saved successfully</div>
+            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--score-high)' }}>{t('pages.phase3.catalogue.controlSaved')}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
-              <code style={{ fontWeight: 700, color: 'var(--text)' }}>{savedControl.id}</code> is now stored in wombat-server and available for export.
+              <code style={{ fontWeight: 700, color: 'var(--text)' }}>{savedControl.id}</code> {t('pages.phase3.catalogue.storedInServerSuffix')}
             </div>
           </div>
         </div>
 
         {/* Downloads */}
         <div>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Export</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>{t('pages.phase3.catalogue.export')}</div>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => downloadText(`${savedControl.id}.yml`, yaml, 'text/yaml')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'rgba(0,148,255,.1)', color: '#0094FF', border: '1px solid rgba(0,148,255,.3)' }}
-            >↓ Download YAML</button>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, var(--waf-brand) 10%, transparent)', color: 'var(--waf-brand-ink)', border: '1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent)' }}
+            >{t('pages.phase3.catalogue.downloadYaml')}</button>
             <button
               onClick={() => downloadText(`${savedControl.id}.py`, ckv, 'text/x-python')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, #7c3aed 10%, transparent)', color: '#7c3aed', border: '1px solid color-mix(in srgb, #7c3aed 30%, transparent)' }}
-            >↓ Download Checkov stub</button>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, var(--waf-info) 10%, transparent)', color: 'var(--waf-info)', border: '1px solid color-mix(in srgb, var(--waf-info) 30%, transparent)' }}
+            >{t('pages.phase3.catalogue.downloadCheckovStub')}</button>
           </div>
         </div>
 
@@ -876,38 +887,38 @@ function Step7Save({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ background: 'var(--bg)', borderRadius: '10px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
         {[
-          ['ID',          state.id],
-          ['Pillar',      state.pillar],
-          ['Severity',    state.severity],
-          ['Types',       state.types.join(', ')],
-          ['Checks',      `${state.checks.length} defined`],
+          ['colId',       state.id],
+          ['pillar',      state.pillar],
+          ['severity',    state.severity],
+          ['types',       state.types.join(', ')],
+          ['checks',      t('pages.phase3.catalogue.checksDefined', { count: state.checks.length })],
         ].map(([k, v]) => (
           <div key={k} style={{ display: 'flex', gap: '0.75rem', fontSize: '0.8rem' }}>
-            <span style={{ fontWeight: 700, color: 'var(--muted)', minWidth: '70px' }}>{k}</span>
+            <span style={{ fontWeight: 700, color: 'var(--muted)', minWidth: '70px' }}>{t(`pages.phase3.catalogue.${k}`)}</span>
             <span style={{ color: 'var(--text)' }}>{v}</span>
           </div>
         ))}
       </div>
 
-      {error && <div style={{ background: 'color-mix(in srgb, #da2c38 7.1%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 25.1%, transparent)', borderRadius: '8px', padding: '0.65rem 0.875rem', fontSize: '0.8rem', color: '#DA2C38' }}>{error}</div>}
+      {error && <div style={{ background: 'color-mix(in srgb, var(--fail) 7.1%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 25.1%, transparent)', borderRadius: '8px', padding: '0.65rem 0.875rem', fontSize: '0.8rem', color: 'var(--fail)' }}>{error}</div>}
 
       <button
         onClick={onSave}
         disabled={saving || !isValid}
         style={{
           padding: '0.65rem 1.25rem', borderRadius: '10px', border: 'none',
-          background: isValid ? '#0094FF' : '#94a3b8', color: '#fff',
+          background: isValid ? 'var(--waf-brand-btn)' : 'var(--skip)', color: '#fff',
           fontWeight: 700, fontSize: '0.85rem', cursor: (saving || !isValid) ? 'default' : 'pointer',
           opacity: saving ? 0.75 : 1,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
         }}
       >
-        {saving ? <><div className="spinner" style={{ width: '14px', height: '14px', borderTopColor: '#fff' }} />Saving…</> : '↑ Save to wombat-server'}
+        {saving ? <><div className="spinner" style={{ width: '14px', height: '14px', borderTopColor: '#fff' }} />{t('pages.phase3.catalogue.saving')}</> : t('pages.phase3.catalogue.saveToServer')}
       </button>
 
       {!isValid && (
         <div style={{ fontSize: '0.73rem', color: 'var(--muted)', textAlign: 'center' }}>
-          Go back and fix validation errors before saving.
+          {t('pages.phase3.catalogue.fixValidationErrors')}
         </div>
       )}
     </div>
@@ -917,6 +928,7 @@ function Step7Save({
 // ── CLI usage block ───────────────────────────────────────────────────────────
 
 function CliUsage({ controlId, isCustom }: { controlId: string; isCustom: boolean }) {
+  const { t } = useI18n()
   const [copied, setCopied] = useState<string | null>(null)
   function copy(text: string, key: string) {
     navigator.clipboard.writeText(text).catch(() => {})
@@ -934,51 +946,51 @@ function CliUsage({ controlId, isCustom }: { controlId: string; isCustom: boolea
         }}>{code}</pre>
         <button
           onClick={() => copy(code, key)}
-          style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '6px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: '#94a3b8', fontSize: '0.7rem' }}
-        >{copied === key ? '✓' : 'copy'}</button>
+          style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '6px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: 'var(--skip)', fontSize: '0.7rem' }}
+        >{copied === key ? '✓' : t('pages.phase3.catalogue.copy')}</button>
       </div>
     </div>
   )
 
   return (
     <div style={{ background: 'var(--bg)', borderRadius: '10px', border: '1px solid var(--border)', padding: '0.875rem 1rem' }}>
-      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-        Use with wombat CLI
+      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+        {t('pages.phase3.catalogue.useWithCli')}
       </div>
       {isCustom ? (
         <>
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-            This custom control is stored in wombat-server. You can use it two ways:
+            {t('pages.phase3.catalogue.customControlStored')}
           </div>
-          {codeBlock('opt1', 'Option 1 — from controls directory (after downloading YAML)',
+          {codeBlock('opt1', t('pages.phase3.catalogue.option1Title'),
 `# Save the YAML to your controls folder, then scan:
 wombat scan ./my-infra --controls-dir ./controls`
           )}
-          {codeBlock('opt2', 'Option 2 — pull directly from wombat-server DB',
+          {codeBlock('opt2', t('pages.phase3.catalogue.option2Title'),
 `# No file needed — server serves the control at runtime:
 wombat scan ./my-infra --server-url http://localhost:8000`
           )}
-          {codeBlock('cli-gen', 'Or generate interactively from the CLI',
+          {codeBlock('cli-gen', t('pages.phase3.catalogue.generateInteractively'),
 `wombat control generate
 # Then push automatically:
 wombat control generate --server-url http://localhost:8000`
           )}
-          {codeBlock('cli-show', `Inspect this control via CLI`,
+          {codeBlock('cli-show', t('pages.phase3.catalogue.inspectViaCli'),
 `wombat control show ${controlId}`
           )}
         </>
       ) : (
         <>
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-            Wombat framework controls are built-in and loaded automatically on every scan.
+            {t('pages.phase3.catalogue.frameworkBuiltIn')}
           </div>
-          {codeBlock('fw-scan', 'Run a scan (framework controls included automatically)',
+          {codeBlock('fw-scan', t('pages.phase3.catalogue.runScanFramework'),
 `wombat scan ./my-infra`
           )}
-          {codeBlock('fw-show', `Inspect this control`,
+          {codeBlock('fw-show', t('pages.phase3.catalogue.inspectThisControl'),
 `wombat control show ${controlId}`
           )}
-          {codeBlock('fw-list', 'List all available controls',
+          {codeBlock('fw-list', t('pages.phase3.catalogue.listAllControls'),
 `wombat control list`
           )}
         </>
@@ -997,6 +1009,7 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
   onClose: () => void
   onDownloadPack: () => void
 }) {
+  const { t } = useI18n()
   const [mode, setMode] = useState<GuideMode>('wombat')
   const [tab,  setTab]  = useState<GuideTab>('quickstart')
   const [copied, setCopied] = useState<string | null>(null)
@@ -1020,23 +1033,23 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
   const p: React.CSSProperties = { margin: '0 0 0.6rem', fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.65 }
 
   const num = (n: number | string) => (
-    <span style={{ background: '#0094FF', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0 }}>{n}</span>
+    <span style={{ background: 'var(--waf-brand-btn)', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0 }}>{n}</span>
   )
 
   function CB({ id, code }: { id: string; code: string }) {
     return (
       <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
         <pre style={dark}>{code}</pre>
-        <button onClick={() => copy(code, id)} style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '6px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: '#94a3b8', fontSize: '0.7rem' }}>
-          {copied === id ? '✓' : 'copy'}
+        <button onClick={() => copy(code, id)} style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: '6px', padding: '0.2rem 0.4rem', cursor: 'pointer', color: 'var(--skip)', fontSize: '0.7rem' }}>
+          {copied === id ? '✓' : t('pages.phase3.catalogue.copy')}
         </button>
       </div>
     )
   }
 
   // Mode-specific tab sets
-  const wafTabs: [GuideTab, string][]  = [['quickstart','Quick Start'],['controls','Custom Controls'],['dashboard','Dashboard & CI']]
-  const ckTabs: [GuideTab, string][]   = [['quickstart','Quick Start'],['implement','Implement a Check'],['cicd','CI/CD']]
+  const wafTabs: [GuideTab, string][]  = [['quickstart', t('pages.phase3.catalogue.tabQuickStart')],['controls', t('pages.phase3.catalogue.tabCustomControls')],['dashboard', t('pages.phase3.catalogue.tabDashboardCi')]]
+  const ckTabs: [GuideTab, string][]   = [['quickstart', t('pages.phase3.catalogue.tabQuickStart')],['implement', t('pages.phase3.catalogue.tabImplementCheck')],['cicd', t('pages.phase3.catalogue.tabCicd')]]
   const tabs = mode === 'wombat' ? wafTabs : ckTabs
 
   return (
@@ -1045,41 +1058,41 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '740px', maxWidth: '96vw', maxHeight: '92vh',
-        background: '#fff', borderRadius: '16px', boxShadow: '0 32px 80px rgba(15,23,42,.22)',
+        background: 'var(--surface)', borderRadius: '16px', boxShadow: '0 32px 80px rgba(15,23,42,.22)',
         display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden',
       }}>
 
         {/* ── Header ── */}
         <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text)' }}>How to implement Wombat Controls</div>
-            <div style={{ fontSize: '0.73rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{totalChecks} controls available · choose your toolchain below</div>
+            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text)' }}>{t('pages.phase3.catalogue.guideTitle')}</div>
+            <div style={{ fontSize: '0.73rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{t('pages.phase3.catalogue.guideSubtitle', { count: totalChecks })}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem' }}>✕</button>
+          <button aria-label={t('pages.phase3.catalogue.closeGuideAria')} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem' }}>✕</button>
         </div>
 
         {/* ── Mode switch ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderBottom: '1px solid var(--border)', background: 'var(--bg)', flexShrink: 0 }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.25rem' }}>Toolchain</span>
-          {([['wombat','WOMBATpass CLI'],['checkov','Checkov']] as [GuideMode,string][]).map(([m, label]) => (
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.25rem' }}>{t('pages.phase3.catalogue.toolchain')}</span>
+          {([['wombat', t('pages.phase3.catalogue.toolchainWombat')],['checkov', t('pages.phase3.catalogue.toolchainCheckov')]] as [GuideMode,string][]).map(([m, label]) => (
             <button
               key={m}
               onClick={() => switchMode(m)}
               style={{
                 padding: '0.4rem 1rem', borderRadius: '8px', cursor: 'pointer',
                 fontWeight: 700, fontSize: '0.8rem',
-                border: `2px solid ${mode === m ? (m === 'wombat' ? '#0094FF' : '#7c3aed') : 'var(--border)'}`,
-                background: mode === m ? (m === 'wombat' ? 'rgba(0,148,255,.1)' : 'color-mix(in srgb, #7c3aed 10%, transparent)') : 'transparent',
-                color: mode === m ? (m === 'wombat' ? '#0094FF' : '#7c3aed') : 'var(--muted)',
-                transition: 'all 0.15s',
+                border: `2px solid ${mode === m ? (m === 'wombat' ? 'var(--waf-brand-ink)' : 'var(--waf-info)') : 'var(--border)'}`,
+                background: mode === m ? (m === 'wombat' ? 'color-mix(in srgb, var(--waf-brand) 10%, transparent)' : 'color-mix(in srgb, var(--waf-info) 10%, transparent)') : 'transparent',
+                color: mode === m ? (m === 'wombat' ? 'var(--waf-brand-ink)' : 'var(--waf-info)') : 'var(--muted)',
+                transition: 'border-color 0.15s, background-color 0.15s, color 0.15s, box-shadow 0.15s',
               }}
             >{label}</button>
           ))}
           {mode === 'checkov' && (
             <button
               onClick={onDownloadPack}
-              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.875rem', borderRadius: '8px', border: 'none', background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
-            >↓ Checkov Pack ({totalChecks})</button>
+              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.875rem', borderRadius: '8px', border: 'none', background: 'var(--waf-info)', color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
+            >{t('pages.phase3.catalogue.checkovPackCount', { count: totalChecks })}</button>
           )}
         </div>
 
@@ -1089,8 +1102,8 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
             <button key={key} onClick={() => setTab(key)} style={{
               padding: '0.5rem 0.875rem', border: 'none', background: 'none', cursor: 'pointer',
               fontSize: '0.8rem', fontWeight: 600,
-              color: tab === key ? (mode === 'wombat' ? '#0094FF' : '#7c3aed') : 'var(--muted)',
-              borderBottom: tab === key ? `2px solid ${mode === 'wombat' ? '#0094FF' : '#7c3aed'}` : '2px solid transparent',
+              color: tab === key ? (mode === 'wombat' ? 'var(--waf-brand-ink)' : 'var(--waf-info)') : 'var(--muted)',
+              borderBottom: tab === key ? `2px solid ${mode === 'wombat' ? 'var(--waf-brand-ink)' : 'var(--waf-info)'}` : '2px solid transparent',
               marginBottom: '-1px', whiteSpace: 'nowrap',
             }}>{label}</button>
           ))}
@@ -1103,52 +1116,52 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
 
           {mode === 'wombat' && tab === 'quickstart' && (
             <div>
-              <p style={{ ...p, marginTop: '1rem' }}>WOMBATpass is a Python CLI that scans Terraform against your security controls. Framework controls are built-in; you can add your own on top.</p>
+              <p style={{ ...p, marginTop: '1rem' }}>{t('pages.phase3.catalogue.paraWombatIntro')}</p>
 
-              <div style={sh}>{num(1)} Install</div>
+              <div style={sh}>{num(1)} {t('pages.phase3.catalogue.install')}</div>
               <CB id="wp-install" code={`# From PyPI (once published):\npip install wombat-core\n\n# Or from source (monorepo):\ngit clone https://github.com/your-org/waf-plus-plus\ncd waf-plus-plus/pass\npip install -e .`} />
 
-              <div style={sh}>{num(2)} Run your first scan</div>
+              <div style={sh}>{num(2)} {t('pages.phase3.catalogue.runFirstScan')}</div>
               <CB id="wp-scan" code={`# Scan a Terraform directory — framework controls loaded automatically:\nwombat check ./terraform/\n\n# Push results to the wombat-server dashboard:\nwombat check ./terraform/ --push http://localhost:8000`} />
 
-              <div style={sh}>{num(3)} Understand the output</div>
-              <p style={p}>Each finding shows the control ID, severity, resource address, and remediation hint. The exit code is non-zero when any FAIL finding exists.</p>
+              <div style={sh}>{num(3)} {t('pages.phase3.catalogue.understandOutput')}</div>
+              <p style={p}>{t('pages.phase3.catalogue.outputExplanation')}</p>
               <CB id="wp-output" code={`[FAIL] SEC-001 (critical) — aws_s3_bucket.data\n        Ensure S3 buckets have server-side encryption enabled\n        Remediation: add server_side_encryption_configuration block\n\n[PASS] SEC-002\n[PASS] COST-001\n\nScore: 87/100  |  2 critical  |  3 high  |  1 medium`} />
 
-              <div style={sh}>{num(4)} Filter and skip</div>
+              <div style={sh}>{num(4)} {t('pages.phase3.catalogue.filterAndSkip')}</div>
               <CB id="wp-filter" code={`# Only run security pillar controls:\nwombat check ./terraform/ --pillar security\n\n# Suppress a specific control (add to .wombat-skip.yml):\nwombat check ./terraform/ --skip SEC-003`} />
             </div>
           )}
 
           {mode === 'wombat' && tab === 'controls' && (
             <div>
-              <p style={{ ...p, marginTop: '1rem' }}>Custom controls extend the built-in framework. Author them with the CLI wizard or the <strong>New Control</strong> button above, then reference them at scan time.</p>
+              <p style={{ ...p, marginTop: '1rem' }}>{t('pages.phase3.catalogue.paraCustomControlsBefore')} <strong>{t('pages.phase3.catalogue.newControl')}</strong> {t('pages.phase3.catalogue.paraCustomControlsAfter')}</p>
 
-              <div style={sh}>Generate a new control (CLI wizard)</div>
+              <div style={sh}>{t('pages.phase3.catalogue.generateNewControl')}</div>
               <CB id="wp-gen" code={`# Interactive 7-step wizard — mirrors the UI wizard:\nwombat control generate\n\n# Non-interactive from a JSON/YAML spec file:\nwombat control generate --non-interactive --spec ./my-control.json\n\n# Automatically push to server after creation:\nwombat control generate --server-url http://localhost:8000`} />
 
-              <div style={sh}>Validate a control file</div>
+              <div style={sh}>{t('pages.phase3.catalogue.validateControlFile')}</div>
               <CB id="wp-val" code={`wombat control validate ./controls/SEC-099.yml\n# ✓ SEC-099 is valid`} />
 
-              <div style={sh}>Inspect controls</div>
+              <div style={sh}>{t('pages.phase3.catalogue.inspectControls')}</div>
               <CB id="wp-list" code={`# List all controls discovered in a directory:\nwombat control list\nwombat control list --controls-dir ./my-controls/\n\n# Show full detail for one control:\nwombat control show SEC-001`} />
 
-              <div style={sh}>Use custom controls in a scan</div>
+              <div style={sh}>{t('pages.phase3.catalogue.useCustomControlsInScan')}</div>
               <CB id="wp-custom-scan" code={`# Option 1 — load from a local directory of YAML files\n#  (download YAML via the Export button in the control detail view):\nwombat check ./terraform/ --controls-dir ./my-controls/\n\n# Option 2 — pull live from wombat-server DB:\nwombat check ./terraform/ --server-url http://localhost:8000\n\n# Both framework + custom controls run together:\nwombat check ./terraform/ \\\n  --controls-dir ./my-controls/ \\\n  --push http://localhost:8000`} />
 
-              <div style={sh}>Control file format (YAML)</div>
+              <div style={sh}>{t('pages.phase3.catalogue.controlFileFormat')}</div>
               <CB id="wp-yaml" code={`# controls/SEC-099.yml\n# Generated by wombat control generate — do not edit manually\nid: SEC-099\npillar: security\nseverity: high\ntype:\n- configuration\n- iac\ndescription: |\n  All RDS instances must have deletion protection enabled\n  to prevent accidental database removal.\nchecks:\n  - id: tf.rds_deletion_protection\n    engine: terraform\n    description: Check deletion_protection = true\n    expected: "deletion_protection attribute is set to true"`} />
             </div>
           )}
 
           {mode === 'wombat' && tab === 'dashboard' && (
             <div>
-              <p style={{ ...p, marginTop: '1rem' }}>Push scan results to wombat-server so they appear in this dashboard. Integrate with your CI/CD pipeline for continuous visibility.</p>
+              <p style={{ ...p, marginTop: '1rem' }}>{t('pages.phase3.catalogue.paraDashboardIntro')}</p>
 
-              <div style={sh}>Push results after a scan</div>
+              <div style={sh}>{t('pages.phase3.catalogue.pushResultsAfterScan')}</div>
               <CB id="wp-push" code={`wombat check ./terraform/ --push http://localhost:8000\n\n# With project + branch metadata:\nwombat check ./terraform/ \\\n  --push http://localhost:8000 \\\n  --project myapp \\\n  --branch main \\\n  --git-sha $(git rev-parse HEAD)`} />
 
-              <div style={sh}>GitHub Actions — full pipeline</div>
+              <div style={sh}>{t('pages.phase3.catalogue.githubActionsFullPipeline')}</div>
               <CB id="wp-gha" code={
 '# .github/workflows/wombat.yml\n' +
 'name: WOMBATpass Scan\n' +
@@ -1172,10 +1185,10 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
 '            --git-sha ${{ github.sha }}'
               } />
 
-              <div style={sh}>GitLab CI</div>
+              <div style={sh}>{t('pages.phase3.catalogue.gitlabCi')}</div>
               <CB id="wp-gl" code={`wombat-scan:\n  image: python:3.12-slim\n  stage: test\n  script:\n    - pip install wombat-core\n    - wombat check ./terraform/\n        --push $WOMBAT_SERVER_URL\n        --project "$CI_PROJECT_PATH"\n        --branch "$CI_COMMIT_BRANCH"\n        --git-sha "$CI_COMMIT_SHA"\n  allow_failure: true`} />
 
-              <div style={sh}>Server setup (docker compose)</div>
+              <div style={sh}>{t('pages.phase3.catalogue.serverSetupDockerCompose')}</div>
               <CB id="wp-docker" code={`# Start the full stack locally:\ngit clone https://github.com/your-org/waf-plus-plus\ncd waf-plus-plus\ndocker compose up -d\n\n# Dashboard → http://localhost:3000\n# API        → http://localhost:8000`} />
             </div>
           )}
@@ -1184,27 +1197,27 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
 
           {mode === 'checkov' && tab === 'quickstart' && (
             <div>
-              <p style={{ ...p, marginTop: '1rem' }}>Wombat Checkov stubs are standard Python <code>BaseResourceCheck</code> classes. Download the pack, implement the stubs, then point Checkov at the directory.</p>
+              <p style={{ ...p, marginTop: '1rem' }}>{t('pages.phase3.catalogue.paraCheckovIntroBefore')} <code>BaseResourceCheck</code> {t('pages.phase3.catalogue.paraCheckovIntroAfter')}</p>
 
-              <div style={sh}>{num(1)} Install Checkov</div>
+              <div style={sh}>{num(1)} {t('pages.phase3.catalogue.installCheckov')}</div>
               <CB id="ck-install" code={`pip install checkov>=3.0.0\ncheckov --version`} />
 
-              <div style={sh}>{num(2)} Download the Checkov Pack</div>
-              <p style={p}>Click <strong>↓ Checkov Pack</strong> in the toolbar above. You get a ZIP with one stub <code>.py</code> file per control ({totalChecks} total).</p>
-              <button onClick={onDownloadPack} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.1rem', borderRadius: '8px', border: 'none', background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.75rem' }}>
-                ↓ Download Checkov Pack ({totalChecks} stubs)
+              <div style={sh}>{num(2)} {t('pages.phase3.catalogue.downloadCheckovPack')}</div>
+              <p style={p}>{t('pages.phase3.catalogue.paraDownloadPackBefore')} <strong>{t('pages.phase3.catalogue.checkovPackBold')}</strong> {t('pages.phase3.catalogue.paraDownloadPackAfter')} <code>.py</code> {t('pages.phase3.catalogue.paraDownloadPackEnd', { count: totalChecks })}</p>
+              <button onClick={onDownloadPack} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.1rem', borderRadius: '8px', border: 'none', background: 'var(--waf-info)', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+                {t('pages.phase3.catalogue.downloadCheckovPackButton', { count: totalChecks })}
               </button>
 
-              <div style={sh}>{num(3)} Unzip next to your Terraform</div>
+              <div style={sh}>{num(3)} {t('pages.phase3.catalogue.unzipNextToTerraform')}</div>
               <CB id="ck-unzip" code={`unzip wombat_checks_*.zip -d .\n\n# Result:\n# wombat_checks/\n# ├── __init__.py\n# ├── SEC-001.py   ← implement each stub\n# ├── SEC-002.py\n# └── ...`} />
 
-              <div style={sh}>{num(4)} Implement the stubs</div>
-              <p style={p}>Each stub raises <code>NotImplementedError</code>. See <strong>Implement a Check</strong> for a worked example before running.</p>
+              <div style={sh}>{num(4)} {t('pages.phase3.catalogue.implementStubs')}</div>
+              <p style={p}>{t('pages.phase3.catalogue.paraImplementStubsBefore')} <code>NotImplementedError</code>{t('pages.phase3.catalogue.paraImplementStubsMid')} <strong>{t('pages.phase3.catalogue.tabImplementCheck')}</strong> {t('pages.phase3.catalogue.paraImplementStubsAfter')}</p>
 
-              <div style={sh}>{num(5)} Run a scan</div>
+              <div style={sh}>{num(5)} {t('pages.phase3.catalogue.runScan')}</div>
               <CB id="ck-run" code={`checkov -d ./terraform \\\n  --external-checks-dir ./wombat_checks/ \\\n  --compact\n\n# Findings appear as CKV_SEC_001, CKV_COST_001, etc.`} />
 
-              <div style={sh}>Selective execution</div>
+              <div style={sh}>{t('pages.phase3.catalogue.selectiveExecution')}</div>
               <CB id="ck-select" code={`# Only specific controls:\ncheckov -d ./tf --external-checks-dir ./wombat_checks/ \\\n  --check CKV_SEC_001,CKV_COST_001\n\n# Skip a control:\ncheckov -d ./tf --external-checks-dir ./wombat_checks/ \\\n  --skip-check CKV_SEC_002`} />
             </div>
           )}
@@ -1212,41 +1225,40 @@ function ImplementGuideModal({ totalChecks, onClose, onDownloadPack }: {
           {mode === 'checkov' && tab === 'implement' && (
             <div>
               <p style={{ ...p, marginTop: '1rem' }}>
-                Each stub has a <code>scan_resource_conf(self, conf: dict)</code> method that must return
-                <code> CheckResult.PASSED</code> or <code>CheckResult.FAILED</code>.
-                Checkov calls it once per matching Terraform resource.
+                {t('pages.phase3.catalogue.paraImplementIntroBefore')} <code>scan_resource_conf(self, conf: dict)</code> {t('pages.phase3.catalogue.paraImplementIntroMid')}
+                <code> CheckResult.PASSED</code> {t('pages.phase3.catalogue.paraImplementIntroOr')} <code>CheckResult.FAILED</code>{t('pages.phase3.catalogue.paraImplementIntroAfter')}
               </p>
 
-              <div style={sh}>How <code>conf</code> is structured</div>
-              <p style={p}>Checkov wraps every Terraform attribute value in a list. A resource block <code>&#123; tags = &#123; env = "prod" &#125; &#125;</code> becomes:</p>
+              <div style={sh}>{t('pages.phase3.catalogue.howConfStructuredBefore')} <code>conf</code> {t('pages.phase3.catalogue.howConfStructuredAfter')}</div>
+              <p style={p}>{t('pages.phase3.catalogue.paraConfBefore')} <code>&#123; tags = &#123; env = "prod" &#125; &#125;</code> {t('pages.phase3.catalogue.paraConfAfter')}</p>
               <CB id="ck-conf" code={`conf = {\n    "bucket":    ["my-bucket-name"],\n    "tags":      [{"env": "prod"}],\n    "versioning":[{"enabled": [True]}],\n    # nested blocks are always wrapped in lists\n}`} />
 
-              <div style={sh}>Worked example — S3 encryption check</div>
+              <div style={sh}>{t('pages.phase3.catalogue.workedExample')}</div>
               <CB id="ck-example" code={`# wombat_checks/SEC-001.py\nfrom checkov.common.models.enums import CheckCategories, CheckResult\nfrom checkov.terraform.checks.resource.base_resource_check import BaseResourceCheck\n\n\nclass CheckSEC001(BaseResourceCheck):\n    """Wombat SEC-001: S3 buckets must have server-side encryption."""\n\n    def __init__(self) -> None:\n        super().__init__(\n            name="S3 bucket has server-side encryption",\n            check_id="CKV_SEC_001",\n            categories=[CheckCategories.ENCRYPTION],\n            supported_resources=["aws_s3_bucket"],\n        )\n\n    def scan_resource_conf(self, conf: dict) -> CheckResult:\n        sse = conf.get("server_side_encryption_configuration", [{}])\n        if not sse or not sse[0]:\n            return CheckResult.FAILED\n        rule = sse[0].get("rule", [{}])\n        if not rule:\n            return CheckResult.FAILED\n        apply = rule[0].get("apply_server_side_encryption_by_default", [{}])\n        if not apply:\n            return CheckResult.FAILED\n        algo = apply[0].get("sse_algorithm", [""])[0]\n        return CheckResult.PASSED if algo in ("aws:kms", "AES256") else CheckResult.FAILED\n\n\nscanner = CheckSEC001()`} />
 
-              <div style={sh}>Multiple resource types in one check</div>
+              <div style={sh}>{t('pages.phase3.catalogue.multipleResourceTypes')}</div>
               <CB id="ck-multi" code={`supported_resources=[\n    "aws_s3_bucket",\n    "aws_s3_bucket_server_side_encryption_configuration",\n]\n\ndef scan_resource_conf(self, conf: dict) -> CheckResult:\n    if self.supported_resource_type == \\\n            "aws_s3_bucket_server_side_encryption_configuration":\n        # new-style standalone resource — already encrypted\n        return CheckResult.PASSED\n    # legacy inline block on aws_s3_bucket\n    ...`} />
 
-              <div style={sh}>Test your check locally</div>
+              <div style={sh}>{t('pages.phase3.catalogue.testCheckLocally')}</div>
               <CB id="ck-test" code={`mkdir -p tests/pass\ncat > tests/pass/main.tf << 'EOF'\nresource "aws_s3_bucket" "good" {\n  server_side_encryption_configuration {\n    rule { apply_server_side_encryption_by_default { sse_algorithm = "AES256" } }\n  }\n}\nEOF\n\ncheckov -d tests/pass \\\n  --external-checks-dir ./wombat_checks/ \\\n  --check CKV_SEC_001\n# Expected: 1 passed, 0 failed`} />
             </div>
           )}
 
           {mode === 'checkov' && tab === 'cicd' && (
             <div>
-              <p style={{ ...p, marginTop: '1rem' }}>Commit <code>wombat_checks/</code> to your repo and add the steps below. Checkov outputs SARIF which GitHub/GitLab render as code-scanning alerts.</p>
+              <p style={{ ...p, marginTop: '1rem' }}>{t('pages.phase3.catalogue.paraCicdBefore')} <code>wombat_checks/</code> {t('pages.phase3.catalogue.paraCicdAfter')}</p>
 
-              <div style={sh}>GitHub Actions</div>
+              <div style={sh}>{t('pages.phase3.catalogue.githubActions')}</div>
               <CB id="ck-gha" code={`# .github/workflows/wombat.yml\nname: Wombat Checkov Scan\non: [push, pull_request]\n\njobs:\n  checkov:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n\n      - name: Run Wombat Checkov scan\n        uses: bridgecrewio/checkov-action@v12\n        with:\n          directory: ./terraform\n          external_checks_dir: ./wombat_checks\n          compact: "true"\n          output_format: sarif\n          output_file_path: wombat.sarif\n        continue-on-error: true\n\n      - name: Upload to GitHub Security\n        uses: github/codeql-action/upload-sarif@v3\n        if: always()\n        with:\n          sarif_file: wombat.sarif\n          category: wombat`} />
 
-              <div style={sh}>GitLab CI</div>
+              <div style={sh}>{t('pages.phase3.catalogue.gitlabCi')}</div>
               <CB id="ck-gitlab" code={`wombat-checkov:\n  image: bridgecrew/checkov:latest\n  stage: test\n  script:\n    - checkov -d ./terraform\n        --external-checks-dir ./wombat_checks/\n        --output junitxml > wombat.xml\n  artifacts:\n    when: always\n    reports:\n      junit: wombat.xml`} />
 
-              <div style={sh}>Pre-commit hook</div>
+              <div style={sh}>{t('pages.phase3.catalogue.preCommitHook')}</div>
               <CB id="ck-precommit" code={`# .pre-commit-config.yaml\nrepos:\n  - repo: https://github.com/bridgecrewio/checkov\n    rev: "3.0.0"\n    hooks:\n      - id: checkov\n        args: [--external-checks-dir, wombat_checks, --compact]`} />
 
-              <div style={sh}>Soft-fail rollout strategy</div>
-              <p style={p}>During rollout, fail only on <code>critical</code> controls and warn on the rest:</p>
+              <div style={sh}>{t('pages.phase3.catalogue.softFailRollout')}</div>
+              <p style={p}>{t('pages.phase3.catalogue.paraSoftFailBefore')} <code>critical</code> {t('pages.phase3.catalogue.paraSoftFailAfter')}</p>
               <CB id="ck-soft" code={`checkov -d ./terraform \\\n  --external-checks-dir ./wombat_checks/ \\\n  --hard-fail-on CKV_SEC_001,CKV_SEC_002 \\\n  --soft-fail-on HIGH,MEDIUM,LOW`} />
             </div>
           )}
@@ -1265,6 +1277,7 @@ interface WizardModalProps {
 }
 
 function WizardModal({ onClose, onCreated }: WizardModalProps) {
+  const { t } = useI18n()
   const [step, setStep] = useState(0)
   const [state, setState] = useState<WizardState>({
     description: '',
@@ -1312,14 +1325,14 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
       setSavedControl(result)
       onCreated(result)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Unknown error')
+      setError(e instanceof Error ? e.message : t('pages.phase3.catalogue.unknownError'))
     } finally {
       setSaving(false)
     }
   }
 
   const isLastStep    = step === WIZARD_STEPS.length - 1
-  const stepLabel     = WIZARD_STEPS[step].label
+  const stepLabel     = t(`pages.phase3.catalogue.${WIZARD_STEPS[step].labelKey}`)
   const stepsLeft     = WIZARD_STEPS.length - 1 - step
   const bodyRef       = useRef<HTMLDivElement>(null)
 
@@ -1332,20 +1345,20 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '660px', maxWidth: '95vw', maxHeight: '90vh',
-        background: '#fff', borderRadius: '16px', boxShadow: '0 32px 80px rgba(15,23,42,.22)',
+        background: 'var(--surface)', borderRadius: '16px', boxShadow: '0 32px 80px rgba(15,23,42,.22)',
         display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden',
       }}>
         {/* Header */}
         <div style={{ padding: '1rem 1.5rem 0.75rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text)' }}>New Custom Control</div>
+            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text)' }}>{t('pages.phase3.catalogue.newCustomControl')}</div>
             <div style={{ fontSize: '0.73rem', color: 'var(--muted)', marginTop: '0.1rem' }}>
-              Step {step + 1} of {WIZARD_STEPS.length} — <strong style={{ color: 'var(--text)' }}>{stepLabel}</strong>
-              {stepsLeft > 0 && <span style={{ marginLeft: '0.4rem', color: 'var(--muted)' }}>· {stepsLeft} step{stepsLeft !== 1 ? 's' : ''} remaining</span>}
-              {savedControl && <span style={{ marginLeft: '0.4rem', color: '#059669', fontWeight: 700 }}>· saved ✓</span>}
+              {t('pages.phase3.catalogue.stepOf', { step: step + 1, total: WIZARD_STEPS.length })} <strong style={{ color: 'var(--text)' }}>{stepLabel}</strong>
+              {stepsLeft > 0 && <span style={{ marginLeft: '0.4rem', color: 'var(--muted)' }}>{t('pages.phase3.catalogue.stepsRemaining', { count: stepsLeft, s: stepsLeft !== 1 ? 's' : '' })}</span>}
+              {savedControl && <span style={{ marginLeft: '0.4rem', color: 'var(--score-high)', fontWeight: 700 }}>{t('pages.phase3.catalogue.savedCheck')}</span>}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', lineHeight: 1, marginTop: '0.1rem' }}>✕</button>
+          <button aria-label={t('pages.phase3.catalogue.closeWizardAria')} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', lineHeight: 1, marginTop: '0.1rem' }}>✕</button>
         </div>
 
         {/* Step stream */}
@@ -1373,7 +1386,7 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
             onClick={() => setStep(s => Math.max(0, s - 1))}
             disabled={step === 0}
             style={{ padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'none', cursor: step === 0 ? 'default' : 'pointer', fontSize: '0.8rem', color: step === 0 ? 'var(--muted)' : 'var(--text)', opacity: step === 0 ? 0.4 : 1 }}
-          >← Previous</button>
+          >{t('pages.phase3.catalogue.previousButton')}</button>
 
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
             {step + 1} / {WIZARD_STEPS.length}
@@ -1385,16 +1398,16 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
               disabled={!canAdvance()}
               style={{
                 padding: '0.45rem 1.1rem', borderRadius: '8px', border: 'none',
-                background: canAdvance() ? '#0094FF' : '#94a3b8',
+                background: canAdvance() ? 'var(--waf-brand-btn)' : 'var(--skip)',
                 color: '#fff', cursor: canAdvance() ? 'pointer' : 'default',
                 fontSize: '0.8rem', fontWeight: 700, opacity: canAdvance() ? 1 : 0.65,
               }}
-            >Next →</button>
+            >{t('pages.phase3.catalogue.nextButton')}</button>
           ) : (
             <button
               onClick={onClose}
               style={{ padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text)' }}
-            >{savedControl ? 'Done' : 'Cancel'}</button>
+            >{savedControl ? t('pages.phase3.catalogue.done') : t('pages.phase3.catalogue.cancel')}</button>
           )}
         </div>
       </div>
@@ -1405,13 +1418,14 @@ function WizardModal({ onClose, onCreated }: WizardModalProps) {
 // ── Detail panel ──────────────────────────────────────────────────────────────
 
 function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => void }) {
+  const { t } = useI18n()
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, #000000 20%, transparent)', zIndex: 99 }} />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '700px', maxWidth: '95vw', maxHeight: '90vh',
-        background: '#fff', borderRadius: '12px', boxShadow: '0 24px 64px rgba(15,23,42,.18)',
+        background: 'var(--surface)', borderRadius: '12px', boxShadow: '0 24px 64px rgba(15,23,42,.18)',
         display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden',
       }}>
         {/* Header */}
@@ -1421,9 +1435,9 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
               <code style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text)' }}>{ctrl.id}</code>
               <Pill label={ctrl.pillar} color={pillarColor(ctrl.pillar)} />
               <Pill label={ctrl.severity} color={sevColor(ctrl.severity)} />
-              {sourceBadge(ctrl.isCustom)}
+              <SourceBadge isCustom={ctrl.isCustom} />
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', lineHeight: 1, flexShrink: 0 }}>✕</button>
+            <button aria-label={t('pages.phase3.catalogue.closeDetailsAria')} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1.2rem', lineHeight: 1, flexShrink: 0 }}>✕</button>
           </div>
           {ctrl.type.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.5rem' }}>
@@ -1436,21 +1450,21 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
         <div style={{ overflowY: 'auto', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Description */}
           <div>
-            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Description</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>{t('pages.phase3.catalogue.description')}</div>
             <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{ctrl.description.trim()}</p>
           </div>
 
           {/* Core: rationale + regulatory */}
           {ctrl.core?.rationale && (
             <div>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Why it matters</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>{t('pages.phase3.catalogue.whyItMatters')}</div>
               <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.6 }}>{ctrl.core.rationale}</p>
             </div>
           )}
 
           {ctrl.core && (ctrl.core.regulatory_mapping?.length ?? 0) > 0 && (
             <div>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Regulatory mapping</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>{t('pages.phase3.catalogue.regulatoryMapping')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {ctrl.core.regulatory_mapping.map(rm => (
                   <div key={rm.framework} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -1467,7 +1481,7 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
           {/* Core: checks */}
           {ctrl.core && (ctrl.core.checks?.length ?? 0) > 0 && (
             <div>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Checks ({ctrl.core.checks.length})</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>{t('pages.phase3.catalogue.checksCount', { count: ctrl.core.checks.length })}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {ctrl.core.checks.map(ch => (
                   <div key={ch.id} style={{ background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--border)', padding: '0.75rem' }}>
@@ -1488,17 +1502,17 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
           {/* Custom: checks */}
           {ctrl.custom && ctrl.custom.checks.length > 0 && (
             <div>
-              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Checks ({ctrl.custom.checks.length})</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>{t('pages.phase3.catalogue.checksCount', { count: ctrl.custom.checks.length })}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {ctrl.custom.checks.map(ch => (
                   <div key={ch.id} style={{ background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--border)', padding: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
                       <code style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)' }}>{ch.id}</code>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0.1rem 0.45rem', borderRadius: '999px', background: `${engineColor(ch.engine)}18`, color: engineColor(ch.engine), fontSize: '0.68rem', fontWeight: 700, border: `1px solid ${engineColor(ch.engine)}30` }}>{ch.engine}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0.1rem 0.45rem', borderRadius: '999px', background: `color-mix(in srgb, ${engineColor(ch.engine)} 9%, transparent)`, color: engineColor(ch.engine), fontSize: '0.7rem', fontWeight: 700, border: `1px solid color-mix(in srgb, ${engineColor(ch.engine)} 19%, transparent)` }}>{ch.engine}</span>
                     </div>
                     <p style={{ margin: '0 0 0.35rem', fontSize: '0.8rem', color: 'var(--text)', lineHeight: 1.5 }}>{ch.description}</p>
-                    <div style={{ background: '#0f172a', borderRadius: '6px', padding: '0.55rem 0.75rem', fontSize: '0.73rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                      <span style={{ color: '#64748b', marginRight: '0.4rem' }}>Expected:</span>
+                    <div style={{ background: '#0f172a', borderRadius: '6px', padding: '0.55rem 0.75rem', fontSize: '0.73rem', color: 'var(--skip)', lineHeight: 1.6 }}>
+                      <span style={{ color: '#64748b', marginRight: '0.4rem' }}>{t('pages.phase3.catalogue.expectedLabel')}</span>
                       <span style={{ color: '#e2e8f0' }}>{ch.expected}</span>
                     </div>
                   </div>
@@ -1509,27 +1523,27 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
 
           {/* Download buttons — available for both custom and framework controls */}
           <div>
-            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Export</div>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>{t('pages.phase3.catalogue.export')}</div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {ctrl.custom && (
                 <button
                   onClick={() => downloadText(`${ctrl.id}.yml`, toYaml(ctrl.custom!), 'text/yaml')}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'rgba(0,148,255,.1)', color: '#0094FF', border: '1px solid rgba(0,148,255,.3)' }}
-                >↓ YAML</button>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, var(--waf-brand) 10%, transparent)', color: 'var(--waf-brand-ink)', border: '1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent)' }}
+                >{t('pages.phase3.catalogue.downloadYamlShort')}</button>
               )}
               {ctrl.core && (
                 <button
                   onClick={() => downloadText(`${ctrl.id}.yml`, toYamlFromCore(ctrl.core!), 'text/yaml')}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'rgba(0,148,255,.1)', color: '#0094FF', border: '1px solid rgba(0,148,255,.3)' }}
-                >↓ YAML</button>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, var(--waf-brand) 10%, transparent)', color: 'var(--waf-brand-ink)', border: '1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent)' }}
+                >{t('pages.phase3.catalogue.downloadYamlShort')}</button>
               )}
               <button
                 onClick={() => {
                   const content = ctrl.custom ? toCheckov(ctrl.custom) : toCheckovFromCore(ctrl.core!)
                   downloadText(`${ctrl.id}.py`, content, 'text/x-python')
                 }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, #7c3aed 10%, transparent)', color: '#7c3aed', border: '1px solid color-mix(in srgb, #7c3aed 30%, transparent)' }}
-              >↓ Checkov stub</button>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, background: 'color-mix(in srgb, var(--waf-info) 10%, transparent)', color: 'var(--waf-info)', border: '1px solid color-mix(in srgb, var(--waf-info) 30%, transparent)' }}
+              >{t('pages.phase3.catalogue.downloadCheckovStubShort')}</button>
             </div>
           </div>
 
@@ -1547,49 +1561,87 @@ function DetailPanel({ ctrl, onClose }: { ctrl: UnifiedControl; onClose: () => v
 // ── Delete button component for admin users ────────────────────────────────────
 
 function DeleteControlButton({ ctrl }: { ctrl: UnifiedControl }) {
+  const { t } = useI18n()
   const { role } = useAuth()
   const [deleting, setDeleting] = useState(false)
   const [deleted, setDeleted] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   if (!ctrl.isCustom || !hasMinRole(role ?? '', 'admin')) {
     return null
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Permanently delete control ${ctrl.id}?`)) return
+    setDeleteError(null)
     setDeleting(true)
     try {
       await deleteCatalogueControl(ctrl.id)
       setDeleted(true)
     } catch (e) {
-      alert(`Failed to delete: ${e instanceof Error ? e.message : 'Unknown error'}`)
+      setDeleteError(e instanceof Error ? e.message : t('pages.phase3.catalogue.unknownError'))
     } finally {
       setDeleting(false)
+      setConfirming(false)
     }
   }
 
   if (deleted) {
     return (
-      <div style={{ fontSize: '0.68rem', color: '#059669', padding: '0.5rem', background: 'color-mix(in srgb, #059669 7.1%, transparent)', borderRadius: '8px', textAlign: 'center' }}>
-        ✓ Deleted
+      <div style={{ fontSize: '0.7rem', color: 'var(--score-high)', padding: '0.5rem', background: 'color-mix(in srgb, var(--score-high) 7.1%, transparent)', borderRadius: '8px', textAlign: 'center' }}>
+        {t('pages.phase3.catalogue.deleted')}
       </div>
     )
   }
 
   return (
     <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Danger Zone</div>
-      <button
-        onClick={handleDelete}
-        disabled={deleting}
-        style={{
-          padding: '0.5rem 0.9rem', borderRadius: '8px', border: '1px solid #DA2C38',
-          background: 'color-mix(in srgb, #da2c38 7.1%, transparent)', color: '#DA2C38', fontWeight: 700, fontSize: '0.78rem',
-          cursor: deleting ? 'default' : 'pointer', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.4rem'
-        }}
-      >
-        {deleting ? 'Deleting…' : 'Delete Custom Control'}
-      </button>
+      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>{t('pages.phase3.catalogue.dangerZone')}</div>
+      {confirming ? (
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text)' }}>
+            {t('pages.phase3.catalogue.deleteControlPromptBefore')} <strong>{ctrl.id}</strong>{t('pages.phase3.catalogue.deleteControlPromptAfter')}
+          </span>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            style={{
+              padding: '0.5rem 0.9rem', borderRadius: '8px', border: '1px solid var(--fail)',
+              background: 'color-mix(in srgb, var(--fail) 7.1%, transparent)', color: 'var(--fail-ink)', fontWeight: 700, fontSize: '0.78rem',
+              cursor: deleting ? 'default' : 'pointer', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.4rem'
+            }}
+          >
+            {deleting ? t('pages.phase3.catalogue.deleting') : t('pages.phase3.catalogue.confirmDelete')}
+          </button>
+          <button
+            onClick={() => setConfirming(false)}
+            disabled={deleting}
+            style={{
+              padding: '0.5rem 0.9rem', borderRadius: '8px', border: '1px solid var(--border)',
+              background: 'var(--bg)', color: 'var(--muted)', fontWeight: 600, fontSize: '0.78rem',
+              cursor: deleting ? 'default' : 'pointer', flexShrink: 0,
+            }}
+          >
+            {t('pages.phase3.catalogue.cancel')}
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirming(true)}
+          style={{
+            padding: '0.5rem 0.9rem', borderRadius: '8px', border: '1px solid var(--fail)',
+            background: 'color-mix(in srgb, var(--fail) 7.1%, transparent)', color: 'var(--fail-ink)', fontWeight: 700, fontSize: '0.78rem',
+            cursor: 'pointer', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '0.4rem'
+          }}
+        >
+          {t('pages.phase3.catalogue.deleteCustomControl')}
+        </button>
+      )}
+      {deleteError && (
+        <div role="alert" style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.78rem', color: 'var(--fail-ink)', background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)' }}>
+          {t('pages.phase3.catalogue.failedToDelete', { message: deleteError })}
+        </div>
+      )}
     </div>
   )
 }
@@ -1603,6 +1655,7 @@ interface Props {
 }
 
 export default function ControlsCataloguePage({ coreControls }: Props) {
+  const { t } = useI18n()
   const isInitialRender = useRef(true)
   if (isInitialRender.current) {
     // Debug logging disabled - removed
@@ -1625,6 +1678,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
   })
   const [packInfo, setPackInfo]             = useState<ActivePackInfo | null>(null)
   const [packLoading, setPackLoading]       = useState(true)
+  const [downloadError, setDownloadError]   = useState<string | null>(null)
 
   useEffect(() => {
     const onPaletteSearch = (event: Event) => {
@@ -1732,6 +1786,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 1 }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['catalogue']}</h1>
       {/* ── Active Control Pack Banner ────────────────────────────────────── */}
       {!packLoading && packInfo && (
         <div className="card" style={{
@@ -1740,7 +1795,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
         }}>
           <div style={{
             width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-            background: 'rgba(0,148,255,0.12)', border: '1px solid rgba(0,148,255,0.25)',
+            background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <svg width="22" height="22" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
@@ -1749,8 +1804,8 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
             </svg>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 2 }}>
-              Active Control Pack
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: 2 }}>
+              {t('pages.phase3.catalogue.activeControlPack')}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--waf-brand)', fontFamily: 'monospace' }}>
@@ -1763,18 +1818,18 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
               )}
             </div>
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+          <div style={{ textAlign: 'right', flexShrink: 0, fontSize: '0.78rem', color: 'var(--muted)' }}>
             <div>
               <strong style={{ color: 'var(--text-primary)' }}>
                 {packInfo.catalogue_count ?? packInfo.control_count}
-              </strong> controls in catalogue
+              </strong> {t('pages.phase3.catalogue.controlsInCatalogue')}
               {packInfo.catalogue_count != null && packInfo.catalogue_count !== packInfo.control_count && (
                 <span style={{ fontSize: '0.7rem', marginLeft: 6, color: 'var(--text-secondary)' }}>
-                  (pack: {packInfo.control_count})
+                  {t('pages.phase3.catalogue.packCount', { count: packInfo.control_count })}
                 </span>
               )}
             </div>
-            <div>activated {new Date(packInfo.activated_at || '').toLocaleDateString()}</div>
+            <div>{t('pages.phase3.catalogue.activated', { date: new Date(packInfo.activated_at || '').toLocaleDateString() })}</div>
           </div>
         </div>
       )}
@@ -1783,14 +1838,14 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.2rem' }}>
           {([
-            ['all',       `All (${allControls.length})`],
-            ['framework', `Wombat Framework (${frameworkCount})`],
-            ['custom',    `Custom (${customCount})`],
+            ['all',       t('pages.phase3.catalogue.tabAll', { count: allControls.length })],
+            ['framework', t('pages.phase3.catalogue.tabFramework', { count: frameworkCount })],
+            ['custom',    t('pages.phase3.catalogue.tabCustom', { count: customCount })],
           ] as [TabFilter, string][]).map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)} style={{
               padding: '0.3rem 0.85rem', borderRadius: '8px', border: 'none', cursor: 'pointer',
               fontSize: '0.78rem', fontWeight: 600,
-              background: tab === key ? '#0094FF' : 'transparent',
+              background: tab === key ? 'var(--waf-brand-btn)' : 'transparent',
               color: tab === key ? '#fff' : 'var(--muted)',
             }}>{label}</button>
           ))}
@@ -1799,6 +1854,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           {/* Download YAML Pack */}
           <button
             onClick={async () => {
+              setDownloadError(null)
               try {
                 const blob = await downloadControlsZip()
                 const url = URL.createObjectURL(blob)
@@ -1810,55 +1866,61 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
                 document.body.removeChild(a)
                 URL.revokeObjectURL(url)
               } catch (e) {
-                alert('Failed to download controls: ' + (e instanceof Error ? e.message : 'Unknown error'))
+                setDownloadError(t('pages.phase3.catalogue.failedDownloadControls', { message: e instanceof Error ? e.message : t('pages.phase3.catalogue.unknownError') }))
               }
             }}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid rgba(0,148,255,.35)', background: 'rgba(0,148,255,.08)', color: '#0094FF', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--waf-brand) 35%, transparent)', background: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)', color: 'var(--waf-brand-ink)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
           >
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Download Controls YAML
-            <span style={{ background: 'rgba(0,148,255,.15)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.68rem' }}>{allControls.length}</span>
+            {t('pages.phase3.catalogue.downloadControlsYaml')}
+            <span style={{ background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.7rem' }}>{allControls.length}</span>
           </button>
           {/* Checkov Pack */}
           <button
             onClick={downloadPack}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid color-mix(in srgb, #7c3aed 35%, transparent)', background: 'color-mix(in srgb, #7c3aed 8%, transparent)', color: '#7c3aed', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: '1px solid color-mix(in srgb, var(--waf-info) 35%, transparent)', background: 'color-mix(in srgb, var(--waf-info) 8%, transparent)', color: 'var(--waf-info)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
           >
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Checkov Pack
-            <span style={{ background: 'color-mix(in srgb, #7c3aed 15%, transparent)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.68rem' }}>{packCount}</span>
+            {t('pages.phase3.catalogue.checkovPack')}
+            <span style={{ background: 'color-mix(in srgb, var(--waf-info) 15%, transparent)', borderRadius: '999px', padding: '0.05rem 0.45rem', fontSize: '0.7rem' }}>{packCount}</span>
           </button>
           <button
             onClick={() => setShowGuide(true)}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
           >
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-            How to implement
+            {t('pages.phase3.catalogue.howToImplement')}
           </button>
           {/* New Control */}
           <button
             onClick={() => setShowWizard(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: 'none', background: '#0094FF', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', borderRadius: '8px', border: 'none', background: 'var(--waf-brand-btn)', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New Control
+            {t('pages.phase3.catalogue.newControl')}
           </button>
         </div>
       </div>
+
+      {downloadError && (
+        <div role="alert" style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--fail-ink)', background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)' }}>
+          {downloadError}
+        </div>
+      )}
 
       {/* Filter bar */}
       <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '0.875rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', flexShrink: 0 }} key="filter-bar-0">
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
-            type="text" placeholder="Search by ID or description…"
+            type="text" placeholder={t('pages.phase3.catalogue.searchPlaceholder')}
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg)', color: 'var(--text)', outline: 'none', minWidth: '220px' }}
           />
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: 'auto' }}>
-            {filtered.length} of {allControls.length}
-            {apiError && <span style={{ color: '#f97316', marginLeft: '0.5rem' }}>· custom controls unavailable</span>}
+            {t('pages.phase3.catalogue.filteredOfTotal', { filtered: filtered.length, total: allControls.length })}
+            {apiError && <span style={{ color: 'var(--waf-warn)', marginLeft: '0.5rem' }}>{t('pages.phase3.catalogue.customUnavailable')}</span>}
           </span>
           <SavedViewsControl
             page="catalogue"
@@ -1874,19 +1936,19 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           />
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }} data-debug="pillar-filter">
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Pillar</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>{t('pages.phase3.catalogue.pillar')}</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
             {(() => ALL_PILLARS.map(p => <TogglePill key={p} label={p} color={pillarColor(p)} active={pillarFilter.includes(p)} onClick={() => togglePillar(p)} />))()}
           </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Severity</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>{t('pages.phase3.catalogue.severity')}</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
             {(() => ALL_SEVERITIES.map(s => <TogglePill key={s} label={s} color={sevColor(s)} active={severityFilter.includes(s)} onClick={() => toggleSeverity(s)} />))()}
           </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center', flex: '0 0 auto' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>Type</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.2rem', flex: '0 0 auto' }}>{t('pages.phase3.catalogue.type')}</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', alignItems: 'center' }}>
             {(() => ALL_TYPES.map(t => <TogglePill key={t} label={t} color={typeColor(t)} active={typeFilter.includes(t)} onClick={() => toggleType(t)} />))()}
           </div>
@@ -1896,7 +1958,7 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
       {/* Loading */}
       {loading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', color: 'var(--muted)', gap: '0.5rem' }}>
-          <div className="spinner" />Loading…
+          <div className="spinner" />{t('pages.phase3.catalogue.loading')}
         </div>
       )}
 
@@ -1906,16 +1968,16 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
           {filtered.length === 0 ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
               {tab === 'custom' && customCount === 0
-                ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>No custom controls yet</strong>Click <strong>New Control</strong> above to author one, or run <code>wombat control generate</code> from the CLI.</>
-                : 'No controls match the current filters.'
+                ? <><strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>{t('pages.phase3.catalogue.noCustomControls')}</strong>{t('pages.phase3.catalogue.noCustomControlsHintBefore')} <strong>{t('pages.phase3.catalogue.newControl')}</strong> {t('pages.phase3.catalogue.noCustomControlsHintAfter')} <code>wombat control generate</code> {t('pages.phase3.catalogue.noCustomControlsHintEnd')}</>
+                : t('pages.phase3.catalogue.noControlsMatch')
               }
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Source', 'ID', 'Pillar', 'Severity', 'Type', 'Description', 'Checks'].map(h => (
-                    <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--bg)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                  {['colSource', 'colId', 'colPillar', 'colSeverity', 'colType', 'colDescription', 'colChecks'].map(h => (
+                    <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--bg)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{t(`pages.phase3.catalogue.${h}`)}</th>
                   ))}
                 </tr>
               </thead>
@@ -1924,11 +1986,11 @@ export default function ControlsCataloguePage({ coreControls }: Props) {
                   <tr
                     key={ctrl.id}
                     onClick={() => setSelected(ctrl)}
-                    style={{ cursor: 'pointer', background: i % 2 === 0 ? 'transparent' : 'rgba(15,23,42,.015)' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,148,255,.05)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(15,23,42,.015)')}
+                    style={{ cursor: 'pointer', background: i % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--text) 1.5%, transparent)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--row-hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--text) 1.5%, transparent)')}
                   >
-                    <td style={{ padding: '0.65rem 1rem', whiteSpace: 'nowrap' }}>{sourceBadge(ctrl.isCustom)}</td>
+                    <td style={{ padding: '0.65rem 1rem', whiteSpace: 'nowrap' }}><SourceBadge isCustom={ctrl.isCustom} /></td>
                     <td style={{ padding: '0.65rem 1rem', whiteSpace: 'nowrap' }}>
                       <code style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)' }}>{ctrl.id}</code>
                     </td>

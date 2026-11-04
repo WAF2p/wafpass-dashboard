@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchSyslogConfig, SYSLOG_ACTIONS, SyslogConfig, SyslogConfigInput, testSyslogConfig, updateSyslogConfig } from '../api'
 import { useI18n } from '../i18n'
-import { CheckIcon, ExclaimIcon, SettingsIcon, XIcon } from './shared/SocComponents'
+import { Modal, Skeleton, SkeletonText } from '../ui'
+import { CheckIcon, ExclaimIcon, SettingsIcon } from './shared/SocComponents'
 
 interface Props {
   onClose: () => void
@@ -136,16 +137,31 @@ export default function SyslogConfigModal({ onClose, onSaved }: Props) {
   }
 
   return (
-    <div className="syslog-modal-backdrop" onClick={onClose}>
-      <div className="syslog-modal" onClick={e => e.stopPropagation()}>
-        <div className="syslog-modal__header">
-          <h3><SettingsIcon /> {t('pages.adminLogs.siemModalTitle')}</h3>
-          <button className="syslog-modal__close" onClick={onClose} aria-label={t('common.cancel')}><XIcon /></button>
-        </div>
-
-        <div className="syslog-modal__body">
+    <Modal
+      open
+      onClose={onClose}
+      title={<><SettingsIcon /> {t('pages.adminLogs.siemModalTitle')}</>}
+      size="lg"
+      closeLabel={t('common.cancel')}
+      footer={
+        <>
+          <button className="syslog-btn-ghost" onClick={onClose} disabled={saving || testing}>{t('pages.adminLogs.siemCancel')}</button>
+          <span style={{ flex: 1 }} />
+          <button className="syslog-btn syslog-btn--secondary" onClick={handleTest} disabled={loading || saving || testing}>
+            {testing ? t('pages.adminLogs.siemTestSending') : t('pages.adminLogs.siemTest')}
+          </button>
+          <button className="syslog-btn syslog-btn--primary" onClick={handleSave} disabled={loading || saving || testing}>
+            {saving ? t('common.saving') : t('pages.adminLogs.siemSave')}
+          </button>
+        </>
+      }
+    >
+        <div className="syslog-modal__stack">
           {loading ? (
-            <div className="syslog-modal__loading"><div className="spinner" /></div>
+            <div aria-busy="true" style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              <Skeleton height={16} width="30%" />
+              <SkeletonText lines={8} />
+            </div>
           ) : loadError ? (
             <div className="syslog-modal__error"><ExclaimIcon /> {loadError}</div>
           ) : (
@@ -233,97 +249,25 @@ export default function SyslogConfigModal({ onClose, onSaved }: Props) {
           )}
         </div>
 
-        <div className="syslog-modal__footer">
-          <button className="syslog-btn-ghost" onClick={onClose} disabled={saving || testing}>{t('pages.adminLogs.siemCancel')}</button>
-          <div className="syslog-modal__actions">
-            <button className="syslog-btn syslog-btn--secondary" onClick={handleTest} disabled={loading || saving || testing}>
-              {testing ? t('pages.adminLogs.siemTestSending') : t('pages.adminLogs.siemTest')}
-            </button>
-            <button className="syslog-btn syslog-btn--primary" onClick={handleSave} disabled={loading || saving || testing}>
-              {saving ? t('common.saving') : t('pages.adminLogs.siemSave')}
-            </button>
-          </div>
-        </div>
-      </div>
-
       <style>{syslogModalCss}</style>
-    </div>
+    </Modal>
   )
 }
 
 const syslogModalCss = `
-.syslog-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  background: color-mix(in srgb, #000000 45%, transparent);
-  padding: 4rem 1rem 1rem;
-}
-.syslog-modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  width: min(720px, 100%);
-  max-height: min(80vh, calc(100vh - 5rem));
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px color-mix(in srgb, #000000 25%, transparent);
-}
-.syslog-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-}
-.syslog-modal__header h3 {
-  margin: 0;
-  font-size: 1rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.syslog-modal__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  border-radius: 6px;
-  padding: 0.35rem;
-}
-.syslog-modal__close:hover { color: var(--text); background: var(--bg); }
-.syslog-modal__body {
-  padding: 1.25rem;
-  overflow-y: auto;
+.syslog-modal__stack {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
 }
-.syslog-modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--border);
-}
-.syslog-modal__actions { display: flex; gap: 0.5rem; }
-.syslog-modal__loading, .syslog-modal__error {
+.syslog-modal__error {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 2rem 1rem;
-}
-.syslog-modal__error {
-  color: #dc2626;
-  background: rgba(220,38,38,.06);
+  color: var(--fail-ink);
+  background: color-mix(in srgb, var(--fail) 6%, transparent);
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -337,8 +281,8 @@ const syslogModalCss = `
   font-size: 0.78rem;
   font-weight: 600;
 }
-.syslog-modal__test--ok { color: #059669; background: color-mix(in srgb, #059669 8%, transparent); }
-.syslog-modal__test--err { color: #dc2626; background: rgba(220,38,38,.08); }
+.syslog-modal__test--ok { color: var(--pass-ink); background: color-mix(in srgb, var(--pass) 8%, transparent); }
+.syslog-modal__test--err { color: var(--fail-ink); background: color-mix(in srgb, var(--fail) 8%, transparent); }
 
 .syslog-grid {
   display: grid;
@@ -363,7 +307,7 @@ const syslogModalCss = `
   padding: 0.5rem 0.7rem;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--input-bg);
   color: var(--text);
   font-size: 0.85rem;
   outline: none;
@@ -404,11 +348,11 @@ const syslogModalCss = `
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .syslog-btn:disabled, .syslog-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
-.syslog-btn--primary { background: var(--waf-brand); color: #fff; border-color: var(--waf-brand); }
-.syslog-btn--secondary { color: var(--waf-brand); border-color: color-mix(in srgb, var(--waf-brand) 30%, transparent); }
+.syslog-btn--primary { background: var(--waf-brand-btn); color: #fff; border-color: var(--waf-brand-btn); }
+.syslog-btn--secondary { color: var(--waf-brand-ink); border-color: color-mix(in srgb, var(--waf-brand) 30%, transparent); }
 .syslog-btn-ghost { background: transparent; color: var(--muted); }
 .syslog-btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
 `

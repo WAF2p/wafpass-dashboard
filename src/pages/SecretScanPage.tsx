@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { RunDetail, Finding, SecretFinding } from '../api'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 import { severityBg, severityColor } from '../severity'
+import { EmptyState } from '../ui'
 
 interface Props { run: RunDetail }
 
@@ -9,7 +11,7 @@ interface Props { run: RunDetail }
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 }
 const STATUS_COLOR: Record<string, string> = {
-  PASS: '#059669', FAIL: '#DA2C38', SKIP: '#94a3b8', WAIVED: '#a78bfa', ERROR: '#f97316',
+  PASS: 'var(--pass-ink)', FAIL: 'var(--fail-ink)', SKIP: 'var(--skip-ink)', WAIVED: 'var(--waf-info)', ERROR: 'var(--score-mid-ink)',
 }
 
 // Patterns for identifying secrets-posture control findings
@@ -44,11 +46,11 @@ function SevBadge({ sev }: { sev: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   const s = (status ?? '').toUpperCase()
-  const color = STATUS_COLOR[s] ?? '#94a3b8'
+  const color = STATUS_COLOR[s] ?? 'var(--skip-ink)'
   return (
     <span style={{
       fontSize: '0.7rem', fontWeight: 700, borderRadius: '4px', padding: '0.12rem 0.45rem',
-      background: `${color}18`, color, letterSpacing: '0.05em', flexShrink: 0,
+      background: `color-mix(in srgb, ${color} 9%, transparent)`, color, letterSpacing: '0.05em', flexShrink: 0,
     }}>{s}</span>
   )
 }
@@ -57,7 +59,6 @@ function StatusBadge({ status }: { status: string }) {
 
 function RawSecretCard({ sf }: { sf: SecretFinding }) {
   const [open, setOpen] = useState(false)
-  const sev = (sf.severity ?? 'HIGH').toUpperCase()
   const hasComments = (sf.comment_count ?? 0) > 0
   const commentCount = sf.comment_count ?? 0
 
@@ -65,22 +66,19 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
     <div
       style={{
         borderRadius: '10px',
-        border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
-        background: 'rgba(218,44,56,.025)',
+        border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+        background: 'color-mix(in srgb, var(--fail) 2.5%, transparent)',
         overflow: 'hidden', cursor: 'pointer',
       }}
       onClick={() => setOpen(o => !o)}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 0.875rem' }}>
-        {/* Red stripe */}
-        <div style={{ width: '4px', borderRadius: '4px', alignSelf: 'stretch', flexShrink: 0, minHeight: '28px', background: severityColor(sev) }} />
-
         {/* Lock icon */}
         <div style={{
           width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
-          background: 'color-mix(in srgb, #da2c38 12%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'color-mix(in srgb, var(--fail) 12%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <svg width="16" height="16" fill="none" stroke="#DA2C38" viewBox="0 0 24 24">
+          <svg width="16" height="16" fill="none" stroke="var(--fail)" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
@@ -89,15 +87,15 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
             <SevBadge sev={sf.severity} />
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#DA2C38' }}>{sf.pattern_name}</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--fail-ink)' }}>{sf.pattern_name}</span>
             {hasComments && (
               <span style={{
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 borderRadius: '999px',
                 padding: '0.05rem 0.4rem',
-                background: 'rgba(0,148,255,.15)',
-                color: '#0094ff',
+                background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
+                color: 'var(--waf-brand-ink)',
               }}>
                 {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
               </span>
@@ -111,7 +109,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
           {/* Attribute + masked value */}
           <div style={{ marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             {sf.matched_key && (
-              <code style={{ fontSize: '0.72rem', background: 'color-mix(in srgb, #da2c38 10%, transparent)', color: '#DA2C38', borderRadius: '4px', padding: '0.1em 0.35em' }}>
+              <code style={{ fontSize: '0.72rem', background: 'color-mix(in srgb, var(--fail) 10%, transparent)', color: 'var(--fail-ink)', borderRadius: '4px', padding: '0.1em 0.35em' }}>
                 {sf.matched_key}
               </code>
             )}
@@ -128,7 +126,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
       </div>
 
       {open && (
-        <div style={{ padding: '0 0.875rem 0.875rem 3.75rem', borderTop: '1px solid color-mix(in srgb, #da2c38 15%, transparent)', paddingTop: '0.75rem', background: 'var(--bg)' }}>
+        <div style={{ padding: '0 0.875rem 0.875rem 3.75rem', borderTop: '1px solid color-mix(in srgb, var(--fail) 15%, transparent)', paddingTop: '0.75rem', background: 'var(--bg)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div>
               <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>Pattern</div>
@@ -139,7 +137,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
               <code style={{ fontSize: '0.72rem', color: 'var(--text)' }}>{sf.file}:{sf.line_no}</code>
             </div>
           </div>
-          <div style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, #da2c38 7%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 20%, transparent)', fontSize: '0.75rem', color: '#DA2C38', lineHeight: 1.6 }}>
+          <div style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', fontSize: '0.75rem', color: 'var(--fail-ink)', lineHeight: 1.6 }}>
             <strong>Suppress this finding</strong> (use sparingly — add a justification comment):<br />
             <code style={{ fontSize: '0.7rem' }}>{'  '}{sf.matched_key || 'value'} = "..." <span style={{ opacity: 0.7 }}># wombat:ignore-secret  reason: &lt;your justification&gt;</span></code>
           </div>
@@ -161,26 +159,25 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
     <div
       style={{
         borderRadius: '10px',
-        border: isFail ? '1px solid color-mix(in srgb, #da2c38 25%, transparent)' : '1px solid var(--border)',
+        border: isFail ? '1px solid color-mix(in srgb, var(--fail) 25%, transparent)' : '1px solid var(--border)',
         background: 'var(--surface)', overflow: 'hidden', cursor: 'pointer',
       }}
       onClick={() => setOpen(o => !o)}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.65rem 0.875rem' }}>
-        <div style={{ width: '3px', borderRadius: '4px', alignSelf: 'stretch', flexShrink: 0, minHeight: '24px', background: isFail ? '#DA2C38' : '#059669' }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
             <SevBadge sev={finding.severity} />
             <StatusBadge status={finding.status} />
-            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontFamily: 'monospace' }}>{finding.check_id}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace' }}>{finding.check_id}</span>
             {hasComments && (
               <span style={{
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 borderRadius: '999px',
                 padding: '0.05rem 0.4rem',
-                background: 'rgba(0,148,255,.15)',
-                color: '#0094ff',
+                background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
+                color: 'var(--waf-brand-ink)',
               }}>
                 {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
               </span>
@@ -217,8 +214,8 @@ function StatBox({ label, value, color, sub }: { label: string; value: string | 
   return (
     <div style={{
       flex: 1, minWidth: '100px', borderRadius: '10px', padding: '0.75rem 1rem',
-      background: color ? `${color}0d` : 'var(--bg)',
-      border: `1px solid ${color ? `${color}30` : 'var(--border)'}`,
+      background: color ? `color-mix(in srgb, ${color} 5%, transparent)` : 'var(--bg)',
+      border: `1px solid ${color ? `color-mix(in srgb, ${color} 19%, transparent)` : 'var(--border)'}`,
     }}>
       <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: color ?? 'var(--muted)', marginBottom: '0.2rem' }}>{label}</div>
       <div style={{ fontSize: '1.5rem', fontWeight: 800, color: color ?? 'var(--text)', lineHeight: 1 }}>{value}</div>
@@ -231,7 +228,7 @@ function StatBox({ label, value, color, sub }: { label: string; value: string | 
 
 function SectionLabel({ color, dot, children }: { color: string; dot?: boolean; children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.07em', color, display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+    <div style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.07em', color, display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
       {dot && <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, flexShrink: 0 }} />}
       {children}
     </div>
@@ -279,32 +276,32 @@ export default function SecretScanPage({ run }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE.secrets}</h1>
 
       {/* ── Alarm banner ── */}
       {hasAlarm && (
         <div style={{
           borderRadius: '12px', padding: '1.25rem 1.5rem',
-          background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)',
-          border: '1px solid color-mix(in srgb, #ef4444 40%, transparent)',
-          boxShadow: '0 4px 24px color-mix(in srgb, #da2c38 25%, transparent)',
+          background: 'color-mix(in srgb, var(--fail) 8%, var(--surface))',
+          border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
           display: 'flex', alignItems: 'center', gap: '1.25rem',
         }}>
           <div style={{
             width: '52px', height: '52px', borderRadius: '12px', flexShrink: 0,
-            background: 'color-mix(in srgb, #ef4444 25%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'color-mix(in srgb, var(--fail) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <svg width="28" height="28" fill="none" stroke="#fca5a5" viewBox="0 0 24 24">
+            <svg width="28" height="28" fill="none" stroke="var(--fail)" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fef2f2', letterSpacing: '-0.01em' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--fail-ink)', letterSpacing: '-0.01em' }}>
               {rawSecrets.length > 0
                 ? t('pages.secretScan.alarmTitle', { count: String(rawSecrets.length) })
                 : t('pages.secretScan.secretsIssue')}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#fca5a5', marginTop: '0.2rem' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text)', marginTop: '0.2rem' }}>
               {rawSecrets.length > 0
                 ? <>
                     {critCount > 0 && <><strong>{critCount} CRITICAL</strong>{highCount > 0 ? ` · ${highCount} HIGH` : ''} · </>}
@@ -314,10 +311,10 @@ export default function SecretScanPage({ run }: Props) {
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', flexShrink: 0, textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fef2f2', lineHeight: 1 }}>
+            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--fail-ink)', lineHeight: 1 }}>
               {rawSecrets.length || failPosture.length}
             </div>
-            <div style={{ fontSize: '0.7rem', color: '#fca5a5', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>
               {rawSecrets.length > 0 ? 'Secrets' : 'Failures'}
             </div>
           </div>
@@ -328,22 +325,22 @@ export default function SecretScanPage({ run }: Props) {
       {!hasAlarm && (
         <div style={{
           borderRadius: '12px', padding: '1.25rem 1.5rem',
-          background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
-          border: '1px solid color-mix(in srgb, #10b981 30%, transparent)',
+          background: 'color-mix(in srgb, var(--pass) 8%, var(--surface))',
+          border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
           display: 'flex', alignItems: 'center', gap: '1rem',
         }}>
           <div style={{
             width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0,
-            background: 'color-mix(in srgb, #10b981 20%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'color-mix(in srgb, var(--pass) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <svg width="26" height="26" fill="none" stroke="#6ee7b7" viewBox="0 0 24 24">
+            <svg width="26" height="26" fill="none" stroke="var(--pass)" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ecfdf5' }}>{t('pages.secretScan.cleanTitle')}</div>
-            <div style={{ fontSize: '0.78rem', color: '#6ee7b7', marginTop: '0.15rem' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--pass-ink)' }}>{t('pages.secretScan.cleanTitle')}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text)', marginTop: '0.15rem' }}>
               The secret scanner found no hardcoded credentials in this run's IaC source files.
             </div>
           </div>
@@ -354,11 +351,11 @@ export default function SecretScanPage({ run }: Props) {
       {(rawSecrets.length > 0 || postureFindings.length > 0) && (
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <StatBox label={t('pages.secretScan.scannerHits')} value={rawSecrets.length}
-            color={rawSecrets.length > 0 ? '#DA2C38' : undefined} sub="hardcoded in source" />
-          <StatBox label={t('pages.secretScan.critical')} value={critCount} color={critCount > 0 ? '#DA2C38' : undefined} />
-          <StatBox label={t('pages.secretScan.high')} value={highCount} color={highCount > 0 ? '#f97316' : undefined} />
+            color={rawSecrets.length > 0 ? 'var(--fail-ink)' : undefined} sub="hardcoded in source" />
+          <StatBox label={t('pages.secretScan.critical')} value={critCount} color={critCount > 0 ? 'var(--fail-ink)' : undefined} />
+          <StatBox label={t('pages.secretScan.high')} value={highCount} color={highCount > 0 ? 'var(--score-mid-ink)' : undefined} />
           <StatBox label={t('pages.secretScan.postureFailures')} value={failPosture.length}
-            color={failPosture.length > 0 ? '#d97706' : undefined} sub="control checks" />
+            color={failPosture.length > 0 ? 'var(--score-mid-ink)' : undefined} sub="control checks" />
           <StatBox label={t('pages.secretScan.postureChecks')} value={postureFindings.length} />
         </div>
       )}
@@ -371,15 +368,15 @@ export default function SecretScanPage({ run }: Props) {
           display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
           background: rawSecrets.length > 0 ? 'rgba(218,44,56,.03)' : undefined,
         }}>
-          <svg width="15" height="15" fill="none" stroke={rawSecrets.length > 0 ? '#DA2C38' : 'var(--muted)'} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+          <svg width="15" height="15" fill="none" stroke={rawSecrets.length > 0 ? 'var(--fail)' : 'var(--muted)'} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: rawSecrets.length > 0 ? '#DA2C38' : 'var(--text)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: rawSecrets.length > 0 ? 'var(--fail-ink)' : 'var(--text)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             {t('pages.secretScan.hardcodedScanTitle')}
           </span>
           {rawSecrets.length > 0 && (
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, borderRadius: '999px', padding: '0.1rem 0.5rem', background: 'color-mix(in srgb, #da2c38 15%, transparent)', color: '#DA2C38' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, borderRadius: '999px', padding: '0.1rem 0.5rem', background: 'color-mix(in srgb, var(--fail) 15%, transparent)', color: 'var(--fail-ink)' }}>
               {t('pages.secretScan.foundCount', { count: String(rawSecrets.length) })}
             </span>
           )}
@@ -403,19 +400,19 @@ export default function SecretScanPage({ run }: Props) {
 
         <div style={{ padding: '1rem' }}>
           {rawSecrets.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ margin: '0 auto 0.5rem', opacity: 0.25, display: 'block' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              {t('pages.secretScan.noSecrets')}
-              {run.secret_findings === undefined || (run.secret_findings as SecretFinding[] | null) === null
-                ? <><br /><span style={{ fontSize: '0.75rem' }}>{t('pages.secretScan.updateCliHint')}</span></>
-                : null}
-            </div>
+            <EmptyState
+              title={t('pages.secretScan.noSecrets')}
+              description={run.secret_findings === undefined || (run.secret_findings as SecretFinding[] | null) === null
+                ? t('pages.secretScan.updateCliHint')
+                : undefined}
+              icon={(
+                <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              )}
+            />
           ) : filteredRaw.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              {t('pages.secretScan.noMatchFilter')}
-            </div>
+            <EmptyState compact title={t('pages.secretScan.noMatchFilter')} />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {filteredRaw.map((sf, i) => <RawSecretCard key={i} sf={sf} />)}
@@ -439,7 +436,7 @@ export default function SecretScanPage({ run }: Props) {
             </span>
           </div>
           <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {failPosture.length > 0 && <SectionLabel color="#DA2C38" dot>{t('pages.secretScan.failingLabel')}</SectionLabel>}
+            {failPosture.length > 0 && <SectionLabel color="var(--fail-ink)" dot>{t('pages.secretScan.failingLabel')}</SectionLabel>}
             {failPosture.map((f, i) => <ControlFindingCard key={`f-${i}`} finding={f} />)}
             {postureFindings.filter(f => f.status?.toUpperCase() !== 'FAIL').length > 0 && (
               <>
@@ -470,7 +467,7 @@ export default function SecretScanPage({ run }: Props) {
           ].map(({ label, code }) => (
             <div key={label} style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
               <div style={{ padding: '0.3rem 0.6rem', background: 'var(--bg)', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
-              <pre style={{ margin: 0, padding: '0.5rem 0.7rem', fontSize: '0.7rem', color: '#22c55e', background: '#0f172a', overflowX: 'auto', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              <pre style={{ margin: 0, padding: '0.5rem 0.7rem', fontSize: '0.7rem', color: 'var(--pass)', background: '#0f172a', overflowX: 'auto', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                 {code}
               </pre>
             </div>

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { sandboxScan, sandboxStatus, SandboxResponse, SandboxControlResult } from '../api'
 import { severityBg, severityColor, scoreColor } from '../severity'
+import { EmptyState, Skeleton, SkeletonText } from '../ui'
+import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 
 // ── Types shared between mock and real engine ─────────────────────────────────
 
@@ -37,12 +40,12 @@ interface SandboxOutput {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
-  PASS: '#22c55e', FAIL: '#DA2C38', SKIP: '#94a3b8',
+  PASS: 'var(--pass)', FAIL: 'var(--fail)', SKIP: 'var(--skip)',
 }
 
 const TEMPLATES: Record<string, { label: string; code: string }> = {
   weak_iam: {
-    label: 'Weak IAM Policy',
+    label: 'templateWeakIam',
     code: `resource "aws_iam_account_password_policy" "weak" {
   minimum_password_length        = 6
   require_symbols                = false
@@ -54,7 +57,7 @@ const TEMPLATES: Record<string, { label: string; code: string }> = {
 `,
   },
   open_storage: {
-    label: 'Unencrypted Storage',
+    label: 'templateOpenStorage',
     code: `resource "aws_s3_bucket" "data" {
   bucket = "unprotected-data-lake"
 }
@@ -72,7 +75,7 @@ resource "aws_db_instance" "database" {
 `,
   },
   open_sg: {
-    label: 'Open Security Group',
+    label: 'templateOpenSg',
     code: `resource "aws_security_group" "open" {
   name        = "allow-all"
   description = "Wide-open security group"
@@ -101,7 +104,7 @@ resource "aws_db_instance" "database" {
 `,
   },
   compliant_s3: {
-    label: 'Compliant S3 Bucket',
+    label: 'templateCompliantS3',
     code: `resource "aws_s3_bucket" "secure" {
   bucket = "my-secure-bucket"
 }
@@ -132,7 +135,7 @@ resource "aws_s3_bucket_public_access_block" "secure" {
 `,
   },
   compliant_rds: {
-    label: 'Compliant RDS Instance',
+    label: 'templateCompliantRds',
     code: `resource "aws_db_instance" "secure" {
   identifier              = "prod-db"
   engine                  = "postgres"
@@ -299,6 +302,7 @@ type RealEngineStatus = 'unknown' | 'checking' | 'available' | 'unavailable'
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SandboxPage() {
+  const { t } = useI18n()
   const [code, setCode] = useState('')
   const [scanning, setScanning] = useState(false)
   const [output, setOutput] = useState<SandboxOutput | null>(null)
@@ -318,15 +322,15 @@ export default function SandboxPage() {
           setRealStatusDetail(`${s.controls_dir}`)
         } else if (!s.engine_available) {
           setRealStatus('unavailable')
-          setRealStatusDetail('wombat-core not installed on server')
+          setRealStatusDetail(t('pages.phase3.sandbox.statusWombatCoreMissing'))
         } else {
           setRealStatus('unavailable')
-          setRealStatusDetail(`Controls dir not found: ${s.controls_dir}`)
+          setRealStatusDetail(t('pages.phase3.sandbox.statusControlsDirNotFound', { dir: s.controls_dir }))
         }
       })
       .catch(() => {
         setRealStatus('unavailable')
-        setRealStatusDetail('Server unreachable — check server URL in Settings')
+        setRealStatusDetail(t('pages.phase3.sandbox.statusServerUnreachable'))
       })
   }, [])
 
@@ -363,13 +367,14 @@ export default function SandboxPage() {
   const realAvailable = realStatus === 'available'
 
   const enginePill = (() => {
-    if (realStatus === 'checking') return { label: 'Checking…', color: '#94a3b8' }
-    if (realStatus === 'available') return { label: 'Real engine ready', color: '#22c55e' }
-    return { label: 'Real engine unavailable', color: '#eab308' }
+    if (realStatus === 'checking') return { label: t('pages.phase3.sandbox.checking'), color: 'var(--skip)' }
+    if (realStatus === 'available') return { label: t('pages.phase3.sandbox.realEngineReady'), color: 'var(--pass)' }
+    return { label: t('pages.phase3.sandbox.realEngineUnavailable'), color: 'var(--waf-warn)' }
   })()
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['sandbox']}</h1>
 
       {/* Engine mode selector */}
       <div style={{
@@ -378,7 +383,7 @@ export default function SandboxPage() {
         background: 'var(--bg-secondary)', border: '1px solid var(--border)',
       }}>
         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Engine
+          {t('pages.phase3.sandbox.engine')}
         </span>
         <div style={{ display: 'flex', gap: '0.4rem' }}>
           {(['mock', 'real'] as EngineMode[]).map(mode => (
@@ -388,20 +393,20 @@ export default function SandboxPage() {
               style={{
                 padding: '0.35rem 0.875rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600,
                 border: `1px solid ${engineMode === mode ? 'var(--waf-brand)' : 'var(--border)'}`,
-                background: engineMode === mode ? 'rgba(0,148,255,.1)' : 'var(--bg)',
-                color: engineMode === mode ? 'var(--waf-brand)' : mode === 'real' && !realAvailable ? 'var(--muted)' : 'var(--text)',
+                background: engineMode === mode ? 'color-mix(in srgb, var(--waf-brand) 10%, transparent)' : 'var(--bg)',
+                color: engineMode === mode ? 'var(--waf-brand-ink)' : mode === 'real' && !realAvailable ? 'var(--muted)' : 'var(--text)',
                 cursor: mode === 'real' && !realAvailable ? 'not-allowed' : 'pointer',
                 opacity: mode === 'real' && !realAvailable ? 0.6 : 1,
               }}
             >
-              {mode === 'mock' ? 'Mock (regex)' : 'Real engine'}
+              {mode === 'mock' ? t('pages.phase3.sandbox.mockRegex') : t('pages.phase3.sandbox.realEngine')}
             </button>
           ))}
         </div>
 
         <span style={{
           fontSize: '0.72rem', fontWeight: 600, color: enginePill.color,
-          background: `${enginePill.color}18`, border: `1px solid ${enginePill.color}40`,
+          background: `color-mix(in srgb, ${enginePill.color} 9%, transparent)`, border: `1px solid color-mix(in srgb, ${enginePill.color} 25%, transparent)`,
           borderRadius: '999px', padding: '0.18rem 0.65rem',
         }}>
           {enginePill.label}
@@ -416,7 +421,7 @@ export default function SandboxPage() {
         {!realAvailable && realStatus !== 'checking' && (
           <span style={{ fontSize: '0.71rem', color: 'var(--muted)' }}>
             {realStatus === 'unavailable'
-              ? 'To enable: install wombat-core and set WOMBAT_CONTROLS_DIR on the server'
+              ? t('pages.phase3.sandbox.enableHint')
               : ''}
           </span>
         )}
@@ -427,7 +432,7 @@ export default function SandboxPage() {
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-              HCL Editor
+              {t('pages.phase3.sandbox.editorTitle')}
             </h2>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
               {Object.entries(TEMPLATES).map(([key, tpl]) => (
@@ -435,23 +440,23 @@ export default function SandboxPage() {
                   key={key}
                   onClick={() => { setCode(tpl.code); setOutput(null); setScanError(null) }}
                   style={{
-                    fontSize: '0.68rem', padding: '0.2rem 0.55rem', borderRadius: '6px',
+                    fontSize: '0.7rem', padding: '0.2rem 0.55rem', borderRadius: '6px',
                     border: '1px solid var(--border)', background: 'var(--bg)',
                     color: 'var(--muted)', cursor: 'pointer',
                   }}
                 >
-                  {tpl.label}
+                  {t(`pages.phase3.sandbox.${tpl.label}`)}
                 </button>
               ))}
               <button
                 onClick={() => { setCode(''); setOutput(null); setScanError(null) }}
                 style={{
-                  fontSize: '0.68rem', padding: '0.2rem 0.55rem', borderRadius: '6px',
+                  fontSize: '0.7rem', padding: '0.2rem 0.55rem', borderRadius: '6px',
                   border: '1px solid var(--border)', background: 'var(--bg)',
                   color: 'var(--muted)', cursor: 'pointer',
                 }}
               >
-                Clear
+                {t('pages.phase3.sandbox.clear')}
               </button>
             </div>
           </div>
@@ -460,7 +465,7 @@ export default function SandboxPage() {
             value={code}
             onChange={e => setCode(e.target.value)}
             onKeyDown={handleTab}
-            placeholder={`# Paste your HCL here and click Analyse\n\nresource "aws_s3_bucket" "example" {\n  bucket = "my-bucket"\n}`}
+            placeholder={`${t('pages.phase3.sandbox.editorPlaceholderHint')}\n\nresource "aws_s3_bucket" "example" {\n  bucket = "my-bucket"\n}`}
             style={{
               width: '100%', minHeight: '380px', resize: 'vertical',
               background: '#0f172a', color: '#e2e8f0', border: '1px solid var(--border)',
@@ -474,20 +479,20 @@ export default function SandboxPage() {
               onClick={() => void runScan()}
               disabled={scanning || !code.trim()}
               style={{
-                background: scanning || !code.trim() ? '#94a3b8' : 'var(--waf-brand)',
-                color: '#fff', border: 'none', borderRadius: '8px',
+                background: scanning || !code.trim() ? 'var(--border)' : 'var(--waf-brand-btn)',
+                color: scanning || !code.trim() ? 'var(--muted)' : 'white', border: 'none', borderRadius: '8px',
                 padding: '0.6rem 1.25rem', fontSize: '0.85rem', fontWeight: 700,
                 cursor: scanning || !code.trim() ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
               }}
             >
               {scanning ? (
-                <><span className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }} /> Analysing…</>
-              ) : `Analyse with ${engineMode === 'real' ? 'Real Engine' : 'Mock Engine'}`}
+                <><span className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }} /> {t('pages.phase3.sandbox.analysing')}</>
+              ) : t('pages.phase3.sandbox.analyseWith', { engine: engineMode === 'real' ? t('pages.phase3.sandbox.realEngineName') : t('pages.phase3.sandbox.mockEngineName') })}
             </button>
             {engineMode === 'real' && (
               <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-                Runs all {'{'}N{'}'} controls against your HCL via the server
+                {t('pages.phase3.sandbox.runsAllControls')}
               </span>
             )}
           </div>
@@ -496,33 +501,30 @@ export default function SandboxPage() {
         {/* Results panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {!output && !scanning && !scanError && (
-            <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔬</div>
-              <div style={{ fontWeight: 600 }}>Architect Sandbox</div>
-              <div style={{ fontSize: '0.78rem', marginTop: '0.3rem' }}>
-                {engineMode === 'real'
-                  ? 'Runs the full WOMBATpass engine server-side against your HCL'
-                  : 'Paste HCL and click Analyse for instant Wombat feedback'
-                }
-              </div>
-            </div>
+            <EmptyState
+              icon={<span style={{ fontSize: '2.5rem' }}>🔬</span>}
+              title={t('pages.phase3.sandbox.emptyTitle')}
+              description={engineMode === 'real'
+                ? t('pages.phase3.sandbox.emptyDescReal')
+                : t('pages.phase3.sandbox.emptyDescMock')}
+            />
           )}
 
           {scanning && (
-            <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-              <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-              <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
-                {engineMode === 'real' ? 'Running WOMBATpass engine on server…' : 'Evaluating controls…'}
+            <div className="card" style={{ padding: '1.25rem' }}>
+              <Skeleton height={20} width="45%" />
+              <div style={{ marginTop: '1rem' }}>
+                <SkeletonText lines={4} />
               </div>
             </div>
           )}
 
           {scanError && (
             <div style={{
-              background: 'color-mix(in srgb, #da2c38 8%, transparent)', border: '1px solid color-mix(in srgb, #da2c38 30%, transparent)',
-              borderRadius: '10px', padding: '1rem 1.25rem', fontSize: '0.85rem', color: '#DA2C38',
+              background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+              borderRadius: '10px', padding: '1rem 1.25rem', fontSize: '0.85rem', color: 'var(--fail-ink)',
             }}>
-              <div style={{ fontWeight: 700, marginBottom: '0.3rem' }}>Engine error</div>
+              <div style={{ fontWeight: 700, marginBottom: '0.3rem' }}>{t('pages.phase3.sandbox.engineError')}</div>
               <div style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>{scanError}</div>
             </div>
           )}
@@ -539,16 +541,16 @@ export default function SandboxPage() {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.5rem' }}>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#22c55e' }}>{output.total_pass}</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>Pass</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--pass-ink)' }}>{output.total_pass}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.phase3.sandbox.pass')}</div>
                       </div>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#DA2C38' }}>{output.total_fail}</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>Fail</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--fail-ink)' }}>{output.total_fail}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.phase3.sandbox.fail')}</div>
                       </div>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#94a3b8' }}>{output.total_skip}</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>Skip</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--muted)' }}>{output.total_skip}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.phase3.sandbox.skip')}</div>
                       </div>
                     </div>
                     <div style={{ background: 'var(--bg)', borderRadius: '999px', height: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
@@ -563,16 +565,16 @@ export default function SandboxPage() {
                 {/* Engine metadata */}
                 <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.72rem', color: 'var(--muted)' }}>
                   <span>
-                    Engine:{' '}
-                    <strong style={{ color: output.engine === 'real' ? '#22c55e' : 'var(--text)' }}>
-                      {output.engine === 'real' ? 'Real WOMBATpass engine' : 'Mock (regex)'}
+                    {t('pages.phase3.sandbox.engineLabel')}{' '}
+                    <strong style={{ color: output.engine === 'real' ? 'var(--pass-ink)' : 'var(--text)' }}>
+                      {output.engine === 'real' ? t('pages.phase3.sandbox.realWombatEngine') : t('pages.phase3.sandbox.mockRegex')}
                     </strong>
                   </span>
                   {output.controls_loaded != null && (
-                    <span>Controls evaluated: <strong style={{ color: 'var(--text)' }}>{output.controls_loaded}</strong></span>
+                    <span>{t('pages.phase3.sandbox.controlsEvaluated')} <strong style={{ color: 'var(--text)' }}>{output.controls_loaded}</strong></span>
                   )}
                   {output.results.length > 0 && (
-                    <span>With findings: <strong style={{ color: 'var(--text)' }}>{output.results.length}</strong></span>
+                    <span>{t('pages.phase3.sandbox.withFindings')} <strong style={{ color: 'var(--text)' }}>{output.results.length}</strong></span>
                   )}
                 </div>
               </div>
@@ -587,14 +589,14 @@ export default function SandboxPage() {
                 })
                 .filter(r => r.status !== 'SKIP')
                 .map(r => (
-                  <div key={r.control_id} className="card" style={{ padding: '0.75rem', borderLeft: `3px solid ${STATUS_COLOR[r.status] ?? '#94a3b8'}` }}>
+                  <div key={r.control_id} className="card" style={{ padding: '0.75rem', borderLeft: `3px solid ${STATUS_COLOR[r.status] ?? 'var(--skip)'}` }}>
                     <div
                       style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
                       onClick={() => setExpanded(expanded === r.control_id ? null : r.control_id)}
                     >
                       <span style={{
                         padding: '0.1rem 0.45rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
-                        background: `${STATUS_COLOR[r.status]}22`, color: STATUS_COLOR[r.status],
+                        background: `color-mix(in srgb, ${STATUS_COLOR[r.status]} 14%, transparent)`, color: STATUS_COLOR[r.status],
                       }}>{r.status}</span>
                       <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)', flex: 1 }}>{r.control_title}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg-secondary)', borderRadius: '4px', padding: '0.08rem 0.4rem' }}>
@@ -614,7 +616,7 @@ export default function SandboxPage() {
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
                               <span style={{
                                 padding: '0.08rem 0.4rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
-                                background: `${STATUS_COLOR[chk.status]}22`, color: STATUS_COLOR[chk.status], flexShrink: 0,
+                                background: `color-mix(in srgb, ${STATUS_COLOR[chk.status]} 14%, transparent)`, color: STATUS_COLOR[chk.status], flexShrink: 0,
                               }}>{chk.status}</span>
                               <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>{chk.check_title}</span>
                             </div>
@@ -625,8 +627,8 @@ export default function SandboxPage() {
                             )}
                             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: chk.remediation ? '0.35rem' : 0 }}>{chk.message}</div>
                             {chk.remediation && (
-                              <div style={{ fontSize: '0.72rem', color: '#60a5fa', fontStyle: 'italic' }}>
-                                Fix: {chk.remediation}
+                              <div style={{ fontSize: '0.72rem', color: 'var(--waf-brand-ink)', fontStyle: 'italic' }}>
+                                {t('pages.phase3.sandbox.fix')} {chk.remediation}
                               </div>
                             )}
                           </div>

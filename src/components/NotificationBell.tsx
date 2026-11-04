@@ -88,7 +88,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
             ? '2px solid var(--waf-brand)'
             : '1px solid var(--nav-border)',
           cursor: 'pointer',
-          transition: 'all 0.15s',
+          transition: 'background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s',
           flexShrink: 0,
         }}
         onMouseEnter={(e) => {
@@ -174,7 +174,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                 <button
                   onClick={handleMarkAllRead}
                   style={{
-                    fontSize: '0.68rem',
+                    fontSize: '0.7rem',
                     padding: '0.25rem 0.5rem',
                     borderRadius: '6px',
                     background: 'rgba(34,197,94,0.1)',
@@ -201,7 +201,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                   padding: '0.25rem 0.5rem',
                   fontWeight: 600,
                   borderRadius: '4px',
-                  transition: 'all 0.15s',
+                  transition: 'background-color 0.15s',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(0,148,255,0.1)'
@@ -261,7 +261,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                       background: note.is_read ? 'rgba(0,0,0,0.03)' : style.bg,
                       border: note.is_read ? '1px solid transparent' : `1px solid ${style.color}44`,
                       cursor: note.is_read ? 'default' : 'pointer',
-                      transition: 'all 0.15s',
+                      transition: 'background-color 0.15s, border-color 0.15s',
                       marginBottom: '0.25rem',
                     }}
                     onMouseEnter={(e) => {
@@ -306,7 +306,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
                       >
                         {note.title}
                         {note.is_read && (
-                          <span style={{ marginLeft: '0.5rem', fontSize: '0.68rem', color: 'var(--nav-muted)' }}>
+                          <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--nav-muted)' }}>
                             {t('pages.notifications.read')}
                           </span>
                         )}
@@ -362,6 +362,7 @@ export function NotificationBell({ navigate }: NotificationBellProps) {
             >
               <button
                 onClick={handleTest}
+                aria-label={t('pages.notifications.test')}
                 style={{
                   width: '100%',
                   display: 'flex',

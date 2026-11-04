@@ -206,7 +206,7 @@ export function MandateIndicator() {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '0.4rem',
-      padding: '0.3rem 0.65rem', borderRadius: '999px',
+      padding: '0.3rem 0.65rem', borderRadius: '8px',
       background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)',
       fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap',
     }}>
@@ -233,7 +233,7 @@ function NavItem({ item, page, navigate }: { item: NavEntry; page: Page; navigat
         fontSize: '0.85rem',
         color: isActive ? 'var(--waf-brand)' : (item.danger ? 'var(--waf-danger)' : 'var(--nav-text)'),
         fontWeight: isActive ? 600 : 400,
-        transition: 'all 0.15s',
+        transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
         width: '100%',
         textAlign: 'left',
         lineHeight: 1.4,
@@ -328,7 +328,7 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
           border: expanded ? '1px solid var(--nav-border)' : (hasActive ? '1px solid var(--waf-brand)' : '1px solid transparent'),
           cursor: 'pointer', color: hasActive ? 'var(--waf-brand)' : 'var(--nav-text)',
           fontSize: '0.85rem', fontWeight: hasActive ? 600 : 500,
-          transition: 'all 0.15s',
+          transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
         }}
       >
         <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: hasActive ? 'var(--waf-brand)' : section.color, flexShrink: 0 }} />
@@ -352,7 +352,7 @@ function NavSectionDropdown({ section, page, navigate, role }: { section: NavSec
             background: 'var(--nav-bg-opaque)',
             border: '1px solid var(--nav-border)',
             borderRadius: '12px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.28)',
+            boxShadow: '0 16px 40px rgba(2, 6, 23, 0.32)',
             padding: '1.5rem 1.75rem',
             zIndex: 100,
             display: 'flex',
@@ -482,7 +482,7 @@ function LanguageSwitcher({ currentLang, onChange }: { currentLang: string; onCh
             background: 'var(--card-bg)',
             border: '1px solid var(--card-border)',
             borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 8px 24px rgba(2, 6, 23, 0.24)',
             zIndex: 1000,
           }}
         >
@@ -798,7 +798,7 @@ export default function TopNavigation({
               padding: '0.5rem', borderRadius: '8px',
               background: 'var(--nav-surf)', color: 'var(--nav-text)',
               border: '1px solid var(--nav-border)',
-              cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+              cursor: 'pointer', transition: 'background-color 0.15s, border-color 0.15s, color 0.15s', flexShrink: 0,
             }}
           >
             {themeName === 'dark'
@@ -818,7 +818,7 @@ export default function TopNavigation({
             background: linkCopied ? 'rgba(34,197,94,.12)' : 'var(--nav-surf)',
             color: linkCopied ? '#15803d' : 'var(--nav-muted)',
             border: `1px solid ${linkCopied ? 'rgba(34,197,94,.4)' : 'var(--nav-border)'}`,
-            cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+            cursor: 'pointer', transition: 'background-color 0.15s, border-color 0.15s, color 0.15s', flexShrink: 0,
           }}
         >
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -839,17 +839,15 @@ export default function TopNavigation({
             background: 'var(--nav-surf)',
             color: 'var(--nav-muted)',
             border: '1px solid var(--nav-border)',
-            cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+            cursor: 'pointer', transition: 'color 0.15s, border-color 0.15s', flexShrink: 0,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#22d3ee'
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(34,211,238,0.15)'
+            e.currentTarget.style.color = 'var(--text)'
+            e.currentTarget.style.borderColor = 'var(--nav-muted)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.color = 'var(--nav-muted)'
-            e.currentTarget.style.transform = 'translateY(0)'
-            e.currentTarget.style.boxShadow = 'none'
+            e.currentTarget.style.borderColor = 'var(--nav-border)'
           }}
         >
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -883,7 +881,7 @@ export default function TopNavigation({
               style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                 background: meta.color,
-                borderRadius: '999px', padding: '0.4rem 0.9rem',
+                borderRadius: '8px', padding: '0.4rem 0.9rem',
                 fontSize: '0.75rem', fontWeight: 700,
                 color: '#ffffff',
                 cursor: 'pointer', flexShrink: 0,
@@ -908,7 +906,7 @@ export default function TopNavigation({
               width: '32px', height: '32px', borderRadius: '50%',
               background: 'var(--nav-surf)',
               border: '1px solid var(--nav-border)',
-              cursor: 'pointer', transition: 'all 0.15s',
+              cursor: 'pointer', transition: 'background-color 0.15s, border-color 0.15s, transform 0.15s',
               flexShrink: 0, position: 'relative', overflow: 'hidden',
             }}
             onMouseEnter={(e) => {
@@ -952,7 +950,7 @@ export default function TopNavigation({
             background: 'var(--card-bg)',
             border: '1px solid var(--nav-border)',
             borderRadius: '8px',
-            boxShadow: '0 12px 40px color-mix(in srgb, #000000 25%, transparent)',
+            boxShadow: '0 16px 40px rgba(2, 6, 23, 0.32)',
             zIndex: 100,
             display: 'none',
           }}>
@@ -978,7 +976,7 @@ export default function TopNavigation({
                 padding: '0.5rem 1rem',
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: '0.8rem', color: 'var(--nav-text)',
-                transition: 'all 0.15s',
+                transition: 'background-color 0.15s, color 0.15s',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(0,148,255,0.1)'
@@ -1004,7 +1002,7 @@ export default function TopNavigation({
                 padding: '0.5rem 1rem',
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: '0.8rem', color: 'var(--waf-danger)',
-                transition: 'all 0.15s',
+                transition: 'background-color 0.15s, color 0.15s',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'color-mix(in srgb, #da2c38 10%, transparent)'

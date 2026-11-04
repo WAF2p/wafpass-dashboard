@@ -1,3 +1,4 @@
+// design-lint-disable hardcoded-hex — print/PDF output uses fixed ink colours and must not follow screen themes
 /**
  * PdfReport — data-driven compliance report.
  *
@@ -171,7 +172,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
   const tableStyle: React.CSSProperties = {
     width: '100%',
     borderCollapse: 'collapse',
-    fontSize: '0.68rem',
+    fontSize: '0.7rem',
   }
 
   const tableHeaderStyle: React.CSSProperties = {
@@ -234,19 +235,19 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#22c55e', lineHeight: 1 }}>{ctrlPass}</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Passed Controls</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Passed Controls</div>
               </div>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ef4444', lineHeight: 1 }}>{ctrlFail}</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Failed Controls</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Failed Controls</div>
               </div>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: colors.textMuted, lineHeight: 1 }}>{ctrlSkip}</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Skipped Controls</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Skipped Controls</div>
               </div>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#a78bfa', lineHeight: 1 }}>{ctrlWaived}</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Waived Controls</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Waived Controls</div>
               </div>
             </div>
 
@@ -254,19 +255,19 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#60a5fa', lineHeight: 1 }}>{total}</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Checks Run</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Checks Run</div>
               </div>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: passRate >= 80 ? '#22c55e' : passRate >= 60 ? '#eab308' : '#ef4444', lineHeight: 1 }}>{passRate}%</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Check Pass Rate</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Check Pass Rate</div>
               </div>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#60a5fa', lineHeight: 1 }}>{resources}</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Resources Scanned</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Resources Scanned</div>
               </div>
               <div style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: failRes > 0 ? '#ef4444' : '#22c55e', lineHeight: 1 }}>{failRes}</div>
-                <div style={{ fontSize: '0.68rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Resources Failing</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: colors.textMuted, marginTop: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Resources Failing</div>
               </div>
             </div>
 
@@ -366,7 +367,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               {regulatoryReadiness.length > 0 && (
                 <div style={cardStyle}>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Frameworks</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Frameworks</div>
                   <div style={{ fontSize: '0.7rem', color: colors.textMuted, lineHeight: 1.4 }}>
                     {regulatoryReadiness.map(({ framework, pass: p, total: t }) => (
                       <div key={framework} style={{ marginBottom: '0.25rem' }}>
@@ -378,7 +379,7 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
               )}
               {categoryBreakdown.length > 0 && (
                 <div style={cardStyle}>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Categories</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: colors.accent, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Categories</div>
                   <div style={{ fontSize: '0.7rem', color: colors.textMuted, lineHeight: 1.4 }}>
                     {categoryBreakdown.map(({ cat, pass: p, total: t }) => (
                       <div key={cat} style={{ marginBottom: '0.25rem' }}>
@@ -531,12 +532,12 @@ export default function PdfReport({ run, settings, maturityLevel, darkMode = fal
             <div style={{ display: 'flex', gap: '2rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               <div style={{ border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '10px', padding: '0.875rem 1.25rem', textAlign: 'center', minWidth: '90px', background: darkMode ? '#1e293b' : '#ffffff' }}>
                 <div style={{ fontSize: '1.75rem', fontWeight: 800, color: colors.accent }}>{detectedRegions.length}</div>
-                <div style={{ fontSize: '0.68rem', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.2rem' }}>Regions</div>
+                <div style={{ fontSize: '0.7rem', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.2rem' }}>Regions</div>
               </div>
               {Object.entries(providerCounts).map(([prov, cnt]) => (
                 <div key={prov} style={{ border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '10px', padding: '0.875rem 1.25rem', textAlign: 'center', minWidth: '90px', background: darkMode ? '#1e293b' : '#ffffff' }}>
                   <div style={{ fontSize: '1.75rem', fontWeight: 800, color: colors.textMain }}>{cnt}</div>
-                  <div style={{ fontSize: '0.68rem', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.2rem' }}>{prov}</div>
+                  <div style={{ fontSize: '0.7rem', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.2rem' }}>{prov}</div>
                 </div>
               ))}
             </div>

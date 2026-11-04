@@ -14,6 +14,7 @@ import {
   ShieldIcon, CostIcon, OpsIcon, PerfIcon, RelIcon, SovIcon, SusIcon, AgenticIcon, ArrowRightIcon,
   scoreColor, scoreGlow, statusColor,
 } from './shared/SocComponents'
+import { EmptyState, PageHeader } from '../ui'
 import type { Page } from '../routing'
 import { severityColor } from '../severity'
 
@@ -138,8 +139,8 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
   }
 
   const STATUS_COLOR: Record<string, string> = {
-    PASS: 'var(--pass)',
-    FAIL: 'var(--fail)',
+    PASS: 'var(--pass-ink)',
+    FAIL: 'var(--fail-ink)',
     SKIP: 'var(--muted)',
     UNKNOWN: 'var(--muted)',
   }
@@ -188,25 +189,20 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
       <style>{securityCommandCenterCss}</style>
 
       {/* Hero — command center header */}
-      <div className="scc-hero">
-        <div className="scc-hero__scanlines" />
-        <div className="scc-hero__content">
-          <div className="scc-hero__badge">
-            <SignalIcon /> SECURITY COMMAND CENTER
+      <PageHeader
+        eyebrow={<><SignalIcon /> SECURITY COMMAND CENTER</>}
+        title={<>{t('compliance.pillarTab')} &amp; {t('compliance.frameworkTab')}</>}
+        description={<>Live posture monitoring across {findings.length} checks and {FRAMEWORKS.length} regulatory frameworks.</>}
+        actions={
+          <div className="scc-hero__score">
+            <CircularScore value={overallScore} size={150} stroke={10} color={scoreColor(overallScore)} />
+            <div className="scc-hero__score-label">
+              <span className="scc-hero__score-value" style={{ color: scoreColor(overallScore) }}>{overallScore}</span>
+              <span className="scc-hero__score-unit">SECURITY POSTURE</span>
+            </div>
           </div>
-          <h1 className="scc-hero__title">{t('compliance.pillarTab')} &amp; {t('compliance.frameworkTab')}</h1>
-          <p className="scc-hero__subtitle">
-            Live posture monitoring across {findings.length} checks and {FRAMEWORKS.length} regulatory frameworks.
-          </p>
-        </div>
-        <div className="scc-hero__score">
-          <CircularScore value={overallScore} size={150} stroke={10} color={scoreColor(overallScore)} />
-          <div className="scc-hero__score-label">
-            <span className="scc-hero__score-value" style={{ color: scoreColor(overallScore) }}>{overallScore}</span>
-            <span className="scc-hero__score-unit">SECURITY POSTURE</span>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Status bar */}
       <StatusBar score={overallScore} passRate={overallPassRate} />
@@ -247,7 +243,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
         <div className="scc-pillar-view">
           {pillars.length === 0 ? (
             <SectionCard title={t('compliance.pillarTab')}>
-              <div className="scc-empty">{t('compliance.noPillarData')}</div>
+              <EmptyState title={t('compliance.noPillarData')} />
             </SectionCard>
           ) : (
             <>
@@ -281,7 +277,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
                   {pillarStats.map(s => (
                     <div key={s.key} className="scc-heatmap__row">
                       <div className="scc-heatmap__pillar">
-                        <span className="scc-heatmap__dot" style={{ background: s.color, boxShadow: `0 0 10px color-mix(in srgb, ${s.color} 25%, transparent)` }} />
+                        <span className="scc-heatmap__dot" style={{ background: s.color }} />
                         <span style={{ textTransform: 'capitalize' }}>{s.pillar}</span>
                       </div>
                       <div className="scc-heatmap__passrate">
@@ -374,7 +370,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
           {/* Framework grid */}
           {frameworkStats.sorted.length === 0 ? (
             <SectionCard title={t('compliance.frameworkTab')}>
-              <div className="scc-empty">{t('compliance.noMatch')}</div>
+              <EmptyState title={t('compliance.noMatch')} />
             </SectionCard>
           ) : (
             <div className="scc-framework-grid">
@@ -503,75 +499,6 @@ const securityCommandCenterCss = `
 }
 
 /* Hero */
-.scc-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  background:
-    radial-gradient(circle at 20% 50%, color-mix(in srgb, var(--waf-brand) 12%, transparent) 0%, transparent 40%),
-    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--fail) 8%, transparent) 0%, transparent 35%),
-    linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 22%, transparent);
-  border-radius: 20px;
-  padding: 1.5rem 1.75rem;
-  box-shadow:
-    0 0 40px color-mix(in srgb, var(--waf-brand) 8%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
-  flex-wrap: wrap;
-  position: relative;
-  overflow: hidden;
-}
-.scc-hero__scanlines {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    color-mix(in srgb, var(--text) 8%, transparent) 4px
-  );
-  pointer-events: none;
-  opacity: 0.35;
-}
-.scc-hero__content {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-  z-index: 1;
-}
-.scc-hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: color-mix(in srgb, var(--waf-brand) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--waf-brand) 30%, transparent);
-  border-radius: 4px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--waf-brand);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.85rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--waf-brand) 16%, transparent);
-}
-.scc-hero__title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text);
-  line-height: 1.15;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.scc-hero__subtitle {
-  margin: 0.45rem 0 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-  max-width: 520px;
-}
 .scc-hero__score {
   flex-shrink: 0;
   display: flex;
@@ -609,12 +536,11 @@ const securityCommandCenterCss = `
   border-radius: 12px;
   padding: 0.75rem 1rem;
   flex-wrap: wrap;
-  backdrop-filter: blur(8px);
 }
 .scc-statusbar__line {
   flex: 1;
   height: 2px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--waf-brand) 55%, transparent), transparent);
+  background: color-mix(in srgb, var(--waf-brand) 25%, transparent);
   min-width: 60px;
 }
 .scc-statusbar__badge {
@@ -623,7 +549,7 @@ const securityCommandCenterCss = `
   gap: 0.5rem;
   padding: 0.35rem 0.75rem;
   border-radius: 4px;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -631,29 +557,23 @@ const securityCommandCenterCss = `
 .scc-statusbar__badge--armed {
   background: color-mix(in srgb, var(--pass) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--pass) 30%, transparent);
-  color: var(--pass);
+  color: var(--pass-ink);
 }
 .scc-statusbar__badge--warn {
   background: color-mix(in srgb, var(--score-mid) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--score-mid) 30%, transparent);
-  color: var(--score-mid);
+  color: var(--score-mid-ink);
 }
 .scc-statusbar__badge--alert {
   background: color-mix(in srgb, var(--fail) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--fail) 35%, transparent);
-  color: var(--fail);
-  animation: sccPulseAlert 1.8s infinite;
-}
-@keyframes sccPulseAlert {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--fail) 30%, transparent); }
-  50% { box-shadow: 0 0 12px 3px color-mix(in srgb, var(--fail) 12%, transparent); }
+  color: var(--fail-ink);
 }
 .scc-statusbar__pulse {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 8px currentColor;
   animation: sccBlink 1.2s infinite;
 }
 @keyframes sccBlink {
@@ -695,22 +615,15 @@ const securityCommandCenterCss = `
 }
 .scc-pillar-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: 2px solid var(--pillar-color);
+  border: 1px solid color-mix(in srgb, var(--pillar-color) 30%, var(--border));
   border-radius: 12px;
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease;
 }
 .scc-pillar-card:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 8px 32px color-mix(in srgb, var(--text) 8%, transparent),
-    0 0 24px color-mix(in srgb, var(--pillar-color) 8%, transparent);
   border-color: var(--pillar-color);
 }
 .scc-pillar-card__top {
@@ -727,7 +640,6 @@ const securityCommandCenterCss = `
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--pillar-color) 25%, transparent);
 }
 .scc-pillar-card__name {
   font-size: 0.85rem;
@@ -751,8 +663,8 @@ const securityCommandCenterCss = `
   font-weight: 700;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-.scc-pill--pass { background: color-mix(in srgb, var(--pass) 12%, transparent); color: var(--pass); border: 1px solid color-mix(in srgb, var(--pass) 22%, transparent); }
-.scc-pill--fail { background: color-mix(in srgb, var(--fail) 12%, transparent); color: var(--fail); border: 1px solid color-mix(in srgb, var(--fail) 22%, transparent); }
+.scc-pill--pass { background: color-mix(in srgb, var(--pass) 12%, transparent); color: var(--pass-ink); border: 1px solid color-mix(in srgb, var(--pass) 22%, transparent); }
+.scc-pill--fail { background: color-mix(in srgb, var(--fail) 12%, transparent); color: var(--fail-ink); border: 1px solid color-mix(in srgb, var(--fail) 22%, transparent); }
 .scc-pill--waived { background: color-mix(in srgb, var(--waived) 12%, transparent); color: var(--waived); border: 1px solid color-mix(in srgb, var(--waived) 22%, transparent); }
 .scc-pill--total { background: var(--bg); color: var(--muted); border: 1px solid color-mix(in srgb, var(--muted) 12%, transparent); margin-left: auto; }
 .scc-pillar-card__bar {
@@ -849,7 +761,6 @@ const securityCommandCenterCss = `
   background: color-mix(in srgb, var(--sev-color) 14%, transparent);
   border-color: color-mix(in srgb, var(--sev-color) 45%, transparent);
   color: var(--sev-color);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--sev-color) 22%, transparent);
 }
 .scc-sev-chip__label {
   opacity: 0.8;
@@ -876,8 +787,6 @@ const securityCommandCenterCss = `
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-sm);
 }
 .scc-filter-bar__top {
   display: flex;
@@ -894,7 +803,7 @@ const securityCommandCenterCss = `
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent);
   background: var(--bg);
-  color: var(--waf-brand);
+  color: var(--waf-brand-ink);
   min-width: 0;
 }
 .scc-search input {
@@ -927,15 +836,9 @@ const securityCommandCenterCss = `
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease;
 }
 .scc-framework-card:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 8px 32px color-mix(in srgb, var(--text) 8%, transparent),
-    0 0 24px color-mix(in srgb, var(--fw-color) 10%, transparent);
   border-color: var(--fw-color);
 }
 .scc-framework-card--clickable {
@@ -943,9 +846,8 @@ const securityCommandCenterCss = `
   outline: none;
 }
 .scc-framework-card--clickable:focus-visible {
-  box-shadow:
-    0 8px 32px color-mix(in srgb, var(--text) 8%, transparent),
-    0 0 0 2px var(--waf-brand);
+  outline: 2px solid var(--waf-brand);
+  outline-offset: 2px;
   border-color: var(--waf-brand);
 }
 .scc-framework-card__header {
@@ -1031,8 +933,8 @@ const securityCommandCenterCss = `
   font-weight: 700;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-.scc-fw-stat--pass { color: var(--pass); }
-.scc-fw-stat--fail { color: var(--fail); }
+.scc-fw-stat--pass { color: var(--pass-ink); }
+.scc-fw-stat--fail { color: var(--fail-ink); }
 .scc-fw-stat--total { color: var(--muted); margin-left: auto; }
 .scc-framework-card__controls {
   display: flex;
@@ -1047,13 +949,8 @@ const securityCommandCenterCss = `
   border-radius: 6px;
   background: var(--bg);
   border: 1px solid color-mix(in srgb, var(--ctrl-color) 30%, transparent);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   min-width: 0;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.scc-control-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--ctrl-color) 18%, transparent);
 }
 .scc-control-chip__id {
   display: inline-flex;
@@ -1099,7 +996,6 @@ const securityCommandCenterCss = `
 }
 
 @media (max-width: 640px) {
-  .scc-hero { flex-direction: column; align-items: flex-start; }
   .scc-hero__score { align-self: center; }
   .scc-statusbar { flex-direction: column; align-items: flex-start; }
   .scc-statusbar__readouts { width: 100%; justify-content: space-between; }

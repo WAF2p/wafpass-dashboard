@@ -291,7 +291,7 @@ function ProviderCard({
         padding: '0.9rem 1rem', borderRadius: '12px', textAlign: 'left',
         background: active ? `${data.color}12` : 'var(--surface)',
         border: `2px solid ${active ? data.color : 'var(--border)'}`,
-        cursor: 'pointer', transition: 'all .15s',
+        cursor: 'pointer', transition: 'background-color .15s, border-color .15s, color .15s',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -328,7 +328,7 @@ function RegionChip({
       background: hovered ? `${color}18` : 'var(--bg)',
       border: `1px solid ${hovered ? color : `${color}40`}`,
       fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--text)',
-      transition: 'all .15s',
+      transition: 'background-color .15s, border-color .15s, color .15s',
     }}
     >
       <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, flexShrink: 0 }} />
@@ -410,7 +410,7 @@ export default function RegionsPage({ run }: Props) {
         </div>
         {run.source_paths && run.source_paths.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.regions.scannedPaths')}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.regions.scannedPaths')}</span>
             {run.source_paths.map(p => (
               <code key={p} style={{
                 fontSize: '0.7rem', background: 'var(--surface)', border: '1px solid var(--border)',
@@ -436,7 +436,7 @@ export default function RegionsPage({ run }: Props) {
           <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {t('pages.regions.providerBreakdown')}
           </div>
-          <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
             {t('pages.regions.hoverHint')}
           </div>
         </div>
@@ -569,7 +569,7 @@ export default function RegionsPage({ run }: Props) {
               className="card"
               style={{
                 borderLeft: `4px solid ${p.color}`,
-                transition: 'all .15s',
+                transition: 'background-color .15s, border-color .15s, box-shadow .15s',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>

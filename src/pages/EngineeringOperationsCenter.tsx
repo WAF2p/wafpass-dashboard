@@ -7,6 +7,7 @@ import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_PERSONA_HOME } from './userPrefsUtils'
 import { getPersonaPreset } from './personaHome'
 import { severityBg, severityBorder, severityColor } from '../severity'
+import { PAGE_TITLE } from '../routing'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 const SEV_ORDER: Severity[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
@@ -145,7 +146,7 @@ export default function EngineeringOperationsCenter({
         cursor: disabled ? 'not-allowed' : 'pointer',
         textAlign: 'left',
         width: '100%',
-        transition: 'all 0.15s',
+        transition: 'background-color 0.15s, border-color 0.15s, opacity 0.15s',
         opacity: disabled ? 0.55 : 1,
       }}
       onMouseEnter={(e) => {
@@ -168,6 +169,7 @@ export default function EngineeringOperationsCenter({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['engineering']}</h1>
       <CenterHero
         eyebrow="Operations Center"
         title={t('pages.engineeringOps.title')}

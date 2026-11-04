@@ -15,8 +15,8 @@ import {
   type RunSummary,
   type ValidationGatewaySubmit,
 } from '../api'
-import { scoreColor } from '../severity';
-import { scoreBg } from '../severity';
+import { scoreBg, scoreColor } from '../severity'
+import { EmptyState, PageHeader, SkeletonText } from '../ui'
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -29,19 +29,19 @@ function fmtDate(iso: string): string {
 }
 
 const STAGE_COLORS: Record<string, { bg: string; text: string }> = {
-  prod: { bg: '#fef2f2', text: '#b91c1c' },
-  production: { bg: '#fef2f2', text: '#b91c1c' },
-  staging: { bg: '#fff7ed', text: '#c2410c' },
-  stage: { bg: '#fff7ed', text: '#c2410c' },
-  dev: { bg: '#f0fdf4', text: '#15803d' },
-  development: { bg: '#f0fdf4', text: '#15803d' },
-  test: { bg: '#eff6ff', text: '#1d4ed8' },
-  qa: { bg: '#faf5ff', text: '#7e22ce' },
+  prod: { bg: 'color-mix(in srgb, var(--fail) 10%, transparent)', text: 'var(--fail-ink)' },
+  production: { bg: 'color-mix(in srgb, var(--fail) 10%, transparent)', text: 'var(--fail-ink)' },
+  staging: { bg: 'color-mix(in srgb, var(--sev-high) 12%, transparent)', text: 'var(--sev-high)' },
+  stage: { bg: 'color-mix(in srgb, var(--sev-high) 12%, transparent)', text: 'var(--sev-high)' },
+  dev: { bg: 'color-mix(in srgb, var(--pass) 10%, transparent)', text: 'var(--pass-ink)' },
+  development: { bg: 'color-mix(in srgb, var(--pass) 10%, transparent)', text: 'var(--pass-ink)' },
+  test: { bg: 'color-mix(in srgb, var(--waf-brand) 10%, transparent)', text: 'var(--waf-brand-ink)' },
+  qa: { bg: 'color-mix(in srgb, var(--waf-info) 12%, transparent)', text: 'var(--text)' },
 }
 
 function StageBadge({ stage }: { stage: string }) {
   if (!stage) return <span style={{ color: 'var(--muted)' }}>—</span>
-  const colors = STAGE_COLORS[stage.toLowerCase()] ?? { bg: '#f1f5f9', text: '#475569' }
+  const colors = STAGE_COLORS[stage.toLowerCase()] ?? { bg: 'var(--bg)', text: 'var(--muted)' }
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
@@ -214,20 +214,16 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
   return (
     <div style={panel ? undefined : { padding: '1.25rem 1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
       {!panel && (
-        <div style={{ marginBottom: '1.25rem' }}>
-          <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.5rem', color: 'var(--text)' }}>
-            {t('pages.shiprun.title')}
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
-            {t('pages.shiprun.subtitle')}
-          </p>
-        </div>
+        <PageHeader
+          title={t('pages.shiprun.title')}
+          description={t('pages.shiprun.subtitle')}
+        />
       )}
 
       {!gatewayConfigured && (
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <svg width="18" height="18" fill="none" stroke="#d97706" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="var(--waf-warn)" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>Validation gateway URL not configured</span>
@@ -252,7 +248,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
               disabled={!gatewayUrl.trim()}
               style={{
                 padding: '0.55rem 1rem', borderRadius: '8px', cursor: gatewayUrl.trim() ? 'pointer' : 'not-allowed',
-                background: gatewayUrl.trim() ? 'var(--waf-brand)' : 'var(--border)', color: '#fff', fontWeight: 700,
+                background: gatewayUrl.trim() ? 'var(--waf-brand-btn)' : 'var(--border)', color: 'white', fontWeight: 700,
                 fontSize: '0.8rem', border: 'none', whiteSpace: 'nowrap',
               }}
             >
@@ -260,7 +256,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
             </button>
           </div>
           <p style={{ margin: 0, fontSize: '0.71rem', color: 'var(--muted)' }}>
-            You can also set the build-time variable <code style={{ fontSize: '0.68rem' }}>VITE_VALIDATION_URL</code> or configure it on the <a href="#/settings" style={{ color: 'var(--waf-brand)' }}>Settings</a> page.
+            You can also set the build-time variable <code style={{ fontSize: '0.7rem' }}>VITE_VALIDATION_URL</code> or configure it on the <a href="#/settings" style={{ color: 'var(--waf-brand-ink)' }}>Settings</a> page.
           </p>
         </Card>
       )}
@@ -276,7 +272,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
       {successId && (
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <svg width="20" height="20" fill="none" stroke="#059669" viewBox="0 0 24 24">
+            <svg width="20" height="20" fill="none" stroke="var(--pass)" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span style={{ fontWeight: 700, color: 'var(--text)' }}>{t('pages.shiprun.successTitle')}</span>
@@ -290,7 +286,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
               display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
               padding: '0.45rem 0.75rem', borderRadius: '8px',
               background: 'var(--surface)', border: '1px solid var(--border)',
-              color: 'var(--waf-brand)', fontSize: '0.78rem', fontWeight: 600,
+              color: 'var(--waf-brand-ink)', fontSize: '0.78rem', fontWeight: 600,
               textDecoration: 'none',
             }}
           >
@@ -302,7 +298,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
       {canSubmit && selectedRun && (
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <svg width="18" height="18" fill="none" stroke="var(--waf-brand)" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="var(--waf-brand-ink)" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>
@@ -315,7 +311,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
             padding: '0.75rem', background: 'var(--bg)', borderRadius: '8px',
             marginBottom: '0.75rem', fontSize: '0.85rem',
           }}>
-            <span style={{ fontWeight: 600, color: 'var(--waf-brand)' }}>{selectedRun.project || '—'}</span>
+            <span style={{ fontWeight: 600, color: 'var(--waf-brand-ink)' }}>{selectedRun.project || '—'}</span>
             <span style={{ color: 'var(--muted)' }}>{selectedRun.branch || '—'}</span>
             <StageBadge stage={selectedRun.stage} />
             <ScoreBadge score={selectedRun.score} />
@@ -341,7 +337,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
           </p>
 
           {submitError && (
-            <div style={{ color: '#DA2C38', fontSize: '0.78rem', marginBottom: '0.75rem' }}>{submitError}</div>
+            <div style={{ color: 'var(--fail-ink)', fontSize: '0.78rem', marginBottom: '0.75rem' }}>{submitError}</div>
           )}
           {step && !submitError && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)', fontSize: '0.78rem', marginBottom: '0.75rem' }}>
@@ -355,7 +351,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
               disabled={submitting || !apiKey.trim() || !gatewayConfigured}
               style={{
                 padding: '0.55rem 1rem', borderRadius: '8px', cursor: submitting || !gatewayConfigured ? 'not-allowed' : 'pointer',
-                background: submitting || !gatewayConfigured ? 'var(--border)' : 'var(--waf-brand)', color: '#fff', fontWeight: 700,
+                background: submitting || !gatewayConfigured ? 'var(--border)' : 'var(--waf-brand-btn)', color: 'white', fontWeight: 700,
                 fontSize: '0.8rem', border: 'none',
               }}
             >
@@ -379,15 +375,13 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
       <div style={{ marginTop: '1.5rem' }}>
         <Card>
           {loadingRuns ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '2rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              <div className="spinner" style={{ width: '18px', height: '18px' }} /> {t('common.loading')}
+            <div style={{ padding: '1.5rem 0' }}>
+              <SkeletonText lines={4} />
             </div>
           ) : runsError ? (
-            <div style={{ padding: '2rem', color: '#DA2C38', fontSize: '0.85rem' }}>{runsError}</div>
+            <div style={{ padding: '2rem', color: 'var(--fail-ink)', fontSize: '0.85rem' }}>{runsError}</div>
           ) : runs.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.85rem' }}>
-              {t('pages.shiprun.noRuns')}
-            </div>
+            <EmptyState compact title={t('pages.shiprun.noRuns')} />
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', minWidth: '1400px', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
@@ -414,7 +408,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
                       }}
                     >
                       <td style={{ padding: '0.75rem 1rem' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--waf-brand)' }}>{r.project || '—'}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--waf-brand-ink)' }}>{r.project || '—'}</div>
                         {r.git_sha && (
                           <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>
                             {r.git_sha.slice(0, 7)}
@@ -438,8 +432,8 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
                           disabled={!canSubmit || submitting}
                           style={{
                             padding: '0.35rem 0.7rem', borderRadius: '6px',
-                            border: '1px solid var(--border)', background: selectedRunId === r.id ? 'var(--waf-brand)' : 'var(--bg)',
-                            color: selectedRunId === r.id ? '#fff' : 'var(--waf-brand)', fontWeight: 600,
+                            border: '1px solid var(--border)', background: selectedRunId === r.id ? 'var(--waf-brand-btn)' : 'var(--bg)',
+                            color: selectedRunId === r.id ? 'white' : 'var(--waf-brand-ink)', fontWeight: 600,
                             fontSize: '0.75rem', cursor: !canSubmit || submitting ? 'not-allowed' : 'pointer',
                             opacity: !canSubmit ? 0.6 : 1,
                           }}

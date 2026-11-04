@@ -7,8 +7,11 @@ import es from './locales/es'
 import pt from './locales/pt'
 import br from './locales/br'
 import el from './locales/el'
+import phase3 from './locales/phase3'
 
-export const LOCALES: Record<string, PartialTranslations> = { en, de, fr, es, pt, br, el }
+const EN = deepMerge(en as Translations, { pages: { phase3 } } as unknown as Partial<Translations>)
+
+export const LOCALES: Record<string, PartialTranslations> = { en: EN, de, fr, es, pt, br, el }
 
 function deepMerge<T extends object>(base: T, override: Partial<T>): T {
   const result = { ...base }
@@ -27,8 +30,8 @@ function deepMerge<T extends object>(base: T, override: Partial<T>): T {
 
 function buildTranslations(langCode: string): Translations {
   const locale = LOCALES[langCode]
-  if (!locale || langCode === 'en') return en as Translations
-  return deepMerge(en as Translations, locale as Partial<Translations>)
+  if (!locale || langCode === 'en') return EN as Translations
+  return deepMerge(EN as Translations, locale as Partial<Translations>)
 }
 
 function makeTFn(translations: Translations): TFunction {
@@ -54,8 +57,8 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue>({
   lang: 'en',
-  translations: en as Translations,
-  t: makeTFn(en as Translations),
+  translations: EN as Translations,
+  t: makeTFn(EN as Translations),
 })
 
 interface I18nProviderProps {

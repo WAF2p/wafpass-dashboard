@@ -23,6 +23,11 @@ import {
   type UserOut,
 } from '../api'
 import { useI18n } from '../i18n'
+import { Button, EmptyState, Skeleton } from '../ui'
+
+type PendingConfirm =
+  | { kind: 'group'; project: string; groupName: string }
+  | { kind: 'user'; groupName: string; userId: string; userName: string }
 
 // ── Helper Components ─────────────────────────────────────────────────────────
 
@@ -57,6 +62,7 @@ export default function ProjectGroupsPage() {
   const [groups, setGroups] = useState<ProjectGroupOut[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<PendingConfirm | null>(null)
   const [newGroupForm, setNewGroupForm] = useState<{ project: string; group_name: string }>({ project: '', group_name: '' })
   const [allUsers, setAllUsers] = useState<UserOut[]>([])
   const [selectedGroup, setSelectedGroup] = useState<ProjectGroupOut | null>(null)
@@ -182,8 +188,6 @@ export default function ProjectGroupsPage() {
   }
 
   const handleDeleteGroup = async (project: string, group_name: string) => {
-    if (!window.confirm(`Remove group "${group_name}" from project "${project}"?`)) return
-
     setIsLoading(true)
     setError(null)
     try {
@@ -231,8 +235,6 @@ export default function ProjectGroupsPage() {
   }
 
   const handleRemoveUserFromGroup = async (userId: string, groupName: string) => {
-    if (!window.confirm(`Remove user from group "${groupName}"?`)) return
-
     setIsLoading(true)
     setError(null)
     try {
@@ -255,6 +257,17 @@ export default function ProjectGroupsPage() {
       setError(`Failed to remove user from group: ${(e as Error).message}`)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const runConfirm = async () => {
+    if (!confirm) return
+    const pending = confirm
+    setConfirm(null)
+    if (pending.kind === 'group') {
+      await handleDeleteGroup(pending.project, pending.groupName)
+    } else {
+      await handleRemoveUserFromGroup(pending.userId, pending.groupName)
     }
   }
 
@@ -305,13 +318,11 @@ export default function ProjectGroupsPage() {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="card" style={{ padding: '3rem', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          {t('pages.projectGroups.accessDenied')}
-        </h2>
-        <p style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: '2rem' }}>
-          {t('pages.projectGroups.adminOnly')}
-        </p>
+      <div className="card" style={{ padding: 0 }}>
+        <EmptyState
+          title={t('pages.projectGroups.accessDenied')}
+          description={t('pages.projectGroups.adminOnly')}
+        />
       </div>
     )
   }
@@ -320,34 +331,27 @@ export default function ProjectGroupsPage() {
     return (
       <div className="card" style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <svg width="16" height="16" fill="none" stroke="#DA2C38" viewBox="0 0 24 24">
+          <svg width="16" height="16" fill="none" stroke="var(--fail)" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.008m-3 6h3a2 2 0 002-2v-6a2 2 0 00-2-2h-3a2 2 0 00-2 2v6a2 2 0 002 2z" />
           </svg>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#DA2C38' }}>Error</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--fail-ink)' }}>Error</span>
         </div>
         <p style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{error}</p>
-        <button
+        <Button
+          variant="danger"
+          size="sm"
           onClick={() => setError(null)}
-          style={{
-            marginTop: '1rem',
-            padding: '0.5rem 1rem',
-            borderRadius: '8px',
-            border: 'none',
-            background: '#DA2C38',
-            color: '#fff',
-            fontSize: '0.78rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          style={{ marginTop: '1rem' }}
         >
           Dismiss
-        </button>
+        </Button>
       </div>
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <h1 className="ui-sr-only">{t('pages.projectGroups.title')}</h1>
       {/* ── Projects Selector ───────────────────────────────────────────────── */}
       <Card
         title={t('pages.projectGroups.projectsHeader')}
@@ -369,12 +373,12 @@ export default function ProjectGroupsPage() {
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 border: selectedProject === passport.project
-                  ? '2px solid var(--waf-brand)'
+                  ? '2px solid var(--waf-brand-ink)'
                   : '1px solid var(--border)',
                 background: selectedProject === passport.project
-                  ? 'rgba(0,148,255,0.08)'
+                  ? 'color-mix(in srgb, var(--waf-brand) 8%, transparent)'
                   : 'var(--bg)',
-                color: selectedProject === passport.project ? 'var(--waf-brand)' : 'var(--text)',
+                color: selectedProject === passport.project ? 'var(--waf-brand-ink)' : 'var(--text)',
               }}
             >
               {passport.project}
@@ -403,22 +407,48 @@ export default function ProjectGroupsPage() {
             </span>
           }
         >
-          {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-              <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-                {t('pages.projectGroups.loading')}
+          {confirm && (
+            <div
+              role="group"
+              aria-label="Confirm removal"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+                marginBottom: '0.75rem',
+                padding: '0.6rem 0.75rem',
+                borderRadius: '8px',
+                background: 'color-mix(in srgb, var(--fail) 7%, var(--surface))',
+                border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)',
+              }}
+            >
+              <span style={{ flex: 1, minWidth: '12rem', fontSize: '0.8rem', color: 'var(--text)' }}>
+                {confirm.kind === 'group'
+                  ? `Remove group "${confirm.groupName}" from project "${confirm.project}"?`
+                  : `Remove ${confirm.userName} from group "${confirm.groupName}"?`}
               </span>
+              <Button variant="danger" size="sm" onClick={runConfirm} disabled={isLoading}>
+                Remove
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setConfirm(null)}>
+                Cancel
+              </Button>
+            </div>
+          )}
+          {isLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }} aria-busy="true">
+              {[0, 1, 2].map(i => <Skeleton key={i} height={56} radius={8} />)}
             </div>
           ) : groups.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)' }}>
-              <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24" style={{ margin: '0 auto 1rem' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <p style={{ margin: 0, fontSize: '0.78rem' }}>
-                {t('pages.projectGroups.noGroups')}
-              </p>
-            </div>
+            <EmptyState
+              title={t('pages.projectGroups.noGroups')}
+              icon={(
+                <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              )}
+            />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {groups.map(group => {
@@ -449,10 +479,10 @@ export default function ProjectGroupsPage() {
                         padding: '0.65rem 0.75rem',
                         cursor: 'pointer',
                         userSelect: 'none',
-                        background: isExpanded ? 'rgba(0,148,255,0.05)' : 'transparent',
+                        background: isExpanded ? 'color-mix(in srgb, var(--waf-brand) 5%, transparent)' : 'transparent',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = isExpanded ? 'rgba(0,148,255,0.05)' : 'rgba(0,0,0,0.02)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = isExpanded ? 'rgba(0,148,255,0.05)' : 'transparent')}
+                      onMouseEnter={e => (e.currentTarget.style.background = isExpanded ? 'color-mix(in srgb, var(--waf-brand) 5%, transparent)' : 'var(--row-hover)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = isExpanded ? 'color-mix(in srgb, var(--waf-brand) 5%, transparent)' : 'transparent')}
                     >
                       <div style={{ flexShrink: 0 }}>
                         {isExpanded ? (
@@ -471,12 +501,12 @@ export default function ProjectGroupsPage() {
                           width: '32px',
                           height: '32px',
                           borderRadius: '8px',
-                          background: 'rgba(34,197,94,0.12)',
-                          border: '1px solid rgba(34,197,94,0.3)',
+                          background: 'color-mix(in srgb, var(--pass) 12%, transparent)',
+                          border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#22c55e',
+                          color: 'var(--pass-ink)',
                         }}
                       >
                         <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -494,22 +524,23 @@ export default function ProjectGroupsPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDeleteGroup(selectedProject, group.group_name)
+                          setConfirm({ kind: 'group', project: selectedProject, groupName: group.group_name })
                         }}
                         style={{
                           padding: '0.35rem 0.65rem',
                           borderRadius: '6px',
                           border: 'none',
-                          background: 'color-mix(in srgb, #da2c38 8%, transparent)',
-                          color: '#DA2C38',
+                          background: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+                          color: 'var(--fail-ink)',
                           fontSize: '0.72rem',
                           fontWeight: 600,
                           cursor: 'pointer',
-                          transition: 'all 0.15s',
+                          transition: 'background-color 0.15s',
                         }}
                         title={t('pages.projectGroups.deleteGroup')}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'color-mix(in srgb, #da2c38 15%, transparent)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'color-mix(in srgb, #da2c38 8%, transparent)')}
+                        aria-label={t('pages.projectGroups.deleteGroup')}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'color-mix(in srgb, var(--fail) 15%, transparent)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'color-mix(in srgb, var(--fail) 8%, transparent)')}
                       >
                         <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -526,9 +557,7 @@ export default function ProjectGroupsPage() {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
                             {allUsers.length === 0 ? (
-                              <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--muted)', fontSize: '0.72rem' }}>
-                                {t('pages.projectGroups.noUsers')}
-                              </div>
+                              <EmptyState compact title={t('pages.projectGroups.noUsers')} />
                             ) : (
                               allUsers.map(user => {
                                 const isInGroup = groupUsers.some(gu => gu.userId === user.id && gu.group_name === group.group_name)
@@ -541,7 +570,7 @@ export default function ProjectGroupsPage() {
                                       gap: '0.5rem',
                                       padding: '0.4rem 0.6rem',
                                       borderRadius: '6px',
-                                      background: isInGroup ? 'rgba(34,197,94,0.08)' : 'rgba(0,0,0,0.03)',
+                                      background: isInGroup ? 'color-mix(in srgb, var(--pass) 8%, transparent)' : 'var(--row-hover)',
                                     }}
                                   >
                                     <div style={{ flex: 1, fontSize: '0.76rem', color: 'var(--text)' }}>
@@ -549,14 +578,14 @@ export default function ProjectGroupsPage() {
                                     </div>
                                     {isInGroup && (
                                       <button
-                                        onClick={() => handleRemoveUserFromGroup(user.id, group.group_name)}
+                                        onClick={() => setConfirm({ kind: 'user', groupName: group.group_name, userId: user.id, userName: user.display_name || user.username })}
                                         style={{
                                           padding: '0.25rem 0.5rem',
                                           borderRadius: '4px',
                                           border: 'none',
-                                          background: 'color-mix(in srgb, #da2c38 8%, transparent)',
-                                          color: '#DA2C38',
-                                          fontSize: '0.68rem',
+                                          background: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+                                          color: 'var(--fail-ink)',
+                                          fontSize: '0.7rem',
                                           fontWeight: 600,
                                           cursor: 'pointer',
                                         }}
@@ -590,7 +619,7 @@ export default function ProjectGroupsPage() {
                                 background: 'var(--surface)',
                                 border: '1px solid var(--border)',
                                 borderRadius: '8px',
-                                boxShadow: '0 20px 60px color-mix(in srgb, #000000 30%, transparent)',
+                                boxShadow: 'var(--shadow-md)',
                               }}
                             >
                               {searchedUsers.map(user => {
@@ -616,7 +645,7 @@ export default function ProjectGroupsPage() {
                                       fontSize: '0.76rem',
                                       color: 'var(--text)',
                                     }}
-                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,148,255,0.08)'}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'color-mix(in srgb, var(--waf-brand) 8%, transparent)'}
                                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                   >
                                     <div style={{
@@ -624,12 +653,12 @@ export default function ProjectGroupsPage() {
                                       width: '28px',
                                       height: '28px',
                                       borderRadius: '6px',
-                                      background: 'rgba(34,197,94,0.12)',
-                                      border: '1px solid rgba(34,197,94,0.3)',
+                                      background: 'color-mix(in srgb, var(--pass) 12%, transparent)',
+                                      border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
-                                      color: '#22c55e',
+                                      color: 'var(--pass-ink)',
                                       fontSize: '0.72rem',
                                       fontWeight: 700,
                                     }}>
@@ -637,10 +666,10 @@ export default function ProjectGroupsPage() {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                       <div>{user.display_name || user.username}</div>
-                                      <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{user.username}</div>
+                                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{user.username}</div>
                                     </div>
                                     {isInGroup && (
-                                      <span style={{ fontSize: '0.68rem', color: '#22c55e', fontWeight: 600 }}>
+                                      <span style={{ fontSize: '0.7rem', color: 'var(--pass-ink)', fontWeight: 600 }}>
                                         Already in group
                                       </span>
                                     )}
@@ -689,18 +718,18 @@ export default function ProjectGroupsPage() {
                                 padding: '0.4rem 0.8rem',
                                 borderRadius: '6px',
                                 border: 'none',
-                                background: '#0094ff',
+                                background: 'var(--waf-brand-btn)',
                                 color: '#fff',
                                 fontSize: '0.76rem',
                                 fontWeight: 600,
                                 cursor: isLoading || !newUserForm.user_id ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.15s',
+                                transition: 'background-color 0.15s',
                               }}
                             >
                               {t('pages.projectGroups.addBtn')}
                             </button>
                             {newUserForm.user_id && (
-                              <span style={{ fontSize: '0.72rem', color: '#22c55e' }}>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--pass-ink)' }}>
                                 Selected: {allUsers.find(u => u.id === newUserForm.user_id)?.display_name || allUsers.find(u => u.id === newUserForm.user_id)?.username}
                               </span>
                             )}
@@ -742,8 +771,8 @@ export default function ProjectGroupsPage() {
                   />
                   {/* Show matching existing groups */}
                   {isGroupsLoading ? (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                      Loading available groups...
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <Skeleton width={180} height={10} />
                     </div>
                   ) : searchedGroups.length > 0 ? (
                     <div style={{ marginTop: '0.5rem', width: '100%' }}>
@@ -790,12 +819,12 @@ export default function ProjectGroupsPage() {
                     padding: '0.5rem 1rem',
                     borderRadius: '8px',
                     border: 'none',
-                    background: '#0094ff',
+                    background: 'var(--waf-brand-btn)',
                     color: '#fff',
                     fontSize: '0.8rem',
                     fontWeight: 700,
                     cursor: isLoading || !newGroupForm.group_name ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.15s',
+                    transition: 'background-color 0.15s',
                   }}
                 >
                   {t('pages.projectGroups.addBtn')}
@@ -814,14 +843,14 @@ export default function ProjectGroupsPage() {
         style={{
           padding: '1rem 1.25rem',
           borderRadius: '10px',
-          background: 'rgba(34,197,94,0.06)',
-          border: '1px solid rgba(34,197,94,0.2)',
+          background: 'color-mix(in srgb, var(--pass) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--pass) 20%, transparent)',
           fontSize: '0.76rem',
           color: 'var(--muted)',
           lineHeight: 1.6,
         }}
       >
-        <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: '#22c55e' }}>
+        <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--pass-ink)' }}>
           {t('pages.projectGroups.infoTitle')}
         </div>
         <p style={{ margin: '0 0 0.75rem', lineHeight: 1.6 }}>

@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { RunSummary } from '../api'
 import { scoreColor } from '../severity';
 import { scoreBg, scoreBorder } from '../severity';
+import { useDialog } from '../ui/useDialog';
 
 interface Props {
   runs: RunSummary[]
@@ -21,6 +22,8 @@ function getAccessibleProjects(runs: RunSummary[], role: string): Set<string> {
 }
 
 export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, role }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  useDialog(onClose, panelRef)
   const [search, setSearch]     = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo]     = useState('')
@@ -62,7 +65,13 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
       />
 
       {/* Modal */}
-      <div style={{
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Select Active Run"
+        tabIndex={-1}
+        style={{
         position: 'fixed', top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 10000, width: '660px', maxWidth: '95vw',
@@ -84,6 +93,7 @@ export default function RunSelectorModal({ runs, selectedId, onSelect, onClose, 
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             style={{
               background: 'none', border: '1px solid var(--border)', borderRadius: '8px',
               color: 'var(--muted)', cursor: 'pointer', padding: '0.3rem 0.65rem', fontSize: '0.85rem',

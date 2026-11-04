@@ -4,6 +4,7 @@
  */
 import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
+import { PAGE_TITLE } from '../routing'
 
 // ── Role definitions ──────────────────────────────────────────────────────────
 
@@ -12,11 +13,11 @@ const ROLES = [
     id: 'clevel',
     label: 'C-Level',
     subtitle: 'CEO · COO · CFO · CTO · Board',
-    color: '#f59e0b',
-    bg: 'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.30)',
+    color: 'var(--waf-warn)',
+    bg: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--waf-warn) 30%, transparent)',
     access: 'Read-only',
-    accessColor: '#64748b',
+    accessColor: 'var(--skip-ink)',
     icon: (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
         <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
@@ -35,11 +36,11 @@ const ROLES = [
     id: 'ciso',
     label: 'CISO',
     subtitle: 'Chief Information Security Officer',
-    color: '#0094ff',
-    bg: 'rgba(0,148,255,0.08)',
-    border: 'rgba(0,148,255,0.28)',
+    color: 'var(--waf-brand-ink)',
+    bg: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--waf-brand) 28%, transparent)',
     access: 'Governance R/W',
-    accessColor: '#0094ff',
+    accessColor: 'var(--waf-brand-ink)',
     icon: (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
@@ -60,11 +61,11 @@ const ROLES = [
     id: 'architect',
     label: 'Architect',
     subtitle: 'Solutions · Cloud · Platform Architect',
-    color: '#8b5cf6',
-    bg: 'rgba(139,92,246,0.08)',
-    border: 'color-mix(in srgb, #8b5cf6 28%, transparent)',
+    color: 'var(--waf-info)',
+    bg: 'color-mix(in srgb, var(--waf-info) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--waf-info) 28%, transparent)',
     access: 'Design R/W',
-    accessColor: '#8b5cf6',
+    accessColor: 'var(--waf-info)',
     icon: (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
         <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
@@ -87,11 +88,11 @@ const ROLES = [
     id: 'engineer',
     label: 'Engineer',
     subtitle: 'DevOps · DevSecOps · Platform · App Engineer',
-    color: '#22c55e',
-    bg: 'rgba(34,197,94,0.08)',
-    border: 'rgba(34,197,94,0.28)',
+    color: 'var(--pass-ink)',
+    bg: 'color-mix(in srgb, var(--pass) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--pass) 28%, transparent)',
     access: 'Full Scan R/W',
-    accessColor: '#22c55e',
+    accessColor: 'var(--pass-ink)',
     icon: (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
         <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
@@ -112,11 +113,11 @@ const ROLES = [
     id: 'admin',
     label: 'Admin',
     subtitle: 'System Administrator',
-    color: '#DA2C38',
-    bg: 'color-mix(in srgb, #da2c38 8%, transparent)',
-    border: 'color-mix(in srgb, #da2c38 30%, transparent)',
+    color: 'var(--fail-ink)',
+    bg: 'color-mix(in srgb, var(--fail) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--fail) 30%, transparent)',
     access: 'Full Access',
-    accessColor: '#DA2C38',
+    accessColor: 'var(--fail-ink)',
     icon: (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
         <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -144,10 +145,10 @@ const AUTH_PROVIDERS = [
     sublabel: 'Username + bcrypt password',
     status: 'live' as const,
     statusLabel: 'Live',
-    statusColor: '#22c55e',
-    color: '#22c55e',
-    bg: 'rgba(34,197,94,0.08)',
-    border: 'rgba(34,197,94,0.25)',
+    statusColor: 'var(--pass-ink)',
+    color: 'var(--pass-ink)',
+    bg: 'color-mix(in srgb, var(--pass) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--pass) 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
@@ -162,10 +163,10 @@ const AUTH_PROVIDERS = [
     sublabel: 'Entra ID · Keycloak · Okta · Auth0 · Google',
     status: 'live' as const,
     statusLabel: 'Live',
-    statusColor: '#22c55e',
-    color: '#0094ff',
-    bg: 'rgba(0,148,255,0.08)',
-    border: 'rgba(0,148,255,0.25)',
+    statusColor: 'var(--pass-ink)',
+    color: 'var(--waf-brand-ink)',
+    bg: 'color-mix(in srgb, var(--waf-brand) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--waf-brand) 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
@@ -180,10 +181,10 @@ const AUTH_PROVIDERS = [
     sublabel: 'ADFS · Keycloak · Azure AD · Okta · any SAML IdP',
     status: 'live' as const,
     statusLabel: 'Live',
-    statusColor: '#22c55e',
-    color: '#8b5cf6',
-    bg: 'rgba(139,92,246,0.08)',
-    border: 'color-mix(in srgb, #8b5cf6 25%, transparent)',
+    statusColor: 'var(--pass-ink)',
+    color: 'var(--waf-info)',
+    bg: 'color-mix(in srgb, var(--waf-info) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--waf-info) 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
@@ -198,10 +199,10 @@ const AUTH_PROVIDERS = [
     sublabel: 'Active Directory · LDAP / Kerberos',
     status: 'roadmap' as const,
     statusLabel: 'Roadmap',
-    statusColor: '#64748b',
-    color: '#475569',
-    bg: 'rgba(71,85,105,0.08)',
-    border: 'color-mix(in srgb, #475569 25%, transparent)',
+    statusColor: 'var(--muted)',
+    color: 'var(--muted)',
+    bg: 'color-mix(in srgb, var(--muted) 8%, transparent)',
+    border: 'color-mix(in srgb, var(--muted) 25%, transparent)',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="2" width="20" height="8" rx="2" /><rect x="2" y="14" width="20" height="8" rx="2" />
@@ -233,18 +234,19 @@ export default function AccessRolesPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <h1 className="ui-sr-only">{PAGE_TITLE['access']}</h1>
 
       {/* ── Top banner ─────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.875rem',
         padding: '0.875rem 1.1rem', borderRadius: '10px',
-        background: 'linear-gradient(135deg, rgba(34,197,94,0.07) 0%, rgba(0,148,255,0.05) 100%)',
-        border: '1px solid rgba(34,197,94,0.22)',
+        background: 'color-mix(in srgb, var(--pass) 6%, var(--surface))',
+        border: '1px solid color-mix(in srgb, var(--pass) 22%, transparent)',
       }}>
         <div style={{
           flexShrink: 0, width: '32px', height: '32px', borderRadius: '8px',
-          background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a',
+          background: 'color-mix(in srgb, var(--pass) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--pass) 30%, transparent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--pass-ink)',
         }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
@@ -262,9 +264,9 @@ export default function AccessRolesPage() {
         <span style={{
           flexShrink: 0, display: 'inline-flex', alignItems: 'center',
           padding: '0.18rem 0.65rem', borderRadius: '999px',
-          background: 'rgba(34,197,94,0.12)', color: '#16a34a',
+          background: 'color-mix(in srgb, var(--pass) 12%, transparent)', color: 'var(--pass-ink)',
           fontWeight: 600, fontSize: '0.7rem', whiteSpace: 'nowrap',
-          border: '1px solid rgba(34,197,94,0.25)',
+          border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
         }}>
           {t('pages.access.bannerBadge')}
         </span>
@@ -272,7 +274,7 @@ export default function AccessRolesPage() {
 
       {/* ── Roles & Navigation Access ──────────────────────────────────────── */}
       <section>
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
+        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
           {t('pages.access.rolesHeader')}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.75rem' }}>
@@ -288,7 +290,7 @@ export default function AccessRolesPage() {
               }}>
                 <div style={{
                   flexShrink: 0, width: '32px', height: '32px', borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.7)', border: `1px solid ${role.border}`,
+                  background: 'var(--surface)', border: `1px solid ${role.border}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: role.color,
                 }}>
                   {role.icon}
@@ -298,13 +300,13 @@ export default function AccessRolesPage() {
                     <span style={{ fontWeight: 800, fontSize: '0.92rem', color: role.color }}>{role.label}</span>
                     <span style={{
                       display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
-                      background: `${role.accessColor}18`, color: role.accessColor,
+                      background: `color-mix(in srgb, ${role.accessColor} 9%, transparent)`, color: role.accessColor,
                       fontWeight: 600, fontSize: '0.7rem', whiteSpace: 'nowrap',
                     }}>
                       {role.access}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: '0.1rem', lineHeight: 1.3 }}>{role.subtitle}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem', lineHeight: 1.3 }}>{role.subtitle}</div>
                 </div>
               </div>
 
@@ -350,7 +352,7 @@ export default function AccessRolesPage() {
 
         {/* Auth providers */}
         <section>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
             {t('pages.access.authProvidersHeader')}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -364,7 +366,7 @@ export default function AccessRolesPage() {
                 }}>
                   <div style={{
                     flexShrink: 0, width: '30px', height: '30px', borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.65)', border: `1px solid ${p.border}`,
+                    background: 'var(--surface)', border: `1px solid ${p.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: p.color,
                   }}>
                     {p.icon}
@@ -374,13 +376,13 @@ export default function AccessRolesPage() {
                       <span style={{ fontWeight: 700, fontSize: '0.85rem', color: p.color }}>{p.label}</span>
                       <span style={{
                         display: 'inline-flex', padding: '0.1rem 0.45rem', borderRadius: '999px',
-                        background: `${p.statusColor}18`, color: p.statusColor,
+                        background: `color-mix(in srgb, ${p.statusColor} 9%, transparent)`, color: p.statusColor,
                         fontWeight: 600, fontSize: '0.7rem',
                       }}>
                         {p.statusLabel}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{p.sublabel} · <strong style={{ color: 'var(--text)' }}>{p.protocol}</strong></div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{p.sublabel} · <strong style={{ color: 'var(--text)' }}>{p.protocol}</strong></div>
                   </div>
                 </div>
                 <ul style={{ margin: 0, padding: '0.5rem 0.875rem', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
@@ -398,7 +400,7 @@ export default function AccessRolesPage() {
 
         {/* Implementation notes */}
         <section>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.6rem' }}>
             {t('pages.access.implNotesHeader')}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
