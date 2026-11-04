@@ -133,10 +133,10 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
     setSuccessId(null)
 
     try {
-      setStep('Signing run locally…')
+      setStep(t('pages.phase3.restB.shipRun.stepSigning'))
       const attestation = await createRunAttestation(selectedRunId)
 
-      setStep('Fetching server certificate…')
+      setStep(t('pages.phase3.restB.shipRun.stepFetchCertificate'))
       const serverCertificate = await fetchServerCertificate()
 
       const payload: ValidationGatewaySubmit = {
@@ -158,7 +158,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
         run: attestation.run,
       }
 
-      setStep('Submitting to validation gateway…')
+      setStep(t('pages.phase3.restB.shipRun.stepSubmitting'))
       const record = await submitValidation(payload, apiKey.trim())
 
       // Persist the new validation ID so it appears on ValidationsPage.
@@ -175,7 +175,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
       setSelectedRunId(null)
       setApiKey('')
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : 'Submit failed')
+      setSubmitError(e instanceof Error ? e.message : t('pages.phase3.restB.shipRun.submitFailed'))
     } finally {
       setSubmitting(false)
       setStep(null)
@@ -226,10 +226,10 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
             <svg width="18" height="18" fill="none" stroke="var(--waf-warn)" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>Validation gateway URL not configured</span>
+            <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>{t('pages.phase3.restB.shipRun.gatewayNotConfigured')}</span>
           </div>
           <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem', color: 'var(--muted)' }}>
-            Set the base URL of the WOMBATpass validation gateway. It is stored locally in this browser and is used when submitting runs for countersignature.
+            {t('pages.phase3.restB.shipRun.gatewayConfigHint')}
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <input
@@ -252,11 +252,11 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
                 fontSize: '0.8rem', border: 'none', whiteSpace: 'nowrap',
               }}
             >
-              Save URL
+              {t('pages.phase3.restB.shipRun.saveUrl')}
             </button>
           </div>
           <p style={{ margin: 0, fontSize: '0.71rem', color: 'var(--muted)' }}>
-            You can also set the build-time variable <code style={{ fontSize: '0.7rem' }}>VITE_VALIDATION_URL</code> or configure it on the <a href="#/settings" style={{ color: 'var(--waf-brand-ink)' }}>Settings</a> page.
+            {t('pages.phase3.restB.shipRun.gatewayHintPrefix')} <code style={{ fontSize: '0.7rem' }}>VITE_VALIDATION_URL</code> {t('pages.phase3.restB.shipRun.gatewayHintMiddle')} <a href="#/settings" style={{ color: 'var(--waf-brand-ink)' }}>{t('pages.phase3.restB.shipRun.settingsLink')}</a> {t('pages.phase3.restB.shipRun.gatewayHintSuffix')}
           </p>
         </Card>
       )}
@@ -438,7 +438,7 @@ export default function ShipRunPage({ mode = 'page' }: ShipRunPageProps) {
                             opacity: !canSubmit ? 0.6 : 1,
                           }}
                         >
-                          {selectedRunId === r.id ? 'Selected' : t('pages.shiprun.actionValidate')}
+                          {selectedRunId === r.id ? t('pages.phase3.restB.shipRun.selected') : t('pages.shiprun.actionValidate')}
                         </button>
                       </td>
                     </tr>

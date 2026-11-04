@@ -8,13 +8,13 @@ export default function AntiPatternMuseumPage() {
     <div style={{ maxWidth: 'none', width: '100%', margin: '0' }}>
       <PageHeader
         title={t('pages.antipattern.title')}
-        description="Learn faster by seeing what goes wrong - side-by-side comparisons of anti-patterns vs. Wombat compliant best practices"
+        description={t('pages.phase3.restA.antiPatternMuseum.subtitle')}
       />
 
       {/* Executive Summary */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          The Anti-Pattern Museum
+          {t('pages.phase3.restA.antiPatternMuseum.museumTitle')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -39,8 +39,8 @@ export default function AntiPatternMuseumPage() {
               border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: 'var(--fail-ink)' }}>Anti-Patterns</strong>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Common security flaws and misconfigurations</p>
+              <strong style={{ color: 'var(--fail-ink)' }}>{t('pages.phase3.restA.antiPatternMuseum.antiPatterns')}</strong>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>{t('pages.phase3.restA.antiPatternMuseum.antiPatternsDesc')}</p>
             </div>
             <div style={{
               padding: '1rem',
@@ -48,8 +48,8 @@ export default function AntiPatternMuseumPage() {
               border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: 'var(--pass-ink)' }}>Best Practices</strong>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>Wombat compliant alternatives</p>
+              <strong style={{ color: 'var(--pass-ink)' }}>{t('pages.phase3.restA.antiPatternMuseum.bestPractices')}</strong>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>{t('pages.phase3.restA.antiPatternMuseum.bestPracticesDesc')}</p>
             </div>
             <div style={{
               padding: '1rem',
@@ -57,8 +57,8 @@ export default function AntiPatternMuseumPage() {
               border: '1px solid color-mix(in srgb, var(--sev-medium) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <strong style={{ color: 'var(--sev-medium)' }}>74 Controls</strong>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>All Wombat pillars covered (SEC, SOV, OPS, COST, PERF, REL, SUS)</p>
+              <strong style={{ color: 'var(--sev-medium)' }}>{t('pages.phase3.restA.antiPatternMuseum.controlsCount')}</strong>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text)', margin: '0.5rem 0 0' }}>{t('pages.phase3.restA.antiPatternMuseum.controlsCovered')}</p>
             </div>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function AntiPatternMuseumPage() {
       {/* Section 1: IAM Anti-Patterns */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          1. IAM & Security Baseline
+          {t('pages.phase3.restA.antiPatternMuseum.section1')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -346,7 +346,7 @@ resource "aws_iam_role_policy_attachment" "app_attach" {
       {/* Section 2: Encryption Anti-Patterns */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          2. Encryption & Secrets Management
+          {t('pages.phase3.restA.antiPatternMuseum.section2')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -502,7 +502,7 @@ resource "aws_db_instance" "compliant" {
       {/* Section 3: CI/CD Anti-Patterns */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          3. CI/CD Pipeline
+          {t('pages.phase3.restA.antiPatternMuseum.section3')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -678,7 +678,7 @@ jobs:
       {/* Section 4: Networking Anti-Patterns */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          4. Networking & Security Controls
+          {t('pages.phase3.restA.antiPatternMuseum.section4')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -885,7 +885,7 @@ resource "aws_ecr_repository" "app" {
       {/* Section 5: Sovereignty Anti-Patterns */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          5. Sovereignty & Data Residency
+          {t('pages.phase3.restA.antiPatternMuseum.section5')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -1059,7 +1059,7 @@ resource "aws_s3_bucket_policy" "pii_data" {
       {/* Section 6: Logging Anti-Patterns */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          6. Logging & Incident Response
+          {t('pages.phase3.restA.antiPatternMuseum.section6')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -1211,7 +1211,7 @@ resource "aws_cloudwatch_metric_alarm" "root_login" {
       {/* Section 7: Cost Anti-Patterns */}
       <section style={{ marginBottom: '2.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          7. Cost Optimization
+          {t('pages.phase3.restA.antiPatternMuseum.section7')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -1398,7 +1398,7 @@ resource "aws_db_instance" "main" {
       {/* Summary */}
       <section style={{ marginBottom: '3rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          Anti-Pattern Museum Summary
+          {t('pages.phase3.restA.antiPatternMuseum.summaryTitle')}
         </h2>
         <div style={{
           background: 'var(--surface)',
@@ -1428,7 +1428,7 @@ resource "aws_db_instance" "main" {
               border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--fail-ink)', margin: '0 0 0.5rem' }}>Anti-Patterns</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--fail-ink)', margin: '0 0 0.5rem' }}>{t('pages.phase3.restA.antiPatternMuseum.antiPatterns')}</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Common security flaws and misconfigurations that violate Wombat controls</p>
             </div>
             <div style={{
@@ -1437,7 +1437,7 @@ resource "aws_db_instance" "main" {
               border: '1px solid color-mix(in srgb, var(--pass) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--pass-ink)', margin: '0 0 0.5rem' }}>Best Practices</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--pass-ink)', margin: '0 0 0.5rem' }}>{t('pages.phase3.restA.antiPatternMuseum.bestPractices')}</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>Wombat compliant alternatives with explanations of why they work</p>
             </div>
             <div style={{
@@ -1446,7 +1446,7 @@ resource "aws_db_instance" "main" {
               border: '1px solid color-mix(in srgb, var(--waf-brand) 25%, transparent)',
               borderRadius: '8px'
             }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--waf-brand-ink)', margin: '0 0 0.5rem' }}>74 Controls</h4>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--waf-brand-ink)', margin: '0 0 0.5rem' }}>{t('pages.phase3.restA.antiPatternMuseum.controlsCount')}</h4>
               <p style={{ fontSize: '0.75rem', color: 'var(--text)', margin: 0 }}>WAF-SEC, WAF-SOV, WAF-OPS, WAF-COST, WAF-PERF, WAF-REL, WAF-SUS covered</p>
             </div>
           </div>

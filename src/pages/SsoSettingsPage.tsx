@@ -6,7 +6,7 @@ import {
 import { useAuth } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { PAGE_TITLE } from '../routing'
-import { Skeleton, SkeletonText } from '../ui'
+import { Input, Select, Skeleton, SkeletonText } from '../ui'
 
 /** Where a save/delete in this page actually lands (ADR-005): the
  * instance-wide default, or one specific mandate's own override.
@@ -126,7 +126,7 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
       setMsg({ ok: true, text: t('pages.sso.oidcSaved') })
       onSaved()
     } catch (e) {
-      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Save failed' })
+      setMsg({ ok: false, text: e instanceof Error ? e.message : t('pages.phase3.restB.ssoSettings.saveFailed') })
     } finally {
       setSaving(false)
     }
@@ -142,7 +142,7 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
       setForm({ ...OIDC_DEFAULTS })
       onSaved()
     } catch (e) {
-      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Delete failed' })
+      setMsg({ ok: false, text: e instanceof Error ? e.message : t('pages.phase3.restB.ssoSettings.deleteFailed') })
     } finally {
       setSaving(false)
     }
@@ -179,41 +179,19 @@ function OidcSection({ initial, scope, onSaved }: { initial: SsoConfigOut | null
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
-        <Field label={t('pages.sso.discoveryUrl')} hint={t('pages.sso.discoveryUrlHint')}>
-          <input style={inputSx} value={form.discovery_url} onChange={e => set('discovery_url', e.target.value)} placeholder="https://..." />
-        </Field>
-        <Field label={t('pages.sso.authEndpointLabel')} hint={t('pages.sso.authEndpointHint')}>
-          <input style={inputSx} value={form.authorization_endpoint} onChange={e => set('authorization_endpoint', e.target.value)} placeholder="http://localhost:8080/realms/master/protocol/openid-connect/auth" />
-        </Field>
-        <Field label={t('pages.sso.clientId')}>
-          <input style={inputSx} value={form.client_id} onChange={e => set('client_id', e.target.value)} placeholder="your-client-id" />
-        </Field>
-        <Field label={t('pages.sso.clientSecret')}>
-          <input style={inputSx} type="password" value={form.client_secret} onChange={e => set('client_secret', e.target.value)} placeholder="••••••••" />
-        </Field>
-        <Field label={t('pages.sso.redirectUri')} hint={t('pages.sso.redirectUriHint')}>
-          <input style={inputSx} value={form.redirect_uri} onChange={e => set('redirect_uri', e.target.value)} placeholder="https://api.example.com/auth/oidc/callback" />
-        </Field>
-        <Field label={t('pages.sso.frontendUrl')} hint={t('pages.sso.frontendUrlHint')}>
-          <input style={inputSx} value={form.frontend_url} onChange={e => set('frontend_url', e.target.value)} placeholder="http://localhost:5173" />
-        </Field>
-        <Field label={t('pages.sso.scopes')} hint={t('pages.sso.scopesHint')}>
-          <input style={inputSx} value={form.scopes} onChange={e => set('scopes', e.target.value)} placeholder="openid profile email" />
-        </Field>
-        <Field label={t('pages.sso.usernameClaim')} hint={t('pages.sso.usernameClaimHint')}>
-          <input style={inputSx} value={form.username_claim} onChange={e => set('username_claim', e.target.value)} placeholder="email" />
-        </Field>
-        <Field label={t('pages.sso.displayNameClaim')}>
-          <input style={inputSx} value={form.display_name_claim} onChange={e => set('display_name_claim', e.target.value)} placeholder="name" />
-        </Field>
-        <Field label={t('pages.sso.defaultRole')} hint={t('pages.sso.defaultRoleHint')}>
-          <select style={inputSx} value={form.default_role} onChange={e => set('default_role', e.target.value)}>
-            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </Field>
-        <Field label={t('pages.sso.roleClaim')} hint={t('pages.sso.roleClaimHint')}>
-          <input style={inputSx} value={form.role_claim} onChange={e => set('role_claim', e.target.value)} placeholder="roles" />
-        </Field>
+        <Input label={t('pages.sso.discoveryUrl')} hint={t('pages.sso.discoveryUrlHint')} value={form.discovery_url} onChange={e => set('discovery_url', e.target.value)} placeholder="https://..." />
+        <Input label={t('pages.sso.authEndpointLabel')} hint={t('pages.sso.authEndpointHint')} value={form.authorization_endpoint} onChange={e => set('authorization_endpoint', e.target.value)} placeholder="http://localhost:8080/realms/master/protocol/openid-connect/auth" />
+        <Input label={t('pages.sso.clientId')} value={form.client_id} onChange={e => set('client_id', e.target.value)} placeholder="your-client-id" />
+        <Input label={t('pages.sso.clientSecret')} type="password" value={form.client_secret} onChange={e => set('client_secret', e.target.value)} placeholder="••••••••" />
+        <Input label={t('pages.sso.redirectUri')} hint={t('pages.sso.redirectUriHint')} value={form.redirect_uri} onChange={e => set('redirect_uri', e.target.value)} placeholder="https://api.example.com/auth/oidc/callback" />
+        <Input label={t('pages.sso.frontendUrl')} hint={t('pages.sso.frontendUrlHint')} value={form.frontend_url} onChange={e => set('frontend_url', e.target.value)} placeholder="http://localhost:5173" />
+        <Input label={t('pages.sso.scopes')} hint={t('pages.sso.scopesHint')} value={form.scopes} onChange={e => set('scopes', e.target.value)} placeholder="openid profile email" />
+        <Input label={t('pages.sso.usernameClaim')} hint={t('pages.sso.usernameClaimHint')} value={form.username_claim} onChange={e => set('username_claim', e.target.value)} placeholder="email" />
+        <Input label={t('pages.sso.displayNameClaim')} value={form.display_name_claim} onChange={e => set('display_name_claim', e.target.value)} placeholder="name" />
+        <Select label={t('pages.sso.defaultRole')} hint={t('pages.sso.defaultRoleHint')} value={form.default_role} onChange={e => set('default_role', e.target.value)}>
+          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+        </Select>
+        <Input label={t('pages.sso.roleClaim')} hint={t('pages.sso.roleClaimHint')} value={form.role_claim} onChange={e => set('role_claim', e.target.value)} placeholder="roles" />
         <div style={{ gridColumn: 'span 2' }}>
           <Field label={t('pages.sso.roleMapping')} hint={t('pages.sso.roleMappingHint')}>
             <textarea style={{ ...textareaSx, minHeight: '52px' }} value={form.role_mapping_raw} onChange={e => set('role_mapping_raw', e.target.value)} placeholder='{"Admin": "admin", "Reader": "clevel"}' />
@@ -364,7 +342,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
       setMsg({ ok: true, text: t('pages.sso.saml2Saved') })
       onSaved()
     } catch (e) {
-      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Save failed' })
+      setMsg({ ok: false, text: e instanceof Error ? e.message : t('pages.phase3.restB.ssoSettings.saveFailed') })
     } finally {
       setSaving(false)
     }
@@ -380,7 +358,7 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
       setForm({ ...SAML_DEFAULTS })
       onSaved()
     } catch (e) {
-      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Delete failed' })
+      setMsg({ ok: false, text: e instanceof Error ? e.message : t('pages.phase3.restB.ssoSettings.deleteFailed') })
     } finally {
       setSaving(false)
     }
@@ -431,15 +409,9 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
         <div style={{ gridColumn: 'span 3', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingTop: '0.15rem' }}>{t('pages.sso.spSection')}</div>
-        <Field label={t('pages.sso.spEntityId')} hint={t('pages.sso.spEntityIdHint')}>
-          <input style={inputSx} value={form.entity_id} onChange={e => set('entity_id', e.target.value)} placeholder="https://wombat.example.com" />
-        </Field>
-        <Field label={t('pages.sso.acsUrl')} hint={t('pages.sso.acsUrlHint')}>
-          <input style={inputSx} value={form.acs_url} onChange={e => set('acs_url', e.target.value)} placeholder="https://api.example.com/auth/saml/acs" />
-        </Field>
-        <Field label={t('pages.sso.frontendUrl')} hint={t('pages.sso.frontendUrlHint')}>
-          <input style={inputSx} value={form.frontend_url} onChange={e => set('frontend_url', e.target.value)} placeholder="http://localhost:5173" />
-        </Field>
+        <Input label={t('pages.sso.spEntityId')} hint={t('pages.sso.spEntityIdHint')} value={form.entity_id} onChange={e => set('entity_id', e.target.value)} placeholder="https://wombat.example.com" />
+        <Input label={t('pages.sso.acsUrl')} hint={t('pages.sso.acsUrlHint')} value={form.acs_url} onChange={e => set('acs_url', e.target.value)} placeholder="https://api.example.com/auth/saml/acs" />
+        <Input label={t('pages.sso.frontendUrl')} hint={t('pages.sso.frontendUrlHint')} value={form.frontend_url} onChange={e => set('frontend_url', e.target.value)} placeholder="http://localhost:5173" />
         <Field label={t('pages.sso.spCertificate')} hint={t('pages.sso.spCertHint')}>
           <textarea style={{ ...textareaSx, minHeight: '58px' }} value={form.sp_certificate} onChange={e => set('sp_certificate', e.target.value)} placeholder="-----BEGIN CERTIFICATE-----&#10;..." />
         </Field>
@@ -451,12 +423,8 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
 
         <div style={{ gridColumn: 'span 3', height: '1px', background: 'var(--border)', margin: '0.1rem 0' }} />
         <div style={{ gridColumn: 'span 3', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.idpSection')}</div>
-        <Field label={t('pages.sso.idpEntityId')}>
-          <input style={inputSx} value={form.idp_entity_id} onChange={e => set('idp_entity_id', e.target.value)} placeholder="https://idp.example.com" />
-        </Field>
-        <Field label={t('pages.sso.idpSsoUrl')}>
-          <input style={inputSx} value={form.idp_sso_url} onChange={e => set('idp_sso_url', e.target.value)} placeholder="https://idp.example.com/sso/saml" />
-        </Field>
+        <Input label={t('pages.sso.idpEntityId')} value={form.idp_entity_id} onChange={e => set('idp_entity_id', e.target.value)} placeholder="https://idp.example.com" />
+        <Input label={t('pages.sso.idpSsoUrl')} value={form.idp_sso_url} onChange={e => set('idp_sso_url', e.target.value)} placeholder="https://idp.example.com/sso/saml" />
         <div style={{ gridColumn: 'span 3' }}>
           <Field label={t('pages.sso.idpCertificate')} hint={t('pages.sso.idpCertHint')}>
             <textarea style={{ ...textareaSx, minHeight: '58px' }} value={form.idp_certificate} onChange={e => set('idp_certificate', e.target.value)} placeholder="-----BEGIN CERTIFICATE-----&#10;..." />
@@ -465,20 +433,12 @@ function Saml2Section({ initial, scope, onSaved }: { initial: SsoConfigOut | nul
 
         <div style={{ gridColumn: 'span 3', height: '1px', background: 'var(--border)', margin: '0.1rem 0' }} />
         <div style={{ gridColumn: 'span 3', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('pages.sso.attrMappingSection')}</div>
-        <Field label={t('pages.sso.usernameAttribute')} hint={t('pages.sso.usernameAttrHint')}>
-          <input style={inputSx} value={form.username_attribute} onChange={e => set('username_attribute', e.target.value)} placeholder="…identity/claims/emailaddress" />
-        </Field>
-        <Field label={t('pages.sso.displayNameAttr')}>
-          <input style={inputSx} value={form.display_name_attribute} onChange={e => set('display_name_attribute', e.target.value)} placeholder="…claims/displayname" />
-        </Field>
-        <Field label={t('pages.sso.defaultRole')}>
-          <select style={inputSx} value={form.default_role} onChange={e => set('default_role', e.target.value)}>
-            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </Field>
-        <Field label={t('pages.sso.roleAttribute')} hint={t('pages.sso.roleAttrHint')}>
-          <input style={inputSx} value={form.role_attribute} onChange={e => set('role_attribute', e.target.value)} placeholder="Role" />
-        </Field>
+        <Input label={t('pages.sso.usernameAttribute')} hint={t('pages.sso.usernameAttrHint')} value={form.username_attribute} onChange={e => set('username_attribute', e.target.value)} placeholder="…identity/claims/emailaddress" />
+        <Input label={t('pages.sso.displayNameAttr')} value={form.display_name_attribute} onChange={e => set('display_name_attribute', e.target.value)} placeholder="…claims/displayname" />
+        <Select label={t('pages.sso.defaultRole')} value={form.default_role} onChange={e => set('default_role', e.target.value)}>
+          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+        </Select>
+        <Input label={t('pages.sso.roleAttribute')} hint={t('pages.sso.roleAttrHint')} value={form.role_attribute} onChange={e => set('role_attribute', e.target.value)} placeholder="Role" />
         <div style={{ gridColumn: 'span 2' }}>
           <Field label={t('pages.sso.roleMapping')} hint={t('pages.sso.roleMappingHint')}>
             <textarea style={{ ...textareaSx, minHeight: '52px' }} value={form.role_mapping_raw} onChange={e => set('role_mapping_raw', e.target.value)} placeholder='{"Admins": "admin"}' />
@@ -586,7 +546,7 @@ export default function SsoSettingsPage() {
     try {
       setConfigs(scope.mandantId ? await fetchMandantSsoConfigs(scope.mandantId) : await fetchSsoConfigs())
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load SSO configuration')
+      setError(e instanceof Error ? e.message : t('pages.phase3.restB.ssoSettings.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -627,7 +587,7 @@ export default function SsoSettingsPage() {
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.5,
       }}>
         <strong style={{ color: 'var(--text)' }}>{t('pages.sso.overviewTitle')}</strong> — {t('pages.sso.overviewText')}
-        <br />SAML2 requires <code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, var(--text) 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>python3-saml</code> to be installed on the server (<code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, var(--text) 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>pip install "wombat-server[saml]"</code>).
+        <br />{t('pages.phase3.restB.ssoSettings.samlRequires')} <code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, var(--text) 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>python3-saml</code> {t('pages.phase3.restB.ssoSettings.samlToBeInstalled')} <code style={{ fontSize: '0.75rem', background: 'color-mix(in srgb, var(--text) 6%, transparent)', padding: '0 0.3rem', borderRadius: '4px' }}>pip install "wombat-server[saml]"</code>{t('pages.phase3.restB.ssoSettings.samlSuffix')}
       </div>
 
       {mandateOptions.length > 0 && (

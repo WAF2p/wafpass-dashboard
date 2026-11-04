@@ -58,11 +58,11 @@ interface GapItem {
 const SEV_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
 
 const STATUS_META: Record<ControlStatus, { label: string; color: string; bg: string; border: string }> = {
-  PASS:    { label: 'Passing',  color: 'var(--pass-ink)',      bg: 'color-mix(in srgb, var(--pass) 8%, transparent)',      border: 'color-mix(in srgb, var(--pass) 25%, transparent)'      },
-  FAIL:    { label: 'Failing',  color: 'var(--fail-ink)',      bg: 'color-mix(in srgb, var(--fail) 8%, transparent)',      border: 'color-mix(in srgb, var(--fail) 25%, transparent)'      },
-  PARTIAL: { label: 'Partial',  color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--score-mid) 8%, transparent)', border: 'color-mix(in srgb, var(--score-mid) 25%, transparent)' },
-  WAIVED:  { label: 'Waived',   color: 'var(--waived)',        bg: 'color-mix(in srgb, var(--waived) 8%, transparent)',    border: 'color-mix(in srgb, var(--waived) 20%, transparent)'    },
-  UNKNOWN: { label: 'No data',  color: 'var(--skip-ink)',      bg: 'color-mix(in srgb, var(--skip) 8%, transparent)',      border: 'color-mix(in srgb, var(--skip) 20%, transparent)'      },
+  PASS:    { label: 'pages.phase3.restA.gapAnalysis.statusPassing',  color: 'var(--pass-ink)',      bg: 'color-mix(in srgb, var(--pass) 8%, transparent)',      border: 'color-mix(in srgb, var(--pass) 25%, transparent)'      },
+  FAIL:    { label: 'pages.phase3.restA.gapAnalysis.statusFailing',  color: 'var(--fail-ink)',      bg: 'color-mix(in srgb, var(--fail) 8%, transparent)',      border: 'color-mix(in srgb, var(--fail) 25%, transparent)'      },
+  PARTIAL: { label: 'pages.phase3.restA.gapAnalysis.statusPartial',  color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--score-mid) 8%, transparent)', border: 'color-mix(in srgb, var(--score-mid) 25%, transparent)' },
+  WAIVED:  { label: 'pages.phase3.restA.gapAnalysis.statusWaived',   color: 'var(--waived)',        bg: 'color-mix(in srgb, var(--waived) 8%, transparent)',    border: 'color-mix(in srgb, var(--waived) 20%, transparent)'    },
+  UNKNOWN: { label: 'pages.phase3.restA.gapAnalysis.statusNoData',  color: 'var(--skip-ink)',      bg: 'color-mix(in srgb, var(--skip) 8%, transparent)',      border: 'color-mix(in srgb, var(--skip) 20%, transparent)'      },
 }
 
 function loadWaivers(): Record<string, { owner?: string }> {
@@ -186,7 +186,7 @@ function RoadmapItem({ item, rank, cumulativeReqs, totalReqs }: {
             <span className="gap-item__title">{ctrl.title}</span>
           </div>
           <div className="gap-item__badges">
-            <span className="gap-item__badge gap-item__badge--status" style={{ color: sm.color, background: sm.bg, borderColor: sm.border }}>{sm.label}</span>
+            <span className="gap-item__badge gap-item__badge--status" style={{ color: sm.color, background: sm.bg, borderColor: sm.border }}>{t(sm.label)}</span>
             <span className="gap-item__badge gap-item__badge--severity" style={{ color: sevColor, background: severityBg(ctrl.severity, 9), borderColor: severityBorder(ctrl.severity, 20) }}>{ctrl.severity}</span>
             <span className="gap-item__badge gap-item__badge--pillar">{ctrl.pillar}</span>
             {item.requirements.map(req => (
@@ -430,7 +430,7 @@ export default function GapAnalysisPage({ run, navigate, frameworkId }: Props) {
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <PageHeader
-        eyebrow={<><TargetIcon /> GAP ANALYSIS</>}
+        eyebrow={<><TargetIcon /> {t('pages.phase3.restA.gapAnalysis.eyebrow')}</>}
         title={t('pages.gapanalysis.heroTitle')}
         description={t('pages.gapanalysis.heroSubtitle')}
         actions={navigate && (

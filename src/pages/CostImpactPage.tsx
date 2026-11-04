@@ -73,15 +73,15 @@ const CONTROL_COST: Record<string, CostBand> = {
 }
 
 const CATEGORY_META: Record<CostCategory, { label: string; icon: string; desc: string }> = {
-  waste:   { label: 'Direct waste',              icon: '🔥', desc: 'Resources incurring unnecessary spend right now' },
-  savings: { label: 'Savings opportunity',       icon: '💰', desc: 'On-demand charges that reserved/committed pricing would reduce' },
-  risk:    { label: 'Financial governance risk', icon: '⚠️', desc: 'Controls that, when failing, create untracked or future cost risk' },
+  waste:   { label: 'pages.phase3.restA.costImpact.categoryWaste',              icon: '🔥', desc: 'Resources incurring unnecessary spend right now' },
+  savings: { label: 'pages.phase3.restA.costImpact.categorySavings',       icon: '💰', desc: 'On-demand charges that reserved/committed pricing would reduce' },
+  risk:    { label: 'pages.phase3.restA.costImpact.categoryRisk', icon: '⚠️', desc: 'Controls that, when failing, create untracked or future cost risk' },
 }
 
 const CONF_META: Record<string, { label: string; color: string }> = {
-  high:   { label: 'High confidence',   color: 'var(--pass)' },
-  medium: { label: 'Medium confidence', color: 'var(--score-mid)' },
-  low:    { label: 'Estimate only',     color: 'var(--muted)' },
+  high:   { label: 'pages.phase3.restA.costImpact.confHigh',   color: 'var(--pass)' },
+  medium: { label: 'pages.phase3.restA.costImpact.confMedium', color: 'var(--score-mid)' },
+  low:    { label: 'pages.phase3.restA.costImpact.confLow',     color: 'var(--muted)' },
 }
 
 // ─── SVG icons ─────────────────────────────────────────────────────────────────
@@ -259,9 +259,9 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
             <span className="coc-control-title">{item.controlTitle}</span>
           </div>
           <div className="coc-control-tags">
-            <span className="coc-tag" style={{ color, background: `color-mix(in srgb, ${color} 9%, transparent)`, borderColor: `color-mix(in srgb, ${color} 20%, transparent)` }}>{cat.label}</span>
-            <span className="coc-tag coc-tag--conf" style={{ color: conf.color }}>{conf.label}</span>
-            <span className="coc-resource-count">{item.resourceBands.length} resource{item.resourceBands.length !== 1 ? 's' : ''}</span>
+            <span className="coc-tag" style={{ color, background: `color-mix(in srgb, ${color} 9%, transparent)`, borderColor: `color-mix(in srgb, ${color} 20%, transparent)` }}>{t(cat.label)}</span>
+            <span className="coc-tag coc-tag--conf" style={{ color: conf.color }}>{t(conf.label)}</span>
+            <span className="coc-resource-count">{item.resourceBands.length} {item.resourceBands.length !== 1 ? t('pages.phase3.restA.costImpact.resourcePlural') : t('pages.phase3.restA.costImpact.resourceSingular')}</span>
             {hasEstimate && <CostBar min={item.totalMin} max={item.totalMax} maxVal={maxMax} color={color} />}
           </div>
         </div>
@@ -269,8 +269,8 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
           {hasEstimate ? (
             <>
               <div className="coc-control-mid" style={{ color }}>~{fmtDollar(item.totalMid)}</div>
-              <div className="coc-control-period">/month</div>
-              <div className="coc-control-range">range: {fmtRange(item.totalMin, item.totalMax)}</div>
+              <div className="coc-control-period">{t('pages.phase3.restA.costImpact.perMonth')}</div>
+              <div className="coc-control-range">{t('pages.phase3.restA.costImpact.rangeLabel')} {fmtRange(item.totalMin, item.totalMax)}</div>
             </>
           ) : (
             <div className="coc-control-nodollar">{t('pages.costImpact.govRiskOnly').split('\n').map((line, i) => <span key={i}>{line}{i === 0 ? <br /> : ''}</span>)}</div>
@@ -285,11 +285,11 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
             <table className="coc-resource-table">
               <thead>
                 <tr>
-                  <th>Resource</th>
-                  <th>Type</th>
-                  <th>Category</th>
-                  <th>Est. $/mo</th>
-                  <th>Basis</th>
+                  <th>{t('pages.phase3.restA.costImpact.colResource')}</th>
+                  <th>{t('pages.phase3.restA.costImpact.colType')}</th>
+                  <th>{t('pages.phase3.restA.costImpact.colCategory')}</th>
+                  <th>{t('pages.phase3.restA.costImpact.colEstimate')}</th>
+                  <th>{t('pages.phase3.restA.costImpact.colBasis')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -302,7 +302,7 @@ function ControlCostCard({ item, maxMax }: { item: ControlCostItem; maxMax: numb
                     <tr key={i}>
                       <td title={finding.resource || ''}>{finding.resource || '—'}</td>
                       <td>{rtype}</td>
-                      <td><span className="coc-tag" style={{ color: ccol, background: `color-mix(in srgb, ${ccol} 10%, transparent)`, borderColor: `color-mix(in srgb, ${ccol} 22%, transparent)` }}>{cm.icon} {cm.label}</span></td>
+                      <td><span className="coc-tag" style={{ color: ccol, background: `color-mix(in srgb, ${ccol} 10%, transparent)`, borderColor: `color-mix(in srgb, ${ccol} 22%, transparent)` }}>{cm.icon} {t(cm.label)}</span></td>
                       <td style={{ color: ccol }}>{band.min === 0 && band.max === 0 ? '—' : `~${fmtDollar(mid)}`}{band.min !== band.max && band.max > 0 && <div className="coc-resource-range">{fmtRange(band.min, band.max)}</div>}</td>
                       <td>{band.basis}</td>
                     </tr>
@@ -383,16 +383,16 @@ export default function CostImpactPage({ run }: Props) {
 
       {/* Hero */}
       <PageHeader
-        eyebrow={<><EuroIcon /> COST OPERATIONS CENTER</>}
+        eyebrow={<><EuroIcon /> {t('pages.phase3.restA.costImpact.eyebrow')}</>}
         title={t('pages.costImpact.title')}
-        description={<>Real-time financial exposure, savings runway, and burn-down projection across {run.findings.filter(f => f.pillar?.toLowerCase() === 'cost').length} cost checks.</>}
+        description={<>{t('pages.phase3.restA.costImpact.heroDescription', { count: run.findings.filter(f => f.pillar?.toLowerCase() === 'cost').length })}</>}
         actions={
           <div className="coc-hero__kpi">
-            <div className="coc-hero__kpi-label">MONTHLY EXPOSURE</div>
+            <div className="coc-hero__kpi-label">{t('pages.phase3.restA.costImpact.monthlyExposure')}</div>
             <div className="coc-hero__kpi-value" style={{ color: hasCostFindings ? 'var(--fail)' : 'var(--pass)' }}>
               {hasCostFindings ? `~${fmtDollar(totals.allMid)}` : '$0'}
             </div>
-            <div className="coc-hero__kpi-range">{hasCostFindings ? `${fmtRange(totals.allMin, totals.allMax)} range` : 'No failing cost controls'}</div>
+            <div className="coc-hero__kpi-range">{hasCostFindings ? t('pages.phase3.restA.costImpact.rangeWithValue', { range: fmtRange(totals.allMin, totals.allMax) }) : t('pages.phase3.restA.costImpact.noFailingControls')}</div>
           </div>
         }
       />
@@ -412,7 +412,7 @@ export default function CostImpactPage({ run }: Props) {
         <div className="coc-kpi coc-kpi--waste">
           <div className="coc-kpi__icon"><FlameIcon /></div>
           <div className="coc-kpi__meta">
-            <div className="coc-kpi__label">DIRECT WASTE</div>
+            <div className="coc-kpi__label">{t('pages.phase3.restA.costImpact.kpiDirectWaste')}</div>
             <div className="coc-kpi__value" style={{ color: categoryColor('waste') }}>~{fmtDollar(totals.byCategory.waste)}</div>
             <div className="coc-kpi__desc">{t('pages.costImpact.directWaste')}</div>
           </div>
@@ -420,7 +420,7 @@ export default function CostImpactPage({ run }: Props) {
         <div className="coc-kpi coc-kpi--savings">
           <div className="coc-kpi__icon"><PiggyIcon /></div>
           <div className="coc-kpi__meta">
-            <div className="coc-kpi__label">SAVINGS OPPORTUNITY</div>
+            <div className="coc-kpi__label">{t('pages.phase3.restA.costImpact.kpiSavings')}</div>
             <div className="coc-kpi__value" style={{ color: categoryColor('savings') }}>~{fmtDollar(totals.byCategory.savings)}</div>
             <div className="coc-kpi__desc">{t('pages.costImpact.savingsOpp')}</div>
           </div>
@@ -428,7 +428,7 @@ export default function CostImpactPage({ run }: Props) {
         <div className="coc-kpi coc-kpi--risk">
           <div className="coc-kpi__icon"><ShieldCostIcon /></div>
           <div className="coc-kpi__meta">
-            <div className="coc-kpi__label">GOVERNANCE RISK</div>
+            <div className="coc-kpi__label">{t('pages.phase3.restA.costImpact.kpiGovernance')}</div>
             <div className="coc-kpi__value" style={{ color: categoryColor('risk') }}>~{fmtDollar(totals.byCategory.risk)}</div>
             <div className="coc-kpi__desc">{t('pages.costImpact.govRisk')}</div>
           </div>
@@ -436,9 +436,9 @@ export default function CostImpactPage({ run }: Props) {
         <div className="coc-kpi coc-kpi--resources">
           <div className="coc-kpi__icon"><ChartIcon /></div>
           <div className="coc-kpi__meta">
-            <div className="coc-kpi__label">RESOURCES / CONTROLS</div>
+            <div className="coc-kpi__label">{t('pages.phase3.restA.costImpact.kpiResources')}</div>
             <div className="coc-kpi__value">{totals.failingResources}<span className="coc-kpi__unit">/{totals.failingControls}</span></div>
-            <div className="coc-kpi__desc">Failing resources and controls</div>
+            <div className="coc-kpi__desc">{t('pages.phase3.restA.costImpact.failingResourcesAndControls')}</div>
           </div>
         </div>
       </div>
@@ -449,8 +449,8 @@ export default function CostImpactPage({ run }: Props) {
           <div className="coc-chart-card__header">
             <TrendDownIcon />
             <div>
-              <div className="coc-chart-card__title">Burn-down projection</div>
-              <div className="coc-chart-card__subtitle">Estimated monthly spend if all recommendations are applied on schedule</div>
+              <div className="coc-chart-card__title">{t('pages.phase3.restA.costImpact.burnDown')}</div>
+              <div className="coc-chart-card__subtitle">{t('pages.phase3.restA.costImpact.burnDownDesc')}</div>
             </div>
             <span className="coc-stub-pill">{t('pages.costImpact.stubBadge')}</span>
           </div>
@@ -475,8 +475,8 @@ export default function CostImpactPage({ run }: Props) {
                   itemStyle={{ fontSize: 12 }}
                   formatter={(value: number, name: string) => [fmtDollar(value), name]}
                 />
-                <Area type="monotone" dataKey="actual" name="Actual spend" stroke="var(--fail)" strokeWidth={2} fill="url(#cocActual)" />
-                <Area type="monotone" dataKey="projected" name="Projected spend" stroke="var(--pass)" strokeWidth={2} fill="url(#cocProjected)" strokeDasharray="5 5" />
+                <Area type="monotone" dataKey="actual" name={t('pages.phase3.restA.costImpact.actualSpend')} stroke="var(--fail)" strokeWidth={2} fill="url(#cocActual)" />
+                <Area type="monotone" dataKey="projected" name={t('pages.phase3.restA.costImpact.projectedSpend')} stroke="var(--pass)" strokeWidth={2} fill="url(#cocProjected)" strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -486,8 +486,8 @@ export default function CostImpactPage({ run }: Props) {
           <div className="coc-chart-card__header">
             <AlertIcon />
             <div>
-              <div className="coc-chart-card__title">Budget & alerts</div>
-              <div className="coc-chart-card__subtitle">Live thresholds once Cost Explorer is connected</div>
+              <div className="coc-chart-card__title">{t('pages.phase3.restA.costImpact.budgetAlerts')}</div>
+              <div className="coc-chart-card__subtitle">{t('pages.phase3.restA.costImpact.budgetAlertsDesc')}</div>
             </div>
             <span className="coc-stub-pill">{t('pages.costImpact.stubBadge')}</span>
           </div>
@@ -535,14 +535,14 @@ export default function CostImpactPage({ run }: Props) {
                 const cm = CATEGORY_META[cat]
                 return (
                   <button key={cat} onClick={() => setCatFilter(cat)} className={`coc-filter-chip ${catFilter === cat ? 'coc-filter-chip--active' : ''}`} style={{ '--chip-color': categoryColor(cat) } as React.CSSProperties}>
-                    {cm.icon} {cm.label} ({count})
+                    {cm.icon} {t(cm.label)} ({count})
                   </button>
                 )
               })}
             </div>
             <div className="coc-filter-actions">
-              <button className="coc-btn-ghost" onClick={() => { setCatFilter('all'); setSearch('') }}><FilterIcon /> Reset</button>
-              <button className="coc-btn-ghost" onClick={() => setExportNotice(true)}><DownloadIcon /> Export</button>
+              <button className="coc-btn-ghost" onClick={() => { setCatFilter('all'); setSearch('') }}><FilterIcon /> {t('pages.phase3.restA.costImpact.reset')}</button>
+              <button className="coc-btn-ghost" onClick={() => setExportNotice(true)}><DownloadIcon /> {t('pages.phase3.restA.costImpact.export')}</button>
             </div>
           </div>
 
@@ -553,7 +553,7 @@ export default function CostImpactPage({ run }: Props) {
               background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)',
               border: '1px solid color-mix(in srgb, var(--waf-brand) 18%, transparent)',
             }}>
-              <span style={{ flex: 1 }}>Export is a demo feature — vote on the GitHub RFC to prioritize it.</span>
+              <span style={{ flex: 1 }}>{t('pages.phase3.restA.costImpact.exportDemo')}</span>
               <button onClick={() => setExportNotice(false)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline' }}>
                 {t('common.close')}
               </button>
@@ -563,8 +563,8 @@ export default function CostImpactPage({ run }: Props) {
           {/* Top resources table */}
           <div className="coc-section-card">
             <div className="coc-section-card__header">
-              <div className="coc-section-card__title">Top financial resources</div>
-              <div className="coc-section-card__subtitle">Highest-impact failing resources by estimated monthly cost</div>
+              <div className="coc-section-card__title">{t('pages.phase3.restA.costImpact.topResources')}</div>
+              <div className="coc-section-card__subtitle">{t('pages.phase3.restA.costImpact.topResourcesDesc')}</div>
             </div>
             <DataTable
               rows={topResources}
@@ -572,7 +572,7 @@ export default function CostImpactPage({ run }: Props) {
               columns={[
                 {
                   key: 'resource',
-                  header: 'Resource',
+                  header: t('pages.phase3.restA.costImpact.colResource'),
                   mono: true,
                   render: row => (
                     <span
@@ -583,23 +583,23 @@ export default function CostImpactPage({ run }: Props) {
                     </span>
                   ),
                 },
-                { key: 'control', header: 'Control', render: row => row.item.controlId },
+                { key: 'control', header: t('pages.phase3.restA.costImpact.colControl'), render: row => row.item.controlId },
                 {
                   key: 'category',
-                  header: 'Category',
+                  header: t('pages.phase3.restA.costImpact.colCategory'),
                   render: row => {
                     const ccol = categoryColor(row.rb.band.category)
                     const cm = CATEGORY_META[row.rb.band.category]
                     return (
                       <span className="coc-tag" style={{ color: ccol, background: `color-mix(in srgb, ${ccol} 10%, transparent)`, borderColor: `color-mix(in srgb, ${ccol} 22%, transparent)` }}>
-                        {cm.icon} {cm.label}
+                        {cm.icon} {t(cm.label)}
                       </span>
                     )
                   },
                 },
                 {
                   key: 'cost',
-                  header: 'Est. $/mo',
+                  header: t('pages.phase3.restA.costImpact.colEstimate'),
                   render: row => {
                     const mid = Math.round((row.rb.band.min + row.rb.band.max) / 2)
                     return (
@@ -611,29 +611,29 @@ export default function CostImpactPage({ run }: Props) {
                 },
                 {
                   key: 'confidence',
-                  header: 'Confidence',
+                  header: t('pages.phase3.restA.costImpact.colConfidence'),
                   render: row => (
                     <span className="coc-tag coc-tag--conf" style={{ color: CONF_META[row.rb.band.confidence].color }}>
-                      {CONF_META[row.rb.band.confidence].label}
+                      {t(CONF_META[row.rb.band.confidence].label)}
                     </span>
                   ),
                 },
               ]}
-              empty={<EmptyState compact title="No resources match the current filter." />}
+              empty={<EmptyState compact title={t('pages.phase3.restA.costImpact.noResourcesMatch')} />}
             />
           </div>
 
           {/* Control cards */}
           <div className="coc-section-card">
             <div className="coc-section-card__header">
-              <div className="coc-section-card__title">Cost controls</div>
+              <div className="coc-section-card__title">{t('pages.phase3.restA.costImpact.costControls')}</div>
               <div className="coc-section-card__subtitle">{t('pages.costImpact.sortedByImpact')}</div>
             </div>
             {filtered.map(item => (
               <ControlCostCard key={item.controlId} item={item} maxMax={maxMax} />
             ))}
             {filtered.length === 0 && (
-              <EmptyState compact title="No controls match the current filter." />
+              <EmptyState compact title={t('pages.phase3.restA.costImpact.noControlsMatch')} />
             )}
           </div>
 

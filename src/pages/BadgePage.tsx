@@ -62,7 +62,7 @@ function CodeBlock({ code, lang = '', t }: { code: string; lang?: string; t: (ke
       </pre>
       <button
         onClick={copy}
-        title="Copy to clipboard"
+        title={t('pages.phase3.restA.badgePage.copyToClipboard')}
         style={{
           position: 'absolute', top: '0.4rem', right: '0.4rem',
           background: copied ? 'color-mix(in srgb, var(--pass) 12%, transparent)' : 'rgba(255,255,255,0.05)',
@@ -313,7 +313,7 @@ export default function BadgePage({ runs }: Props) {
               fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px',
               background: `color-mix(in srgb, ${currentColor} 8%, transparent)`, color: currentColor, border: `1px solid color-mix(in srgb, ${currentColor} 19%, transparent)`,
             }}>
-              Score {status.score} · {currentLabel}
+              {t('pages.phase3.restA.badgePage.scoreWithLabel', { score: String(status.score), label: currentLabel })}
             </span>
           )}
         </div>
@@ -540,7 +540,7 @@ jobs:
                     <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    Download
+                    {t('pages.phase3.restA.badgePage.download')}
                   </a>
                 </div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
@@ -557,7 +557,7 @@ jobs:
         <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.15rem' }}>{t('pages.badgePage.shieldsIo')}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
-            Use the JSON endpoint with shields.io's <code style={{ color: 'var(--text)' }}>endpoint</code> badge type for full customisation
+            {t('pages.phase3.restA.badgePage.useJsonEndpoint')} <code style={{ color: 'var(--text)' }}>{t('pages.phase3.restA.badgePage.endpointWord')}</code> {t('pages.phase3.restA.badgePage.badgeTypeCustomisation')}
           </div>
         </div>
         <div style={{ padding: '1.25rem' }}>

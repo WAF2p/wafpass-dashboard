@@ -23,21 +23,21 @@ import { DataTable, EmptyState, PageHeader, type Column } from '../ui'
 // ─── Category metadata ──────────────────────────────────────────────────────────
 
 const CAT_META: Record<AuditCategory, { label: string; color: string; bg: string }> = {
-  waiver:  { label: 'Waiver',  color: '#2563eb', bg: 'color-mix(in srgb, #2563eb 10%, transparent)'  },
-  risk:    { label: 'Risk',    color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 10%, transparent)' },
-  scan:    { label: 'Scan',    color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)'  },
-  finding: { label: 'Finding', color: '#d97706', bg: 'rgba(217,119,6,.10)'  },
+  waiver:  { label: 'pages.phase3.restA.auditLog.catWaiver',  color: '#2563eb', bg: 'color-mix(in srgb, #2563eb 10%, transparent)'  },
+  risk:    { label: 'pages.phase3.restA.auditLog.catRisk',    color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 10%, transparent)' },
+  scan:    { label: 'pages.phase3.restA.auditLog.catScan',    color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)'  },
+  finding: { label: 'pages.phase3.restA.auditLog.catFinding', color: '#d97706', bg: 'rgba(217,119,6,.10)'  },
 }
 
 const ACTION_LABEL: Record<string, string> = {
-  waiver_created:       'Waiver created',
-  waiver_updated:       'Waiver updated',
-  waiver_deleted:       'Waiver removed',
-  risk_created:         'Risk accepted',
-  risk_updated:         'Risk updated',
-  risk_deleted:         'Risk removed',
-  scan_received:        'Scan received',
-  control_first_failed: 'First seen failing',
+  waiver_created:       'pages.phase3.restA.auditLog.actionWaiverCreated',
+  waiver_updated:       'pages.phase3.restA.auditLog.actionWaiverUpdated',
+  waiver_deleted:       'pages.phase3.restA.auditLog.actionWaiverDeleted',
+  risk_created:         'pages.phase3.restA.auditLog.actionRiskCreated',
+  risk_updated:         'pages.phase3.restA.auditLog.actionRiskUpdated',
+  risk_deleted:         'pages.phase3.restA.auditLog.actionRiskDeleted',
+  scan_received:        'pages.phase3.restA.auditLog.actionScanReceived',
+  control_first_failed: 'pages.phase3.restA.auditLog.actionControlFirstFailed',
 }
 
 // ─── Export helpers ───────────────────────────────────────────────────────────
@@ -67,11 +67,11 @@ function EventRow({ event, t }: { event: AuditEvent; t: ReturnType<typeof useI18
   const relTime = (() => {
     const diff = Date.now() - new Date(event.timestamp).getTime()
     const m = Math.floor(diff / 60000)
-    if (m < 1) return 'just now'
-    if (m < 60) return `${m}m ago`
+    if (m < 1) return t('pages.phase3.restA.auditLog.justNow')
+    if (m < 60) return t('pages.phase3.restA.auditLog.minutesAgo', { count: m })
     const h = Math.floor(m / 60)
-    if (h < 24) return `${h}h ago`
-    return `${Math.floor(h / 24)}d ago`
+    if (h < 24) return t('pages.phase3.restA.auditLog.hoursAgo', { count: h })
+    return t('pages.phase3.restA.auditLog.daysAgo', { count: Math.floor(h / 24) })
   })()
 
   return (
@@ -81,12 +81,12 @@ function EventRow({ event, t }: { event: AuditEvent; t: ReturnType<typeof useI18
         onClick={() => hasDiff && setOpen(o => !o)}
       >
         <span className="audit-event__cat" style={{ color: cat.color, background: cat.bg, borderColor: `${cat.color}33` }}>
-          {cat.label}
+          {t(cat.label)}
         </span>
 
         <div className="audit-event__main">
           <div className="audit-event__title-row">
-            <span className="audit-event__action">{ACTION_LABEL[event.action] ?? event.action}</span>
+            <span className="audit-event__action">{t(ACTION_LABEL[event.action] ?? event.action)}</span>
             <span className="audit-event__subject">{event.subject_id}</span>
           </div>
           <div className="audit-event__summary">{event.summary}</div>
@@ -95,7 +95,7 @@ function EventRow({ event, t }: { event: AuditEvent; t: ReturnType<typeof useI18
         <div className="audit-event__meta">
           <div className="audit-event__time">{relTime}</div>
           <div className="audit-event__actor">{event.actor}</div>
-          {hasDiff && <div className="audit-event__diff-toggle" style={{ color: cat.color }}>{open ? '▲ hide' : '▼ diff'}</div>}
+          {hasDiff && <div className="audit-event__diff-toggle" style={{ color: cat.color }}>{open ? t('pages.phase3.restA.auditLog.hideDiff') : t('pages.phase3.restA.auditLog.showDiff')}</div>}
         </div>
       </div>
 
@@ -308,7 +308,7 @@ export default function AuditLogPage() {
       <style>{auditCss}</style>
 
       <PageHeader
-        eyebrow={<><ShieldIcon /> AUDIT LOG</>}
+        eyebrow={<><ShieldIcon /> {t('pages.phase3.restA.auditLog.eyebrow')}</>}
         title={t('pages.audit.heroTitle')}
         description={t('pages.audit.heroSubtitle')}
       />
@@ -370,7 +370,7 @@ export default function AuditLogPage() {
             <select value={catFilter} onChange={e => setCatFilter(e.target.value as AuditCategory | '')} className="audit-select">
               <option value="">{t('pages.audit.allCategories')}</option>
               {(Object.keys(CAT_META) as AuditCategory[]).map(c => (
-                <option key={c} value={c}>{CAT_META[c].label}</option>
+                <option key={c} value={c}>{t(CAT_META[c].label)}</option>
               ))}
             </select>
             {(catFilter || search) && (

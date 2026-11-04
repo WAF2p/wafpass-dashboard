@@ -58,6 +58,7 @@ function StatusBadge({ status }: { status: string }) {
 // ── Raw secret scanner card ───────────────────────────────────────────────────
 
 function RawSecretCard({ sf }: { sf: SecretFinding }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const hasComments = (sf.comment_count ?? 0) > 0
   const commentCount = sf.comment_count ?? 0
@@ -97,7 +98,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
                 background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
                 color: 'var(--waf-brand-ink)',
               }}>
-                {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+                {commentCount} {commentCount === 1 ? t('pages.phase3.restB.secretScan.commentOne') : t('pages.phase3.restB.secretScan.commentMany')}
               </span>
             )}
           </div>
@@ -129,16 +130,16 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
         <div style={{ padding: '0 0.875rem 0.875rem 3.75rem', borderTop: '1px solid color-mix(in srgb, var(--fail) 15%, transparent)', paddingTop: '0.75rem', background: 'var(--bg)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>Pattern</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>{t('pages.phase3.restB.secretScan.pattern')}</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text)' }}>{sf.pattern_name}</div>
             </div>
             <div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>Location</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>{t('pages.phase3.restB.secretScan.location')}</div>
               <code style={{ fontSize: '0.72rem', color: 'var(--text)' }}>{sf.file}:{sf.line_no}</code>
             </div>
           </div>
           <div style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--fail) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)', fontSize: '0.75rem', color: 'var(--fail-ink)', lineHeight: 1.6 }}>
-            <strong>Suppress this finding</strong> (use sparingly — add a justification comment):<br />
+            <strong>{t('pages.phase3.restB.secretScan.suppressFindingBold')}</strong> {t('pages.phase3.restB.secretScan.suppressFindingHint')}<br />
             <code style={{ fontSize: '0.7rem' }}>{'  '}{sf.matched_key || 'value'} = "..." <span style={{ opacity: 0.7 }}># wombat:ignore-secret  reason: &lt;your justification&gt;</span></code>
           </div>
         </div>
@@ -150,6 +151,7 @@ function RawSecretCard({ sf }: { sf: SecretFinding }) {
 // ── Control-level finding card ────────────────────────────────────────────────
 
 function ControlFindingCard({ finding }: { finding: Finding }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const isFail = finding.status?.toUpperCase() === 'FAIL'
   const hasComments = (finding.comment_count ?? 0) > 0
@@ -179,7 +181,7 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
                 background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
                 color: 'var(--waf-brand-ink)',
               }}>
-                {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+                {commentCount} {commentCount === 1 ? t('pages.phase3.restB.secretScan.commentOne') : t('pages.phase3.restB.secretScan.commentMany')}
               </span>
             )}
           </div>
@@ -198,7 +200,7 @@ function ControlFindingCard({ finding }: { finding: Finding }) {
           {finding.message && <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.6, marginBottom: '0.5rem' }}>{finding.message}</div>}
           {finding.remediation && (
             <div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>Remediation</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--muted)', marginBottom: '0.2rem' }}>{t('pages.phase3.restB.secretScan.remediation')}</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.6 }}>{finding.remediation}</div>
             </div>
           )}
@@ -305,9 +307,9 @@ export default function SecretScanPage({ run }: Props) {
               {rawSecrets.length > 0
                 ? <>
                     {critCount > 0 && <><strong>{critCount} CRITICAL</strong>{highCount > 0 ? ` · ${highCount} HIGH` : ''} · </>}
-                    Hardcoded credentials are committed to version control and visible in git history forever. Rotate all affected secrets immediately.
+                    {t('pages.phase3.restB.secretScan.hardcodedWarning')}
                   </>
-                : 'Secrets management controls are failing — credentials may not be properly protected at rest or in transit.'}
+                : t('pages.phase3.restB.secretScan.postureWarning')}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', flexShrink: 0, textAlign: 'center' }}>
@@ -315,7 +317,7 @@ export default function SecretScanPage({ run }: Props) {
               {rawSecrets.length || failPosture.length}
             </div>
             <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-              {rawSecrets.length > 0 ? 'Secrets' : 'Failures'}
+              {rawSecrets.length > 0 ? t('pages.phase3.restB.secretScan.secretsLabel') : t('pages.phase3.restB.secretScan.failuresLabel')}
             </div>
           </div>
         </div>
@@ -341,7 +343,7 @@ export default function SecretScanPage({ run }: Props) {
           <div>
             <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--pass-ink)' }}>{t('pages.secretScan.cleanTitle')}</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text)', marginTop: '0.15rem' }}>
-              The secret scanner found no hardcoded credentials in this run's IaC source files.
+              {t('pages.phase3.restB.secretScan.cleanBody')}
             </div>
           </div>
         </div>
@@ -351,11 +353,11 @@ export default function SecretScanPage({ run }: Props) {
       {(rawSecrets.length > 0 || postureFindings.length > 0) && (
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <StatBox label={t('pages.secretScan.scannerHits')} value={rawSecrets.length}
-            color={rawSecrets.length > 0 ? 'var(--fail-ink)' : undefined} sub="hardcoded in source" />
+            color={rawSecrets.length > 0 ? 'var(--fail-ink)' : undefined} sub={t('pages.phase3.restB.secretScan.statHardcoded')} />
           <StatBox label={t('pages.secretScan.critical')} value={critCount} color={critCount > 0 ? 'var(--fail-ink)' : undefined} />
           <StatBox label={t('pages.secretScan.high')} value={highCount} color={highCount > 0 ? 'var(--score-mid-ink)' : undefined} />
           <StatBox label={t('pages.secretScan.postureFailures')} value={failPosture.length}
-            color={failPosture.length > 0 ? 'var(--score-mid-ink)' : undefined} sub="control checks" />
+            color={failPosture.length > 0 ? 'var(--score-mid-ink)' : undefined} sub={t('pages.phase3.restB.secretScan.statControlChecks')} />
           <StatBox label={t('pages.secretScan.postureChecks')} value={postureFindings.length} />
         </div>
       )}
@@ -432,7 +434,7 @@ export default function SecretScanPage({ run }: Props) {
               {t('pages.secretScan.postureTitle')}
             </span>
             <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
-              {failPosture.length > 0 ? `${failPosture.length} failing · ` : ''}{postureFindings.length} total control checks
+              {failPosture.length > 0 ? t('pages.phase3.restB.secretScan.failingCount', { count: String(failPosture.length) }) : ''}{t('pages.phase3.restB.secretScan.totalChecks', { count: String(postureFindings.length) })}
             </span>
           </div>
           <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -474,7 +476,7 @@ export default function SecretScanPage({ run }: Props) {
           ))}
         </div>
         <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'var(--bg)', border: '1px solid var(--border)', fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.7 }}>
-          <strong style={{ color: 'var(--text)' }}>Suppress a specific line</strong> (use sparingly — add a justification):<br />
+          <strong style={{ color: 'var(--text)' }}>{t('pages.phase3.restB.secretScan.suppressLineBold')}</strong> {t('pages.phase3.restB.secretScan.suppressLineHint')}<br />
           <code style={{ fontSize: '0.72rem' }}>{'  password = "..." # wombat:ignore-secret  reason: non-sensitive test placeholder'}</code>
         </div>
 

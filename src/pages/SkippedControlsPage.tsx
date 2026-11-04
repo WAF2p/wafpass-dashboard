@@ -1,6 +1,7 @@
 import { RunDetail } from '../api'
 import { useI18n } from '../i18n'
 import { Card, DataTable, EmptyState, type Column } from '../ui'
+import PageHeader from '../ui/PageHeader'
 
 interface Props { run: RunDetail | null }
 
@@ -98,21 +99,23 @@ export default function SkippedControlsPage({ run }: Props) {
   ]
 
   return (
-    <Card
-      padding="none"
-      title={t('pages.skippedControls.title')}
-      subtitle={t('pages.skippedControls.controlsOf', {
-        skipped: String(skippedControls.length),
-        total: String(run.controls_meta.length),
-      })}
-    >
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={row => row.id}
-        caption={t('pages.skippedControls.title')}
-        empty={<EmptyState compact title={t('pages.skippedControls.noSkipped')} />}
+    <>
+      <PageHeader
+        title={t('pages.skippedControls.title')}
+        description={t('pages.skippedControls.controlsOf', {
+          skipped: String(skippedControls.length),
+          total: String(run.controls_meta.length),
+        })}
       />
-    </Card>
+      <Card padding="none">
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={row => row.id}
+          caption={t('pages.skippedControls.title')}
+          empty={<EmptyState compact title={t('pages.skippedControls.noSkipped')} />}
+        />
+      </Card>
+    </>
   )
 }

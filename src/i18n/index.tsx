@@ -56,9 +56,16 @@ function makeTFn(translations: Translations): TFunction {
     const parts = key.split('.')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let node: any = translations
-    for (const part of parts) {
+    for (let i = 0; i < parts.length; i++) {
       if (node == null || typeof node !== 'object') return key
-      node = node[part]
+      // Support namespaces that store a dotted key flat, e.g.
+      // { 'card.lockedBadge': '…' } alongside nested objects.
+      if (node[parts[i]] === undefined) {
+        const rest = parts.slice(i).join('.')
+        if (typeof node[rest] === 'string') { node = node[rest]; break }
+        return key
+      }
+      node = node[parts[i]]
     }
     if (typeof node !== 'string') return key
     if (!vars) return node

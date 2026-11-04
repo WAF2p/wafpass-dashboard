@@ -851,7 +851,7 @@ export default function EvidencePage({ run }: Props) {
       const tempHtml = generateHtml(run, cfg, waivers, risks, auditEvents)
       const ev = await createEvidence({
         run_id: run.id,
-        title: `${run.project || 'unnamed'} — ${cfg.period || new Date().toISOString().slice(0, 10)}`,
+        title: `${run.project || t('pages.phase3.restA.evidence.unnamed')} — ${cfg.period || new Date().toISOString().slice(0, 10)}`,
         note: cfg.notes,
         prepared_by: cfg.preparedBy,
         organization: cfg.organization,

@@ -10,6 +10,7 @@ function getServerUrl(): string {
 }
 
 function CopyBlock({ code, lang = '' }: { code: string; lang?: string }) {
+  const { t } = useI18n()
   const [copied, setCopied] = useState(false)
   function copy() {
     navigator.clipboard.writeText(code).then(() => {
@@ -35,7 +36,7 @@ function CopyBlock({ code, lang = '' }: { code: string; lang?: string }) {
         fontSize: '0.7rem', fontWeight: 600, padding: '0.25rem 0.6rem', cursor: 'pointer',
         transition: 'background-color .15s ease, border-color .15s ease, color .15s ease',
       }}>
-        {copied ? 'Copied!' : 'Copy'}
+        {copied ? t('pages.phase3.restB.runScan.copied') : t('pages.phase3.restB.runScan.copy')}
       </button>
     </div>
   )
@@ -213,9 +214,9 @@ function ServerScanPanel() {
             background: 'color-mix(in srgb, var(--waf-warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-warn) 25%, transparent)',
             fontSize: '0.75rem', color: 'var(--sev-medium)',
           }}>
-            {!status.enabled && 'Server-side scanning is disabled (WOMBAT_SCAN_ENABLED=false). '}
-            {status.enabled && !status.engine_available && 'wombat-core is not installed on the server. Run: pip install wombat-core. '}
-            {status.enabled && status.engine_available && !status.controls_dir_exists && `Controls directory not found on server: ${status.controls_dir}. Set WOMBAT_CONTROLS_DIR. `}
+            {!status.enabled && t('pages.phase3.restB.runScan.serverDisabled')}
+            {status.enabled && !status.engine_available && t('pages.phase3.restB.runScan.engineMissing')}
+            {status.enabled && status.engine_available && !status.controls_dir_exists && t('pages.phase3.restB.runScan.controlsDirMissing', { dir: status.controls_dir })}
           </div>
         )}
       </div>
@@ -226,7 +227,7 @@ function ServerScanPanel() {
           background: 'color-mix(in srgb, var(--fail) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 20%, transparent)',
           fontSize: '0.78rem', color: 'var(--fail-ink)',
         }}>
-          Could not reach server: {statusError}
+          {t('pages.phase3.restB.runScan.couldNotReach')} {statusError}
         </div>
       )}
 
@@ -235,9 +236,9 @@ function ServerScanPanel() {
           display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.72rem', color: 'var(--muted)',
         }}>
           {[
-            ['Engine', status.engine_available ? '✓ wombat-core' : '✗ not installed'],
-            ['Controls dir', status.controls_dir_exists ? '✓ found' : '✗ missing'],
-            ...(status.scan_base_dir ? [['Base dir', status.scan_base_dir]] : []),
+            [t('pages.phase3.restB.runScan.engine'), status.engine_available ? '✓ wombat-core' : t('pages.phase3.restB.runScan.notInstalled')],
+            [t('pages.phase3.restB.runScan.controlsDir'), status.controls_dir_exists ? t('pages.phase3.restB.runScan.found') : t('pages.phase3.restB.runScan.missing')],
+            ...(status.scan_base_dir ? [[t('pages.phase3.restB.runScan.baseDir'), status.scan_base_dir]] : []),
           ].map(([k, v]) => (
             <div key={k} style={{
               padding: '0.25rem 0.65rem', borderRadius: '6px',
@@ -312,8 +313,8 @@ function ServerScanPanel() {
               <span style={{ color: scoreColor(result.score), fontWeight: 800 }}>{result.score}%</span>
             </div>
             <div><span style={{ fontWeight: 700 }}>{t('pages.scan.controlsRunLabel')}</span> {result.controls_run}</div>
-            {result.project && <div><span style={{ fontWeight: 700 }}>Project:</span> {result.project}</div>}
-            {result.stage && <div><span style={{ fontWeight: 700 }}>Stage:</span> {result.stage}</div>}
+            {result.project && <div><span style={{ fontWeight: 700 }}>{t('pages.phase3.restB.runScan.projectLabel')}</span> {result.project}</div>}
+            {result.stage && <div><span style={{ fontWeight: 700 }}>{t('pages.phase3.restB.runScan.stageLabel')}</span> {result.stage}</div>}
           </div>
         </div>
       )}
@@ -323,10 +324,10 @@ function ServerScanPanel() {
         background: 'color-mix(in srgb, var(--waf-brand) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
         fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6,
       }}>
-        The server runs <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>wombat-core</code> directly against a path on its filesystem.
+        {t('pages.phase3.restB.runScan.serverRunsPrefix')} <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>wombat-core</code> {t('pages.phase3.restB.runScan.serverRunsSuffix')}
         {status?.scan_base_dir
-          ? <> Paths are restricted to <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>{status.scan_base_dir}</code>.</>
-          : <> Set <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>WOMBAT_SCAN_BASE_DIR</code> on the server to restrict which paths are allowed.</>}
+          ? <> {t('pages.phase3.restB.runScan.pathsRestrictedPrefix')} <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>{status.scan_base_dir}</code>{t('pages.phase3.restB.runScan.pathsRestrictedSuffix')}</>
+          : <> {t('pages.phase3.restB.runScan.setPrefix')} <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>WOMBAT_SCAN_BASE_DIR</code> {t('pages.phase3.restB.runScan.setSuffix')}</>}
       </div>
     </div>
   )
@@ -401,9 +402,9 @@ function CliPanel() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.72rem', fontWeight: 800,
             }}>1</div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>Install</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.phase3.restB.runScan.install')}</div>
           </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Python 3.10+ required.</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{t('pages.phase3.restB.runScan.pythonRequired')}</div>
           <CopyBlock code="pip install wombat-core" lang="sh" />
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -414,9 +415,9 @@ function CliPanel() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.72rem', fontWeight: 800,
             }}>2</div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>Push</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{t('pages.phase3.restB.runScan.push')}</div>
           </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Fastest way from a local terminal.</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{t('pages.phase3.restB.runScan.fastestWay')}</div>
           <CopyBlock code={quickCmd} lang="sh" />
         </div>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -429,7 +430,7 @@ function CliPanel() {
             }}>3</div>
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>CI/CD</div>
           </div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Add <code style={{ color: 'var(--text)' }}>--fail-on fail</code> to gate merges.</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{t('pages.phase3.restB.runScan.addPrefix')} <code style={{ color: 'var(--text)' }}>--fail-on fail</code> {t('pages.phase3.restB.runScan.addSuffix')}</div>
           <CopyBlock code={`wombat check --push ${serverUrl}/runs --project "\${{ github.repository }}" --branch "\${{ github.ref_name }}" ./infra`} lang="sh" />
         </div>
       </div>
@@ -448,7 +449,7 @@ function ApiPanel() {
         background: 'color-mix(in srgb, var(--waf-brand) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 15%, transparent)',
         fontSize: '0.78rem', color: 'var(--muted)', lineHeight: 1.6,
       }}>
-        POST JSON results directly — generated automatically with <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>--output json --push</code>.
+        {t('pages.phase3.restB.runScan.apiIntroPrefix')} <code style={{ color: 'var(--text)', background: 'var(--surface)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem' }}>--output json --push</code>{t('pages.phase3.restB.runScan.apiIntroSuffix')}
       </div>
 
       <CopyBlock lang="sh" code={`wombat check --output json ./infra > results.json
@@ -463,11 +464,11 @@ curl -X POST ${serverUrl}/runs \\
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
           {[
-            ['POST', '/scan', 'Trigger server-side scan (persists Run)'],
-            ['POST', '/runs', 'Submit a pre-built scan result'],
-            ['GET', '/runs', 'List all scan runs'],
-            ['GET', '/runs/{id}', 'Full run detail with findings'],
-            ['GET', '/runs/{id}/findings', 'Filter by ?status=FAIL&severity=critical'],
+            ['POST', '/scan', t('pages.phase3.restB.runScan.apiTrigger')],
+            ['POST', '/runs', t('pages.phase3.restB.runScan.apiSubmit')],
+            ['GET', '/runs', t('pages.phase3.restB.runScan.apiList')],
+            ['GET', '/runs/{id}', t('pages.phase3.restB.runScan.apiDetail')],
+            ['GET', '/runs/{id}/findings', t('pages.phase3.restB.runScan.apiFilter')],
           ].map(([method, p, desc]) => (
             <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem' }}>
               <span style={{
@@ -487,18 +488,18 @@ curl -X POST ${serverUrl}/runs \\
 
 function FlagsShelf({ t }: { t: (key: string) => string }) {
   const flags = [
-    ['--push URL', 'POST results to dashboard'],
-    ['--output json', 'Required for --push'],
-    ['--project NAME', 'Label this run'],
-    ['--branch NAME', 'Git branch'],
-    ['--stage NAME', 'dev | staging | prod'],
-    ['--iac FRAMEWORK', 'terraform | cdk | pulumi | bicep | cfn'],
-    ['--pillars LIST', 'security,cost,reliability,…'],
-    ['--severity LEVEL', 'critical | high | medium | low'],
-    ['--fail-on fail', 'Exit non-zero on FAIL'],
-    ['--fail-on skip', 'Exit on FAIL + SKIP'],
-    ['--plan-file PATH', 'Terraform plan JSON'],
-    ['--waiver-file PATH', '.wombat-skip.yml'],
+    ['--push URL', t('pages.phase3.restB.runScan.flagPush')],
+    ['--output json', t('pages.phase3.restB.runScan.flagOutput')],
+    ['--project NAME', t('pages.phase3.restB.runScan.flagProject')],
+    ['--branch NAME', t('pages.phase3.restB.runScan.flagBranch')],
+    ['--stage NAME', t('pages.phase3.restB.runScan.flagStage')],
+    ['--iac FRAMEWORK', t('pages.phase3.restB.runScan.flagIac')],
+    ['--pillars LIST', t('pages.phase3.restB.runScan.flagPillars')],
+    ['--severity LEVEL', t('pages.phase3.restB.runScan.flagSeverity')],
+    ['--fail-on fail', t('pages.phase3.restB.runScan.flagFailOnFail')],
+    ['--fail-on skip', t('pages.phase3.restB.runScan.flagFailOnSkip')],
+    ['--plan-file PATH', t('pages.phase3.restB.runScan.flagPlanFile')],
+    ['--waiver-file PATH', t('pages.phase3.restB.runScan.flagWaiverFile')],
   ]
 
   return (

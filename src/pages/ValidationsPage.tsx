@@ -94,6 +94,7 @@ function Card({ children }: { children: React.ReactNode }) {
 }
 
 function MonoRow({ label, value, copy }: { label: string; value: string; copy?: boolean }) {
+  const { t } = useI18n()
   const [copied, setCopied] = useState(false)
   return (
     <div style={{
@@ -121,7 +122,7 @@ function MonoRow({ label, value, copy }: { label: string; value: string; copy?: 
               fontSize: '0.7rem', fontWeight: 600, color: copied ? 'var(--pass-ink)' : 'var(--muted)',
             }}
           >
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? t('common.copied') : t('common.copy')}
           </button>
         )}
       </div>
@@ -223,8 +224,8 @@ function ConnectionBanner() {
     return () => { cancelled = true }
   }, [gatewayUrl])
 
-  const apiBase = getApiBase() || '(not configured)'
-  const gatewayBase = getValidationGatewayBase() || '(not configured)'
+  const apiBase = getApiBase() || t('pages.phase3.restB.validations.notConfigured')
+  const gatewayBase = getValidationGatewayBase() || t('pages.phase3.restB.validations.notConfigured')
   const hasGatewayConfigured = Boolean(getValidationGatewayBase())
 
   // All good: server reachable and either no gateway configured or gateway reachable.
@@ -357,10 +358,10 @@ function SubmitPanel({ onSubmitted }: { onSubmitted: (id: string) => void }) {
       const { settings } = loadMaturityState()
       const meta = settings.validationMetadata ?? {}
 
-      setStep('Signing run locally…')
+      setStep(t('pages.phase3.restB.validations.stepSigning'))
       const attestation = await createRunAttestation(selectedRunId)
 
-      setStep('Fetching server certificate…')
+      setStep(t('pages.phase3.restB.validations.stepFetchCertificate'))
       const serverCertificate = await fetchServerCertificate()
 
       const payload: ValidationGatewaySubmit = {
@@ -382,13 +383,13 @@ function SubmitPanel({ onSubmitted }: { onSubmitted: (id: string) => void }) {
         },
       }
 
-      setStep('Submitting to validation gateway…')
+      setStep(t('pages.phase3.restB.validations.stepSubmitting'))
       const record = await submitValidation(payload, apiKey.trim())
       onSubmitted(record.validation_id)
       setSelectedRunId('')
       setApiKey('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Submit failed')
+      setError(e instanceof Error ? e.message : t('pages.phase3.restB.validations.submitFailed'))
     } finally {
       setStep(null)
       setLoading(false)
@@ -558,7 +559,7 @@ function DetailPanel({
       const refreshed = await fetchGatewayValidation(id)
       setRecord(refreshed)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Revoke failed')
+      setError(e instanceof Error ? e.message : t('pages.phase3.restB.validations.revokeFailed'))
     } finally {
       setRevoking(false)
     }
@@ -580,7 +581,7 @@ function DetailPanel({
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>Validation {shortId(id)}</h2>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>{t('pages.phase3.restB.validations.validationTitle', { id: shortId(id) })}</h2>
             {record && statusPill(record.status)}
           </div>
           <button onClick={onClose} aria-label={t('common.close')} style={{
@@ -604,13 +605,13 @@ function DetailPanel({
           <>
             <Section title={t('pages.validations.runIdentity')}>
               <Card>
-                <MonoRow label="Validation ID" value={record.validation_id} />
-                <MonoRow label="Run hash" value={record.canonical_hash} copy />
+                <MonoRow label={t('pages.phase3.restB.validations.validationId')} value={record.validation_id} />
+                <MonoRow label={t('pages.phase3.restB.validations.runHash')} value={record.canonical_hash} copy />
                 <MonoRow label={t('pages.validations.colProject')} value={record.project || '—'} />
                 <MonoRow label={t('pages.validations.colBranch')} value={record.branch || '—'} />
                 <MonoRow label={t('pages.validations.colGitSha')} value={record.git_sha || '—'} />
-                <MonoRow label="Validated at" value={fmtDate(record.validated_at)} />
-                {record.expires_at && <MonoRow label="Expires at" value={fmtDate(record.expires_at)} />}
+                <MonoRow label={t('pages.phase3.restB.validations.validatedAt')} value={fmtDate(record.validated_at)} />
+                {record.expires_at && <MonoRow label={t('pages.phase3.restB.validations.expiresAt')} value={fmtDate(record.expires_at)} />}
               </Card>
             </Section>
 
@@ -638,8 +639,8 @@ function DetailPanel({
 
             <Section title={t('pages.validations.cryptoProof')}>
               <Card>
-                <MonoRow label="Server public key" value={record.server_public_key} copy />
-                <MonoRow label="Server signature" value={record.server_signature} copy />
+                <MonoRow label={t('pages.phase3.restB.validations.serverPublicKey')} value={record.server_public_key} copy />
+                <MonoRow label={t('pages.phase3.restB.validations.serverSignature')} value={record.server_signature} copy />
                 {record.certificate_chain.map((cert, i) => (
                   <CertificateRow
                     key={i}
@@ -675,9 +676,9 @@ function DetailPanel({
                   border: '1px solid var(--border)', borderRadius: '10px',
                 }}>
                   <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontSize: '0.8rem' }}>
-                    <span><strong>Status:</strong> {badge.status}</span>
-                    <span><strong>Score:</strong> {badge.score ?? '—'}%</span>
-                    <span><strong>Signer key:</strong> <code title={badge.signer_public_key}>{badge.signer_public_key.slice(0, 20)}…</code></span>
+                    <span><strong>{t('pages.phase3.restB.validations.badgeStatus')}</strong> {badge.status}</span>
+                    <span><strong>{t('pages.phase3.restB.validations.badgeScore')}</strong> {badge.score ?? '—'}%</span>
+                    <span><strong>{t('pages.phase3.restB.validations.badgeSignerKey')}</strong> <code title={badge.signer_public_key}>{badge.signer_public_key.slice(0, 20)}…</code></span>
                   </div>
                   {badge.metadata && Object.keys(badge.metadata).length > 0 && (
                     <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontSize: '0.78rem', color: 'var(--muted)' }}>
@@ -825,7 +826,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
           description={t('pages.validations.subtitle')}
           actions={
             <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
-              Download WOMBATpass Root CA
+              {t('pages.phase3.restB.validations.downloadRootCa')}
             </a>
           }
         />
@@ -843,7 +844,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by ID, project, branch, status…"
+            placeholder={t('pages.phase3.restB.validations.searchPlaceholder')}
             style={{
               flex: 1, minWidth: '200px', padding: '0.5rem 0.75rem', borderRadius: '8px',
               border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)',
@@ -851,7 +852,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
             }}
           />
           <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-            {filtered.length} of {ids.length} known
+            {t('pages.phase3.restB.validations.countKnown', { filtered: filtered.length, total: ids.length })}
           </span>
         </div>
 
@@ -861,7 +862,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
             value={trackId}
             onChange={e => setTrackId(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') trackValidation(trackId) }}
-            placeholder="Track an existing validation ID…"
+            placeholder={t('pages.phase3.restB.validations.trackPlaceholder')}
             style={{
               flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px',
               border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)',
@@ -876,7 +877,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
               fontSize: '0.78rem', cursor: 'pointer',
             }}
           >
-            Track
+            {t('pages.phase3.restB.validations.track')}
           </button>
         </div>
 
@@ -933,7 +934,7 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
                             fontSize: '0.75rem', cursor: 'pointer',
                           }}
                         >
-                          View
+                          {t('pages.phase3.restB.validations.view')}
                         </button>
                       </td>
                     </tr>

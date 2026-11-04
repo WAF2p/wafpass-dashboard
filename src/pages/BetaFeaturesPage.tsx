@@ -244,7 +244,7 @@ export default function BetaFeaturesPage({
           <Benefits items={[t('pages.betaFeatures.findingsTriageBenefit1'), t('pages.betaFeatures.findingsTriageBenefit2'), t('pages.betaFeatures.findingsTriageBenefit3')]} />
           <div className="beta-module-actions">
             <button type="button" className="beta-secondary" onClick={() => onNavigate('findings')}>{t('pages.betaFeatures.triageOpenFindings')}</button>
-            <span className="beta-hint">Then choose <strong>Triage</strong> in the Findings filter bar.</span>
+            <span className="beta-hint">{t('pages.phase3.restA.betaFeatures.thenChoose')} <strong>{t('pages.phase3.restA.betaFeatures.triage')}</strong> {t('pages.phase3.restA.betaFeatures.inFindingsFilterBar')}</span>
           </div>
         </>
       )

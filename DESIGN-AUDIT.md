@@ -20,7 +20,7 @@ tables, states, a11y) plus spot reads; not a screenshot review of every page.
 | **L4** | Systematized — global primitives, rules enforced, both themes |
 | **L5** | Governed — automated checks + visual regression in CI |
 
-**Overall: L4.5 — systematized and gated in CI** (was L2.5 at the initial audit).
+**Overall: L4.8 — governed, with chart-colour debt** (was L2.5 at the initial audit).
 
 | Dimension | Score | Evidence |
 |---|---|---|
@@ -262,6 +262,22 @@ Changes 58→7, RunsList 48→15, GroupMappings 34→0, Findings 27→0, Risk Ac
 **Visual regression.** `scripts/visual-regression.mjs` (pixelmatch + pngjs) captures 6 routes × 2 themes, waits for content to settle and for two identical frames, and compares against `visual-baselines/`. Commands: `npm run visual:baseline` / `npm run visual:check`. Diffs land in `.visual/diffs/` (gitignored).
 
 **Secrets.** Root `.env` was migrated from `WAFPASS_*` to `WOMBAT_*` for every compose-consumed setting; JWT, API and internal signing secrets rotated. `.env.example` documents the internal key and sub-CA path.
+
+### Phase 4c — full adoption, quality gates, remaining i18n
+
+**Tables.** `DataTable` gained selection (`selectable`, `selectedKeys`, `onSelectionChange`), expansion (`renderExpanded`, `expandedKeys`), `rowClassName` and an actions column. Migrated the four complex tables: Findings (selection + detail row), Runs (bookmark + row click), User Management (expandable + per-row actions), Project Overview (row action). Remaining raw tables are diff/heatmap/code-report surfaces that need bespoke cells.
+
+**Headers.** Five more pages adopted `PageHeader` (Architecture / Engineering / Maturity / Pipeline Operations Centers, Skipped Controls). Pages without a visible title keep their sr-only `<h1>`.
+
+**Primitives adopted.** `Input`/`Select` in Settings, SSO Settings and User Preferences; `StatTile` on Compliance Readiness; `Toolbar` in Controls Packs; `Tabs` in Validation Center. `ChartFrame` and its palette remain available for chart migration.
+
+**i18n.** Extracted a further **699 UI strings** into `pages.phase3.restA` / `restB` across 35 pages. Remaining English is content by design: code/YAML/HCL samples, generated HTML reports, legal prose, diagram labels, data values. `xx_TEMPLATE.ts` now includes every Phase 3 namespace (≈1,000 keys). The `t()` resolver now supports both nested and flat dotted keys (fixes the Evidence namespace).
+
+**Quality gates.**
+- `npm run a11y:check` — axe-core via CDP, WCAG 2.1 A/AA, 14 routes × light/dark. **0 serious/critical violations.**
+- `npm run visual:check` — pixel diff at **1440/900/390** widths × light/dark, **36 baselines** committed; passes.
+- `.github/workflows/quality.yml` — manual workflow against a reachable deployment, installs Chrome, runs axe + visual checks and uploads reports.
+- `.github/workflows/design.yml` — install, design gate, build, tests on push/PR.
 
 ---
 

@@ -11,7 +11,7 @@ import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_RUN_BOOKMARKS } from './userPrefsUtils'
 import { scoreColor } from '../severity';
 import { scoreBg } from '../severity';
-import { Card, EmptyState } from '../ui';
+import { Card, DataTable, EmptyState, type Column } from '../ui';
 import { PAGE_TITLE } from '../routing'
 
 interface Props {
@@ -50,6 +50,7 @@ const PAGE_SIZE = 50
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 function ScoreTooltip({ active, payload, label }: any) {
+  const { t } = useI18n()
   if (!active || !payload?.length) return null
   return (
     <div style={{
@@ -68,7 +69,7 @@ function ScoreTooltip({ active, payload, label }: any) {
           )}
         </div>
       ))}
-      <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--muted)' }}>Click dot to open run</div>
+      <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--muted)' }}>{t('pages.phase3.restB.runsList.clickDotToOpen')}</div>
     </div>
   )
 }
@@ -179,7 +180,7 @@ function TrendView({ runs, onSelect }: Props) {
       <div className="card" style={{ padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
         <div>
           <span style={{ fontSize: '1.5rem', fontWeight: 800, lineHeight: 1, color: 'var(--text)' }}>{sorted.length}</span>
-          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.35rem' }}>runs</span>
+          <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginLeft: '0.35rem' }}>{t('pages.phase3.restB.runsList.runs')}</span>
         </div>
         <div style={{ width: '1px', height: '28px', background: 'var(--border)' }} />
         <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{dateRange}</div>
@@ -198,7 +199,7 @@ function TrendView({ runs, onSelect }: Props) {
               fontSize: '0.7rem', fontWeight: 700,
               color: overallDelta > 0 ? 'var(--score-high-ink)' : overallDelta < 0 ? 'var(--score-low-ink)' : 'var(--muted)',
             }}>
-              {overallDelta > 0 ? '+' : ''}{overallDelta} pts
+              {t('pages.phase3.restB.runsList.pointsDelta', { delta: `${overallDelta > 0 ? '+' : ''}${overallDelta}` })}
             </span>
           </div>
           <div style={{ textAlign: 'center' }}>
@@ -295,7 +296,7 @@ function TrendView({ runs, onSelect }: Props) {
             </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1px', background: 'var(--border)' }}>
-            {pillarSeries.map(({ key, label, color, data }) => {
+            {pillarSeries.map(({ key, color, data }) => {
               const latest  = data[data.length - 1]?.score ?? 0
               const first   = data[0]?.score ?? 0
               const delta   = data.length > 1 ? latest - first : null
@@ -303,7 +304,7 @@ function TrendView({ runs, onSelect }: Props) {
                 <div key={key} style={{ background: 'var(--surface)', padding: '0.875rem 1rem 0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '0.625rem' }}>
                     <div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t(`pages.phase3.restB.runsList.pillar.${key}`)}</span>
                       {delta !== null && (
                         <span style={{
                           marginLeft: '0.4rem', fontSize: '0.7rem', fontWeight: 700,
@@ -332,7 +333,7 @@ function TrendView({ runs, onSelect }: Props) {
                         <YAxis domain={[0, 100]} hide />
                         <Tooltip content={<PillarTooltip />} />
                         <Area
-                          type="monotone" dataKey="score" name={label}
+                          type="monotone" dataKey="score" name={t(`pages.phase3.restB.runsList.pillar.${key}`)}
                           stroke={color} strokeWidth={1.75}
                           fill={`url(#grad-${key})`}
                           dot={false}
@@ -392,88 +393,67 @@ function StageBadge({ stage }: { stage: string }) {
   )
 }
 
-function RunRow({ r, onSelect }: { r: RunSummary; onSelect: (id: string) => void }) {
+function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: string) => void }) {
+  const { t } = useI18n()
   const { prefs, isEnabled, update } = useBetaFeatures()
   const bookmarkEnabled = isEnabled(BETA_RUN_BOOKMARKS)
-  const bookmarked = (prefs.bookmarkedRuns ?? []).includes(r.id)
-  const toggleBookmark = (event: React.MouseEvent) => {
+
+  const toggleBookmark = (r: RunSummary, event: React.MouseEvent) => {
     event.stopPropagation()
     if (!bookmarkEnabled) return
     const current = prefs.bookmarkedRuns ?? []
+    const bookmarked = current.includes(r.id)
     const next = bookmarked ? current.filter(id => id !== r.id) : [...current, r.id].slice(-5)
     update({ bookmarkedRuns: next })
   }
-  return (
-    <tr
-      onClick={() => onSelect(r.id)}
-      style={{ borderTop: '1px solid var(--border)', cursor: 'pointer' }}
-      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = 'var(--bg)'}
-      onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
-    >
-      <td style={{ padding: '0.75rem 1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '.45rem' }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 600, color: 'var(--waf-brand)' }}>{r.project || '—'}</div>
-            {r.git_sha && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>{r.git_sha.slice(0, 7)}</div>}
-          </div>
-          {bookmarkEnabled && (
-            <button
-              type="button"
-              className={`run-bookmark${bookmarked ? ' is-on' : ''}`}
-              aria-pressed={bookmarked}
-              aria-label={bookmarked ? 'Remove run bookmark' : 'Bookmark run'}
-              title={bookmarked ? 'Remove run bookmark' : 'Bookmark run'}
-              onClick={toggleBookmark}
-            >
-              <svg width="14" height="14" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h12a1 1 0 011 1v16l-7-4-7 4V5a1 1 0 011-1z" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </td>
-      <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{r.branch || '—'}</td>
-      <td style={{ padding: '0.75rem 1rem' }}><StageBadge stage={r.stage} /></td>
-      <td style={{ padding: '0.75rem 1rem' }}><ScoreBadge score={r.score} /></td>
-      <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)', fontFamily: 'monospace', fontSize: '0.78rem' }}>{r.iac_framework}</td>
-      <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>{r.triggered_by}</td>
-      <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)' }}>
-        {r.controls_run > 0 ? `${r.controls_run} / ${r.controls_loaded}` : '—'}
-      </td>
-      <td style={{ padding: '0.75rem 1rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-        {new Date(r.created_at).toLocaleString()}
-      </td>
-    </tr>
-  )
-}
 
-function RunsTable({ runs, onSelect }: { runs: RunSummary[]; onSelect: (id: string) => void }) {
-  const { t } = useI18n()
-  const colHeaders = [t('pages.runs.colProject'), t('pages.runs.colBranch'), t('pages.runs.colStage'), t('pages.runs.colScore'), t('pages.runs.colFramework'), t('pages.runs.colTriggeredBy'), t('pages.runs.colControls'), t('pages.runs.colDate')]
+  const columns: Column<RunSummary>[] = [
+    {
+      key: 'project',
+      header: t('pages.runs.colProject'),
+      render: r => {
+        const bookmarked = (prefs.bookmarkedRuns ?? []).includes(r.id)
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.45rem' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 600, color: 'var(--waf-brand)' }}>{r.project || '—'}</div>
+              {r.git_sha && <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>{r.git_sha.slice(0, 7)}</div>}
+            </div>
+            {bookmarkEnabled && (
+              <button
+                type="button"
+                className={`run-bookmark${bookmarked ? ' is-on' : ''}`}
+                aria-pressed={bookmarked}
+                aria-label={bookmarked ? t('pages.phase3.restB.runsList.removeBookmark') : t('pages.phase3.restB.runsList.bookmarkRun')}
+                title={bookmarked ? t('pages.phase3.restB.runsList.removeBookmark') : t('pages.phase3.restB.runsList.bookmarkRun')}
+                onClick={event => toggleBookmark(r, event)}
+              >
+                <svg width="14" height="14" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 4h12a1 1 0 011 1v16l-7-4-7 4V5a1 1 0 011-1z" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )
+      },
+    },
+    { key: 'branch', header: t('pages.runs.colBranch'), render: r => <span style={{ color: 'var(--muted)' }}>{r.branch || '—'}</span> },
+    { key: 'stage', header: t('pages.runs.colStage'), render: r => <StageBadge stage={r.stage} /> },
+    { key: 'score', header: t('pages.runs.colScore'), render: r => <ScoreBadge score={r.score} /> },
+    { key: 'framework', header: t('pages.runs.colFramework'), mono: true, render: r => <span style={{ color: 'var(--muted)', fontSize: '0.78rem' }}>{r.iac_framework}</span> },
+    { key: 'triggered_by', header: t('pages.runs.colTriggeredBy'), render: r => <span style={{ color: 'var(--muted)' }}>{r.triggered_by}</span> },
+    { key: 'controls', header: t('pages.runs.colControls'), render: r => <span style={{ color: 'var(--muted)' }}>{r.controls_run > 0 ? `${r.controls_run} / ${r.controls_loaded}` : '—'}</span> },
+    { key: 'created_at', header: t('pages.runs.colDate'), render: r => <span style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>{new Date(r.created_at).toLocaleString()}</span> },
+  ]
+
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-        <thead>
-          <tr style={{ background: 'var(--bg)' }}>
-            {colHeaders.map(h => (
-              <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {runs.map(r => <RunRow key={r.id} r={r} onSelect={onSelect} />)}
-          {runs.length === 0 && (
-            <tr>
-              <td colSpan={colHeaders.length}>
-                <EmptyState compact title={t('common.noData')} />
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+    <DataTable<RunSummary>
+      columns={columns}
+      rows={runs}
+      rowKey={r => r.id}
+      onRowClick={r => onSelect(r.id)}
+      empty={<EmptyState compact title={t('common.noData')} />}
+    />
   )
 }
 
@@ -557,7 +537,7 @@ export default function RunsListPage({ runs, onSelect }: Props) {
       />
       {canCompare && (
         <button type="button" className="run-compare" onClick={() => setShowTrend(true)}>
-          Compare bookmarks <span>{bookmarkedRuns.length}</span>
+          {t('pages.phase3.restB.runsList.compareBookmarks')} <span>{bookmarkedRuns.length}</span>
         </button>
       )}
       <div style={{ flex: 1 }} />
@@ -669,10 +649,10 @@ export default function RunsListPage({ runs, onSelect }: Props) {
           <div key={project} className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'var(--bg)' }}>
               <span style={{ fontWeight: 700, fontSize: '0.85rem', color: isUnnamed ? 'var(--muted)' : 'var(--waf-brand)', fontStyle: isUnnamed ? 'italic' : undefined }}>
-                {project}
+                {isUnnamed ? t('pages.phase3.restB.runsList.noProject') : project}
               </span>
               <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-                {groupRuns.length} run{groupRuns.length !== 1 ? 's' : ''}
+                {groupRuns.length} {groupRuns.length !== 1 ? t('pages.phase3.restB.runsList.runMany') : t('pages.phase3.restB.runsList.runOne')}
               </span>
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: 'var(--muted)' }}>
                 {t('pages.runs.avgScore')} <span style={{ fontWeight: 700, color, fontSize: '0.8rem' }}>{avgScore}</span>

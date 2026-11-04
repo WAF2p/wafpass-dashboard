@@ -1,0 +1,57 @@
+name: quality
+
+# Manual quality gate against a reachable deployment.
+# Visual baselines are environment-specific: run this against the same
+# environment the baselines were captured from.
+on:
+  workflow_dispatch:
+    inputs:
+      web_url:
+        description: Dashboard URL
+        required: true
+        default: http://localhost:3000
+      api_url:
+        description: wombat-server URL
+        required: true
+        default: http://localhost:8000
+
+jobs:
+  a11y-visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+
+      - id: chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Accessibility (axe)
+        env:
+          WAF_WEB_URL: ${{ inputs.web_url }}
+          WAF_API_URL: ${{ inputs.api_url }}
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: npm run a11y:check
+
+      - name: Visual regression
+        env:
+          WAF_WEB_URL: ${{ inputs.web_url }}
+          WAF_API_URL: ${{ inputs.api_url }}
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: npm run visual:check
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: |
+            .a11y/report.json
+            .visual/diffs/
+          if-no-files-found: ignore

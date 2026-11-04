@@ -3,10 +3,10 @@ import { RunDetail, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
 import { aggregateScore, companyTrend, JOURNEY_STAGES, latestRunByProject, nextStage, pointsToNextStage, stageFor } from './journeyUtils'
-import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner, TwoColumnGrid } from './OperationsCenterShell'
+import { Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard, StubBanner, TwoColumnGrid } from './OperationsCenterShell'
+import PageHeader from '../ui/PageHeader'
 import StageBadge from './journey/components/StageBadge'
 import type { JourneyStage } from './journeyUtils'
-import { PAGE_TITLE } from '../routing'
 
 function stageColor(stage: JourneyStage): string {
   switch (stage.idx) {
@@ -164,14 +164,11 @@ export default function MaturityOperationsCenter({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <h1 className="ui-sr-only">{PAGE_TITLE['maturity']}</h1>
-      <CenterHero
+      <PageHeader
         eyebrow="Operations Center"
         title={t('pages.maturityOps.title')}
-        subtitle={t('pages.maturityOps.subtitle')}
-        accent="var(--fail)"
-      >
-        {runs.length > 0 && (
+        description={t('pages.maturityOps.subtitle')}
+        actions={runs.length > 0 && (
           <div style={{ textAlign: 'right', minWidth: '180px' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.journey.companyAverage')}
@@ -185,7 +182,7 @@ export default function MaturityOperationsCenter({
             </div>
           </div>
         )}
-      </CenterHero>
+      />
 
       <StubBanner
         title={t('pages.maturityOps.stubsInProgress')}

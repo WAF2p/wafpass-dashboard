@@ -15,11 +15,11 @@ type Attrs = Record<string, unknown>
 // ─── Shared constants ─────────────────────────────────────────────────────────
 
 const ACTION_META: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  create:  { label: 'Add',     color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 8%, var(--surface))',   icon: '+' },
-  update:  { label: 'Change',  color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))',   icon: '~' },
-  delete:  { label: 'Destroy', color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 8%, var(--surface))',   icon: '−' },
-  replace: { label: 'Replace', color: 'var(--waf-info)', bg: 'color-mix(in srgb, var(--waf-info) 8%, var(--surface))', icon: '⟳' },
-  'no-op': { label: 'No-op',   color: 'var(--skip)', bg: 'transparent',           icon: '·' },
+  create:  { label: 'pages.phase3.restA.changes.actionAdd',     color: 'var(--pass-ink)', bg: 'color-mix(in srgb, var(--pass) 8%, var(--surface))',   icon: '+' },
+  update:  { label: 'pages.phase3.restA.changes.actionChange',  color: 'var(--score-mid-ink)', bg: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))',   icon: '~' },
+  delete:  { label: 'pages.phase3.restA.changes.actionDestroy', color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 8%, var(--surface))',   icon: '−' },
+  replace: { label: 'pages.phase3.restA.changes.actionReplace', color: 'var(--waf-info)', bg: 'color-mix(in srgb, var(--waf-info) 8%, var(--surface))', icon: '⟳' },
+  'no-op': { label: 'pages.phase3.restA.changes.actionNoOp',   color: 'var(--skip)', bg: 'transparent',           icon: '·' },
 }
 
 function actionMeta(action: string) {
@@ -96,19 +96,19 @@ function getTailbreakRisks(type: string): string[] {
 
 // ─── Plan Changes helpers ─────────────────────────────────────────────────────
 
-function renderAttrValue(val: unknown, isUnknown?: boolean): React.ReactNode {
-  if (isUnknown) return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>(computed at apply)</span>
+function renderAttrValue(val: unknown, t: ReturnType<typeof useI18n>['t'], isUnknown?: boolean): React.ReactNode {
+  if (isUnknown) return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>{t('pages.changes.computedAtApply')}</span>
   if (val === null || val === undefined) return <span style={{ color: 'var(--skip)' }}>null</span>
   if (val === true)  return <span style={{ color: 'var(--pass-ink)', fontWeight: 700 }}>true</span>
   if (val === false) return <span style={{ color: 'var(--fail-ink)', fontWeight: 700 }}>false</span>
   if (typeof val === 'number') return <span style={{ color: '#0ea5e9' }}>{val}</span>
   if (typeof val === 'string') {
-    if (val === '') return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>(empty)</span>
+    if (val === '') return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>{t('pages.phase3.restA.changes.emptyValue')}</span>
     const display = val.length > 160 ? val.slice(0, 160) + '…' : val
     return <span title={val.length > 160 ? val : undefined}>{display}</span>
   }
   if (Array.isArray(val)) {
-    if (val.length === 0) return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>(empty list)</span>
+    if (val.length === 0) return <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>{t('pages.phase3.restA.changes.emptyList')}</span>
     if (val.length <= 5 && val.every(v => typeof v !== 'object' || v === null))
       return <span>{(val as unknown[]).map(v => v === null ? 'null' : String(v)).join(', ')}</span>
     const str = JSON.stringify(val, null, 2)
@@ -131,7 +131,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterLabel = 'After', diffOnly = true }: {
+function DiffTable({ before, after, afterUnknown, beforeLabel, afterLabel, diffOnly = true }: {
   before: Attrs | null | undefined
   after: Attrs | null | undefined
   afterUnknown?: Attrs | null
@@ -139,9 +139,12 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
   afterLabel?: string
   diffOnly?: boolean
 }) {
+  const { t } = useI18n()
+  const resolvedBeforeLabel = beforeLabel ?? t('pages.phase3.restA.changes.before')
+  const resolvedAfterLabel = afterLabel ?? t('pages.phase3.restA.changes.after')
   if (before == null && after == null) return (
     <div style={{ fontSize: '0.8rem', color: 'var(--muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
-      Attribute data not available — re-run wombat with a plan file using the latest version to see attribute-level details.
+      {t('pages.phase3.restA.changes.noAttributeData')}
     </div>
   )
 
@@ -160,7 +163,7 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
     return x.key.localeCompare(y.key)
   })
 
-  if (!rows.length) return <div style={{ fontSize: '0.8rem', color: 'var(--pass-ink)' }}>No attribute differences detected.</div>
+  if (!rows.length) return <div style={{ fontSize: '0.8rem', color: 'var(--pass-ink)' }}>{t('pages.phase3.restA.changes.noAttributeDifferences')}</div>
 
   const securityChanges = rows.filter(c => c.isSecurity && diffOnly)
   const beforeColor = before == null ? 'var(--skip)' : 'var(--fail-ink)'
@@ -170,15 +173,15 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
       {securityChanges.length > 0 && (
         <div style={{ padding: '0.55rem 0.75rem', borderRadius: '8px', background: 'color-mix(in srgb, var(--waf-warn) 8%, var(--surface))', border: '1px solid color-mix(in srgb, var(--waf-warn) 20%, transparent)', fontSize: '0.77rem', color: 'var(--score-mid-ink)' }}>
-          <strong>⚠ Security-sensitive attributes changing:</strong>{' '}{securityChanges.map(c => c.key).join(', ')}
+          <strong>{t('pages.phase3.restA.changes.securitySensitive')}</strong>{' '}{securityChanges.map(c => c.key).join(', ')}
         </div>
       )}
       <table className="changes-attr-table">
         <thead>
           <tr>
-            <th>Attribute</th>
-            <th style={{ color: beforeColor }}>{beforeLabel}</th>
-            <th style={{ color: afterColor }}>{afterLabel}</th>
+            <th>{t('pages.phase3.restA.changes.attribute')}</th>
+            <th style={{ color: beforeColor }}>{resolvedBeforeLabel}</th>
+            <th style={{ color: afterColor }}>{resolvedAfterLabel}</th>
           </tr>
         </thead>
         <tbody>
@@ -188,10 +191,10 @@ function DiffTable({ before, after, afterUnknown, beforeLabel = 'Before', afterL
                 {isSecurity && <span style={{ marginRight: '0.2rem' }}>⚠</span>}{key}
               </td>
               <td style={{ background: 'color-mix(in srgb, var(--fail) 4%, var(--surface))', borderRight: '2px solid color-mix(in srgb, var(--fail) 12%, transparent)' }}>
-                {b !== undefined ? renderAttrValue(b) : <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>—</span>}
+                {b !== undefined ? renderAttrValue(b, t) : <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>—</span>}
               </td>
               <td style={{ background: 'color-mix(in srgb, var(--pass) 4%, var(--surface))' }}>
-                {a !== undefined ? renderAttrValue(a, isUnknown) : <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>—</span>}
+                {a !== undefined ? renderAttrValue(a, t, isUnknown) : <span style={{ color: 'var(--skip)', fontStyle: 'italic' }}>—</span>}
               </td>
             </tr>
           ))}
@@ -223,7 +226,7 @@ function CreateDetail({ after, afterUnknown }: { after: Attrs | null | undefined
       </div>
       <div>
         <SectionLabel>{t('pages.changes.attrToBeCreated')}</SectionLabel>
-        <DiffTable before={null} after={after} afterUnknown={afterUnknown} diffOnly={false} beforeLabel="Before (does not exist)" afterLabel="After (planned values)" />
+        <DiffTable before={null} after={after} afterUnknown={afterUnknown} diffOnly={false} beforeLabel={t('pages.phase3.restA.changes.beforeDoesNotExist')} afterLabel={t('pages.phase3.restA.changes.afterPlannedValues')} />
       </div>
     </div>
   )
@@ -251,7 +254,7 @@ function DeleteDetail({ before, type }: { before: Attrs | null | undefined; type
       <TailbreakAlert type={type} />
       <div>
         <SectionLabel>{t('pages.changes.currentState')}</SectionLabel>
-        <DiffTable before={before} after={null} diffOnly={false} beforeLabel="Before (current values)" afterLabel="After (will be destroyed)" />
+        <DiffTable before={before} after={null} diffOnly={false} beforeLabel={t('pages.phase3.restA.changes.beforeCurrentValues')} afterLabel={t('pages.phase3.restA.changes.afterWillBeDestroyed')} />
       </div>
     </div>
   )
@@ -289,10 +292,10 @@ function ChangeDetailModal({ change, onClose }: { change: PlanChange; onClose: (
           <div className="changes-modal__title-block">
             <div className="changes-modal__address">{change.address}</div>
             <div className="changes-modal__meta">
-              <span className="changes-badge" style={{ background: bg, color }}>{label}</span>
+              <span className="changes-badge" style={{ background: bg, color }}>{t(label)}</span>
               <span className="changes-badge changes-badge--muted">{change.type}</span>
               {change.provider && <span className="changes-badge changes-badge--brand">{change.provider}</span>}
-              {change.module_address && <span className="changes-badge changes-badge--muted">module: {change.module_address}</span>}
+              {change.module_address && <span className="changes-badge changes-badge--muted">{t('pages.phase3.restA.changes.moduleLabel')} {change.module_address}</span>}
             </div>
           </div>
           <button className="changes-modal__close" onClick={onClose} aria-label={t('common.close')}>×</button>
@@ -542,10 +545,10 @@ function Sidebar({ run, runs, prevRun }: { run: RunDetail; runs: RunSummary[]; p
       {prevRun && (
         <SectionCard title={t('pages.changes.driftBaseline')}>
           <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.7 }}>
-            <div><strong>Branch:</strong> {prevRun.branch}</div>
-            <div><strong>Score:</strong> {prevRun.score}</div>
-            <div><strong>SHA:</strong> <span style={{ fontFamily: 'monospace' }}>{prevRun.git_sha?.slice(0, 8)}</span></div>
-            <div><strong>Date:</strong> {new Date(prevRun.created_at).toLocaleString()}</div>
+            <div><strong>{t('pages.phase3.restA.changes.branchLabel')}</strong> {prevRun.branch}</div>
+            <div><strong>{t('pages.phase3.restA.changes.scoreLabel')}</strong> {prevRun.score}</div>
+            <div><strong>{t('pages.phase3.restA.changes.shaLabel')}</strong> <span style={{ fontFamily: 'monospace' }}>{prevRun.git_sha?.slice(0, 8)}</span></div>
+            <div><strong>{t('pages.phase3.restA.changes.dateLabel')}</strong> {new Date(prevRun.created_at).toLocaleString()}</div>
           </div>
         </SectionCard>
       )}
@@ -597,7 +600,7 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
       render: change => (
         <>
           <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--text)', fontWeight: 600 }}>{change.address}</div>
-          {change.module_address && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>module: {change.module_address}</div>}
+          {change.module_address && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{t('pages.phase3.restA.changes.moduleLabel')} {change.module_address}</div>}
         </>
       ),
     },
@@ -618,7 +621,7 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
       header: t('pages.changes.colAction'),
       render: change => {
         const { color, bg } = actionMeta(change.action)
-        return <span className="changes-badge" style={{ background: bg, color, whiteSpace: 'nowrap' }}>{actionMeta(change.action).label}</span>
+        return <span className="changes-badge" style={{ background: bg, color, whiteSpace: 'nowrap' }}>{t(actionMeta(change.action).label)}</span>
       },
     },
   ]
@@ -652,10 +655,10 @@ function PlanChangesTab({ run }: { run: RunDetail }) {
               />
               <select className="scc-select" value={actionFilter} onChange={e => setActionFilter(e.target.value)}>
                 <option value="">{t('pages.changes.allActions')}</option>
-                <option value="create">Add</option>
-                <option value="update">Change</option>
-                <option value="replace">Replace</option>
-                <option value="delete">Destroy</option>
+                <option value="create">{t('pages.phase3.restA.changes.actionAdd')}</option>
+                <option value="update">{t('pages.phase3.restA.changes.actionChange')}</option>
+                <option value="replace">{t('pages.phase3.restA.changes.actionReplace')}</option>
+                <option value="delete">{t('pages.phase3.restA.changes.actionDestroy')}</option>
               </select>
               {providers.length > 1 && (
                 <select className="scc-select" value={providerFilter} onChange={e => setProviderFilter(e.target.value)}>
@@ -851,7 +854,7 @@ export default function ChangesPage({ run, runs }: Props) {
 
       <div className="changes-hero">
         <div className="changes-hero__main">
-          <div className="changes-hero__badge"><ListIcon /> Changes & Drift</div>
+          <div className="changes-hero__badge"><ListIcon /> {t('pages.phase3.restA.changes.heroBadge')}</div>
           <h1 className="changes-hero__title">{t('pages.changes.title')}</h1>
           <p className="changes-hero__subtitle">{t('pages.changes.subtitle')}</p>
         </div>

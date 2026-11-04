@@ -86,7 +86,7 @@ export default function ProjectGroupsPage() {
           setSelectedProject(passports[0].project)
         }
       } catch (e) {
-        setError(`Failed to load projects: ${(e as Error).message}`)
+        setError(t('pages.phase3.restB.projectGroups.errorLoadProjects', { error: (e as Error).message }))
       }
     }
     loadPassports()
@@ -181,7 +181,7 @@ export default function ProjectGroupsPage() {
         setSelectedGroup(groups[0])
       }
     } catch (e) {
-      setError(`Failed to load groups: ${(e as Error).message}`)
+      setError(t('pages.phase3.restB.projectGroups.errorLoadGroups', { error: (e as Error).message }))
     } finally {
       setIsLoading(false)
     }
@@ -198,7 +198,7 @@ export default function ProjectGroupsPage() {
         setGroupUsers([])
       }
     } catch (e) {
-      setError(`Failed to delete group: ${(e as Error).message}`)
+      setError(t('pages.phase3.restB.projectGroups.errorDeleteGroup', { error: (e as Error).message }))
     } finally {
       setIsLoading(false)
     }
@@ -228,7 +228,7 @@ export default function ProjectGroupsPage() {
       }
       setGroupUsers(updatedGroupUsers)
     } catch (e) {
-      setError(`Failed to add user to group: ${(e as Error).message}`)
+      setError(t('pages.phase3.restB.projectGroups.errorAddUser', { error: (e as Error).message }))
     } finally {
       setIsLoading(false)
     }
@@ -254,7 +254,7 @@ export default function ProjectGroupsPage() {
       }
       setGroupUsers(updatedGroupUsers)
     } catch (e) {
-      setError(`Failed to remove user from group: ${(e as Error).message}`)
+      setError(t('pages.phase3.restB.projectGroups.errorRemoveUser', { error: (e as Error).message }))
     } finally {
       setIsLoading(false)
     }
@@ -286,7 +286,7 @@ export default function ProjectGroupsPage() {
       await loadGroups(selectedProject)
       setNewGroupForm({ project: '', group_name: '' })
     } catch (e) {
-      setError(`Failed to add group: ${(e as Error).message}`)
+      setError(t('pages.phase3.restB.projectGroups.errorAddGroup', { error: (e as Error).message }))
     } finally {
       setIsLoading(false)
     }
@@ -334,7 +334,7 @@ export default function ProjectGroupsPage() {
           <svg width="16" height="16" fill="none" stroke="var(--fail)" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.008m-3 6h3a2 2 0 002-2v-6a2 2 0 00-2-2h-3a2 2 0 00-2 2v6a2 2 0 002 2z" />
           </svg>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--fail-ink)' }}>Error</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--fail-ink)' }}>{t('pages.phase3.restB.projectGroups.error')}</span>
         </div>
         <p style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{error}</p>
         <Button
@@ -343,7 +343,7 @@ export default function ProjectGroupsPage() {
           onClick={() => setError(null)}
           style={{ marginTop: '1rem' }}
         >
-          Dismiss
+          {t('pages.phase3.restB.projectGroups.dismiss')}
         </Button>
       </div>
     )
@@ -410,7 +410,7 @@ export default function ProjectGroupsPage() {
           {confirm && (
             <div
               role="group"
-              aria-label="Confirm removal"
+              aria-label={t('pages.phase3.restB.projectGroups.confirmRemoval')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -425,14 +425,14 @@ export default function ProjectGroupsPage() {
             >
               <span style={{ flex: 1, minWidth: '12rem', fontSize: '0.8rem', color: 'var(--text)' }}>
                 {confirm.kind === 'group'
-                  ? `Remove group "${confirm.groupName}" from project "${confirm.project}"?`
-                  : `Remove ${confirm.userName} from group "${confirm.groupName}"?`}
+                  ? t('pages.phase3.restB.projectGroups.removeGroupConfirm', { group: confirm.groupName, project: confirm.project })
+                  : t('pages.phase3.restB.projectGroups.removeUserConfirm', { user: confirm.userName, group: confirm.groupName })}
               </span>
               <Button variant="danger" size="sm" onClick={runConfirm} disabled={isLoading}>
-                Remove
+                {t('pages.phase3.restB.projectGroups.remove')}
               </Button>
               <Button variant="secondary" size="sm" onClick={() => setConfirm(null)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           )}
@@ -590,7 +590,7 @@ export default function ProjectGroupsPage() {
                                           cursor: 'pointer',
                                         }}
                                       >
-                                        Remove
+                                        {t('pages.phase3.restB.projectGroups.remove')}
                                       </button>
                                     )}
                                   </div>
@@ -670,7 +670,7 @@ export default function ProjectGroupsPage() {
                                     </div>
                                     {isInGroup && (
                                       <span style={{ fontSize: '0.7rem', color: 'var(--pass-ink)', fontWeight: 600 }}>
-                                        Already in group
+                                        {t('pages.phase3.restB.projectGroups.alreadyInGroup')}
                                       </span>
                                     )}
                                   </button>
@@ -690,7 +690,7 @@ export default function ProjectGroupsPage() {
                               type="text"
                               value={userSearchTerm}
                               onChange={e => setUserSearchTerm(e.target.value)}
-                              placeholder="Search users..."
+                              placeholder={t('pages.phase3.restB.projectGroups.searchUsersPlaceholder')}
                               style={{
                                 width: '100%',
                                 background: 'var(--input-bg)',
@@ -730,7 +730,7 @@ export default function ProjectGroupsPage() {
                             </button>
                             {newUserForm.user_id && (
                               <span style={{ fontSize: '0.72rem', color: 'var(--pass-ink)' }}>
-                                Selected: {allUsers.find(u => u.id === newUserForm.user_id)?.display_name || allUsers.find(u => u.id === newUserForm.user_id)?.username}
+                                {t('pages.phase3.restB.projectGroups.selectedPrefix')} {allUsers.find(u => u.id === newUserForm.user_id)?.display_name || allUsers.find(u => u.id === newUserForm.user_id)?.username}
                               </span>
                             )}
                           </form>
@@ -777,7 +777,7 @@ export default function ProjectGroupsPage() {
                   ) : searchedGroups.length > 0 ? (
                     <div style={{ marginTop: '0.5rem', width: '100%' }}>
                       <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.25rem' }}>
-                        Matching existing groups:
+                        {t('pages.phase3.restB.projectGroups.matchingGroups')}
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {searchedGroups.map(group => (
@@ -797,18 +797,18 @@ export default function ProjectGroupsPage() {
                               cursor: 'pointer',
                             }}
                           >
-                            {group.group_name} <span style={{ color: 'var(--muted)' }}>({group.user_count} users, {group.projects.length} project(s))</span>
+                            {group.group_name} <span style={{ color: 'var(--muted)' }}>{t('pages.phase3.restB.projectGroups.groupMeta', { users: group.user_count, projects: group.projects.length })}</span>
                           </button>
                         ))}
                       </div>
                     </div>
                   ) : allGroups.length > 0 ? (
                     <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                      No matching groups found
+                      {t('pages.phase3.restB.projectGroups.noMatchingGroups')}
                     </div>
                   ) : (
                     <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                      No groups available (create groups first)
+                      {t('pages.phase3.restB.projectGroups.noGroupsAvailable')}
                     </div>
                   )}
                 </div>

@@ -12,3 +12,4 @@ requirements.sbom.txt
 
 # visual-regression artifacts (baselines are committed)
 .visual/
+.a11y/

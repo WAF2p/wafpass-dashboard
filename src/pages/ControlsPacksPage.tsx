@@ -14,7 +14,7 @@ import {
   type ControlPackOut,
   type UpdateInfo,
 } from '../api'
-import { EmptyState, Skeleton } from '../ui'
+import { EmptyState, Skeleton, Toolbar } from '../ui'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +27,7 @@ function fmtDate(iso: string | null | undefined): string {
 }
 
 function StatusBadge({ active }: { active: boolean }) {
+  const { t } = useI18n()
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -37,7 +38,7 @@ function StatusBadge({ active }: { active: boolean }) {
       fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.04em', textTransform: 'uppercase',
     }}>
       {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pass)', display: 'inline-block' }} />}
-      {active ? 'Active' : 'Inactive'}
+      {active ? t('pages.phase3.restA.controlsPacks.active') : t('pages.phase3.restA.controlsPacks.inactive')}
     </span>
   )
 }
@@ -307,20 +308,20 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
                     {updateInfo.framework.version.display || updateInfo.version}
                   </span>
                   <span style={{ padding: '0.15rem 0.55rem', borderRadius: '999px', background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand-ink)', fontSize: '0.7rem', fontWeight: 700 }}>
-                    {updateInfo.generated_at ? `Updated ${new Date(updateInfo.generated_at).toLocaleDateString()}` : ''}
+                    {updateInfo.generated_at ? t('pages.phase3.restA.controlsPacks.updated', { date: new Date(updateInfo.generated_at).toLocaleDateString() }) : ''}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                    Branch: <strong style={{ color: 'var(--text)' }}>{updateInfo.framework.git_branch}</strong>
+                    {t('pages.phase3.restA.controlsPacks.branch')} <strong style={{ color: 'var(--text)' }}>{updateInfo.framework.git_branch}</strong>
                   </span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                    Commit: <strong style={{ color: 'var(--text)' }}>{updateInfo.framework.last_commit.hash?.substring(0, 8) || '—'}</strong>
+                    {t('pages.phase3.restA.controlsPacks.commit')} <strong style={{ color: 'var(--text)' }}>{updateInfo.framework.last_commit.hash?.substring(0, 8) || '—'}</strong>
                   </span>
                 </div>
               </>
             ) : (
-              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>No framework version information available.</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{t('pages.phase3.restA.controlsPacks.noFrameworkVersion')}</div>
             )}
           </div>
         </div>
@@ -705,37 +706,39 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
       </div>
 
       {/* ── Catalogue link footer ────────────────────────────────────── */}
-      <div className="card" style={{
-        display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'space-between', flexWrap: 'wrap',
-        background: 'var(--bg)', border: '1px solid var(--border)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 10,
-            background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" size={20} />
+      <Toolbar
+        ariaLabel={t('pages.controlspacks.manageControls')}
+        left={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 10,
+              background: 'color-mix(in srgb, var(--waf-brand) 12%, transparent)', color: 'var(--waf-brand)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>{t('pages.controlspacks.manageControls')}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t('pages.controlspacks.singlePointTruth')}</div>
+            </div>
           </div>
-          <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>{t('pages.controlspacks.manageControls')}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t('pages.controlspacks.singlePointTruth')}</div>
-          </div>
-        </div>
-        <button
-          onClick={() => navigate('catalogue')}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-            padding: '0.5rem 1rem', borderRadius: '8px',
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            color: 'var(--text)', fontSize: '0.78rem', fontWeight: 700,
-            cursor: 'pointer', transition: 'border-color .12s, background-color .12s',
-          }}
-        >
-          {t('pages.controlspacks.catalogueLink')}
-          <Icon d="M9 5l7 7-7 7" size={14} />
-        </button>
-      </div>
+        }
+        right={
+          <button
+            onClick={() => navigate('catalogue')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.5rem 1rem', borderRadius: '8px',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              color: 'var(--text)', fontSize: '0.78rem', fontWeight: 700,
+              cursor: 'pointer', transition: 'border-color .12s, background-color .12s',
+            }}
+          >
+            {t('pages.controlspacks.catalogueLink')}
+            <Icon d="M9 5l7 7-7 7" size={14} />
+          </button>
+        }
+      />
 
     </div>
   )

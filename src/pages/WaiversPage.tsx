@@ -83,8 +83,8 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
         setWaivers(cached)
         setSyncStatus('offline')
         setSyncError(e instanceof TypeError
-          ? 'Cannot reach server — showing cached data. Check the server URL in Settings.'
-          : `Server error loading waivers (${e instanceof Error ? e.message : String(e)}) — showing cached data.`)
+          ? t('pages.phase3.restB.waivers.errorOfflineCached')
+          : t('pages.phase3.restB.waivers.errorServerLoading', { error: e instanceof Error ? e.message : String(e) }))
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -129,8 +129,8 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
     } catch (e) {
       setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? 'Cannot reach server — waiver not saved. Check the server URL in Settings.'
-        : `Server error saving waiver (${e instanceof Error ? e.message : String(e)})`)
+        ? t('pages.phase3.restB.waivers.errorOfflineSave')
+        : t('pages.phase3.restB.waivers.errorServerSave', { error: e instanceof Error ? e.message : String(e) }))
     }
   }, [form, waivers]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -158,8 +158,8 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
     } catch (e) {
       setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? 'Cannot reach server — waiver not removed. Check the server URL in Settings.'
-        : `Server error deleting waiver (${e instanceof Error ? e.message : String(e)})`)
+        ? t('pages.phase3.restB.waivers.errorOfflineRemove')
+        : t('pages.phase3.restB.waivers.errorServerRemove', { error: e instanceof Error ? e.message : String(e) }))
     }
   }, [waivers]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -313,14 +313,14 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                       disabled={syncStatus === 'offline'}
                       style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--muted)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
-                      Edit
+                      {t('pages.phase3.restB.waivers.edit')}
                     </button>
                     <button
                       onClick={() => void remove(w.id)}
                       disabled={syncStatus === 'offline'}
                       style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--fail-ink)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
-                      Remove
+                      {t('pages.phase3.restB.waivers.remove')}
                     </button>
                   </div>
                 </div>
@@ -377,7 +377,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                   onChange={e => setForm({ ...form, id: e.target.value })}
                   style={inputStyle}
                 >
-                  <option value="">— select a control —</option>
+                  <option value="">{t('pages.phase3.restB.waivers.selectControl')}</option>
                   {controls.map(c => (
                     <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
                   ))}
@@ -392,7 +392,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
               <textarea
                 value={form.reason}
                 onChange={e => setForm({ ...form, reason: e.target.value })}
-                placeholder="Business justification for waiving this control"
+                placeholder={t('pages.phase3.restB.waivers.reasonPlaceholder')}
                 rows={3}
                 style={{ ...inputStyle, resize: 'vertical' }}
               />
@@ -406,7 +406,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                 <input
                   value={form.owner}
                   onChange={e => setForm({ ...form, owner: e.target.value })}
-                  placeholder="team or person"
+                  placeholder={t('pages.phase3.restB.waivers.ownerPlaceholder')}
                   style={inputStyle}
                 />
               </div>
@@ -437,7 +437,7 @@ export default function WaiversPage({ controls, onCountChange }: Props) {
                 onClick={() => setShowForm(false)}
                 style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.45rem 1rem', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--muted)' }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => void submit()}

@@ -113,6 +113,7 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
   downstream: GNode[]
   onNavigate: (id: string) => void
 }) {
+  const { t } = useI18n()
   const W = 320, H = 220, CX = 160, CY = 110, R = 80
   const col = severityColor(center.severity)
 
@@ -176,7 +177,7 @@ function MiniGraph({ center, upstream, downstream, onNavigate }: {
               style={{ userSelect: 'none', pointerEvents: 'none' }}>
               {trunc(n.name, 10)}
             </text>
-            <title>{n.id}{'\n'}Click to navigate</title>
+            <title>{n.id}{'\n'}{t('pages.phase3.restA.blastRadius.clickToNavigate')}</title>
           </g>
         )
       })}
@@ -289,7 +290,7 @@ export default function BlastRadiusPage({ run }: Props) {
         {(search || sevFilter) && (
           <button onClick={() => { setSearch(''); setSevFilter('') }}
             style={{ fontSize: '0.78rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0.5rem' }}>
-            Clear
+            {t('pages.phase3.restA.blastRadius.clear')}
           </button>
         )}
         <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--muted)' }}>
@@ -333,7 +334,7 @@ export default function BlastRadiusPage({ run }: Props) {
                 {/* Meta: pill count + dependency indicator */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexShrink: 0 }}>
                   {hasLinks && (
-                    <span title="Has inferred dependencies" style={{ fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <span title={t('pages.phase3.restA.blastRadius.hasInferredDependencies')} style={{ fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                       </svg>
@@ -343,7 +344,7 @@ export default function BlastRadiusPage({ run }: Props) {
                   <div style={{ textAlign: 'right' }}>
                     <span style={{ fontSize: '1rem', fontWeight: 800, color: col }}>{n.failCount}</span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.25rem' }}>
-                      {n.failCount === 1 ? 'control' : 'controls'}
+                      {n.failCount === 1 ? t('pages.phase3.restA.blastRadius.controlSingular') : t('pages.phase3.restA.blastRadius.controlPlural')}
                     </span>
                   </div>
                   <span style={{ color: 'var(--muted)', fontSize: '1rem', transition: 'transform 0.22s ease', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>

@@ -10,7 +10,7 @@ export default function ReferenceArchitecturePage() {
     <div style={{ maxWidth: 'none', width: '100%', margin: '0' }}>
       <PageHeader
         title={t('pages.reference.title')}
-        description="Complete Terraform and Pulumi implementation examples for all Wombat controls"
+        description={t('pages.phase3.restB.referenceArchitecture.pageDescription')}
       />
 
       {/* Executive Summary */}
@@ -2065,12 +2065,10 @@ jobs:
         marginBottom: '2rem'
       }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--waf-brand-ink)', margin: '0 0 0.75rem' }}>
-          Need More Details?
+          {t('pages.phase3.restB.referenceArchitecture.needMoreTitle')}
         </h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text)', marginBottom: '1rem' }}>
-          This reference architecture is designed to complement the official Wombat documentation.
-          For complete control definitions, regulatory mappings, and implementation guidance,
-          please refer to the official Wombat documentation.
+          {t('pages.phase3.restB.referenceArchitecture.needMoreBody')}
         </p>
         <a
           href="https://www.wombat-gov.dev/docs/wafpp/1.0/index.html"
@@ -2093,7 +2091,7 @@ jobs:
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
-          Open Wombat 1.0 Documentation (German)
+          {t('pages.phase3.restB.referenceArchitecture.openDocs')}
         </a>
       </div>
 

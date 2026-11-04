@@ -253,7 +253,7 @@ export default function RemediationSprintPage({ run }: Props) {
       textArea.select()
       document.execCommand('copy')
       document.body.removeChild(textArea)
-      setExportMessage('Slack/Teams message text copied to clipboard! You can paste it into your message.')
+      setExportMessage(t('pages.phase3.restB.remediationSprint.slackCopied'))
     } finally {
       setIsExporting(false)
     }
@@ -336,7 +336,7 @@ export default function RemediationSprintPage({ run }: Props) {
           allControls.some(c => c.severity === s) && (
             <button key={s} onClick={() => addBySeverity(s)}
               style={{ fontSize: '0.75rem', padding: '0.3rem 0.75rem', borderRadius: '8px', border: `1px solid ${severityBorder(s, 31)}`, background: severityBg(s, 7), color: severityColor(s), cursor: 'pointer', fontWeight: 700 }}>
-              All {s}
+              {t('pages.remediation.allSev', { sev: s })}
             </button>
           )
         ))}
@@ -371,7 +371,7 @@ export default function RemediationSprintPage({ run }: Props) {
               </select>
               {/* Filters */}
               <select value={pillarFilter} onChange={e => setPillarFilter(e.target.value)} className="filter-select" style={{ fontSize: '0.75rem' }}>
-                <option value="">All pillars</option>
+                <option value="">{t('pages.phase3.restB.remediationSprint.allPillars')}</option>
                 {pillars.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
               <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} className="filter-select" style={{ fontSize: '0.75rem' }}>
@@ -443,7 +443,7 @@ export default function RemediationSprintPage({ run }: Props) {
                       <line x1="0" y1="7" x2="24" y2="7" stroke="var(--waf-brand)" strokeWidth="2" />
                       <polygon points="24,3 32,7 24,11" fill="var(--waf-brand)" />
                     </svg>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--waf-brand)', fontWeight: 700 }}>+{impact.pointsGain} pts</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--waf-brand)', fontWeight: 700 }}>{t('pages.phase3.restB.remediationSprint.pointsGain', { points: impact.pointsGain })}</span>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '2rem', fontWeight: 800, color: scoreColor(impact.projectedScore), lineHeight: 1 }}>{impact.projectedScore}</div>
@@ -476,7 +476,7 @@ export default function RemediationSprintPage({ run }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
                   <span style={{ color: 'var(--skip)' }}>{t('pages.remediation.sprintEffort')}</span>
                   <span style={{ fontWeight: 700, color: EFFORT_COLOR[impact.effortLabel as keyof typeof EFFORT_COLOR] ?? 'var(--skip)' }}>
-                    {impact.effortLabel}
+                    {impact.effortLabel === 'Low' ? t('pages.remediation.lowEffort') : impact.effortLabel === 'Medium' ? t('pages.remediation.mediumEffort') : t('pages.remediation.highEffort')}
                   </span>
                 </div>
 
@@ -586,7 +586,7 @@ export default function RemediationSprintPage({ run }: Props) {
                       {ctrl.title}
                     </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
-                      +{ctrl.pointsGain} pts · {ctrl.frameworks.length} fw · {t('pages.remediation.effortBadge', { effort: ctrl.effort })}
+                      {t('pages.phase3.restB.remediationSprint.sprintMeta', { points: ctrl.pointsGain, count: ctrl.frameworks.length, effort: t('pages.remediation.effortBadge', { effort: ctrl.effort }) })}
                     </div>
                   </div>
                   <button onClick={() => removeFromSprint(ctrl.id)}
@@ -655,9 +655,9 @@ function ControlCard({
             {ctrl.category && <span style={{ color: 'var(--border)' }}>·</span>}
             {ctrl.category && <span>{ctrl.category}</span>}
             <span style={{ color: 'var(--border)' }}>·</span>
-            <span>{ctrl.failResCount} resource{ctrl.failResCount !== 1 ? 's' : ''}</span>
+            <span>{ctrl.failResCount} {ctrl.failResCount !== 1 ? t('pages.phase3.restB.remediationSprint.resourceMany') : t('pages.phase3.restB.remediationSprint.resourceOne')}</span>
             <span style={{ color: 'var(--border)' }}>·</span>
-            <span>{ctrl.checkCount} check{ctrl.checkCount !== 1 ? 's' : ''}</span>
+            <span>{ctrl.checkCount} {ctrl.checkCount !== 1 ? t('pages.phase3.restB.remediationSprint.checkMany') : t('pages.phase3.restB.remediationSprint.checkOne')}</span>
           </div>
 
           {/* Metrics row */}
@@ -667,11 +667,11 @@ function ControlCard({
               <div style={{ flex: 1, height: '5px', borderRadius: '999px', background: 'var(--bg)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', borderRadius: '999px', background: 'var(--waf-brand)', width: `${Math.min(100, ctrl.pointsGain * 5)}%` }} />
               </div>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand-ink)', whiteSpace: 'nowrap' }}>~{ctrl.pointsGain} pts</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand-ink)', whiteSpace: 'nowrap' }}>{t('pages.phase3.restB.remediationSprint.approxPoints', { points: ctrl.pointsGain })}</span>
             </div>
             {/* Framework badge */}
             <span style={{ fontSize: '0.7rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-              {ctrl.frameworks.length > 0 ? `${ctrl.frameworks.length} framework${ctrl.frameworks.length !== 1 ? 's' : ''}` : t('pages.remediation.noFrameworks')}
+              {ctrl.frameworks.length > 0 ? `${ctrl.frameworks.length} ${ctrl.frameworks.length !== 1 ? t('pages.phase3.restB.remediationSprint.frameworkMany') : t('pages.phase3.restB.remediationSprint.frameworkOne')}` : t('pages.remediation.noFrameworks')}
             </span>
             {/* Effort badge */}
             <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.45rem', borderRadius: '999px', background: `color-mix(in srgb, ${effCol} 9%, transparent)`, color: effCol, border: `1px solid color-mix(in srgb, ${effCol} 21%, transparent)`, whiteSpace: 'nowrap' }}>
@@ -683,7 +683,7 @@ function ControlCard({
         {/* Expand chevron */}
         {(ctrl.description || ctrl.remediations.length > 0 || ctrl.frameworks.length > 0) && (
           <button onClick={onExpand}
-            aria-label={expanded ? 'Collapse details' : 'Expand details'}
+            aria-label={expanded ? t('pages.phase3.restB.remediationSprint.collapseDetails') : t('pages.phase3.restB.remediationSprint.expandDetails')}
             style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '0.25rem', flexShrink: 0, marginTop: '2px' }}>
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

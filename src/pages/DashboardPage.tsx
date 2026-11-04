@@ -372,11 +372,11 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         </div>
 
         <div className="x-statbar">
-          <StatPill label={t('pages.dashboard.failedControls')} value={controlStats.fail} sub={`${controlIds.length} controls`} color="var(--fail)" />
-          <StatPill label={t('pages.dashboard.critHigh')} value={critFails.length + highFails.length} sub={`${critFails.length} critical · ${highFails.length} high`} color="var(--waf-warn)" />
-          <StatPill label={t('pages.dashboard.resourcesAtRisk')} value={failResources} sub={`${resources} scanned`} color="var(--score-mid)" />
-          <StatPill label={t('pages.dashboard.activeWaivers')} value={waiverCount} sub={`${riskCount} risks`} color="var(--waived)" />
-          <StatPill label={t('pages.dashboard.avgCompliance')} value={`${avgCompliance}%`} sub={`${regulatoryAll.length} frameworks`} color="var(--pass)" />
+          <StatPill label={t('pages.dashboard.failedControls')} value={controlStats.fail} sub={t('pages.phase3.restA.dashboard.controlsCountSub', { count: controlIds.length })} color="var(--fail)" />
+          <StatPill label={t('pages.dashboard.critHigh')} value={critFails.length + highFails.length} sub={t('pages.phase3.restA.dashboard.critHighSub', { critical: critFails.length, high: highFails.length })} color="var(--waf-warn)" />
+          <StatPill label={t('pages.dashboard.resourcesAtRisk')} value={failResources} sub={t('pages.phase3.restA.dashboard.resourcesScannedSub', { count: resources })} color="var(--score-mid)" />
+          <StatPill label={t('pages.dashboard.activeWaivers')} value={waiverCount} sub={t('pages.phase3.restA.dashboard.risksSub', { count: riskCount })} color="var(--waived)" />
+          <StatPill label={t('pages.dashboard.avgCompliance')} value={`${avgCompliance}%`} sub={t('pages.phase3.restA.dashboard.frameworksSub', { count: regulatoryAll.length })} color="var(--pass)" />
         </div>
       </header>
 
@@ -405,7 +405,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                     {f.pillar}
                   </span>
                 )}
-                <span className="x-attention-link">Fix →</span>
+                <span className="x-attention-link">{t('pages.phase3.restA.dashboard.fixArrow')}</span>
               </button>
             ))}
           </div>
@@ -418,40 +418,40 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         <div className="x-nav-grid">
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navAnalysis')}</div>
-            <NavTile icon={I.list} title="Findings" value={allFails.length > 0 ? allFails.length : undefined} desc={`${passRate}% pass · ${totalChecks} checks`} accent="var(--fail)" alert={allFails.length > 0} onClick={() => onNav?.('findings')} />
-            <NavTile icon={I.check} title="Compliance" value={`${avgCompliance}%`} desc={`${regulatoryAll.length} frameworks`} accent="var(--waf-brand)" onClick={() => onNav?.('compliance')} />
-            <NavTile icon={I.gap} title="Gap Analysis" value={allFails.length > 0 ? t('pages.dashboard.gapsLabel', { count: new Set(allFails.map(f => f.control_id)).size }) : undefined} desc="Effort ranked" accent="var(--waived)" onClick={() => onNav?.('gapanalysis')} />
-            <NavTile icon={I.exploit} title="Exploit Paths" desc="Attack chains" accent="var(--fail)" onClick={() => onNav?.('exploitpath')} />
-            <NavTile icon={I.blast} title="Blast Radius" value={failResources > 0 ? failResources : undefined} desc="Impact map" accent="var(--waf-warn)" onClick={() => onNav?.('blastradius')} />
-            <NavTile icon={I.dep} title="Dep. Graph" desc="Topology" accent="var(--score-high)" onClick={() => onNav?.('depgraph')} />
+            <NavTile icon={I.list} title={t('pages.phase3.restA.dashboard.navFindings')} value={allFails.length > 0 ? allFails.length : undefined} desc={t('pages.phase3.restA.dashboard.descPassChecks', { pass: passRate, total: totalChecks })} accent="var(--fail)" alert={allFails.length > 0} onClick={() => onNav?.('findings')} />
+            <NavTile icon={I.check} title={t('pages.phase3.restA.dashboard.navCompliance')} value={`${avgCompliance}%`} desc={t('pages.phase3.restA.dashboard.descFrameworks', { count: regulatoryAll.length })} accent="var(--waf-brand)" onClick={() => onNav?.('compliance')} />
+            <NavTile icon={I.gap} title={t('pages.phase3.restA.dashboard.navGapAnalysis')} value={allFails.length > 0 ? t('pages.dashboard.gapsLabel', { count: new Set(allFails.map(f => f.control_id)).size }) : undefined} desc={t('pages.phase3.restA.dashboard.descEffortRanked')} accent="var(--waived)" onClick={() => onNav?.('gapanalysis')} />
+            <NavTile icon={I.exploit} title={t('pages.phase3.restA.dashboard.navExploitPaths')} desc={t('pages.phase3.restA.dashboard.descAttackChains')} accent="var(--fail)" onClick={() => onNav?.('exploitpath')} />
+            <NavTile icon={I.blast} title={t('pages.phase3.restA.dashboard.navBlastRadius')} value={failResources > 0 ? failResources : undefined} desc={t('pages.phase3.restA.dashboard.descImpactMap')} accent="var(--waf-warn)" onClick={() => onNav?.('blastradius')} />
+            <NavTile icon={I.dep} title={t('pages.phase3.restA.dashboard.navDepGraph')} desc={t('pages.phase3.restA.dashboard.descTopology')} accent="var(--score-high)" onClick={() => onNav?.('depgraph')} />
           </div>
 
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navInfrastructure')}</div>
-            <NavTile icon={I.shield} title="Controls Catalogue" value={run.controls_loaded || run.controls_meta?.length || 0} desc={`${pillarHealth.length} pillars`} accent="var(--waf-brand)" onClick={() => onNav?.('catalogue')} />
-            <NavTile icon={I.globe} title="Deployed Regions" value={detectedRegions.length > 0 ? `${detectedRegions.length}` : undefined} desc={detectedRegions.length > 0 ? providerNames.map(p => p.toUpperCase()).join(', ') : 'Cloud footprint'} accent="var(--waf-brand)" onClick={() => onNav?.('regions')} />
-            <NavTile icon={I.key} title="Secret Scanner" value={secretUnsuppressed > 0 ? secretUnsuppressed : undefined} desc={`${secretCritical} critical secrets`} accent="var(--fail)" alert={secretCritical > 0} onClick={() => onNav?.('secrets')} />
-            <NavTile icon={I.module} title="Module Scores" desc="Per-module breakdown" accent="var(--waived)" onClick={() => onNav?.('modules')} />
-            <NavTile icon={I.dollar} title="Cost Impact" desc="Cost control estimates" accent="var(--pass)" onClick={() => onNav?.('cost')} />
-            <NavTile icon={I.drift} title="Changes & Drift" value={changeDelta > 0 ? changeDelta : undefined} desc="Plan deltas" accent="var(--waf-warn)" onClick={() => onNav?.('changes')} />
+            <NavTile icon={I.shield} title={t('pages.phase3.restA.dashboard.navControlsCatalogue')} value={run.controls_loaded || run.controls_meta?.length || 0} desc={t('pages.phase3.restA.dashboard.descPillars', { count: pillarHealth.length })} accent="var(--waf-brand)" onClick={() => onNav?.('catalogue')} />
+            <NavTile icon={I.globe} title={t('pages.phase3.restA.dashboard.navDeployedRegions')} value={detectedRegions.length > 0 ? `${detectedRegions.length}` : undefined} desc={detectedRegions.length > 0 ? providerNames.map(p => p.toUpperCase()).join(', ') : t('pages.phase3.restA.dashboard.descCloudFootprint')} accent="var(--waf-brand)" onClick={() => onNav?.('regions')} />
+            <NavTile icon={I.key} title={t('pages.phase3.restA.dashboard.navSecretScanner')} value={secretUnsuppressed > 0 ? secretUnsuppressed : undefined} desc={t('pages.phase3.restA.dashboard.descCriticalSecrets', { count: secretCritical })} accent="var(--fail)" alert={secretCritical > 0} onClick={() => onNav?.('secrets')} />
+            <NavTile icon={I.module} title={t('pages.phase3.restA.dashboard.navModuleScores')} desc={t('pages.phase3.restA.dashboard.descPerModuleBreakdown')} accent="var(--waived)" onClick={() => onNav?.('modules')} />
+            <NavTile icon={I.dollar} title={t('pages.phase3.restA.dashboard.navCostImpact')} desc={t('pages.phase3.restA.dashboard.descCostControlEstimates')} accent="var(--pass)" onClick={() => onNav?.('cost')} />
+            <NavTile icon={I.drift} title={t('pages.phase3.restA.dashboard.navChangesDrift')} value={changeDelta > 0 ? changeDelta : undefined} desc={t('pages.phase3.restA.dashboard.descPlanDeltas')} accent="var(--waf-warn)" onClick={() => onNav?.('changes')} />
           </div>
 
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navRiskGovernance')}</div>
-            <NavTile icon={I.waiver} title="Waivers" value={waiverCount > 0 ? waiverCount : undefined} desc="Active waivers" accent="var(--waived)" onClick={() => onNav?.('waivers')} />
-            <NavTile icon={I.risk} title="Risk Acceptance" value={riskCount > 0 ? riskCount : undefined} desc="Approver trail" accent="var(--waf-warn)" onClick={() => onNav?.('risk')} />
-            <NavTile icon={I.sprint} title="Remediation Sprint" desc="Fix queue" accent="var(--pass)" onClick={() => onNav?.('remediation')} />
-            <NavTile icon={I.skip} title="Skipped Controls" value={controlStats.skip > 0 ? controlStats.skip : undefined} desc="Coverage gaps" accent="var(--muted)" onClick={() => onNav?.('skipped')} />
+            <NavTile icon={I.waiver} title={t('pages.phase3.restA.dashboard.navWaivers')} value={waiverCount > 0 ? waiverCount : undefined} desc={t('pages.phase3.restA.dashboard.descActiveWaivers')} accent="var(--waived)" onClick={() => onNav?.('waivers')} />
+            <NavTile icon={I.risk} title={t('pages.phase3.restA.dashboard.navRiskAcceptance')} value={riskCount > 0 ? riskCount : undefined} desc={t('pages.phase3.restA.dashboard.descApproverTrail')} accent="var(--waf-warn)" onClick={() => onNav?.('risk')} />
+            <NavTile icon={I.sprint} title={t('pages.phase3.restA.dashboard.navRemediationSprint')} desc={t('pages.phase3.restA.dashboard.descFixQueue')} accent="var(--pass)" onClick={() => onNav?.('remediation')} />
+            <NavTile icon={I.skip} title={t('pages.phase3.restA.dashboard.navSkippedControls')} value={controlStats.skip > 0 ? controlStats.skip : undefined} desc={t('pages.phase3.restA.dashboard.descCoverageGaps')} accent="var(--muted)" onClick={() => onNav?.('skipped')} />
           </div>
 
           <div className="x-nav-col">
             <div className="x-nav-label">{t('pages.dashboard.navHistoryAudit')}</div>
-            <NavTile icon={I.history} title="Run History" value={runCount > 0 ? `${runCount}` : undefined} desc="Score trends" accent="var(--waf-brand)" onClick={() => onNav?.('runs')} />
-            <NavTile icon={I.diff} title="Run Comparison" desc="Side-by-side diff" accent="var(--waived)" onClick={() => onNav?.('diff')} />
-            <NavTile icon={I.log} title="Audit Log" desc="Action record" accent="var(--muted)" onClick={() => onNav?.('audit')} />
-            <NavTile icon={I.evidence} title="Evidence Package" desc="Export bundle" accent="var(--waf-brand)" onClick={() => onNav?.('evidence')} />
-            <NavTile icon={I.play} title="Run Scan" desc="Browser scan" accent="var(--pass)" onClick={() => onNav?.('runscan')} />
-            <NavTile icon={I.code} title="Sandbox" desc="Terraform live" accent="var(--waf-brand)" onClick={() => onNav?.('sandbox')} />
+            <NavTile icon={I.history} title={t('pages.phase3.restA.dashboard.navRunHistory')} value={runCount > 0 ? `${runCount}` : undefined} desc={t('pages.phase3.restA.dashboard.descScoreTrends')} accent="var(--waf-brand)" onClick={() => onNav?.('runs')} />
+            <NavTile icon={I.diff} title={t('pages.phase3.restA.dashboard.navRunComparison')} desc={t('pages.phase3.restA.dashboard.descSideBySideDiff')} accent="var(--waived)" onClick={() => onNav?.('diff')} />
+            <NavTile icon={I.log} title={t('pages.phase3.restA.dashboard.navAuditLog')} desc={t('pages.phase3.restA.dashboard.descActionRecord')} accent="var(--muted)" onClick={() => onNav?.('audit')} />
+            <NavTile icon={I.evidence} title={t('pages.phase3.restA.dashboard.navEvidencePackage')} desc={t('pages.phase3.restA.dashboard.descExportBundle')} accent="var(--waf-brand)" onClick={() => onNav?.('evidence')} />
+            <NavTile icon={I.play} title={t('pages.phase3.restA.dashboard.navRunScan')} desc={t('pages.phase3.restA.dashboard.descBrowserScan')} accent="var(--pass)" onClick={() => onNav?.('runscan')} />
+            <NavTile icon={I.code} title={t('pages.phase3.restA.dashboard.navSandbox')} desc={t('pages.phase3.restA.dashboard.descTerraformLive')} accent="var(--waf-brand)" onClick={() => onNav?.('sandbox')} />
           </div>
         </div>
       </section>
@@ -488,14 +488,14 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
         {/* Severity donut + pillar chart */}
         {(severityCounts.length > 0 || pillarData.length > 0) && (
           <section className="x-card x-card--charts">
-            <SectionTitle icon={I.warning}>Findings &amp; Pillar Scores</SectionTitle>
+            <SectionTitle icon={I.warning}>{t('pages.phase3.restA.dashboard.findingsPillarScores')}</SectionTitle>
             <div className="x-chart-grid">
               {severityCounts.length > 0 && (
                 <div className="x-donut">
                   <div className="x-donut-chart">
                     <div className="x-donut-inner">
                       <span className="x-donut-total">{allFails.length}</span>
-                      <span className="x-donut-label">Failures</span>
+                      <span className="x-donut-label">{t('pages.phase3.restA.dashboard.failures')}</span>
                     </div>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -544,7 +544,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
               action={onNav && <ActionButton variant="ghost" onClick={() => onNav('compliance')}>{t('pages.dashboard.fullMatrix')} →</ActionButton>}
             >
               {t('pages.dashboard.regulatoryReadiness')}
-              {regulatoryAll.length > 6 && <span className="x-section-count">top 6 of {regulatoryAll.length}</span>}
+              {regulatoryAll.length > 6 && <span className="x-section-count">{t('pages.phase3.restA.dashboard.topSixOf', { count: regulatoryAll.length })}</span>}
             </SectionTitle>
             <div className="x-compliance-list">
               {regulatoryTop.map(({ fw, pass, total, pct }) => {
@@ -572,9 +572,9 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
               icon={<span style={{ color: 'var(--fail)' }}>{I.fire}</span>}
               action={
                 <div className="x-heat-legend">
-                  <span>Low</span>
+                  <span>{t('pages.phase3.restA.dashboard.low')}</span>
                   {HEAT_STEPS.map(c => <div key={c} className="x-heat-swatch" style={{ background: c }} />)}
-                  <span>High</span>
+                  <span>{t('pages.phase3.restA.dashboard.high')}</span>
                 </div>
               }
             >
@@ -632,7 +632,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                     <span className="x-win-code">{f.control_id}</span>
                     <span className="x-win-title">{f.check_title || f.check_id}</span>
                     {f.pillar && <span className="x-pill" style={{ background: hex(pColor, 0.12), color: pColor }}>{f.pillar}</span>}
-                    <span className="x-win-link" style={{ color: sevColor }}>Fix →</span>
+                    <span className="x-win-link" style={{ color: sevColor }}>{t('pages.phase3.restA.dashboard.fixArrow')}</span>
                   </button>
                 )
               })}
@@ -659,7 +659,7 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
                   <div key={prov} className="x-cloud-provider">
                     <span className="x-cloud-dot" style={{ background: PROVIDER_COLOR[prov] ?? 'var(--muted)' }} />
                     <span className="x-cloud-name">{prov}</span>
-                    <span className="x-cloud-cnt">{cnt} region{cnt > 1 ? 's' : ''}</span>
+                    <span className="x-cloud-cnt">{t('pages.phase3.restA.dashboard.regionCount', { count: cnt, s: cnt > 1 ? 's' : '' })}</span>
                   </div>
                 ))}
               </div>
@@ -685,10 +685,10 @@ export default function DashboardPage({ run, onNav, waiverCount = 0, riskCount =
       {totalChecks > 0 && (
         <section className="x-checkbar">
           {[
-            { label: t('pages.dashboard.checksRun'), value: totalChecks, sub: 'individual checks', color: 'var(--text)' },
-            { label: t('pages.dashboard.checkPassRate'), value: `${passRate}%`, sub: `${passChecks}/${totalChecks} passed`, color: passRate >= 80 ? 'var(--pass)' : passRate >= 60 ? 'var(--waf-warn)' : 'var(--fail)' },
-            { label: t('pages.dashboard.resourcesScanned'), value: resources, sub: 'unique resources', color: 'var(--waf-brand)' },
-            { label: t('pages.dashboard.resourcesFailing'), value: failResources, sub: 'with ≥1 failure', color: failResources > 0 ? 'var(--fail)' : 'var(--pass)' },
+            { label: t('pages.dashboard.checksRun'), value: totalChecks, sub: t('pages.phase3.restA.dashboard.checksRunSub'), color: 'var(--text)' },
+            { label: t('pages.dashboard.checkPassRate'), value: `${passRate}%`, sub: t('pages.phase3.restA.dashboard.passedSub', { pass: passChecks, total: totalChecks }), color: passRate >= 80 ? 'var(--pass)' : passRate >= 60 ? 'var(--waf-warn)' : 'var(--fail)' },
+            { label: t('pages.dashboard.resourcesScanned'), value: resources, sub: t('pages.phase3.restA.dashboard.uniqueResources'), color: 'var(--waf-brand)' },
+            { label: t('pages.dashboard.resourcesFailing'), value: failResources, sub: t('pages.phase3.restA.dashboard.withFailure'), color: failResources > 0 ? 'var(--fail)' : 'var(--pass)' },
           ].map(({ label, value, sub, color }) => (
             <div key={label} className="x-checkcard" style={{ borderColor: hex(color, 0.18) }}>
               <div className="x-checkcard-value" style={{ color }}>{value}</div>

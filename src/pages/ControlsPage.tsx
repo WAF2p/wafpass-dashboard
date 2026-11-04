@@ -55,13 +55,14 @@ const TABS: { id: TabId; label: string }[] = [
 ]
 
 function CopyBtn({ code }: { code: string }) {
+  const { t } = useI18n()
   const [copied, setCopied] = useState(false)
   return (
     <button
       onClick={() => navigator.clipboard.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })}
       style={{ position: 'absolute', top: '0.4rem', right: '0.4rem', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '4px', color: copied ? 'var(--pass)' : 'var(--skip)', fontSize: '0.7rem', padding: '0.15rem 0.45rem', cursor: 'pointer' }}
     >
-      {copied ? 'Copied!' : 'Copy'}
+      {copied ? t('common.copied') : t('common.copy')}
     </button>
   )
 }
@@ -174,20 +175,20 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
           <>
             {ctrl.description && (
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Description</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.phase3.restA.controlsPage.description')}</div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>{ctrl.description}</p>
               </div>
             )}
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               {ctrl.category && (
                 <div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Category</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>{t('pages.phase3.restA.controlsPage.category')}</div>
                   <Pill label={ctrl.category} color="var(--waf-brand)" />
                 </div>
               )}
               {ctrl.checks.length > 0 && (
                 <div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Automated Checks</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>{t('pages.phase3.restA.controlsPage.automatedChecks')}</div>
                   <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{ctrl.checks.length}</span>
                 </div>
               )}
@@ -199,13 +200,13 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
           <>
             {ctrl.rationale && (
               <div style={{ background: 'color-mix(in srgb, var(--waf-brand) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--waf-brand) 20%, transparent)', borderRadius: '10px', padding: '1rem' }}>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>Business Impact</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--waf-brand)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.phase3.restA.controlsPage.businessImpact')}</div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>{ctrl.rationale}</p>
               </div>
             )}
             {ctrl.threat && ctrl.threat.length > 0 && (
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>Technical Impact</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>{t('pages.phase3.restA.controlsPage.technicalImpact')}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   {ctrl.threat.map((t, i) => (
                     <div key={i} style={{ background: 'color-mix(in srgb, var(--fail) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)', borderRadius: '8px', padding: '0.65rem 0.875rem' }}>
@@ -232,7 +233,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                   </div>
                 ))}
               </div>
-            : <EmptyState compact title="No regulatory mappings for this control." />
+            : <EmptyState compact title={t('pages.phase3.restA.controlsPage.noRegulatoryMappings')} />
         )}
 
         {activeTab === 'checks' && (
@@ -246,7 +247,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                   </div>
                 ))}
               </div>
-            : <EmptyState compact title="No automated checks for this control." />
+            : <EmptyState compact title={t('pages.phase3.restA.controlsPage.noAutomatedChecks')} />
         )}
 
         {activeTab === 'fix' && (
@@ -275,7 +276,7 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
                   </div>
                 ))}
               </div>
-            : <EmptyState compact title="No remediation guidance available for this control." />
+            : <EmptyState compact title={t('pages.phase3.restA.controlsPage.noRemediation')} />
         )}
 
         {activeTab === 'waiver' && (
@@ -289,14 +290,14 @@ function DetailPanel({ ctrl, status, onClose }: { ctrl: ControlMeta; status: 'PA
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.controlsPage.waiverReason')}</label>
               <textarea
                 value={wReason} onChange={e => setWReason(e.target.value)}
-                rows={3} placeholder="Why is this control being waived?"
+                rows={3} placeholder={t('pages.phase3.restA.controlsPage.waiverReasonPlaceholder')}
                 style={{ ...inputStyle, resize: 'vertical' as const }}
               />
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.controlsPage.waiverOwner')}</label>
-                <input value={wOwner} onChange={e => setWOwner(e.target.value)} placeholder="team or person" style={inputStyle} />
+                <input value={wOwner} onChange={e => setWOwner(e.target.value)} placeholder={t('pages.phase3.restA.controlsPage.waiverOwnerPlaceholder')} style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.25rem' }}>{t('pages.controlsPage.waiverExpires')}</label>
@@ -390,8 +391,8 @@ export default function ControlsPage({ controls, findings }: Props) {
         }}>
           <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isLive ? 'var(--waf-brand)' : 'var(--skip)', flexShrink: 0 }} />
           {isLive
-            ? <><strong>{source.length} controls</strong> loaded from the active run</>
-            : <>Showing reference set — run <code style={{ fontSize: '0.75rem' }}>wombat check --output json --push …</code> to see your actual loaded controls</>
+            ? <><strong>{t('pages.phase3.restA.controlsPage.countControls', { count: source.length })}</strong> {t('pages.phase3.restA.controlsPage.loadedFromActiveRun')}</>
+            : <>{t('pages.phase3.restA.controlsPage.showingReferenceSetBefore')} <code style={{ fontSize: '0.75rem' }}>wombat check --output json --push …</code> {t('pages.phase3.restA.controlsPage.showingReferenceSetAfter')}</>
           }
         </div>
 
@@ -468,7 +469,7 @@ export default function ControlsPage({ controls, findings }: Props) {
                   <Pill label={ctrl.severity} color={sc} />
                   {ctrl.checks.length > 0 && (
                     <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                      {ctrl.checks.length} check{ctrl.checks.length !== 1 ? 's' : ''}
+                      {ctrl.checks.length} {ctrl.checks.length !== 1 ? t('pages.phase3.restA.controlsPage.checkPlural') : t('pages.phase3.restA.controlsPage.checkSingular')}
                     </span>
                   )}
                 </div>

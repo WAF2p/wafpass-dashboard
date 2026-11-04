@@ -38,6 +38,7 @@ function normalizePillarName(p: string): string {
 interface Props { run: RunDetail; settings?: Settings; navigate?: (page: Page, filters?: { framework?: string }) => void }
 
 function StatusBar({ score, passRate }: { score: number; passRate: number }) {
+  const { t } = useI18n()
   const armed = score >= 80
   const warning = score >= 60 && score < 80
   return (
@@ -45,15 +46,15 @@ function StatusBar({ score, passRate }: { score: number; passRate: number }) {
       <div className="scc-statusbar__line" />
       <div className={`scc-statusbar__badge ${armed ? 'scc-statusbar__badge--armed' : warning ? 'scc-statusbar__badge--warn' : 'scc-statusbar__badge--alert'}`}>
         <span className="scc-statusbar__pulse" />
-        <span>{armed ? 'SYSTEM SECURE' : warning ? 'CONDITION YELLOW' : 'ALERT — ACTION REQUIRED'}</span>
+        <span>{armed ? t('pages.phase3.restA.compliance.statusSecure') : warning ? t('pages.phase3.restA.compliance.statusYellow') : t('pages.phase3.restA.compliance.statusAlert')}</span>
       </div>
       <div className="scc-statusbar__readouts">
         <div className="scc-statusbar__readout">
-          <span className="scc-statusbar__label">POSTURE</span>
+          <span className="scc-statusbar__label">{t('pages.phase3.restA.compliance.posture')}</span>
           <span className="scc-statusbar__value" style={{ color: scoreColor(score) }}>{score}%</span>
         </div>
         <div className="scc-statusbar__readout">
-          <span className="scc-statusbar__label">PASS RATE</span>
+          <span className="scc-statusbar__label">{t('pages.phase3.restA.compliance.passRate')}</span>
           <span className="scc-statusbar__value" style={{ color: scoreColor(passRate) }}>{passRate}%</span>
         </div>
       </div>
@@ -190,15 +191,15 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
 
       {/* Hero — command center header */}
       <PageHeader
-        eyebrow={<><SignalIcon /> SECURITY COMMAND CENTER</>}
+        eyebrow={<><SignalIcon /> {t('pages.phase3.restA.compliance.eyebrow')}</>}
         title={<>{t('compliance.pillarTab')} &amp; {t('compliance.frameworkTab')}</>}
-        description={<>Live posture monitoring across {findings.length} checks and {FRAMEWORKS.length} regulatory frameworks.</>}
+        description={<>{t('pages.phase3.restA.compliance.heroDescription', { checks: findings.length, frameworks: FRAMEWORKS.length })}</>}
         actions={
           <div className="scc-hero__score">
             <CircularScore value={overallScore} size={150} stroke={10} color={scoreColor(overallScore)} />
             <div className="scc-hero__score-label">
               <span className="scc-hero__score-value" style={{ color: scoreColor(overallScore) }}>{overallScore}</span>
-              <span className="scc-hero__score-unit">SECURITY POSTURE</span>
+              <span className="scc-hero__score-unit">{t('pages.phase3.restA.compliance.securityPosture')}</span>
             </div>
           </div>
         }
@@ -210,19 +211,19 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
       {/* KPI tiles */}
       <div className="scc-kpi-grid">
         <div className="scc-kpi scc-kpi--pass" style={{ order: orderOf('passing'), display: isHidden('passing') ? 'none' : undefined }}>
-          <div className="scc-kpi__label">PASSING CHECKS</div>
+          <div className="scc-kpi__label">{t('pages.phase3.restA.compliance.kpiPassing')}</div>
           <div className="scc-kpi__value" style={{ color: statusColor('good') }}>{overallPassRate}%</div>
         </div>
         <div className="scc-kpi scc-kpi--fail" style={{ order: orderOf('failed'), display: isHidden('failed') ? 'none' : undefined }}>
-          <div className="scc-kpi__label">FAILED CHECKS</div>
+          <div className="scc-kpi__label">{t('pages.phase3.restA.compliance.kpiFailed')}</div>
           <div className="scc-kpi__value" style={{ color: overallFailCount > 0 ? statusColor('bad') : statusColor('muted') }}>{overallFailCount}</div>
         </div>
         <div className="scc-kpi scc-kpi--crit" style={{ order: orderOf('critical'), display: isHidden('critical') ? 'none' : undefined }}>
-          <div className="scc-kpi__label">CRITICAL FINDINGS</div>
+          <div className="scc-kpi__label">{t('pages.phase3.restA.compliance.kpiCritical')}</div>
           <div className="scc-kpi__value" style={{ color: overallCritCount > 0 ? statusColor('bad') : statusColor('muted') }}>{overallCritCount}</div>
         </div>
         <div className="scc-kpi scc-kpi--frameworks" style={{ order: orderOf('frameworks'), display: isHidden('frameworks') ? 'none' : undefined }}>
-          <div className="scc-kpi__label">FRAMEWORKS TRACKED</div>
+          <div className="scc-kpi__label">{t('pages.phase3.restA.compliance.kpiFrameworks')}</div>
           <div className="scc-kpi__value" style={{ color: statusColor('info') }}>{FRAMEWORKS.length}</div>
         </div>
       </div>
@@ -263,7 +264,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
                       <span className="scc-pill scc-pill--pass"><CheckIcon /> {s.pass}</span>
                       {s.fail > 0 && <span className="scc-pill scc-pill--fail"><XIcon /> {s.fail}</span>}
                       {s.waived > 0 && <span className="scc-pill scc-pill--waived"><MinusIcon /> {s.waived}</span>}
-                      <span className="scc-pill scc-pill--total">{s.total} total</span>
+                      <span className="scc-pill scc-pill--total">{s.total} {t('pages.phase3.restA.compliance.total')}</span>
                     </div>
                     <div className="scc-pillar-card__bar">
                       <span style={{ width: `${s.passRate}%`, background: scoreColor(s.passRate) }} />
@@ -272,7 +273,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
                 ))}
               </div>
 
-              <SectionCard title={t('compliance.failingFindings')} subtitle="Severity heatmap across pillars">
+              <SectionCard title={t('compliance.failingFindings')} subtitle={t('pages.phase3.restA.compliance.heatmapSubtitle')}>
                 <div className="scc-heatmap">
                   {pillarStats.map(s => (
                     <div key={s.key} className="scc-heatmap__row">
@@ -386,7 +387,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
                     onClick={mapped > 0 ? () => { setDetailFrameworkId(fw.id); setTab('framework-detail') } : undefined}
                     role={mapped > 0 ? 'button' : undefined}
                     tabIndex={mapped > 0 ? 0 : undefined}
-                    aria-label={mapped > 0 ? `${fw.label} details` : undefined}
+                    aria-label={mapped > 0 ? `${fw.label} ${t('pages.phase3.restA.compliance.details')}` : undefined}
                     onKeyDown={mapped > 0 ? e => { if (e.key === 'Enter' || e.key === ' ') { setDetailFrameworkId(fw.id); setTab('framework-detail') } } : undefined}
                   >
                     <div className="scc-framework-card__header">
@@ -452,7 +453,7 @@ export default function CompliancePage({ run, settings, navigate }: Props) {
                       <button
                         className="scc-framework-card__gaps"
                         onClick={e => { e.stopPropagation(); navigate('gapanalysis', { framework: fw.id }) }}
-                        aria-label={`${fw.label} gap analysis`}
+                        aria-label={`${fw.label} ${t('pages.phase3.restA.compliance.gapAnalysis')}`}
                       >
                         {t('compliance.openGapAnalysis')} <ArrowRightIcon />
                       </button>

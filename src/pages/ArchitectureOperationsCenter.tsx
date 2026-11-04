@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Finding, RunDetail, fetchRuns } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
-import { CenterHero, Icon, KpiCard, KpiSlot, MiniBadge, PriorityRow, RightRail, SectionCard, TwoColumnGrid } from './OperationsCenterShell'
+import { Icon, KpiCard, KpiSlot, MiniBadge, PriorityRow, RightRail, SectionCard, TwoColumnGrid } from './OperationsCenterShell'
+import PageHeader from '../ui/PageHeader'
 import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_PERSONA_HOME } from './userPrefsUtils'
 import { getPersonaPreset } from './personaHome'
 import { severityColor } from '../severity'
-import { PAGE_TITLE } from '../routing'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 
@@ -157,14 +157,11 @@ export default function ArchitectureOperationsCenter({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <h1 className="ui-sr-only">{PAGE_TITLE['architecture']}</h1>
-      <CenterHero
+      <PageHeader
         eyebrow="Operations Center"
         title={t('pages.architectureOps.title')}
-        subtitle={t('pages.architectureOps.subtitle')}
-        accent="var(--waf-info)"
-      >
-        {run && (
+        description={t('pages.architectureOps.subtitle')}
+        actions={run && (
           <div style={{ textAlign: 'right', minWidth: '160px' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.dashboard.infrastructureScan')}
@@ -175,7 +172,7 @@ export default function ArchitectureOperationsCenter({
             </div>
           </div>
         )}
-      </CenterHero>
+      />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
         <KpiSlot order={orderOf('controls')} hidden={isHidden('controls')}>

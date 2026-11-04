@@ -24,6 +24,10 @@ const PASS = process.env.WAF_ADMIN_PASSWORD ?? 'admin'
 const PORT = Number(process.env.CDP_PORT ?? 9333)
 const ROUTES = (process.env.VISUAL_ROUTES ?? 'catalogue,settings,about,legal,compliance-readiness,evidence').split(',')
 const THEMES = (process.env.VISUAL_THEMES ?? 'dark,light').split(',')
+const VIEWPORTS = (process.env.VISUAL_VIEWPORTS ?? '1440x900,900x900,390x844')
+  .split(',')
+  .map(v => v.split('x').map(Number))
+  .map(([width, height]) => ({ width, height }))
 const THRESHOLD = Number(process.env.VISUAL_THRESHOLD ?? 0.1)
 const BASELINE_DIR = 'visual-baselines'
 const WORK_DIR = '.visual'
@@ -143,6 +147,10 @@ async function main() {
     let failures = 0
     for (const theme of THEMES) {
       await evaluate(`localStorage.setItem('wombat_theme', ${JSON.stringify(theme)}); 'ok'`)
+      for (const viewport of VIEWPORTS) {
+      await page.send('Emulation.setDeviceMetricsOverride', {
+        width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: viewport.width < 600,
+      })
       await page.send('Page.reload')
       await sleep(1800)
       for (const route of ROUTES) {
@@ -170,7 +178,7 @@ async function main() {
           if (png && next.equals(png)) break
           png = next
         }
-        const name = `${theme}-${route}.png`
+        const name = `${theme}-${viewport.width}-${route}.png`
         const current = join(WORK_DIR, 'current', name)
         writeFileSync(current, png)
         const baseline = join(BASELINE_DIR, name)
@@ -187,6 +195,7 @@ async function main() {
             console.log(`ok        ${name}`)
           }
         }
+      }
       }
     }
     if (failures) {

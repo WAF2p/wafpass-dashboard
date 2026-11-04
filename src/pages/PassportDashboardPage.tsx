@@ -134,30 +134,31 @@ function LinkIconButton({ href, title, children }: { href: string; title: string
 }
 
 function RepoIcon({ url }: { url: string }) {
+  const { t } = useI18n()
   const type = detectRepoType(url)
   if (type === 'github') return (
-    <LinkIconButton href={url} title="GitHub Repository">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.repoGitHub')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'gitlab') return (
-    <LinkIconButton href={url} title="GitLab Repository">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.repoGitLab')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51 1.22 3.78a.84.84 0 0 1-.3.92z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'bitbucket') return (
-    <LinkIconButton href={url} title="Bitbucket Repository">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.repoBitbucket')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M.778 1.213a.768.768 0 0 0-.768.892l3.263 19.81c.084.5.515.868 1.022.868h15.387c.38 0 .71-.258.79-.63l3.263-19.845a.768.768 0 0 0-.768-.895zM14.78 15.959H9.234L7.616 8.04h8.777z" />
       </svg>
     </LinkIconButton>
   )
   return (
-    <LinkIconButton href={url} title="Repository">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.repoGeneric')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
       </svg>
@@ -166,30 +167,31 @@ function RepoIcon({ url }: { url: string }) {
 }
 
 function DocsIcon({ url }: { url: string }) {
+  const { t } = useI18n()
   const type = detectDocsType(url)
   if (type === 'confluence') return (
-    <LinkIconButton href={url} title="Confluence Documentation">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.docsConfluence')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M.887 18.168c-.28.459-.523.852-.71 1.161-.41.687-.117 1.567.635 1.877l3.783 1.552c.737.302 1.579-.055 1.896-.786.177-.409.413-.905.686-1.44C9.26 17.252 11.374 16.05 14.745 16c3.473-.052 6.072 1.267 7.944 3.638.463.589 1.293.738 1.938.34l3.33-2.059a1.377 1.377 0 0 0 .39-1.924C25.494 12.44 21.417 9 14.793 9 8.248 9 3.535 12.63.887 18.168zm22.226-12.336c.28-.459.523-.852.71-1.161.41-.687.117-1.567-.635-1.877L19.405 1.242c-.737-.302-1.579.055-1.896.786-.177.409-.413.905-.686 1.44C14.74 6.748 12.626 7.95 9.255 8c-3.473.052-6.072-1.267-7.944-3.638A1.378 1.378 0 0 0-.627 4.022L-3.957 6.08a1.377 1.377 0 0 0-.39 1.924C-.494 11.56 3.583 15 10.207 15c6.545 0 11.258-3.63 13.906-9.168z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'notion') return (
-    <LinkIconButton href={url} title="Notion Documentation">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.docsNotion')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.447-.093-1.961-.747l-3.13-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z" />
       </svg>
     </LinkIconButton>
   )
   if (type === 'gitbook') return (
-    <LinkIconButton href={url} title="GitBook Documentation">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.docsGitBook')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M10.802 17.77a.703.703 0 1 1-.002 1.406.703.703 0 0 1 .002-1.406m11.024-4.347a.703.703 0 1 1 .001-1.406.703.703 0 0 1-.001 1.406M3.136 14.12a.703.703 0 1 1 .001-1.407.703.703 0 0 1-.001 1.407m17.323-9.91a2.11 2.11 0 1 0 .001 4.22 2.11 2.11 0 0 0 0-4.22m0 3.164a1.054 1.054 0 1 1 0-2.11 1.054 1.054 0 0 1 0 2.11m-14.86-3.164a2.11 2.11 0 1 0 0 4.22 2.11 2.11 0 0 0 0-4.22m0 3.164a1.054 1.054 0 1 1 0-2.11 1.054 1.054 0 0 1 0 2.11" />
       </svg>
     </LinkIconButton>
   )
   return (
-    <LinkIconButton href={url} title="Documentation">
+    <LinkIconButton href={url} title={t('pages.phase3.restB.passportDashboard.docsGeneric')}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <polyline points="14 2 14 8 20 8" />
@@ -318,6 +320,7 @@ function AccessDeniedOverlay({
   onClose: () => void
   project: string
 }) {
+  const { t } = useI18n()
   return createPortal(
     <div className="pp-overlay-backdrop" onClick={onClose}>
       <div className="pp-modal pp-modal--access" onClick={e => e.stopPropagation()}>
@@ -326,7 +329,7 @@ function AccessDeniedOverlay({
             <div className="pp-modal-kicker">Wombat · PROJECT PASSPORT</div>
             <div className="pp-modal-title" style={{ maxWidth: 280 }}>{project}</div>
           </div>
-          <button className="pp-modal-close" onClick={onClose} aria-label="Close">
+          <button className="pp-modal-close" onClick={onClose} aria-label={t('pages.phase3.restB.passportDashboard.close')}>
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -338,9 +341,9 @@ function AccessDeniedOverlay({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <div className="pp-access-title">Access Denied</div>
+          <div className="pp-access-title">{t('pages.phase3.restB.passportDashboard.accessDenied')}</div>
           <div className="pp-access-text">
-            You do not have access to this project. Contact your administrator to request access.
+            {t('pages.phase3.restB.passportDashboard.accessDeniedBody')}
           </div>
         </div>
         <div className="pp-modal-mrz">
@@ -377,6 +380,7 @@ function AchievementsOverlay({
   displayName: string
   origin?: { dx: number; dy: number } | null
 }) {
+  const { t } = useI18n()
   const [page, setPage] = useState(0)
   const [coverOpen, setCoverOpen] = useState(false)
   const [opened, setOpened] = useState(false)
@@ -460,7 +464,7 @@ function AchievementsOverlay({
               className="pp-passport-open"
               onClick={e => { e.stopPropagation(); setCoverOpen(true) }}
             >
-              Open passport
+              {t('pages.phase3.restB.passportDashboard.openPassport')}
             </button>
           </div>
         </div>
@@ -470,7 +474,7 @@ function AchievementsOverlay({
             <div className="pp-modal-kicker">WOMBATpass · STAMP COLLECTION</div>
             <div className="pp-book-title">{displayName}</div>
           </div>
-          <button className="pp-modal-close" onClick={onClose} aria-label="Close">
+          <button className="pp-modal-close" onClick={onClose} aria-label={t('pages.phase3.restB.passportDashboard.close')}>
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -479,7 +483,7 @@ function AchievementsOverlay({
 
         <div className="pp-book-sheet" key={page}>
           {page === 0 && (
-            <section className="pp-book-page pp-book-page--details" aria-label="Project details">
+            <section className="pp-book-page pp-book-page--details" aria-label={t('pages.phase3.restB.passportDashboard.projectDetails')}>
               <header className="pp-data-head">
                 <img src="/logo.png" alt="" className="pp-data-emblem" />
                 <div>
@@ -487,7 +491,7 @@ function AchievementsOverlay({
                   <div className="pp-data-doctype">Project Passport · Reisepass</div>
                 </div>
                 <div className="pp-data-docno">
-                  <span>Pass No.</span>
+                  <span>{t('pages.phase3.restB.passportDashboard.passNo')}</span>
                   <strong>{docNo}</strong>
                 </div>
               </header>
@@ -501,41 +505,41 @@ function AchievementsOverlay({
                 </div>
 
                 <div className="pp-data-fields">
-                  <DataField n="01" label="Project / Name" value={displayName} strong />
-                  <DataField n="02" label="Identifier" value={!project.trim() || project === '(unnamed)' ? '—' : project} mono />
-                  <DataField n="03" label="Owner" value={passport?.owner ?? '—'} />
-                  <DataField n="04" label="Team" value={passport?.owner_team ?? '—'} />
-                  <DataField n="05" label="Contact" value={passport?.contact_email ?? '—'} />
-                  <DataField n="06" label="Criticality" value={criticality?.label ?? '—'} />
-                  <DataField n="07" label="Environment" value={env?.label ?? '—'} />
-                  <DataField n="08" label="Cloud" value={cloud?.label ?? '—'} />
-                  <DataField n="09" label="Issued" value={issuedLabel} />
-                  <DataField n="10" label="Last scan" value={lastScanLabel} />
-                  <DataField n="11" label="Score" value={bestScore > 0 ? `${bestScore} / 100` : '—'} />
-                  <DataField n="12" label="Maturity" value={maturity.short} />
+                  <DataField n="01" label={t('pages.phase3.restB.passportDashboard.fieldProjectName')} value={displayName} strong />
+                  <DataField n="02" label={t('pages.phase3.restB.passportDashboard.fieldIdentifier')} value={!project.trim() || project === '(unnamed)' ? '—' : project} mono />
+                  <DataField n="03" label={t('pages.phase3.restB.passportDashboard.fieldOwner')} value={passport?.owner ?? '—'} />
+                  <DataField n="04" label={t('pages.phase3.restB.passportDashboard.fieldTeam')} value={passport?.owner_team ?? '—'} />
+                  <DataField n="05" label={t('pages.phase3.restB.passportDashboard.fieldContact')} value={passport?.contact_email ?? '—'} />
+                  <DataField n="06" label={t('pages.phase3.restB.passportDashboard.fieldCriticality')} value={criticality?.label ?? '—'} />
+                  <DataField n="07" label={t('pages.phase3.restB.passportDashboard.fieldEnvironment')} value={env?.label ?? '—'} />
+                  <DataField n="08" label={t('pages.phase3.restB.passportDashboard.fieldCloud')} value={cloud?.label ?? '—'} />
+                  <DataField n="09" label={t('pages.phase3.restB.passportDashboard.fieldIssued')} value={issuedLabel} />
+                  <DataField n="10" label={t('pages.phase3.restB.passportDashboard.fieldLastScan')} value={lastScanLabel} />
+                  <DataField n="11" label={t('pages.phase3.restB.passportDashboard.fieldScore')} value={bestScore > 0 ? `${bestScore} / 100` : '—'} />
+                  <DataField n="12" label={t('pages.phase3.restB.passportDashboard.fieldMaturity')} value={maturity.short} />
                 </div>
               </div>
 
               <footer className="pp-data-foot">
                 <div className="pp-data-stats">
-                  <span><strong>{latestScore > 0 ? latestScore : '—'}</strong>latest</span>
-                  <span><strong>{avgScore > 0 ? avgScore : '—'}</strong>avg</span>
-                  <span><strong>{projectRuns.length}</strong>scans</span>
-                  <span><strong>{coverage != null ? `${coverage}%` : '—'}</strong>coverage</span>
+                  <span><strong>{latestScore > 0 ? latestScore : '—'}</strong>{t('pages.phase3.restB.passportDashboard.statLatest')}</span>
+                  <span><strong>{avgScore > 0 ? avgScore : '—'}</strong>{t('pages.phase3.restB.passportDashboard.statAvg')}</span>
+                  <span><strong>{projectRuns.length}</strong>{t('pages.phase3.restB.passportDashboard.statScans')}</span>
+                  <span><strong>{coverage != null ? `${coverage}%` : '—'}</strong>{t('pages.phase3.restB.passportDashboard.statCoverage')}</span>
                 </div>
                 <div className="pp-data-sig">
                   <span className="pp-data-sig-name">{displayName}</span>
-                  <span className="pp-data-sig-line">Authorised signature</span>
+                  <span className="pp-data-sig-line">{t('pages.phase3.restB.passportDashboard.authorisedSignature')}</span>
                 </div>
               </footer>
             </section>
           )}
 
           {page === 1 && (
-            <section className="pp-book-page" aria-label="Maturity levels">
+            <section className="pp-book-page" aria-label={t('pages.phase3.restB.passportDashboard.maturityLevels')}>
               <header className="pp-book-page-head">
-                <span className="pp-book-page-kicker">Maturity Levels</span>
-                <span className="pp-book-page-meta">{earnedMaturity} / {MATURITY_META.length} earned · Page 2 of {pageCount}</span>
+                <span className="pp-book-page-kicker">{t('pages.phase3.restB.passportDashboard.maturityLevels')}</span>
+                <span className="pp-book-page-meta">{t('pages.phase3.restB.passportDashboard.earnedPage', { earned: earnedMaturity, total: MATURITY_META.length, page: 2, pages: pageCount })}</span>
               </header>
               <div className="pp-stamp-grid">
                 {maturityBadges.map((m, i) => (
@@ -548,7 +552,7 @@ function AchievementsOverlay({
                         : i === 3 ? 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'
                         : 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'}
                     title={`L${m.level} · ${m.short}`}
-                    subtitle={`Score ${MATURITY_THRESHOLDS[m.level]}+`}
+                    subtitle={t('pages.phase3.restB.passportDashboard.scorePlus', { score: MATURITY_THRESHOLDS[m.level] })}
                     earned={m.earned}
                     index={i}
                   />
@@ -558,11 +562,11 @@ function AchievementsOverlay({
           )}
 
           {page >= 2 && (
-            <section className="pp-book-page" aria-label="Achievements">
+            <section className="pp-book-page" aria-label={t('pages.phase3.restB.passportDashboard.achievements')}>
               <header className="pp-book-page-head">
-                <span className="pp-book-page-kicker">Achievements</span>
+                <span className="pp-book-page-kicker">{t('pages.phase3.restB.passportDashboard.achievements')}</span>
                 <span className="pp-book-page-meta">
-                  {earnedAchievements} / {achievementBadges.length} earned · Page {page + 1} of {pageCount}
+                  {t('pages.phase3.restB.passportDashboard.earnedPage', { earned: earnedAchievements, total: achievementBadges.length, page: page + 1, pages: pageCount })}
                 </span>
               </header>
               <div className="pp-stamp-grid pp-stamp-grid--achievements">
@@ -571,8 +575,8 @@ function AchievementsOverlay({
                     key={a.id}
                     color={STAMP_CATEGORY_COLOR[a.category]}
                     icon={a.icon}
-                    title={a.title}
-                    subtitle={a.desc}
+                    title={t(`pages.phase3.restB.passportDashboard.stamp.${a.id}.title`)}
+                    subtitle={t(`pages.phase3.restB.passportDashboard.stamp.${a.id}.desc`)}
                     earned={a.earned}
                     index={i}
                   />
@@ -583,7 +587,7 @@ function AchievementsOverlay({
         </div>
 
         <div className="pp-book-nav">
-          <button className="pp-book-arrow" onClick={prev} disabled={page === 0} aria-label="Previous page">
+          <button className="pp-book-arrow" onClick={prev} disabled={page === 0} aria-label={t('pages.phase3.restB.passportDashboard.previousPage')}>
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
             </svg>
@@ -593,7 +597,7 @@ function AchievementsOverlay({
               <span key={i} className={`pp-book-dot${page === i ? ' is-active' : ''}`} />
             ))}
           </div>
-          <button className="pp-book-arrow" onClick={next} disabled={page >= pageCount - 1} aria-label="Next page">
+          <button className="pp-book-arrow" onClick={next} disabled={page >= pageCount - 1} aria-label={t('pages.phase3.restB.passportDashboard.nextPage')}>
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>
@@ -617,7 +621,7 @@ type ViewMode = 'grid' | 'wide' | 'list'
 
 // ── Shared card data hook ─────────────────────────────────────────────────────
 
-function usePassportCardData(project: string, passport: ProjectPassport | null, runs: RunSummary[]) {
+function usePassportCardData(project: string, passport: ProjectPassport | null, runs: RunSummary[], t: (key: string, vars?: Record<string, string | number>) => string) {
   const projectRuns  = runs.filter(r => (r.project || '(unnamed)') === project)
   const sortedRuns   = [...projectRuns].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
   const latestRun    = sortedRuns[sortedRuns.length - 1]
@@ -633,7 +637,7 @@ function usePassportCardData(project: string, passport: ProjectPassport | null, 
   const env          = passport?.environment  ? ENV_META[passport.environment]          : null
   const cloud        = passport?.cloud_provider ? CLOUD_META[passport.cloud_provider]  : null
   const isUnnamedProject = !project.trim() || project === '(unnamed)'
-  const displayName  = passport?.display_name || (isUnnamedProject ? 'Untitled project' : project)
+  const displayName  = passport?.display_name || (isUnnamedProject ? t('pages.phase3.restB.passportDashboard.untitledProject') : project)
   const achievementCount = [
     projectRuns.length >= 1,
     projectRuns.some(r => r.score >= 60),
@@ -664,8 +668,9 @@ function PassportRow({
   runs: RunSummary[]
   onClick: () => void
 }) {
+  const { t } = useI18n()
   const { projectRuns, latestRun, bestScore, maturity, criticality, env, cloud, displayName, achievementCount, mrz1 } =
-    usePassportCardData(project, passport, runs)
+    usePassportCardData(project, passport, runs, t)
 
   return (
     <button onClick={onClick} className="pp-row">
@@ -686,22 +691,22 @@ function PassportRow({
           {passport?.description ? (
             <div className="pp-row-desc">{passport.description}</div>
           ) : (
-            <div className="pp-row-desc pp-row-desc--empty">No description</div>
+            <div className="pp-row-desc pp-row-desc--empty">{t('pages.phase3.restB.passportDashboard.noDescription')}</div>
           )}
         </div>
 
         <div className="pp-row-owner">
           {passport?.owner ? (
             <div className="pp-field">
-              <div className="pp-field-label">Owner</div>
+              <div className="pp-field-label">{t('pages.phase3.restB.passportDashboard.fieldOwner')}</div>
               <div className="pp-field-value">{passport.owner}</div>
             </div>
           ) : (
-            <div className="pp-row-desc--empty">No owner</div>
+            <div className="pp-row-desc--empty">{t('pages.phase3.restB.passportDashboard.noOwner')}</div>
           )}
           {passport?.owner_team && (
             <div className="pp-field">
-              <div className="pp-field-label">Team</div>
+              <div className="pp-field-label">{t('pages.phase3.restB.passportDashboard.fieldTeam')}</div>
               <div className="pp-field-value" style={{ fontWeight: 600, color: 'var(--muted)' }}>{passport.owner_team}</div>
             </div>
           )}
@@ -717,7 +722,7 @@ function PassportRow({
         <div className="pp-row-score">
           <div className="pp-score-big" style={{ color: scoreColor(bestScore) }}>{bestScore > 0 ? bestScore : '—'}</div>
           <div className="pp-score-label">/ 100</div>
-          <div className="pp-row-meta">{projectRuns.length} scan{projectRuns.length !== 1 ? 's' : ''}</div>
+          <div className="pp-row-meta">{projectRuns.length} {projectRuns.length !== 1 ? t('pages.phase3.restB.passportDashboard.scanMany') : t('pages.phase3.restB.passportDashboard.scanOne')}</div>
           {achievementCount > 0 && (
             <div className="pp-row-achievements">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
@@ -740,13 +745,13 @@ function PassportRow({
             href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
             download={`wombat-badge-${project}.svg`}
             onClick={e => e.stopPropagation()}
-            title="Download SVG badge"
+            title={t('pages.phase3.restB.passportDashboard.downloadBadge')}
             className="pp-row-badge"
           >
             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span>Badge</span>
+            <span>{t('pages.phase3.restB.passportDashboard.badge')}</span>
           </a>
         </div>
       </div>
@@ -766,8 +771,9 @@ function PassportCard({
   onClick: () => void
   onOpenStamps: (origin?: { dx: number; dy: number }) => void
 }) {
+  const { t } = useI18n()
   const { projectRuns, latestRun, bestScore, latestScore, scoreDelta, avgScore, sparkRuns, latestControls, maturity, criticality, env, cloud, displayName, achievementCount, mrz1 } =
-    usePassportCardData(project, passport, runs)
+    usePassportCardData(project, passport, runs, t)
 
   const isUnnamed = !project.trim() || project === '(unnamed)'
   const issuedDate = passport?.created_at
@@ -792,7 +798,7 @@ function PassportCard({
         </div>
 
         <div className="pp-card-identity">
-          <div className="pp-card-kicker">PROJECT PASSPORT</div>
+          <div className="pp-card-kicker">{t('pages.phase3.restB.passportDashboard.projectPassport')}</div>
           <div className="pp-card-name">{displayName}</div>
           {!isUnnamed && <div className="pp-card-project">{project}</div>}
           <div className="pp-card-tags-inline">
@@ -839,14 +845,14 @@ function PassportCard({
       </div>
 
       <div className="pp-card-meta">
-        <PassportDataField label="Owner" value={passport?.owner ?? '—'} />
-        <PassportDataField label="Team" value={passport?.owner_team ?? '—'} />
-        <PassportDataField label="Contact" value={passport?.contact_email ?? '—'} small />
-        <PassportDataField label="Criticality" value={criticality?.label ?? '—'} valueColor={criticality?.color} />
-        <PassportDataField label="Environment" value={env?.label ?? '—'} valueColor={env?.color} />
-        <PassportDataField label="Cloud" value={cloud?.label ?? '—'} valueColor={cloud?.color} />
-        <PassportDataField label="Issued" value={issuedLabel} small />
-        <PassportDataField label="Last scan" value={lastScanLabel} small />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldOwner')} value={passport?.owner ?? '—'} />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldTeam')} value={passport?.owner_team ?? '—'} />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldContact')} value={passport?.contact_email ?? '—'} small />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldCriticality')} value={criticality?.label ?? '—'} valueColor={criticality?.color} />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldEnvironment')} value={env?.label ?? '—'} valueColor={env?.color} />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldCloud')} value={cloud?.label ?? '—'} valueColor={cloud?.color} />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldIssued')} value={issuedLabel} small />
+        <PassportDataField label={t('pages.phase3.restB.passportDashboard.fieldLastScan')} value={lastScanLabel} small />
       </div>
 
       <div className="pp-card-performance">
@@ -858,11 +864,11 @@ function PassportCard({
             })}
           </svg>
         ) : (
-          <span className="pp-card-no-trend">No trend yet</span>
+          <span className="pp-card-no-trend">{t('pages.phase3.restB.passportDashboard.noTrend')}</span>
         )}
         <div className="pp-card-latest">
           <span className="pp-score-mid" style={{ color: scoreColor(latestScore) }}>{latestScore > 0 ? latestScore : '—'}</span>
-          <span className="pp-score-label">latest</span>
+          <span className="pp-score-label">{t('pages.phase3.restB.passportDashboard.statLatest')}</span>
           {scoreDelta !== null && scoreDelta !== 0 && (
             <span className="pp-card-delta" style={{ color: scoreDelta > 0 ? 'var(--pass)' : 'var(--fail)' }}>
               {scoreDelta > 0 ? `↑${scoreDelta}` : `↓${Math.abs(scoreDelta)}`}
@@ -872,9 +878,9 @@ function PassportCard({
         <div className="pp-card-divider" />
         <div className="pp-card-stats">
           {[
-            { label: 'avg', value: avgScore > 0 ? String(avgScore) : '—' },
-            { label: 'scans', value: String(projectRuns.length) },
-            { label: 'coverage', value: latestControls && latestControls.loaded > 0 ? `${Math.round((latestControls.run / latestControls.loaded) * 100)}%` : '—' },
+            { label: t('pages.phase3.restB.passportDashboard.statAvg'), value: avgScore > 0 ? String(avgScore) : '—' },
+            { label: t('pages.phase3.restB.passportDashboard.statScans'), value: String(projectRuns.length) },
+            { label: t('pages.phase3.restB.passportDashboard.statCoverage'), value: latestControls && latestControls.loaded > 0 ? `${Math.round((latestControls.run / latestControls.loaded) * 100)}%` : '—' },
           ].map(s => (
             <div key={s.label} className="pp-mini-stat">
               <span className="pp-mini-stat-value">{s.value}</span>
@@ -886,7 +892,7 @@ function PassportCard({
 
       {passport?.tags && passport.tags.length > 0 && (
         <div className="pp-card-tags">
-          <span className="pp-card-tags-label">Tags</span>
+          <span className="pp-card-tags-label">{t('pages.phase3.restB.passportDashboard.tags')}</span>
           {passport.tags.slice(0, 4).map(tag => (
             <span key={tag} className="pp-tag">{tag}</span>
           ))}
@@ -907,23 +913,23 @@ function PassportCard({
             href={`${getApiBase() || ''}/public/badge/${encodeURIComponent(project)}/download`}
             download={`wombat-badge-${project}.svg`}
             onClick={e => e.stopPropagation()}
-            title="Download SVG badge"
+            title={t('pages.phase3.restB.passportDashboard.downloadBadge')}
             className="pp-btn-ghost pp-btn-ghost--sm"
           >
             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span>Badge</span>
+            <span>{t('pages.phase3.restB.passportDashboard.badge')}</span>
           </a>
           <button
             onClick={e => { e.stopPropagation(); onOpenStamps(stampOriginFromEvent(e)) }}
-            title="View stamps & achievements"
+            title={t('pages.phase3.restB.passportDashboard.viewStamps')}
             className="pp-btn-ghost pp-btn-ghost--sm"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
-            <span>Stamps</span>
+            <span>{t('pages.phase3.restB.passportDashboard.stamps')}</span>
           </button>
         </div>
       </div>
@@ -941,6 +947,7 @@ function PassportEditModal({
   onSave: (data: ProjectPassportUpsert) => Promise<void>
   onClose: () => void
 }) {
+  const { t } = useI18n()
   const [form, setForm] = useState<ProjectPassportUpsert>(initial)
   const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
@@ -954,7 +961,7 @@ function PassportEditModal({
   async function handleSave() {
     setSaving(true); setError(null)
     try { await onSave(form); onClose() }
-    catch (e) { setError(e instanceof Error ? e.message : 'Save failed') }
+    catch (e) { setError(e instanceof Error ? e.message : t('pages.phase3.restB.passportDashboard.saveFailed')) }
     finally { setSaving(false) }
   }
 
@@ -969,10 +976,10 @@ function PassportEditModal({
       <div className="pp-modal pp-modal--edit">
         <div className="pp-modal-header">
           <div>
-            <div className="pp-modal-title">Edit Passport</div>
+            <div className="pp-modal-title">{t('pages.phase3.restB.passportDashboard.editPassport')}</div>
             <div className="pp-modal-subtitle">{project}</div>
           </div>
-          <button className="pp-modal-close" onClick={onClose} aria-label="Close">
+          <button className="pp-modal-close" onClick={onClose} aria-label={t('pages.phase3.restB.passportDashboard.close')}>
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -981,31 +988,31 @@ function PassportEditModal({
 
         <div className="pp-modal-body pp-modal-body--form">
           <div className="pp-form-grid pp-form-grid--2">
-            <FormField label="Display Name" value={form.display_name} onChange={v => set('display_name', v)} placeholder={project} />
-            <FormField label="Owner" value={form.owner} onChange={v => set('owner', v)} placeholder="Jane Smith" />
-            <FormField label="Owner Team" value={form.owner_team} onChange={v => set('owner_team', v)} placeholder="Platform Engineering" />
-            <FormField label="Contact Email" value={form.contact_email} onChange={v => set('contact_email', v)} placeholder="team@example.com" type="email" />
-            <FormField label="Repository URL" value={form.repository_url} onChange={v => set('repository_url', v)} placeholder="https://github.com/org/repo" />
-            <FormField label="Documentation URL" value={form.documentation_url} onChange={v => set('documentation_url', v)} placeholder="https://confluence.example.com/…" />
+            <FormField label={t('pages.phase3.restB.passportDashboard.formDisplayName')} value={form.display_name} onChange={v => set('display_name', v)} placeholder={project} />
+            <FormField label={t('pages.phase3.restB.passportDashboard.fieldOwner')} value={form.owner} onChange={v => set('owner', v)} placeholder="Jane Smith" />
+            <FormField label={t('pages.phase3.restB.passportDashboard.formOwnerTeam')} value={form.owner_team} onChange={v => set('owner_team', v)} placeholder="Platform Engineering" />
+            <FormField label={t('pages.phase3.restB.passportDashboard.formContactEmail')} value={form.contact_email} onChange={v => set('contact_email', v)} placeholder="team@example.com" type="email" />
+            <FormField label={t('pages.phase3.restB.passportDashboard.formRepositoryUrl')} value={form.repository_url} onChange={v => set('repository_url', v)} placeholder="https://github.com/org/repo" />
+            <FormField label={t('pages.phase3.restB.passportDashboard.formDocumentationUrl')} value={form.documentation_url} onChange={v => set('documentation_url', v)} placeholder="https://confluence.example.com/…" />
           </div>
 
           <div className="pp-form-grid pp-form-grid--3">
-            <FormSelect label="Criticality" value={form.criticality} onChange={v => set('criticality', v)} options={[
-              { value: '', label: '— Select —' },
+            <FormSelect label={t('pages.phase3.restB.passportDashboard.fieldCriticality')} value={form.criticality} onChange={v => set('criticality', v)} options={[
+              { value: '', label: t('pages.phase3.restB.passportDashboard.selectOption') },
               { value: 'critical', label: 'Critical' },
               { value: 'high',     label: 'High' },
               { value: 'medium',   label: 'Medium' },
               { value: 'low',      label: 'Low' },
             ]} />
-            <FormSelect label="Environment" value={form.environment} onChange={v => set('environment', v)} options={[
-              { value: '',            label: '— Select —' },
+            <FormSelect label={t('pages.phase3.restB.passportDashboard.fieldEnvironment')} value={form.environment} onChange={v => set('environment', v)} options={[
+              { value: '',            label: t('pages.phase3.restB.passportDashboard.selectOption') },
               { value: 'production',  label: 'Production' },
               { value: 'staging',     label: 'Staging' },
               { value: 'development', label: 'Development' },
               { value: 'mixed',       label: 'Mixed' },
             ]} />
-            <FormSelect label="Cloud Provider" value={form.cloud_provider} onChange={v => set('cloud_provider', v)} options={[
-              { value: '',       label: '— Select —' },
+            <FormSelect label={t('pages.phase3.restB.passportDashboard.formCloudProvider')} value={form.cloud_provider} onChange={v => set('cloud_provider', v)} options={[
+              { value: '',       label: t('pages.phase3.restB.passportDashboard.selectOption') },
               { value: 'aws',    label: 'AWS' },
               { value: 'azure',  label: 'Azure' },
               { value: 'gcp',    label: 'GCP' },
@@ -1021,26 +1028,26 @@ function PassportEditModal({
           </div>
 
           <div>
-            <label style={labelStyle}>Description</label>
+            <label style={labelStyle}>{t('pages.phase3.restB.passportDashboard.formDescription')}</label>
             <textarea
               value={form.description}
               onChange={e => set('description', e.target.value)}
-              placeholder="Short description of this project…"
+              placeholder={t('pages.phase3.restB.passportDashboard.formDescriptionPlaceholder')}
               rows={2}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
           </div>
 
           <div>
-            <label style={labelStyle}>Project Image</label>
+            <label style={labelStyle}>{t('pages.phase3.restB.passportDashboard.formProjectImage')}</label>
             <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.5rem' }}>
               {(['url', 'upload'] as const).map(m => (
                 <button key={m} onClick={() => setImageMode(m)} className={`pp-image-toggle ${imageMode === m ? 'active' : ''}`}>
-                  {m === 'url' ? 'URL' : 'Upload'}
+                  {m === 'url' ? t('pages.phase3.restB.passportDashboard.imageUrl') : t('pages.phase3.restB.passportDashboard.imageUpload')}
                 </button>
               ))}
               {form.image_url && (
-                <button onClick={() => set('image_url', '')} className="pp-image-clear">Clear</button>
+                <button onClick={() => set('image_url', '')} className="pp-image-clear">{t('pages.phase3.restB.passportDashboard.clear')}</button>
               )}
             </div>
             {imageMode === 'url' ? (
@@ -1053,8 +1060,8 @@ function PassportEditModal({
               />
             ) : (
               <label className="pp-file-upload">
-                <div className="pp-file-btn">Choose file…</div>
-                <span>{form.image_url && form.image_url.startsWith('data:') ? 'Image loaded' : 'PNG, JPG, SVG — max ~200 KB'}</span>
+                <div className="pp-file-btn">{t('pages.phase3.restB.passportDashboard.chooseFile')}</div>
+                <span>{form.image_url && form.image_url.startsWith('data:') ? t('pages.phase3.restB.passportDashboard.imageLoaded') : t('pages.phase3.restB.passportDashboard.imageHint')}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -1072,29 +1079,29 @@ function PassportEditModal({
             {safeImageUrl(form.image_url, { allowSvgData: true }) && (
               <div className="pp-image-preview">
                 <img src={safeImageUrl(form.image_url, { allowSvgData: true }) ?? undefined} alt="preview" />
-                <span>Preview</span>
+                <span>{t('pages.phase3.restB.passportDashboard.preview')}</span>
               </div>
             )}
           </div>
 
           <div>
-            <label style={labelStyle}>Tags</label>
+            <label style={labelStyle}>{t('pages.phase3.restB.passportDashboard.tags')}</label>
             <div className="pp-tag-input">
               <input
                 value={tagInput}
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-                placeholder="Add tag and press Enter"
+                placeholder={t('pages.phase3.restB.passportDashboard.tagPlaceholder')}
                 style={{ ...inputStyle, flex: 1 }}
               />
-              <button onClick={addTag} className="pp-btn-secondary">Add</button>
+              <button onClick={addTag} className="pp-btn-secondary">{t('pages.phase3.restB.passportDashboard.add')}</button>
             </div>
             {form.tags.length > 0 && (
               <div className="pp-tag-list">
                 {form.tags.map(tag => (
                   <span key={tag} className="pp-tag-chip">
                     {tag}
-                    <button onClick={() => set('tags', form.tags.filter(t => t !== tag))} aria-label={`Remove ${tag}`}>×</button>
+                    <button onClick={() => set('tags', form.tags.filter(t => t !== tag))} aria-label={t('pages.phase3.restB.passportDashboard.removeTag', { tag })}>×</button>
                   </span>
                 ))}
               </div>
@@ -1102,11 +1109,11 @@ function PassportEditModal({
           </div>
 
           <div>
-            <label style={labelStyle}>Notes</label>
+            <label style={labelStyle}>{t('pages.phase3.restB.passportDashboard.formNotes')}</label>
             <textarea
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
-              placeholder="Internal notes, links, context…"
+              placeholder={t('pages.phase3.restB.passportDashboard.formNotesPlaceholder')}
               rows={2}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
@@ -1118,9 +1125,9 @@ function PassportEditModal({
         </div>
 
         <div className="pp-modal-footer">
-          <button onClick={onClose} className="pp-btn-secondary">Cancel</button>
+          <button onClick={onClose} className="pp-btn-secondary">{t('common.cancel')}</button>
           <button onClick={handleSave} disabled={saving} className="pp-btn-primary">
-            {saving ? 'Saving…' : 'Save Passport'}
+            {saving ? t('pages.phase3.restB.passportDashboard.saving') : t('pages.phase3.restB.passportDashboard.savePassport')}
           </button>
         </div>
       </div>
@@ -1258,7 +1265,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
       onRefetchRuns?.()
     } catch (err) {
       console.error('Failed to delete project:', err)
-      setDeleteError(`Failed to delete project: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setDeleteError(t('pages.phase3.restB.passportDashboard.deleteFailed', { error: err instanceof Error ? err.message : t('pages.phase3.restB.passportDashboard.unknownError') }))
     }
   }
 
@@ -1285,21 +1292,21 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search projects, owners, tags…"
+            placeholder={t('pages.phase3.restB.passportDashboard.searchPlaceholder')}
           />
         </div>
         <div className="pp-count">
-          {accessibleFilteredProjects.length} project{accessibleFilteredProjects.length !== 1 ? 's' : ''} visible
+          {accessibleFilteredProjects.length} {accessibleFilteredProjects.length !== 1 ? t('pages.phase3.restB.passportDashboard.projectMany') : t('pages.phase3.restB.passportDashboard.projectOne')} {t('pages.phase3.restB.passportDashboard.visible')}
           {inaccessibleProjects.length > 0 && role !== 'admin' && (
-            <span className="pp-count-hidden">{inaccessibleProjects.length} hidden</span>
+            <span className="pp-count-hidden">{inaccessibleProjects.length} {t('pages.phase3.restB.passportDashboard.hidden')}</span>
           )}
         </div>
         <div className="pp-segment">
           {VIEW_MODES.map(vm => (
             <button
               key={vm.id}
-              title={vm.label}
-              aria-label={vm.label}
+              title={t(`pages.phase3.restB.passportDashboard.view.${vm.id}`)}
+              aria-label={t(`pages.phase3.restB.passportDashboard.view.${vm.id}`)}
               aria-pressed={viewMode === vm.id}
               onClick={() => { setViewMode(vm.id); localStorage.setItem('wombat_passport_view', vm.id) }}
               className={viewMode === vm.id ? 'active' : ''}
@@ -1381,7 +1388,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
           border: '1px solid color-mix(in srgb, var(--fail) 18%, transparent)',
         }}>
           <span style={{ flex: 1 }}>
-            Delete project "{deleteTarget}" and all {runs.filter(r => r.project === deleteTarget).length} run(s)? This action cannot be undone.
+            {t('pages.phase3.restB.passportDashboard.deleteConfirm', { project: deleteTarget, count: runs.filter(r => r.project === deleteTarget).length })}
           </span>
           <button onClick={() => handleDelete(deleteTarget)} style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: 'var(--fail)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem' }}>
             {t('common.delete')}
@@ -1409,8 +1416,8 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 9h6v6H9z" />
             </svg>
           )}
-          title={search ? 'No projects match your search.' : 'No projects found'}
-          description={search ? 'Try a different keyword or clear the filter.' : 'Push a scan to create the first project passport.'}
+          title={search ? t('pages.phase3.restB.passportDashboard.noMatchTitle') : t('pages.phase3.restB.passportDashboard.noProjectsTitle')}
+          description={search ? t('pages.phase3.restB.passportDashboard.noMatchDesc') : t('pages.phase3.restB.passportDashboard.noProjectsDesc')}
         />
       ) : viewMode === 'list' ? (
         <>
@@ -1425,12 +1432,12 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                 />
                 {canEdit(role) && (
                   <div className="pp-item-actions">
-                    <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" aria-label="Edit passport" className="pp-action-edit">
+                    <button onClick={e => { e.stopPropagation(); openEdit(project) }} title={t('pages.phase3.restB.passportDashboard.editPassport')} aria-label={t('pages.phase3.restB.passportDashboard.editPassport')} className="pp-action-edit">
                       <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
-                    <button onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(project) }} title="Delete project" aria-label="Delete project" className="pp-action-delete">
+                    <button onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(project) }} title={t('pages.phase3.restB.passportDashboard.deleteProject')} aria-label={t('pages.phase3.restB.passportDashboard.deleteProject')} className="pp-action-delete">
                       <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
@@ -1453,7 +1460,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                   <div
                     className="pp-lock-overlay"
                     onClick={e => { e.stopPropagation(); setAccessDeniedProject(project) }}
-                    title="You don't have access to this project"
+                    title={t('pages.phase3.restB.passportDashboard.noAccessTooltip')}
                   >
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V9a3 3 0 00-6 0v4h6z" />
@@ -1471,7 +1478,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
               const pp = passportMap[project] ?? null
               const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
               const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
-              const displayName = pp?.display_name || (!project.trim() || project === '(unnamed)' ? 'Untitled project' : project)
+              const displayName = pp?.display_name || (!project.trim() || project === '(unnamed)' ? t('pages.phase3.restB.passportDashboard.untitledProject') : project)
               return (
                 <div key={project} className="pp-grid-item">
                   <PassportCard
@@ -1483,12 +1490,12 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                   />
                   {canEdit(role) && (
                     <div className="pp-item-actions pp-item-actions--card">
-                      <button onClick={e => { e.stopPropagation(); openEdit(project) }} title="Edit passport" aria-label="Edit passport" className="pp-action-edit">
+                      <button onClick={e => { e.stopPropagation(); openEdit(project) }} title={t('pages.phase3.restB.passportDashboard.editPassport')} aria-label={t('pages.phase3.restB.passportDashboard.editPassport')} className="pp-action-edit">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </button>
-                      <button onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(project) }} title="Delete project" aria-label="Delete project" className="pp-action-delete">
+                      <button onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteTarget(project) }} title={t('pages.phase3.restB.passportDashboard.deleteProject')} aria-label={t('pages.phase3.restB.passportDashboard.deleteProject')} className="pp-action-delete">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
@@ -1516,7 +1523,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                 const pp = passportMap[project] ?? null
                 const ppRuns = runs.filter(r => (r.project || '(unnamed)') === project)
                 const bestScore = ppRuns.reduce((m, r) => Math.max(m, r.score), 0)
-                const displayName = pp?.display_name || (!project.trim() || project === '(unnamed)' ? 'Untitled project' : project)
+                const displayName = pp?.display_name || (!project.trim() || project === '(unnamed)' ? t('pages.phase3.restB.passportDashboard.untitledProject') : project)
                 return (
                   <div key={project} className="pp-grid-item pp-grid-item--locked">
                     <PassportCard
@@ -1529,7 +1536,7 @@ export default function PassportDashboardPage({ runs, role, onOpenProject, onRef
                     <div
                       className="pp-lock-overlay"
                       onClick={e => { e.stopPropagation(); setAccessDeniedProject(project) }}
-                      title="You don't have access to this project"
+                      title={t('pages.phase3.restB.passportDashboard.noAccessTooltip')}
                     >
                       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V9a3 3 0 00-6 0v4h6z" />

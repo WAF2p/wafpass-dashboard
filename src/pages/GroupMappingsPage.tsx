@@ -44,8 +44,9 @@ function RoleBadge({ role }: { role: string }) {
 }
 
 function ProviderBadge({ provider }: { provider: string }) {
+  const { t } = useI18n()
   const c = PROVIDER_COLOR[provider] ?? PROVIDER_COLOR['*']
-  const label = provider === '*' ? 'any' : provider
+  const label = provider === '*' ? t('pages.phase3.restA.groupMappings.providerAny') : provider
   return (
     <span style={{
       display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
@@ -86,7 +87,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
       onCreated(created)
       setForm(blank)
       setOpen(false)
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed to create mapping') }
+    } catch (e) { setErr(e instanceof Error ? e.message : t('pages.phase3.restA.groupMappings.failedCreateMapping')) }
     finally { setSaving(false) }
   }
 
@@ -122,7 +123,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.groupNameLabel')}</span>
           <input
-            style={inputStyle} placeholder="e.g. wombat-admins"
+            style={inputStyle} placeholder={t('pages.phase3.restA.groupMappings.groupNamePlaceholder')}
             value={form.group_name}
             onChange={e => setForm(f => ({ ...f, group_name: e.target.value }))}
           />
@@ -130,7 +131,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.providerLabel')}</span>
           <select style={selectStyle} value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}>
-            {ALL_PROVIDERS.map(p => <option key={p} value={p}>{p === '*' ? '* (any)' : p}</option>)}
+            {ALL_PROVIDERS.map(p => <option key={p} value={p}>{p === '*' ? t('pages.phase3.restA.groupMappings.providerAnyOption') : p}</option>)}
           </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
@@ -171,7 +172,7 @@ function CreateForm({ onCreated }: { onCreated: (m: GroupRoleMappingOut) => void
       <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.75rem' }}>
         <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.descriptionLabel')}</span>
         <input
-          style={inputStyle} placeholder="e.g. Azure AD group for WOMBATpass platform admins"
+          style={inputStyle} placeholder={t('pages.phase3.restA.groupMappings.descriptionPlaceholder')}
           value={form.description}
           onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
         />
@@ -201,7 +202,7 @@ function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut
     try {
       const updated = await updateGroupMapping(mapping.id, { ...form, group_name: form.group_name.trim() })
       onSaved(updated)
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed to save') }
+    } catch (e) { setErr(e instanceof Error ? e.message : t('pages.phase3.restA.groupMappings.failedSave')) }
     finally { setSaving(false) }
   }
 
@@ -215,7 +216,7 @@ function EditForm({ mapping, onSaved, onCancel }: { mapping: GroupRoleMappingOut
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
           <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('pages.groupMappings.providerLabel')}</span>
           <select style={selectStyle} value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}>
-            {ALL_PROVIDERS.map(p => <option key={p} value={p}>{p === '*' ? '* (any)' : p}</option>)}
+            {ALL_PROVIDERS.map(p => <option key={p} value={p}>{p === '*' ? t('pages.phase3.restA.groupMappings.providerAnyOption') : p}</option>)}
           </select>
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
@@ -267,7 +268,7 @@ export default function GroupMappingsPage() {
     setLoading(true)
     fetchGroupMappings()
       .then(setMappings)
-      .catch(e => setErr(e instanceof Error ? e.message : 'Failed to load mappings'))
+      .catch(e => setErr(e instanceof Error ? e.message : t('pages.phase3.restA.groupMappings.failedLoadMappings')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -286,7 +287,7 @@ export default function GroupMappingsPage() {
       setMappings(prev => prev.filter(m => m.id !== id))
       setDeletingId(null)
       if (expandedId === id) setExpandedId(null)
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed to delete') }
+    } catch (e) { setErr(e instanceof Error ? e.message : t('pages.phase3.restA.groupMappings.failedDelete')) }
   }
 
   const byProvider = (p: string) => mappings.filter(m => m.provider === p).length

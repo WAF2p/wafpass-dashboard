@@ -19,8 +19,8 @@ import {
   fetchRisks,
   fetchWaivers,
 } from '../api'
-import { scoreBg, scoreBorder, scoreColor } from '../severity';
-import { Card, EmptyState, PageHeader, Skeleton, SkeletonText } from '../ui';
+import { scoreColor } from '../severity';
+import { Card, EmptyState, PageHeader, Skeleton, SkeletonText, StatTile } from '../ui';
 import { useI18n } from '../i18n';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -164,41 +164,30 @@ export default function ComplianceReadinessPage({ run }: Props) {
         <>
           {/* ── Stats Dashboard ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-        <StatCard
+        <StatTile
           label={t('pages.phase3.readiness.statControlsMapped')}
           value={`${readinessData.totalFrameworkCoverage}%`}
-          color="var(--pass-ink)"
-          bg="color-mix(in srgb, var(--pass) 8%, transparent)"
-          border="color-mix(in srgb, var(--pass) 20%, transparent)"
+          tone="pass"
         />
-        <StatCard
+        <StatTile
           label={t('pages.phase3.readiness.statFrameworks')}
           value={String(readinessData.frameworkCount)}
-          color="var(--waf-brand-ink)"
-          bg="color-mix(in srgb, var(--waf-brand) 8%, transparent)"
-          border="color-mix(in srgb, var(--waf-brand) 20%, transparent)"
+          tone="info"
         />
-        <StatCard
+        <StatTile
           label={t('pages.phase3.readiness.statEvidenceReady')}
           value={`${readinessData.evidenceCompleteness}%`}
-          color="var(--score-mid-ink)"
-          bg="color-mix(in srgb, var(--score-mid) 8%, transparent)"
-          border="color-mix(in srgb, var(--score-mid) 20%, transparent)"
+          tone="warn"
         />
-        <StatCard
+        <StatTile
           label={t('pages.phase3.readiness.statMissingRemediation')}
           value={String(readinessData.findingsWithoutRemediation)}
-          color="var(--fail-ink)"
-          bg="color-mix(in srgb, var(--fail) 8%, transparent)"
-          border="color-mix(in srgb, var(--fail) 20%, transparent)"
+          tone="fail"
         />
-        <StatCard
+        <StatTile
           label={t('pages.phase3.readiness.statReadyForAudit')}
           value={`${readinessData.readinessScore}/100`}
-          color={scoreColor(readinessData.readinessScore)}
-          bg={scoreBg(readinessData.readinessScore, 8)}
-          border={scoreBorder(readinessData.readinessScore, 20)}
-          highlight
+          tone={readinessData.readinessScore >= 80 ? 'pass' : readinessData.readinessScore >= 60 ? 'warn' : 'fail'}
         />
       </div>
 
@@ -444,50 +433,6 @@ export default function ComplianceReadinessPage({ run }: Props) {
         )}
       </Card>
       </>)}
-    </div>
-  )
-}
-
-// ─── Stat Card Component ─────────────────────────────────────────────────────
-
-function StatCard({ label, value, color, bg, border, highlight = false }: {
-  label: string
-  value: string
-  color: string
-  bg: string
-  border: string
-  highlight?: boolean
-}) {
-  return (
-    <div style={{
-      textAlign: 'center',
-      padding: '1.25rem',
-      background: bg,
-      border: `1px solid ${border}`,
-      borderRadius: '12px',
-    }}>
-      <div
-        style={{
-          fontSize: highlight ? '2rem' : '1.75rem',
-          fontWeight: 800,
-          color: color,
-          lineHeight: 1,
-        }}
-      >
-        {value}
-      </div>
-      <div
-        style={{
-          fontSize: '0.7rem',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          color: color,
-          marginTop: '0.25rem',
-        }}
-      >
-        {label}
-      </div>
     </div>
   )
 }

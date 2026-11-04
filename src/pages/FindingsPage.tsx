@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Finding, RunDetail, upsertWaiver, fetchFindingComments, createFindingComment, deleteFindingComment, FindingComment } from '../api'
 import { appendAuditEvent } from '../audit'
 import { useI18n, type TFunction } from '../i18n'
@@ -10,7 +10,7 @@ import { useBetaFeatures } from '../beta/BetaFeaturesContext'
 import { BETA_FINDINGS_TRIAGE } from './userPrefsUtils'
 import { severityColor } from '../severity'
 import { safeImageUrl } from '../safeUrl'
-import { EmptyState } from '../ui'
+import { DataTable, EmptyState, type Column } from '../ui'
 import { PAGE_TITLE } from '../routing'
 
 interface Props { run: RunDetail; onNavigate?: (page: Page) => void }
@@ -42,7 +42,7 @@ function Pill({ label, color }: { label: string; color: string }) {
 interface CommentInputProps {
   onSubmit: (message: string) => Promise<void>
   user: { username: string; display_name: string } | null
-  t: (k: string) => string
+  t: (k: string, vars?: Record<string, string | number>) => string
 }
 
 function CommentInput({ onSubmit, user, t }: CommentInputProps) {
@@ -61,7 +61,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
       setTimeout(() => setStatus('idle'), 1500)
     } catch (e) {
       setStatus('error')
-      setErrorMsg(e instanceof Error ? e.message : 'Unknown error')
+      setErrorMsg(e instanceof Error ? e.message : t('pages.phase3.restA.findings.unknownError'))
     }
   }
 
@@ -81,7 +81,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
-            placeholder={user ? `Write a comment as ${user.display_name || user.username}...` : 'Sign in to comment...'}
+            placeholder={user ? t('pages.phase3.restA.findings.writeCommentAs', { name: user.display_name || user.username }) : t('pages.phase3.restA.findings.signInToComment')}
             rows={3}
             disabled={!user}
             style={{ ...inputStyle, opacity: !user ? 0.6 : 1 }}
@@ -90,7 +90,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
             <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', marginTop: '0.25rem' }}>{errorMsg}</div>
           )}
           {status === 'done' && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--pass-ink)', marginTop: '0.25rem' }}>✓ Comment added</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--pass-ink)', marginTop: '0.25rem' }}>{t('pages.phase3.restA.findings.commentAdded')}</div>
           )}
         </div>
         <button
@@ -106,7 +106,7 @@ function CommentInput({ onSubmit, user, t }: CommentInputProps) {
           {status === 'saving' ? '...' : t('pages.findings.commentBtn')}
         </button>
       </div>
-      {!user && <div style={{ fontSize: '0.7rem', color: 'var(--skip)', marginTop: '0.25rem' }}>Sign in with your WOMBATpass account to participate</div>}
+      {!user && <div style={{ fontSize: '0.7rem', color: 'var(--skip)', marginTop: '0.25rem' }}>{t('pages.phase3.restA.findings.signInToParticipate')}</div>}
     </div>
   )
 }
@@ -238,7 +238,7 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
         setError(null)
       } catch (err) {
         console.error('Failed to load comments:', err)
-        setError('Failed to load comments')
+        setError(t('pages.phase3.restA.findings.failedLoadComments'))
         setComments([])
       }
     }
@@ -252,7 +252,7 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
       setComments(prev => [...prev, newComment])
     } catch (err) {
       console.error('Failed to create comment:', err)
-      setError('Failed to create comment')
+      setError(t('pages.phase3.restA.findings.failedCreateComment'))
     }
   }
 
@@ -263,7 +263,7 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
       setComments(prev => prev.filter(c => c.id !== commentId))
     } catch (err) {
       console.error('Failed to delete comment:', err)
-      setError('Failed to delete comment')
+      setError(t('pages.phase3.restA.findings.failedDeleteComment'))
     }
   }
 
@@ -416,7 +416,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
       setTimeout(onDone, 900)
     } catch (e) {
       setStatus('error')
-      setErrorMsg(e instanceof Error ? e.message : 'Unknown error')
+      setErrorMsg(e instanceof Error ? e.message : t('pages.phase3.restA.findings.unknownError'))
     }
   }
 
@@ -461,7 +461,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
           <textarea
             value={reason}
             onChange={e => setReason(e.target.value)}
-            placeholder="Why are these controls being waived?"
+            placeholder={t('pages.phase3.restA.findings.waiveReasonPlaceholder')}
             rows={3}
             style={{ ...inputStyle, resize: 'vertical' }}
           />
@@ -470,7 +470,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.findings.waiveOwner')}</label>
-            <input value={owner} onChange={e => setOwner(e.target.value)} placeholder="name or team" style={inputStyle} />
+            <input value={owner} onChange={e => setOwner(e.target.value)} placeholder={t('pages.phase3.restA.findings.waiveOwnerPlaceholder')} style={inputStyle} />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{t('pages.findings.waiveExpires')}</label>
@@ -492,7 +492,7 @@ function WaiveModal({ controlIds, project, onClose, onDone, t }: WaiveModalProps
 
         <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: '0.5rem 1rem', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg)', color: 'var(--muted)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={submit}
@@ -604,9 +604,7 @@ export default function FindingsPage({ run, onNavigate }: Props) {
     }
   }, [filtered])
 
-  const allFilteredKeys = useMemo(() => new Set(filtered.map(rowKey)), [filtered])
   const checkedInView   = useMemo(() => filtered.filter(f => checked.has(rowKey(f))), [filtered, checked])
-  const allSelected     = filtered.length > 0 && checkedInView.length === filtered.length
   const someSelected    = checkedInView.length > 0
 
   // Unique control ids for selected rows (waivers are per-control)
@@ -615,23 +613,60 @@ export default function FindingsPage({ run, onNavigate }: Props) {
     [checkedInView]
   )
 
-  function toggleRow(key: string) {
-    setChecked(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key); else next.add(key)
-      return next
-    })
-  }
-
-  const toggleAll = useCallback(() => {
-    if (allSelected) {
-      setChecked(prev => { const next = new Set(prev); allFilteredKeys.forEach(k => next.delete(k)); return next })
-    } else {
-      setChecked(prev => new Set([...prev, ...allFilteredKeys]))
-    }
-  }, [allSelected, allFilteredKeys])
-
   function clearSelection() { setChecked(new Set()) }
+
+  const columns: Column<Finding>[] = [
+    {
+      key: 'check',
+      header: t('pages.findings.colCheck'),
+      render: f => (
+        <>
+          <div style={{ fontWeight: 600, color: 'var(--text)' }}>{f.check_id}</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
+            {f.check_title}
+            {(f.comment_count ?? 0) > 0 && (
+              <span style={{
+                marginLeft: '0.5rem',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                borderRadius: '999px',
+                padding: '0.05rem 0.4rem',
+                background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
+                color: 'var(--waf-brand-ink)',
+              }}>
+                {(f.comment_count ?? 0)} {(f.comment_count ?? 0) === 1 ? t('pages.phase3.restA.findings.commentSingular') : t('pages.phase3.restA.findings.commentPlural')}
+              </span>
+            )}
+          </div>
+        </>
+      ),
+    },
+    {
+      key: 'resource',
+      header: t('pages.findings.colResource'),
+      mono: true,
+      render: f => (
+        <span style={{ fontSize: '0.78rem', color: 'var(--muted)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+          {f.resource}
+        </span>
+      ),
+    },
+    {
+      key: 'pillar',
+      header: t('pages.findings.colPillar'),
+      render: f => f.pillar ? <Pill label={f.pillar} color="var(--waf-brand)" /> : null,
+    },
+    {
+      key: 'severity',
+      header: t('pages.findings.colSeverity'),
+      render: f => <Pill label={f.severity.toUpperCase()} color={severityColor(f.severity)} />,
+    },
+    {
+      key: 'status',
+      header: t('pages.findings.colStatus'),
+      render: f => <Pill label={f.status} color={STATUS_COLOR[f.status] ?? 'var(--skip)'} />,
+    },
+  ]
 
   const selectStyle = {
     background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
@@ -685,7 +720,7 @@ export default function FindingsPage({ run, onNavigate }: Props) {
               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Triage
+              {t('pages.phase3.restA.findings.triage')}
               <span className="triage-trigger-count">{filtered.length}</span>
             </button>
           )}
@@ -766,100 +801,17 @@ export default function FindingsPage({ run, onNavigate }: Props) {
         )}
 
         {/* ── Table ─────────────────────────────────────────────────────────── */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-            <thead>
-              <tr style={{ background: 'var(--bg)' }}>
-                {/* Select-all checkbox */}
-                <th style={{ padding: '0.65rem 0.75rem 0.65rem 1.25rem', width: 36 }}>
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={el => { if (el) el.indeterminate = someSelected && !allSelected }}
-                    onChange={toggleAll}
-                    style={{ accentColor: 'var(--waf-brand)', cursor: 'pointer' }}
-                  />
-                </th>
-                {[t('pages.findings.colCheck'), t('pages.findings.colResource'), t('pages.findings.colPillar'), t('pages.findings.colSeverity'), t('pages.findings.colStatus')].map(h => (
-                  <th key={h} style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((f, i) => {
-                const key = rowKey(f)
-                const isChecked = checked.has(key)
-                const isDetail = detail ? rowKey(detail) === key : false
-                return (
-                  <tr
-                    key={i}
-                    style={{
-                      borderTop: '1px solid var(--border)',
-                      background: isChecked ? 'color-mix(in srgb, var(--waf-brand) 5%, transparent)' : isDetail ? 'color-mix(in srgb, var(--waf-brand) 4%, transparent)' : undefined,
-                    }}
-                    onMouseEnter={e => { if (!isChecked && !isDetail) (e.currentTarget as HTMLElement).style.background = 'var(--bg)' }}
-                    onMouseLeave={e => { if (!isChecked && !isDetail) (e.currentTarget as HTMLElement).style.background = '' }}
-                  >
-                    {/* Checkbox cell — clicking here only toggles selection */}
-                    <td
-                      style={{ padding: '0.75rem 0.75rem 0.75rem 1.25rem', width: 36 }}
-                      onClick={e => { e.stopPropagation(); toggleRow(key) }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleRow(key)}
-                        onClick={e => e.stopPropagation()}
-                        style={{ accentColor: 'var(--waf-brand)', cursor: 'pointer' }}
-                      />
-                    </td>
-                    {/* Content cells — clicking opens detail panel */}
-                    <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      <div style={{ fontWeight: 600, color: 'var(--text)' }}>{f.check_id}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
-                        {f.check_title}
-                        {(f.comment_count ?? 0) > 0 && (
-                          <span style={{
-                            marginLeft: '0.5rem',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            borderRadius: '999px',
-                            padding: '0.05rem 0.4rem',
-                            background: 'color-mix(in srgb, var(--waf-brand) 15%, transparent)',
-                            color: 'var(--waf-brand-ink)',
-                          }}>
-                            {(f.comment_count ?? 0)} {(f.comment_count ?? 0) === 1 ? 'comment' : 'comments'}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--muted)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      {f.resource}
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      {f.pillar && <Pill label={f.pillar} color="var(--waf-brand)" />}
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      <Pill label={f.severity.toUpperCase()} color={severityColor(f.severity)} />
-                    </td>
-                    <td style={{ padding: '0.75rem 1rem', cursor: 'pointer' }} onClick={() => setDetail(isDetail ? null : f)}>
-                      <Pill label={f.status} color={STATUS_COLOR[f.status] ?? 'var(--skip)'} />
-                    </td>
-                  </tr>
-                )
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6}>
-                    <EmptyState compact title={t('pages.findings.noFindings')} />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<Finding>
+          columns={columns}
+          rows={filtered}
+          rowKey={rowKey}
+          selectable
+          selectedKeys={Array.from(checked)}
+          onSelectionChange={keys => setChecked(new Set(keys))}
+          onRowClick={f => setDetail(prev => (prev && rowKey(prev) === rowKey(f) ? null : f))}
+          rowClassName={f => (detail && rowKey(detail) === rowKey(f) ? 'ui-table-row-detail' : undefined)}
+          empty={<EmptyState compact title={t('pages.findings.noFindings')} />}
+        />
       </div>
 
       {/* Detail panel overlay */}

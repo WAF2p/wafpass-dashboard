@@ -96,8 +96,8 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
         setData(cached)
         setSyncStatus('offline')
         setSyncError(e instanceof TypeError
-          ? 'Cannot reach server — showing cached data. Check the server URL in Settings.'
-          : `Server error loading risks (${e instanceof Error ? e.message : String(e)}) — showing cached data.`)
+          ? t('pages.phase3.restB.riskAcceptance.errorOfflineCached')
+          : t('pages.phase3.restB.riskAcceptance.errorServerLoading', { error: e instanceof Error ? e.message : String(e) }))
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -153,8 +153,8 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
     } catch (e) {
       setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? 'Cannot reach server — risk acceptance not saved. Check the server URL in Settings.'
-        : `Server error saving risk (${e instanceof Error ? e.message : String(e)})`)
+        ? t('pages.phase3.restB.riskAcceptance.errorOfflineSave')
+        : t('pages.phase3.restB.riskAcceptance.errorServerSave', { error: e instanceof Error ? e.message : String(e) }))
     }
   }, [editId, idInput, form, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -182,8 +182,8 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
     } catch (e) {
       setSyncStatus(e instanceof TypeError ? 'offline' : 'error')
       setSyncError(e instanceof TypeError
-        ? 'Cannot reach server — risk acceptance not removed. Check the server URL in Settings.'
-        : `Server error deleting risk (${e instanceof Error ? e.message : String(e)})`)
+        ? t('pages.phase3.restB.riskAcceptance.errorOfflineRemove')
+        : t('pages.phase3.restB.riskAcceptance.errorServerRemove', { error: e instanceof Error ? e.message : String(e) }))
     }
   }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -315,12 +315,12 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                       <div style={{ marginTop: '0.35rem', display: 'flex', gap: '0.75rem', fontSize: '0.72rem' }}>
                         {r.jira_link && (
                           <a href={r.jira_link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--waf-brand)' }}>
-                            Jira ticket
+                            {t('pages.phase3.restB.riskAcceptance.jiraTicket')}
                           </a>
                         )}
                         {r.other_link && (
                           <a href={r.other_link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--waf-brand)' }}>
-                            Reference
+                            {t('pages.phase3.restB.riskAcceptance.reference')}
                           </a>
                         )}
                       </div>
@@ -339,14 +339,14 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                       disabled={syncStatus === 'offline'}
                       style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--muted)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
-                      Edit
+                      {t('pages.phase3.restB.riskAcceptance.edit')}
                     </button>
                     <button
                       onClick={() => void remove(r.id)}
                       disabled={syncStatus === 'offline'}
                       style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--fail) 30%, transparent)', borderRadius: '6px', padding: '0.25rem 0.6rem', fontSize: '0.72rem', cursor: syncStatus === 'offline' ? 'not-allowed' : 'pointer', color: 'var(--fail-ink)', opacity: syncStatus === 'offline' ? 0.5 : 1 }}
                     >
-                      Delete
+                      {t('pages.phase3.restB.riskAcceptance.delete')}
                     </button>
                   </div>
                 </div>
@@ -376,7 +376,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
                 <input value={idInput} disabled style={{ ...inputStyle, opacity: 0.6 }} />
               ) : (
                 <select value={idInput} onChange={e => setIdInput(e.target.value)} style={inputStyle}>
-                  <option value="">— select a control —</option>
+                  <option value="">{t('pages.phase3.restB.riskAcceptance.selectControl')}</option>
                   {controls.map(c => (
                     <option key={c.id} value={c.id}>{c.id} — {c.title}</option>
                   ))}
@@ -387,17 +387,17 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>{t('pages.risk.reasonLabel')}</label>
               <textarea value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })}
-                placeholder="Why is this risk being accepted?" rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+                placeholder={t('pages.phase3.restB.riskAcceptance.reasonPlaceholder')} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>{t('pages.risk.approverLabel')}</label>
-                <input value={form.approver} onChange={e => setForm({ ...form, approver: e.target.value })} placeholder="Name / role" style={inputStyle} />
+                <input value={form.approver} onChange={e => setForm({ ...form, approver: e.target.value })} placeholder={t('pages.phase3.restB.riskAcceptance.approverPlaceholder')} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>{t('pages.risk.ownerLabel')}</label>
-                <input value={form.owner} onChange={e => setForm({ ...form, owner: e.target.value })} placeholder="Team or person" style={inputStyle} />
+                <input value={form.owner} onChange={e => setForm({ ...form, owner: e.target.value })} placeholder={t('pages.phase3.restB.riskAcceptance.ownerPlaceholder')} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>{t('pages.risk.rfcLabel')}</label>
@@ -441,7 +441,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.3rem' }}>{t('pages.risk.notesLabel')}</label>
               <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}
-                placeholder="Additional context…" rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
+                placeholder={t('pages.phase3.restB.riskAcceptance.notesPlaceholder')} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
 
             {syncError && (
@@ -455,7 +455,7 @@ export default function RiskAcceptancePage({ controls, onCountChange }: Props) {
 
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.45rem 1rem', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--muted)' }}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => void submit()}

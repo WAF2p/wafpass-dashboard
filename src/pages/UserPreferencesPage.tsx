@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '../theme'
+import { Select } from '../ui'
 import { UserPreferences, saveUserPrefs, DEFAULT_USER_PREFS } from './userPrefsUtils'
 import { LOCALES, useI18n } from '../i18n'
 import { PAGE_TITLE } from '../routing'
@@ -37,23 +38,6 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
       <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
   )
-}
-
-function SelectRow({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
-      <div>
-        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>{label}</div>
-        {desc && <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{desc}</div>}
-      </div>
-      <div>{children}</div>
-    </div>
-  )
-}
-
-const sel: React.CSSProperties = {
-  background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)',
-  borderRadius: 7, padding: '0.28rem 0.55rem', fontSize: '0.78rem', outline: 'none', cursor: 'pointer',
 }
 
 const PAGE_OPTIONS = [
@@ -165,34 +149,48 @@ export default function UserPreferencesPage({ prefs, user, syncStatus, onChange 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.navigation')}</div>
 
-            <SelectRow label={t('prefs.defaultPage')} desc={t('prefs.defaultPageDesc')}>
-              <select value={p.defaultPage} onChange={e => update({ defaultPage: e.target.value })} style={sel}>
+            <div style={{ padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
+              <Select
+                label={t('prefs.defaultPage')}
+                hint={t('prefs.defaultPageDesc')}
+                value={p.defaultPage}
+                onChange={e => update({ defaultPage: e.target.value })}
+              >
                 {PAGE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </SelectRow>
+              </Select>
+            </div>
 
-            <SelectRow label={t('prefs.language')} desc={t('prefs.languageDesc')}>
-              <select value={p.language} onChange={e => update({ language: e.target.value })} style={sel}>
+            <div style={{ padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
+              <Select
+                label={t('prefs.language')}
+                hint={t('prefs.languageDesc')}
+                value={p.language}
+                onChange={e => update({ language: e.target.value })}
+              >
                 <option value="">{t('prefs.languageSystemDefault')}</option>
                 {Object.values(LOCALES).map(l => (
                   <option key={l.meta!.code} value={l.meta!.code}>
                     {l.meta!.flag} {l.meta!.name}
                   </option>
                 ))}
-              </select>
-            </SelectRow>
+              </Select>
+            </div>
           </div>
 
           <div className="card" style={{ padding: '0.9rem 1rem' }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>{t('prefs.dates')}</div>
 
-            <SelectRow label={t('prefs.dateFormat')}>
-              <select value={p.dateFormat} onChange={e => update({ dateFormat: e.target.value as UserPreferences['dateFormat'] })} style={sel}>
+            <div style={{ padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
+              <Select
+                label={t('prefs.dateFormat')}
+                value={p.dateFormat}
+                onChange={e => update({ dateFormat: e.target.value as UserPreferences['dateFormat'] })}
+              >
                 <option value="relative">{t('prefs.dateRelative')}</option>
                 <option value="absolute">{t('prefs.dateAbsolute')}</option>
                 <option value="full">{t('prefs.dateFull')}</option>
-              </select>
-            </SelectRow>
+              </Select>
+            </div>
 
             <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.55rem', borderRadius: 6, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: '0.71rem', color: 'var(--muted)' }}>
               {t('prefs.datePreview')}{' '}

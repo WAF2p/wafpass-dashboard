@@ -3,7 +3,7 @@
  * Click a user row to see their extended profile and audit trail.
  * Requires admin role.
  */
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../AuthContext'
 import {
   fetchUsers, createUser, updateUser, deleteUser, fetchUserLogs,
@@ -50,15 +50,15 @@ function RoleBadge({ role }: { role: string }) {
   )
 }
 
-function timeAgo(iso: string | null | undefined): string {
+function timeAgo(iso: string | null | undefined, t: (key: string, vars?: Record<string, string | number>) => string): string {
   if (!iso) return '—'
   const diff = Date.now() - new Date(iso).getTime()
   const m = Math.floor(diff / 60000)
-  if (m < 1) return 'just now'
-  if (m < 60) return `${m}m ago`
+  if (m < 1) return t('pages.phase3.restB.userManagement.justNow')
+  if (m < 60) return t('pages.phase3.restB.userManagement.minutesAgo', { count: m })
   const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  return `${Math.floor(h / 24)}d ago`
+  if (h < 24) return t('pages.phase3.restB.userManagement.hoursAgo', { count: h })
+  return t('pages.phase3.restB.userManagement.daysAgo', { count: Math.floor(h / 24) })
 }
 
 function fmtDate(iso: string | null | undefined): string {
@@ -197,7 +197,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
       header: t('pages.users.colTimestamp'),
       render: log => (
         <>
-          <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.timestamp)}</div>
+          <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.timestamp, t)}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.timestamp)}</div>
         </>
       ),
@@ -227,8 +227,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
   const roleC = ROLE_COLOR[user.role] ?? FALLBACK_ROLE
 
   return (
-    <tr>
-      <td colSpan={7} style={{ padding: '0 1rem 0.875rem', background: 'var(--bg)' }}>
+    <div style={{ padding: '0 1rem 0.875rem' }}>
         <div style={{
           borderRadius: '12px',
           background: 'var(--surface)',
@@ -301,7 +300,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               <MetaTile label={t('pages.users.colLastLogin')}>
                 {user.last_login_at ? (
                   <>
-                    <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{timeAgo(user.last_login_at)}</span>
+                    <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{timeAgo(user.last_login_at, t)}</span>
                     <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(user.last_login_at)}</div>
                   </>
                 ) : <span style={{ color: 'var(--muted)' }}>{t('pages.users.never')}</span>}
@@ -310,7 +309,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               <MetaTile label={t('pages.users.colCreated')}>
                 {user.created_at ? (
                   <>
-                    <span>{timeAgo(user.created_at)}</span>
+                    <span>{timeAgo(user.created_at, t)}</span>
                     <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(user.created_at)}</div>
                   </>
                 ) : '—'}
@@ -362,8 +361,7 @@ function UserDetailPanel({ user }: { user: UserOut }) {
             />
           )}
         </div>
-      </td>
-    </tr>
+    </div>
   )
 }
 
@@ -559,6 +557,115 @@ export default function UserManagementPage() {
     )
   }
 
+  const columns: Column<UserOut>[] = [
+    {
+      key: 'expand',
+      header: '',
+      width: '28px',
+      render: u => {
+        const isExpanded = expandedId === u.id
+        const roleC = ROLE_COLOR[u.role] ?? FALLBACK_ROLE
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '999px', background: isExpanded ? roleC.accent : 'var(--border)', flexShrink: 0, transition: 'background-color 0.15s' }} />
+            <svg
+              width="11" height="11" fill="none" stroke="var(--muted)" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
+              style={{ display: 'block', transition: 'transform 0.15s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        )
+      },
+    },
+    {
+      key: 'user',
+      header: t('pages.users.colUser'),
+      render: u => {
+        const roleC = ROLE_COLOR[u.role] ?? FALLBACK_ROLE
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{
+              width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
+              background: roleC.subtle,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.7rem', fontWeight: 800, color: roleC.accent,
+              overflow: 'hidden',
+            }}>
+              {safeImageUrl(u.image_url) ? (
+                <img src={safeImageUrl(u.image_url) ?? undefined} alt={u.display_name || u.username} style={{
+                  width: '100%', height: '100%', objectFit: 'cover',
+                }} />
+              ) : (
+                <span>{(u.display_name || u.username).charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text)', fontSize: '0.85rem' }}>
+                {u.username}
+                {u.id === user?.id && (
+                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg)', padding: '0.08rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', fontWeight: 600 }}>{t('pages.phase3.restB.userManagement.you')}</span>
+                )}
+              </div>
+              {u.display_name && u.display_name !== u.username && (
+                <div style={{ fontSize: '0.71rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{u.display_name}</div>
+              )}
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      key: 'role',
+      header: t('pages.users.colRole'),
+      render: u => (
+        <>
+          <RoleBadge role={u.role} />
+          {u.holding_role && (
+            <span style={{
+              display: 'inline-flex', marginLeft: '0.3rem', padding: '0.12rem 0.5rem', borderRadius: '6px',
+              background: 'color-mix(in srgb, #7c3aed 9%, transparent)', color: '#7c3aed', fontWeight: 700, fontSize: '0.7rem',
+            }}>
+              {u.holding_role}
+            </span>
+          )}
+        </>
+      ),
+    },
+    {
+      key: 'mandate',
+      header: t('pages.users.colMandate'),
+      render: u => <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{mandateNameFor(u)}</span>,
+    },
+    {
+      key: 'status',
+      header: t('pages.users.colStatus'),
+      render: u => (
+        <span style={{
+          display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
+          background: u.is_active ? 'color-mix(in srgb, var(--pass) 9%, transparent)' : 'color-mix(in srgb, var(--muted) 9%, transparent)',
+          color: u.is_active ? 'var(--pass-ink)' : 'var(--muted)',
+          fontWeight: 600, fontSize: '0.69rem',
+        }}>
+          {u.is_active ? t('pages.users.active') : t('pages.users.inactive')}
+        </span>
+      ),
+    },
+    {
+      key: 'last_login',
+      header: t('pages.users.colLastLogin'),
+      render: u => u.last_login_at ? (
+        <div>
+          <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{timeAgo(u.last_login_at, t)}</span>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(u.last_login_at)}</div>
+        </div>
+      ) : (
+        <span style={{ color: 'var(--muted)', opacity: 0.6 }}>{t('pages.users.never')}</span>
+      ),
+    },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <h1 className="ui-sr-only">{PAGE_TITLE.users}</h1>
@@ -699,7 +806,7 @@ export default function UserManagementPage() {
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <span style={{ color: 'var(--muted)' }}>Upload image</span>
+                    <span style={{ color: 'var(--muted)' }}>{t('pages.phase3.restB.userManagement.uploadImage')}</span>
                     <input type="file" accept="image/*"
                       onChange={e => {
                         const file = e.target.files?.[0]
@@ -722,7 +829,7 @@ export default function UserManagementPage() {
                 <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 8 ? 'var(--fail)' : undefined }} type="password" value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   autoComplete="new-password"
-                  placeholder={editId ? '••••••••' : 'min. 8 characters'} />
+                  placeholder={editId ? '••••••••' : t('pages.phase3.restB.userManagement.minChars')} />
                 {form.password && form.password.length < 8 && (
                   <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', marginTop: '0.2rem' }}>
                     {t('pages.users.passwordTooShort')}
@@ -774,144 +881,31 @@ export default function UserManagementPage() {
           ) : error ? (
             <div style={{ padding: '1rem', color: 'var(--fail-ink)', fontSize: '0.85rem' }}>{error}</div>
           ) : users.length === 0 ? (
-            <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem', textAlign: 'center' }}>No users found.</div>
+            <div style={{ padding: '1.5rem', color: 'var(--muted)', fontSize: '0.85rem', textAlign: 'center' }}>{t('pages.phase3.restB.userManagement.noUsers')}</div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {['', t('pages.users.colUser'), t('pages.users.colRole'), t('pages.users.colMandate'), t('pages.users.colStatus'), t('pages.users.colLastLogin'), t('pages.users.colActions')].map(h => (
-                    <th key={h} style={{
-                      padding: '0.55rem 0.875rem', textAlign: 'left',
-                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
-                      textTransform: 'uppercase', letterSpacing: '0.06em',
-                      whiteSpace: 'nowrap',
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u, i) => {
-                  const isExpanded = expandedId === u.id
-                  const isLast = i === users.length - 1
-                  const roleC = ROLE_COLOR[u.role] ?? FALLBACK_ROLE
-                  return (
-                    <Fragment key={u.id}>
-                      <tr
-                        onClick={() => toggleExpand(u.id)}
-                        style={{
-                          borderBottom: isExpanded ? 'none' : (isLast && !isExpanded ? undefined : '1px solid var(--border)'),
-                          opacity: u.is_active ? 1 : 0.6,
-                          cursor: 'pointer',
-                          transition: 'background-color 0.1s',
-                        }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--row-hover)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-                      >
-                        {/* Chevron + accent */}
-                        <td style={{ padding: '0.6rem 0.5rem 0.6rem 0.875rem', width: '28px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '999px', background: isExpanded ? roleC.accent : 'var(--border)', flexShrink: 0, transition: 'background-color 0.15s' }} />
-                            <svg
-                              width="11" height="11" fill="none" stroke="var(--muted)" strokeWidth="2.5"
-                              strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"
-                              style={{ display: 'block', transition: 'transform 0.15s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}
-                            >
-                              <polyline points="9 18 15 12 9 6" />
-                            </svg>
-                          </div>
-                        </td>
-
-                        {/* User identity cell */}
-                        <td style={{ padding: '0.6rem 0.875rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                            <div style={{
-                              width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
-                              background: roleC.subtle,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: '0.7rem', fontWeight: 800, color: roleC.accent,
-                              overflow: 'hidden',
-                            }}>
-                              {safeImageUrl(u.image_url) ? (
-                                <img src={safeImageUrl(u.image_url) ?? undefined} alt={u.display_name || u.username} style={{
-                                  width: '100%', height: '100%', objectFit: 'cover',
-                                }} />
-                              ) : (
-                                <span>{(u.display_name || u.username).charAt(0).toUpperCase()}</span>
-                              )}
-                            </div>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'var(--text)', fontSize: '0.85rem' }}>
-                                {u.username}
-                                {u.id === user?.id && (
-                                  <span style={{ fontSize: '0.7rem', color: 'var(--muted)', background: 'var(--bg)', padding: '0.08rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)', fontWeight: 600 }}>you</span>
-                                )}
-                              </div>
-                              {u.display_name && u.display_name !== u.username && (
-                                <div style={{ fontSize: '0.71rem', color: 'var(--muted)', marginTop: '0.05rem' }}>{u.display_name}</div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        <td style={{ padding: '0.6rem 0.875rem' }}>
-                          <RoleBadge role={u.role} />
-                          {u.holding_role && (
-                            <span style={{
-                              display: 'inline-flex', marginLeft: '0.3rem', padding: '0.12rem 0.5rem', borderRadius: '6px',
-                              background: 'color-mix(in srgb, #7c3aed 9%, transparent)', color: '#7c3aed', fontWeight: 700, fontSize: '0.7rem',
-                            }}>
-                              {u.holding_role}
-                            </span>
-                          )}
-                        </td>
-
-                        <td style={{ padding: '0.6rem 0.875rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
-                          {mandateNameFor(u)}
-                        </td>
-
-                        <td style={{ padding: '0.6rem 0.875rem' }}>
-                          <span style={{
-                            display: 'inline-flex', padding: '0.12rem 0.5rem', borderRadius: '6px',
-                            background: u.is_active ? 'color-mix(in srgb, var(--pass) 9%, transparent)' : 'color-mix(in srgb, var(--muted) 9%, transparent)',
-                            color: u.is_active ? 'var(--pass-ink)' : 'var(--muted)',
-                            fontWeight: 600, fontSize: '0.69rem',
-                          }}>
-                            {u.is_active ? t('pages.users.active') : t('pages.users.inactive')}
-                          </span>
-                        </td>
-
-                        <td style={{ padding: '0.6rem 0.875rem', fontSize: '0.77rem' }}>
-                          {u.last_login_at ? (
-                            <div>
-                              <span style={{ color: 'var(--pass-ink)', fontWeight: 600 }}>{timeAgo(u.last_login_at)}</span>
-                              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(u.last_login_at)}</div>
-                            </div>
-                          ) : (
-                            <span style={{ color: 'var(--muted)', opacity: 0.6 }}>{t('pages.users.never')}</span>
-                          )}
-                        </td>
-
-                        <td style={{ padding: '0.6rem 0.875rem' }} onClick={e => e.stopPropagation()}>
-                          {u.id !== user?.id ? (
-                            <div style={{ display: 'flex', gap: '0.3rem' }}>
-                              <button onClick={e => openEdit(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.editBtn')}</button>
-                              <button onClick={e => handleToggleActive(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: u.is_active ? 'var(--score-mid-ink)' : 'var(--pass-ink)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
-                                {u.is_active ? t('pages.users.disableBtn') : t('pages.users.enableBtn')}
-                              </button>
-                              <button onClick={e => requestDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--fail-ink)', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.delBtn')}</button>
-                            </div>
-                          ) : (
-                            <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>—</span>
-                          )}
-                        </td>
-                      </tr>
-
-                      {isExpanded && <UserDetailPanel user={u} />}
-                    </Fragment>
-                  )
-                })}
-              </tbody>
-            </table>
+            <DataTable<UserOut>
+              columns={columns}
+              rows={users}
+              rowKey={u => u.id}
+              onRowClick={u => toggleExpand(u.id)}
+              expandedKeys={expandedId ? [expandedId] : []}
+              renderExpanded={u => <UserDetailPanel user={u} />}
+              rowClassName={u => (u.is_active ? undefined : 'ui-table-row-inactive')}
+              actions={u => (
+                u.id !== user?.id ? (
+                  <div style={{ display: 'flex', gap: '0.3rem' }}>
+                    <button onClick={e => openEdit(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.editBtn')}</button>
+                    <button onClick={e => handleToggleActive(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: u.is_active ? 'var(--score-mid-ink)' : 'var(--pass-ink)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>
+                      {u.is_active ? t('pages.users.disableBtn') : t('pages.users.enableBtn')}
+                    </button>
+                    <button onClick={e => requestDelete(u, e)} style={{ padding: '0.22rem 0.55rem', borderRadius: '6px', background: 'var(--bg)', color: 'var(--fail-ink)', border: '1px solid color-mix(in srgb, var(--fail) 25%, transparent)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600 }}>{t('pages.users.delBtn')}</button>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>—</span>
+                )
+              )}
+              actionsHeader={t('pages.users.colActions')}
+            />
           )}
         </div>
 

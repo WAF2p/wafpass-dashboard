@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { fetchPipelineMetrics, fetchPipelineTrends, fetchRuns, PipelineMetrics, PipelineTrends, RunSummary } from '../api'
 import { useI18n } from '../i18n'
 import { Page, scoreColor } from '../routing'
-import { CenterHero, Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard } from './OperationsCenterShell'
-import { PAGE_TITLE } from '../routing'
+import { Icon, KpiCard, MiniBadge, PriorityRow, RightRail, SectionCard } from './OperationsCenterShell'
+import PageHeader from '../ui/PageHeader'
 
 const WAF_COLORS = [
   'var(--waf-brand)', 'var(--waf-info)', 'var(--score-high)', 'var(--waf-warn)',
@@ -21,8 +21,8 @@ function getProjectColor(project: string): string {
   return WAF_COLORS[Math.abs(hash) % WAF_COLORS.length]
 }
 
-function scoreLabel(s: number) {
-  return s >= 80 ? 'Excellent' : s >= 60 ? 'Needs Attention' : 'High Risk'
+function scoreLabel(s: number, t: (key: string) => string) {
+  return s >= 80 ? t('pages.phase3.restB.pipelineOps.scoreExcellent') : s >= 60 ? t('pages.phase3.restB.pipelineOps.scoreNeedsAttention') : t('pages.phase3.restB.pipelineOps.scoreHighRisk')
 }
 
 interface FlakyProject {
@@ -98,16 +98,16 @@ function formatDate(iso: string): string {
   }
 }
 
-function getTimeAgo(iso: string): string {
+function getTimeAgo(iso: string, t: (key: string, vars?: Record<string, string | number>) => string): string {
   try {
     const diff = Date.now() - new Date(iso).getTime()
     const minutes = Math.floor(diff / 60000)
     const hours = Math.floor(minutes / 60)
     const days = Math.floor(hours / 24)
-    if (minutes < 1) return 'just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    if (days < 7) return `${days}d ago`
+    if (minutes < 1) return t('pages.phase3.restB.pipelineOps.justNow')
+    if (minutes < 60) return t('pages.phase3.restB.pipelineOps.minutesAgo', { count: minutes })
+    if (hours < 24) return t('pages.phase3.restB.pipelineOps.hoursAgo', { count: hours })
+    if (days < 7) return t('pages.phase3.restB.pipelineOps.daysAgo', { count: days })
     return formatDate(iso)
   } catch {
     return iso
@@ -115,7 +115,8 @@ function getTimeAgo(iso: string): string {
 }
 
 function CICDBadge({ isCICD }: { isCICD: boolean }) {
-  if (!isCICD) return <span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--muted)' }}>manual</span>
+  const { t } = useI18n()
+  if (!isCICD) return <span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--muted)' }}>{t('pages.phase3.restB.pipelineOps.manual')}</span>
   return (
     <span style={{ padding: '0.1rem 0.45rem', borderRadius: '4px', background: 'color-mix(in srgb, var(--pass) 10%, transparent)', color: 'var(--pass)', fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
       CI/CD
@@ -160,7 +161,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         setLoading(false)
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load pipeline data')
+          setError(err instanceof Error ? err.message : t('pages.phase3.restB.pipelineOps.loadFailed'))
           setLoading(false)
         }
       }
@@ -225,8 +226,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         e.currentTarget.style.background = 'var(--surface)'
       }}
     >
-      <div style={{ color, flexShrink: 0 }}>
-      <h1 className="ui-sr-only">{PAGE_TITLE['pipelines']}</h1><Icon path={icon} size={20} /></div>
+      <div style={{ color, flexShrink: 0 }}><Icon path={icon} size={20} /></div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>{label}</div>
         <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{t('common.view')} →</div>
@@ -236,13 +236,11 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <CenterHero
-        eyebrow="Operations Center"
+      <PageHeader
+        eyebrow={t('pages.phase3.restB.pipelineOps.eyebrow')}
         title={t('pages.pipelineOps.title')}
-        subtitle={t('pages.pipelineOps.subtitle')}
-        accent="var(--waf-warn)"
-      >
-        {!loading && metrics && (
+        description={t('pages.pipelineOps.subtitle')}
+        actions={!loading && metrics && (
           <div style={{ textAlign: 'right', minWidth: '140px' }}>
             <div style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.15rem' }}>
               {t('pages.pipelines.averageScore')}
@@ -253,7 +251,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
             </div>
           </div>
         )}
-      </CenterHero>
+      />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
         <KpiCard
@@ -273,7 +271,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
         <KpiCard
           label={t('pages.pipelines.averageScore')}
           value={metrics?.avgScore ?? '—'}
-          sub={metrics ? scoreLabel(metrics.avgScore) : ''}
+          sub={metrics ? scoreLabel(metrics.avgScore, t) : ''}
           color={scoreColor(metrics?.avgScore ?? 0)}
           icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
         />
@@ -342,7 +340,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                       <div
                         key={day.day}
                         style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', minWidth: 0, height: '100%' }}
-                        title={`${new Date(day.day).toLocaleDateString('en-GB')}: ${day.count} runs${hiddenCount > 0 ? ` (${visibleCount} shown, +${hiddenCount} more)` : ''}`}
+                        title={`${t('pages.phase3.restB.pipelineOps.dayTooltip', { date: new Date(day.day).toLocaleDateString('en-GB'), count: day.count })}${hiddenCount > 0 ? t('pages.phase3.restB.pipelineOps.dayTooltipHidden', { shown: visibleCount, more: hiddenCount }) : ''}`}
                       >
                         <div
                           style={{
@@ -361,7 +359,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                             <button
                               key={run.id ?? j}
                               onClick={() => navigate?.('runs')}
-                              title={`${run.project}: ${run.score}`}
+                              title={t('pages.phase3.restB.pipelineOps.runTooltip', { project: run.project, score: run.score })}
                               style={{
                                 width: 9,
                                 height: 9,
@@ -391,7 +389,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                   })}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--waf-brand)' }} /> run by project</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--waf-brand)' }} /> {t('pages.phase3.restB.pipelineOps.runByProject')}</span>
                   <span style={{ marginLeft: 'auto' }}>{t('pages.pipelines.last30Days')}</span>
                 </div>
               </div>
@@ -415,7 +413,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                       count={proj.avgScore}
                       total={100}
                       color={scoreColor(proj.avgScore)}
-                      meta={`${proj.runCount} runs · latest ${proj.latestScore}`}
+                      meta={t('pages.phase3.restB.pipelineOps.projectMeta', { count: proj.runCount, score: proj.latestScore })}
                       badge={
                         <div style={{ width: '10px', height: '10px', borderRadius: '4px', background: getProjectColor(proj.project), flexShrink: 0 }} />
                       }
@@ -443,7 +441,7 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                         <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{run.project}</span>
                         <CICDBadge isCICD={run.is_cicd} />
                       </div>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{getTimeAgo(run.created_at)}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{getTimeAgo(run.created_at, t)}</span>
                     </div>
                     <MiniBadge color={scoreColor(run.score)}>{run.score}</MiniBadge>
                   </div>
@@ -513,9 +511,9 @@ export default function PipelineOperationsCenter({ navigate }: { navigate?: (pag
                   </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pass)' }} /> faster</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-warn)' }} /> slower</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-info)' }} /> stable</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pass)' }} /> {t('pages.phase3.restB.pipelineOps.faster')}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-warn)' }} /> {t('pages.phase3.restB.pipelineOps.slower')}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--waf-info)' }} /> {t('pages.phase3.restB.pipelineOps.stable')}</span>
                 </div>
               </div>
             </SectionCard>

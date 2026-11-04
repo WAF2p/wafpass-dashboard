@@ -5,7 +5,7 @@ import {
 import { FRAMEWORKS } from '../controls-data'
 import { LOCALES, useI18n } from '../i18n'
 import Toggle from '../components/Toggle'
-import { PageHeader } from '../ui'
+import { Input, PageHeader, Select } from '../ui'
 import {
   ALL_PILLARS, controlsForLevel, DEFAULT_REPORT_SECTIONS,
   getMaturityMeta, MATURITY_META, MATURITY_PRESETS, PILLAR_COUNTS, saveMaturityState, TOTAL_CONTROLS,
@@ -47,23 +47,6 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 const PILLAR_ICONS: Record<string, string> = {
   security: '🔒', cost: '💰', operations: '⚙️', reliability: '🔁',
   performance: '⚡', sovereign: '🏛️', sustainability: '🌱', agentic: '🤖',
-}
-
-const selectStyle: React.CSSProperties = {
-  background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-  borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.85rem', outline: 'none',
-  width: '100%',
-}
-
-const inputStyle: React.CSSProperties = {
-  background: 'var(--input-bg)', color: 'var(--text)', border: '1px solid var(--border)',
-  borderRadius: '8px', padding: '0.45rem 0.65rem', fontSize: '0.85rem', outline: 'none',
-  width: '100%', boxSizing: 'border-box',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '0.72rem', fontWeight: 600,
-  color: 'var(--muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em',
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -116,7 +99,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           if (res.ok) {
             const json = await res.json().catch(() => ({})) as Record<string, unknown>
             setServerStatus('ok')
-            setServerStatusMsg(`Connected · ${json.status ?? 'ok'}`)
+            setServerStatusMsg(t('pages.phase3.restB.settings.connected', { status: String(json.status ?? 'ok') }))
           } else {
             setServerStatus('error')
             setServerStatusMsg(`HTTP ${res.status} ${res.statusText}`)
@@ -124,7 +107,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         })
         .catch(e => {
           setServerStatus('error')
-          setServerStatusMsg(e instanceof Error ? e.message : 'Unreachable')
+          setServerStatusMsg(e instanceof Error ? e.message : t('pages.phase3.restB.settings.unreachable'))
         })
     }, 400)
   }
@@ -148,7 +131,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             const text = await res.text()
             const hasCert = text.includes('BEGIN CERTIFICATE')
             setValidationStatus(hasCert ? 'ok' : 'error')
-            setValidationStatusMsg(hasCert ? 'Gateway root CA reachable' : 'Unexpected response')
+            setValidationStatusMsg(hasCert ? t('pages.phase3.restB.settings.gatewayReachable') : t('pages.phase3.restB.settings.unexpectedResponse'))
           } else {
             setValidationStatus('error')
             setValidationStatusMsg(`HTTP ${res.status} ${res.statusText}`)
@@ -156,7 +139,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         })
         .catch(e => {
           setValidationStatus('error')
-          setValidationStatusMsg(e instanceof Error ? e.message : 'Unreachable')
+          setValidationStatusMsg(e instanceof Error ? e.message : t('pages.phase3.restB.settings.unreachable'))
         })
     }, 400)
   }
@@ -401,12 +384,12 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
               {intelligenceToggles
                 .filter(([key]) => (MATURITY_PRESETS[level] as Settings)[key as keyof Settings] === true)
-                .map(([key, label]) => (
+                .map(([key]) => (
                   <span key={key} style={{
                     padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600,
                     background: `${meta.color}20`, color: meta.color,
                     border: `1px solid ${meta.color}44`,
-                  }}>{label}</span>
+                  }}>{t(`pages.phase3.restB.settings.toggle.${key}.label`)}</span>
                 ))
               }
             </div>
@@ -421,42 +404,39 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         <div className="card">
           <SectionHeader title={t('pages.settingsPage.sectionScan')} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>{t('pages.settingsPage.defaultIacLabel')}</label>
-              <select value={s.defaultIac} onChange={e => setS({ ...s, defaultIac: e.target.value })} style={selectStyle}>
-                <option value="terraform">Terraform</option>
-                <option value="cdk">AWS CDK</option>
-                <option value="pulumi">Pulumi</option>
-                <option value="bicep">Bicep</option>
-                <option value="cfn">CloudFormation</option>
-              </select>
-              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
-                {t('pages.settingsPage.defaultIacDesc')}
-              </div>
-            </div>
-            <div>
-              <label style={labelStyle}>{t('pages.settingsPage.failOnLabel')}</label>
-              <select value={s.failOn} onChange={e => setS({ ...s, failOn: e.target.value })} style={selectStyle}>
-                <option value="fail">Exit non-zero on FAIL findings</option>
-                <option value="skip">Exit non-zero on FAIL + SKIP findings</option>
-                <option value="never">Never fail (report only)</option>
-              </select>
-              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
-                {t('pages.settingsPage.failOnDesc')}
-              </div>
-            </div>
-            <div>
-              <label style={labelStyle}>{t('pages.settingsPage.minSeverityLabel')}</label>
-              <select value={s.defaultSeverity} onChange={e => setS({ ...s, defaultSeverity: e.target.value })} style={selectStyle}>
-                <option value="">All severities (73 controls)</option>
-                <option value="critical">Critical only (~8 controls)</option>
-                <option value="high">High+ (~42 controls)</option>
-                <option value="medium">Medium+ (~70 controls)</option>
-              </select>
-              <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
-                {t('pages.settingsPage.minSeverityDesc')}
-              </div>
-            </div>
+            <Select
+              label={t('pages.settingsPage.defaultIacLabel')}
+              hint={t('pages.settingsPage.defaultIacDesc')}
+              value={s.defaultIac}
+              onChange={e => setS({ ...s, defaultIac: e.target.value })}
+            >
+              <option value="terraform">Terraform</option>
+              <option value="cdk">AWS CDK</option>
+              <option value="pulumi">Pulumi</option>
+              <option value="bicep">Bicep</option>
+              <option value="cfn">CloudFormation</option>
+            </Select>
+            <Select
+              label={t('pages.settingsPage.failOnLabel')}
+              hint={t('pages.settingsPage.failOnDesc')}
+              value={s.failOn}
+              onChange={e => setS({ ...s, failOn: e.target.value })}
+            >
+              <option value="fail">{t('pages.phase3.restB.settings.failOnFail')}</option>
+              <option value="skip">{t('pages.phase3.restB.settings.failOnSkip')}</option>
+              <option value="never">{t('pages.phase3.restB.settings.failOnNever')}</option>
+            </Select>
+            <Select
+              label={t('pages.settingsPage.minSeverityLabel')}
+              hint={t('pages.settingsPage.minSeverityDesc')}
+              value={s.defaultSeverity}
+              onChange={e => setS({ ...s, defaultSeverity: e.target.value })}
+            >
+              <option value="">{t('pages.phase3.restB.settings.severityAll')}</option>
+              <option value="critical">{t('pages.phase3.restB.settings.severityCritical')}</option>
+              <option value="high">{t('pages.phase3.restB.settings.severityHigh')}</option>
+              <option value="medium">{t('pages.phase3.restB.settings.severityMedium')}</option>
+            </Select>
           </div>
         </div>
 
@@ -477,7 +457,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                       {PILLAR_ICONS[p]} {p.charAt(0).toUpperCase() + p.slice(1)}
                     </span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.5rem' }}>
-                      {PILLAR_COUNTS[p]} controls
+                      {t('pages.phase3.restB.settings.controlsCount', { count: PILLAR_COUNTS[p] })}
                     </span>
                   </div>
                   {!active && (
@@ -488,13 +468,13 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             })}
           </div>
           <div style={{ marginTop: '0.85rem', fontSize: '0.72rem', color: 'var(--muted)', padding: '0.5rem 0.7rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-            Active:{' '}
+            {t('pages.phase3.restB.settings.activeLabel')}{' '}
             <strong style={{ color: 'var(--text)' }}>
               {(s.activePillars ?? ALL_PILLARS).reduce((n, p) => n + (PILLAR_COUNTS[p] ?? 0), 0)}
             </strong>
-            {' '}/ {TOTAL_CONTROLS} controls across{' '}
+            {' '}/ {TOTAL_CONTROLS} {t('pages.phase3.restB.settings.controlsAcross')}{' '}
             <strong style={{ color: 'var(--text)' }}>{(s.activePillars ?? ALL_PILLARS).length}</strong>
-            {' '}/ {ALL_PILLARS.length} pillars
+            {' '}/ {ALL_PILLARS.length} {t('pages.phase3.restB.settings.pillarsLabel')}
           </div>
         </div>
 
@@ -502,7 +482,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         <div className="card">
           <SectionHeader title={t('pages.settingsPage.sectionLanguage')} />
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '1rem', lineHeight: 1.55 }}>
-            Applied to all users who have not set a personal language preference.
+            {t('pages.phase3.restB.settings.languageDesc')}
           </div>
           <select
             value={s.defaultLanguage ?? 'en'}
@@ -530,7 +510,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem 2rem' }}>
-          {Object.entries(categoryLabels).map(([cat, catLabel]) => {
+          {Object.entries(categoryLabels).map(([cat]) => {
             const rows = toggleGroups[cat]
             if (!rows?.length) return null
             return (
@@ -539,16 +519,16 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                   fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase',
                   letterSpacing: '0.06em', marginBottom: '0.5rem', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border)',
                 }}>
-                  {catLabel}
+                  {t(`pages.phase3.restB.settings.category.${cat}`)}
                 </div>
-                {rows.map(([key, label, desc]) => (
+                {rows.map(([key]) => (
                   <div key={key} style={{
                     display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
                     gap: '0.75rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)',
                   }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>{label}</div>
-                      <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.45, marginTop: '0.1rem' }}>{desc}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>{t(`pages.phase3.restB.settings.toggle.${key}.label`)}</div>
+                      <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.45, marginTop: '0.1rem' }}>{t(`pages.phase3.restB.settings.toggle.${key}.desc`)}</div>
                     </div>
                     <Toggle
                       checked={s[key as keyof Settings] as boolean}
@@ -574,7 +554,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
 
           {/* Presets */}
           <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.1rem', flexWrap: 'wrap' }}>
-            {REGION_PRESETS.map(preset => {
+            {REGION_PRESETS.map((preset, presetIndex) => {
               const isActive = preset.regions.length === activeRegions.length &&
                 preset.regions.every(r => activeRegions.includes(r))
               return (
@@ -588,9 +568,9 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     color: isActive ? 'var(--waf-brand)' : 'var(--text)',
                     transition: 'border-color 0.15s, background-color 0.15s, color 0.15s',
                   }}>
-                  {preset.label}
+                  {t(`pages.phase3.restB.settings.regionPreset.${presetIndex}.label`)}
                   <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: isActive ? 'var(--waf-brand)' : 'var(--muted)', fontWeight: 400 }}>
-                    {preset.desc}
+                    {t(`pages.phase3.restB.settings.regionPreset.${presetIndex}.desc`)}
                   </span>
                 </button>
               )
@@ -631,10 +611,10 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           </div>
 
           <div style={{ marginTop: '0.9rem', fontSize: '0.72rem', color: 'var(--muted)', padding: '0.45rem 0.65rem', background: 'var(--bg)', borderRadius: 6, border: '1px solid var(--border)' }}>
-            Active: <strong style={{ color: 'var(--text)' }}>{activeRegions.length}</strong> region{activeRegions.length !== 1 ? 's' : ''} ·{' '}
+            {t('pages.phase3.restB.settings.activeLabel')} <strong style={{ color: 'var(--text)' }}>{activeRegions.length}</strong> {activeRegions.length !== 1 ? t('pages.phase3.restB.settings.regionMany') : t('pages.phase3.restB.settings.regionOne')} ·{' '}
             <strong style={{ color: 'var(--text)' }}>
               {FRAMEWORKS.filter(fw => activeRegions.includes(fw.region)).length}
-            </strong> frameworks in scope
+            </strong> {t('pages.phase3.restB.settings.frameworksInScope')}
           </div>
         </div>
 
@@ -655,16 +635,16 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               ['remediationPlan',  'Remediation Plan',     'Quick wins and auto-fix guidance',                       4],
               ['cloudFootprint',   'Cloud Footprint',      'Detected regions and cloud providers',                   4],
               ['planChanges',      'Plan Changes',         'IaC plan adds, updates, destroys, replacements',   5],
-            ] as [keyof ReportSections, string, string, number][]).map(([key, label, desc, minLevel]) => (
+            ] as [keyof ReportSections, string, string, number][]).map(([key, , , minLevel]) => (
               <div key={key} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', padding: '0.55rem 0', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>{label}</span>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)' }}>{t(`pages.phase3.restB.settings.pdf.${key}.label`)}</span>
                     <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.05rem 0.35rem', borderRadius: '999px', background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
                       L{minLevel}+
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.45, marginTop: '0.1rem' }}>{desc}</div>
+                  <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.45, marginTop: '0.1rem' }}>{t(`pages.phase3.restB.settings.pdf.${key}.desc`)}</div>
                 </div>
                 <Toggle
                   checked={s.reportSections?.[key] ?? false}
@@ -714,7 +694,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 </button>
               </div>
               <div style={{ marginTop: '0.35rem', fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                Enter the base URL only — no <code style={{ fontSize: '0.7rem' }}>/api/v1/runs</code> suffix (e.g. <code style={{ fontSize: '0.7rem' }}>http://localhost:8000</code> when running locally). Leave empty to use the same origin as the dashboard. Takes effect immediately — no reload needed.
+                {t('pages.phase3.restB.settings.enterBaseUrl')} <code style={{ fontSize: '0.7rem' }}>/api/v1/runs</code> {t('pages.phase3.restB.settings.suffixHint')} <code style={{ fontSize: '0.7rem' }}>http://localhost:8000</code> {t('pages.phase3.restB.settings.runningLocallyHint')}
               </div>
             </div>
 
@@ -734,22 +714,21 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             )}
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
-              Active: <strong style={{ color: 'var(--text)' }}>{serverUrl.trim() || '(same origin)'}</strong>
+              {t('pages.phase3.restB.settings.activeLabel')} <strong style={{ color: 'var(--text)' }}>{serverUrl.trim() || t('pages.phase3.restB.settings.sameOrigin')}</strong>
             </div>
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-              To set a persistent default without rebuilding, add{' '}
+              {t('pages.phase3.restB.settings.persistentDefaultPrefix')}{' '}
               <code style={{ color: 'var(--waf-brand)', fontSize: '0.7rem' }}>VITE_API_URL=http://localhost:8000</code>{' '}
-              to <code style={{ color: 'var(--text)', fontSize: '0.7rem' }}>.env.local</code>{' '}
-              (copy from <code style={{ color: 'var(--text)', fontSize: '0.7rem' }}>.env.example</code>).
-              The runtime value above takes precedence.
+              {t('pages.phase3.restB.settings.persistentDefaultTo')} <code style={{ color: 'var(--text)', fontSize: '0.7rem' }}>.env.local</code>{' '}
+              {t('pages.phase3.restB.settings.persistentDefaultCopyFrom')} <code style={{ color: 'var(--text)', fontSize: '0.7rem' }}>.env.example</code>{t('pages.phase3.restB.settings.persistentDefaultSuffix')}
             </div>
           </div>
 
           {/* Middle: validation gateway URL */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', paddingBottom: '0.35rem', borderBottom: '1px solid var(--border)' }}>
-              Validation Gateway URL
+              {t('pages.phase3.restB.settings.validationGatewayUrl')}
             </div>
 
             <div>
@@ -775,7 +754,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                 </button>
               </div>
               <div style={{ marginTop: '0.35rem', fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-                Base URL of the central WOMBATpass validation gateway. Used by the dashboard to request official countersignatures. Leave empty to use the build-time <code style={{ fontSize: '0.7rem' }}>VITE_VALIDATION_URL</code> value.
+                {t('pages.phase3.restB.settings.validationGatewayDescPrefix')} <code style={{ fontSize: '0.7rem' }}>VITE_VALIDATION_URL</code> {t('pages.phase3.restB.settings.validationGatewayDescSuffix')}
               </div>
             </div>
 
@@ -795,11 +774,11 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             )}
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
-              Active: <strong style={{ color: 'var(--text)' }}>{validationUrl.trim() || getValidationGatewayBase() || '(not configured)'}</strong>
+              {t('pages.phase3.restB.settings.activeLabel')} <strong style={{ color: 'var(--text)' }}>{validationUrl.trim() || getValidationGatewayBase() || t('pages.phase3.restB.settings.notConfigured')}</strong>
             </div>
 
             <div style={{ fontSize: '0.71rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-              The gateway must trust the server's sub-CA certificate (see <code style={{ color: 'var(--waf-brand)', fontSize: '0.7rem' }}>WOMBAT_SERVER_SUBCA_CERT</code> on the server).
+              {t('pages.phase3.restB.settings.gatewayTrustPrefix')} <code style={{ color: 'var(--waf-brand)', fontSize: '0.7rem' }}>WOMBAT_SERVER_SUBCA_CERT</code> {t('pages.phase3.restB.settings.gatewayTrustSuffix')}
             </div>
           </div>
 
@@ -816,14 +795,14 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', lineHeight: 1.6 }}>
               <strong style={{ color: 'var(--text)' }}>{t('pages.settingsPage.requirements')}:</strong>
               <ul style={{ margin: '0.35rem 0 0 1rem', padding: 0 }}>
-                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>wombat-core</code> installed on the server</li>
-                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>WOMBAT_CONTROLS_DIR</code> pointing to control YAML files</li>
+                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>wombat-core</code> {t('pages.phase3.restB.settings.installedOnServer')}</li>
+                <li><code style={{ color: 'var(--waf-brand)', fontSize: '0.72rem' }}>WOMBAT_CONTROLS_DIR</code> {t('pages.phase3.restB.settings.pointingToControls')}</li>
               </ul>
             </div>
 
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
               <strong style={{ color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>{t('pages.settingsPage.dockerCompose')}</strong>
-              Controls are copied into the image automatically — no extra config needed:
+              {t('pages.phase3.restB.settings.controlsCopiedHint')}
             </div>
             <pre style={{
               background: '#0f172a', color: '#e2e8f0', borderRadius: '8px',
@@ -834,7 +813,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
 
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.6 }}>
               <strong style={{ color: 'var(--text)', display: 'block', marginBottom: '0.2rem' }}>{t('pages.settingsPage.customControls')}</strong>
-              Override with your own controls directory:
+              {t('pages.phase3.restB.settings.overrideControlsHint')}
             </div>
             <pre style={{
               background: '#0f172a', color: '#e2e8f0', borderRadius: '8px',
@@ -858,73 +837,53 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
-          <div>
-            <label style={labelStyle}>{t('pages.settingsPage.validationOrganization')}</label>
-            <input
-              type="text"
-              value={s.validationMetadata?.organization ?? ''}
-              onChange={e => setS(prev => ({
-                ...prev,
-                validationMetadata: { ...(prev.validationMetadata ?? {}), organization: e.target.value },
-              }))}
-              placeholder={t('pages.settingsPage.validationOrganizationPlaceholder')}
-              style={inputStyle}
-            />
-            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
-              {t('pages.settingsPage.validationOrganizationDesc')}
-            </div>
-          </div>
+          <Input
+            label={t('pages.settingsPage.validationOrganization')}
+            hint={t('pages.settingsPage.validationOrganizationDesc')}
+            type="text"
+            value={s.validationMetadata?.organization ?? ''}
+            onChange={e => setS(prev => ({
+              ...prev,
+              validationMetadata: { ...(prev.validationMetadata ?? {}), organization: e.target.value },
+            }))}
+            placeholder={t('pages.settingsPage.validationOrganizationPlaceholder')}
+          />
 
-          <div>
-            <label style={labelStyle}>{t('pages.settingsPage.validationEnvironment')}</label>
-            <input
-              type="text"
-              value={s.validationMetadata?.environment ?? ''}
-              onChange={e => setS(prev => ({
-                ...prev,
-                validationMetadata: { ...(prev.validationMetadata ?? {}), environment: e.target.value },
-              }))}
-              placeholder={t('pages.settingsPage.validationEnvironmentPlaceholder')}
-              style={inputStyle}
-            />
-            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
-              {t('pages.settingsPage.validationEnvironmentDesc')}
-            </div>
-          </div>
+          <Input
+            label={t('pages.settingsPage.validationEnvironment')}
+            hint={t('pages.settingsPage.validationEnvironmentDesc')}
+            type="text"
+            value={s.validationMetadata?.environment ?? ''}
+            onChange={e => setS(prev => ({
+              ...prev,
+              validationMetadata: { ...(prev.validationMetadata ?? {}), environment: e.target.value },
+            }))}
+            placeholder={t('pages.settingsPage.validationEnvironmentPlaceholder')}
+          />
 
-          <div>
-            <label style={labelStyle}>{t('pages.settingsPage.validationValidatedBy')}</label>
-            <input
-              type="text"
-              value={s.validationMetadata?.validatedBy ?? ''}
-              onChange={e => setS(prev => ({
-                ...prev,
-                validationMetadata: { ...(prev.validationMetadata ?? {}), validatedBy: e.target.value },
-              }))}
-              placeholder={t('pages.settingsPage.validationValidatedByPlaceholder')}
-              style={inputStyle}
-            />
-            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
-              {t('pages.settingsPage.validationValidatedByDesc')}
-            </div>
-          </div>
+          <Input
+            label={t('pages.settingsPage.validationValidatedBy')}
+            hint={t('pages.settingsPage.validationValidatedByDesc')}
+            type="text"
+            value={s.validationMetadata?.validatedBy ?? ''}
+            onChange={e => setS(prev => ({
+              ...prev,
+              validationMetadata: { ...(prev.validationMetadata ?? {}), validatedBy: e.target.value },
+            }))}
+            placeholder={t('pages.settingsPage.validationValidatedByPlaceholder')}
+          />
 
-          <div>
-            <label style={labelStyle}>{t('pages.settingsPage.validationNotes')}</label>
-            <input
-              type="text"
-              value={s.validationMetadata?.notes ?? ''}
-              onChange={e => setS(prev => ({
-                ...prev,
-                validationMetadata: { ...(prev.validationMetadata ?? {}), notes: e.target.value },
-              }))}
-              placeholder={t('pages.settingsPage.validationNotesPlaceholder')}
-              style={inputStyle}
-            />
-            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.3rem', lineHeight: 1.45 }}>
-              {t('pages.settingsPage.validationNotesDesc')}
-            </div>
-          </div>
+          <Input
+            label={t('pages.settingsPage.validationNotes')}
+            hint={t('pages.settingsPage.validationNotesDesc')}
+            type="text"
+            value={s.validationMetadata?.notes ?? ''}
+            onChange={e => setS(prev => ({
+              ...prev,
+              validationMetadata: { ...(prev.validationMetadata ?? {}), notes: e.target.value },
+            }))}
+            placeholder={t('pages.settingsPage.validationNotesPlaceholder')}
+          />
         </div>
       </section>
 

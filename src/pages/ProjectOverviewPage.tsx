@@ -7,7 +7,7 @@ import { fetchProjectAchievements, getApiBase, ProjectAchievement, RunSummary } 
 import { useI18n } from '../i18n'
 import { MATURITY_META } from './settingsUtils'
 import { scoreColor } from '../severity';
-import { EmptyState, PageHeader } from '../ui'
+import { DataTable, EmptyState, PageHeader, type Column } from '../ui'
 
 interface Props {
   runs: RunSummary[]
@@ -307,6 +307,7 @@ function MedalBadge({
 function CircleBadge({ title, description, category, iconPath, earned }: {
   title: string; description: string; category: AchievementCategory; iconPath: string; earned: boolean
 }) {
+  const { t } = useI18n()
   const color = CATEGORY_COLOR[category]
   return (
     <div style={{
@@ -349,7 +350,7 @@ function CircleBadge({ title, description, category, iconPath, earned }: {
         color: earned ? color : 'var(--muted)',
         textTransform: 'uppercase', letterSpacing: '0.05em',
       }}>
-        {CATEGORY_LABEL[category]}
+        {t(`pages.phase3.restB.projectOverview.category.${category}`)}
       </span>
       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: earned ? 'var(--text)' : 'var(--muted)', lineHeight: 1.2 }}>{title}</div>
       <div style={{ fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.45, maxWidth: '120px' }}>{description}</div>
@@ -360,6 +361,7 @@ function CircleBadge({ title, description, category, iconPath, earned }: {
 // ── Section header with Preview pill ─────────────────────────────────────────
 
 function SectionHeader({ title, sub, count, total }: { title: string; sub: string; count?: number; total?: number }) {
+  const { t } = useI18n()
   return (
     <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div>
@@ -369,7 +371,7 @@ function SectionHeader({ title, sub, count, total }: { title: string; sub: strin
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         {count !== undefined && total !== undefined && (
           <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
-            <strong style={{ color: 'var(--text)' }}>{count}</strong>/{total} earned
+            <strong style={{ color: 'var(--text)' }}>{count}</strong>/{total} {t('pages.phase3.restB.projectOverview.earned')}
           </span>
         )}
         <span style={{
@@ -377,7 +379,7 @@ function SectionHeader({ title, sub, count, total }: { title: string; sub: strin
           background: alpha('var(--waf-brand)', 0.08), color: 'var(--waf-brand)',
           border: `1px solid ${alpha('var(--waf-brand)', 0.2)}`,
           textTransform: 'uppercase', letterSpacing: '0.07em',
-        }}>Preview</span>
+        }}>{t('pages.phase3.restB.projectOverview.preview')}</span>
       </div>
     </div>
   )
@@ -424,11 +426,11 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
       }
     }
     return PILLAR_META.map(p => ({
-      pillar: p.label,
+      pillar: t(`pages.phase3.restB.projectOverview.pillar.${p.key}`),
       score: normalizedScores[p.key] ?? 0,
       color: p.color,
     }))
-  }, [latestRun])
+  }, [latestRun, t])
 
   // Maturity badges: earned = bestScore >= that level's threshold
   const maturityBadges = useMemo(
@@ -453,8 +455,13 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
 
   // Achievement badges
   const achievementBadges = useMemo(
-    () => ACHIEVEMENTS.map(a => ({ ...a, earned: a.check(projectRuns) })),
-    [projectRuns],
+    () => ACHIEVEMENTS.map(a => ({
+      ...a,
+      title: t(`pages.phase3.restB.projectOverview.ach.${a.id}.title`),
+      description: t(`pages.phase3.restB.projectOverview.ach.${a.id}.desc`),
+      earned: a.check(projectRuns),
+    })),
+    [projectRuns, t],
   )
   const earnedAchievementCount = achievementBadges.filter(b => b.earned).length
 
@@ -477,6 +484,14 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
     }).catch(() => {})
   }
 
+  const recentColumns: Column<RunSummary>[] = [
+    { key: 'score', header: t('pages.projectOverview.colScore'), render: r => <span style={{ fontWeight: 800, color: scoreColor(r.score) }}>{r.score}</span> },
+    { key: 'branch', header: t('pages.projectOverview.colBranch'), render: r => <span style={{ color: 'var(--muted)' }}>{r.branch || '—'}</span> },
+    { key: 'stage', header: t('pages.projectOverview.colStage'), render: r => <span style={{ color: 'var(--muted)' }}>{r.stage || '—'}</span> },
+    { key: 'triggered_by', header: t('pages.projectOverview.colTriggeredBy'), render: r => <span style={{ color: 'var(--muted)' }}>{r.triggered_by || '—'}</span> },
+    { key: 'created_at', header: t('pages.projectOverview.colDate'), render: r => <span style={{ color: 'var(--muted)' }}>{fmtFull(r.created_at)}</span> },
+  ]
+
   if (runs.length === 0) {
     return (
       <EmptyState title={t('pages.projectOverview.noScans')} />
@@ -488,7 +503,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
 
       {/* ── Header: back button + project name ──────────────────────────────── */}
       <PageHeader
-        title={activeProject ?? ''}
+        title={activeProject === '(unnamed)' ? t('pages.phase3.restB.projectOverview.unnamed') : (activeProject ?? '')}
         eyebrow={t('pages.projectOverview.title')}
         actions={onBack ? (
           <button
@@ -630,9 +645,9 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--muted)', position: 'relative' }}>
-                <span>{currentMeta.short} · score {currentThreshold}</span>
+                <span>{currentMeta.short} · {t('pages.phase3.restB.projectOverview.scoreValue', { score: currentThreshold })}</span>
                 <span style={{ fontWeight: 700, color: 'var(--text)' }}>{progressPct}%</span>
-                <span>{nextMeta.short} · score {nextThreshold}</span>
+                <span>{nextMeta.short} · {t('pages.phase3.restB.projectOverview.scoreValue', { score: nextThreshold })}</span>
               </div>
             </div>
           ) : (
@@ -756,10 +771,10 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             />
             <div style={{ padding: '1.25rem' }}>
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                {(Object.entries(CATEGORY_LABEL) as [AchievementCategory, string][]).map(([cat, label]) => (
+                {(Object.entries(CATEGORY_LABEL) as [AchievementCategory, string][]).map(([cat]) => (
                   <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', color: 'var(--muted)' }}>
                     <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: CATEGORY_COLOR[cat], flexShrink: 0 }} />
-                    {label}
+                    {t(`pages.phase3.restB.projectOverview.category.${cat}`)}
                   </div>
                 ))}
               </div>
@@ -813,7 +828,7 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
                             fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.45rem', borderRadius: '999px',
                             background: alpha(color, 20 / 255), color, border: `1px solid ${alpha(color, 48 / 255)}`,
                             textTransform: 'uppercase', letterSpacing: '0.05em',
-                          }}>Score {a.score}</span>
+                          }}>{t('pages.phase3.restB.projectOverview.verifiedScore', { score: a.score })}</span>
                         </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>
                           {new Date(a.achieved_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -868,31 +883,17 @@ export default function ProjectOverviewPage({ runs, onSelect, onBack, initialPro
             <div style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>
               {t('pages.projectOverview.recentScans', { project: activeProject })}
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg)' }}>
-                  {[t('pages.projectOverview.colScore'), t('pages.projectOverview.colBranch'), t('pages.projectOverview.colStage'), t('pages.projectOverview.colTriggeredBy'), t('pages.projectOverview.colDate'), ''].map(h => (
-                    <th key={h} style={{ padding: '0.55rem 1rem', textAlign: 'left', fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[...projectRuns].reverse().slice(0, 10).map((r, i, arr) => (
-                  <tr key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                    <td style={{ padding: '0.65rem 1rem', fontWeight: 800, color: scoreColor(r.score) }}>{r.score}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{r.branch || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{r.stage || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{r.triggered_by || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{fmtFull(r.created_at)}</td>
-                    <td style={{ padding: '0.65rem 1rem' }}>
-                      <button onClick={() => onSelect(r.id)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', color: 'var(--waf-brand)', cursor: 'pointer', fontWeight: 600 }}>
-                        {t('pages.projectOverview.open')}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable<RunSummary>
+              columns={recentColumns}
+              rows={[...projectRuns].reverse().slice(0, 10)}
+              rowKey={r => r.id}
+              actions={r => (
+                <button onClick={() => onSelect(r.id)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', color: 'var(--waf-brand)', cursor: 'pointer', fontWeight: 600 }}>
+                  {t('pages.projectOverview.open')}
+                </button>
+              )}
+              actionsHeader=""
+            />
           </div>
         </>
       ) : (

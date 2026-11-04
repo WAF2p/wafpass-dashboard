@@ -151,6 +151,7 @@ function ErrorIcon() { return <IconWrapper size={48}><circle cx="12" cy="12" r="
 
 // ── Score ring component ──────────────────────────────────────────────────────
 function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
+  const { t } = useI18n()
   const color = scoreColor(score)
   const pct = Math.min(100, Math.max(0, score))
   return (
@@ -177,7 +178,7 @@ function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
         }}
       >
         <span style={{ fontSize: '2.5rem', fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
-        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.05em' }}>OF 100</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.05em' }}>{t('pages.phase3.restA.globalDashboard.of100')}</span>
       </div>
     </div>
   )
@@ -268,6 +269,7 @@ function SectionCard({
 
 // ── Maturity distribution chart ───────────────────────────────────────────────
 function MaturityChart({ data }: { data: { label: string; count: number; color: string }[] }) {
+  const { t } = useI18n()
   return (
     <div style={{ width: '100%', height: 240 }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -291,7 +293,7 @@ function MaturityChart({ data }: { data: { label: string; count: number; color: 
               fontSize: '0.78rem',
             }}
             itemStyle={{ color: 'var(--text)' }}
-            formatter={(value: number) => [`${value} projects`, 'Count']}
+            formatter={(value: number) => [t('pages.phase3.restA.globalDashboard.projectsCount', { count: value }), t('pages.phase3.restA.globalDashboard.countLabel')]}
           />
           <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
             {data.map((entry, index) => (
@@ -306,6 +308,7 @@ function MaturityChart({ data }: { data: { label: string; count: number; color: 
 
 // ── Pillar radar chart ──────────────────────────────────────────────────────────
 function PillarRadar({ data }: { data: { pillar: string; score: number; color: string }[] }) {
+  const { t } = useI18n()
   return (
     <div style={{ width: '100%', height: 280 }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -317,7 +320,7 @@ function PillarRadar({ data }: { data: { pillar: string; score: number; color: s
           />
           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
           <Radar
-            name="Pillar Score"
+            name={t('pages.phase3.restA.globalDashboard.pillarScore')}
             dataKey="score"
             stroke="var(--waf-brand)"
             strokeWidth={2}
@@ -602,7 +605,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
       .then(setPassports)
       .catch(e => {
         console.error('Failed to fetch passports:', e)
-        setError('Failed to load passports: ' + (e as Error).message)
+        setError(t('pages.phase3.restA.globalDashboard.failedLoadPassports') + ' ' + (e as Error).message)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -718,7 +721,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
       <div className="gd-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center', maxWidth: 420, padding: '2rem', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div style={{ color: 'var(--fail)', marginBottom: '1rem' }}><ErrorIcon /></div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Error Loading Global Dashboard</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>{t('pages.phase3.restA.globalDashboard.errorLoading')}</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{error}</div>
         </div>
       </div>
@@ -745,8 +748,8 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
       <div className="gd-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
         <div style={{ textAlign: 'center', maxWidth: 460, padding: '2.5rem', borderRadius: '16px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <div style={{ color: 'var(--waf-brand)', marginBottom: '1rem' }}><EmptyStateIcon /></div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>No run data available</div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>Run a WOMBATpass scan first to populate your operational center.</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>{t('pages.phase3.restA.globalDashboard.noRunData')}</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '1.5rem' }}>{t('pages.phase3.restA.globalDashboard.runFirstScanHint')}</div>
           <button
             onClick={() => navigate('runscan')}
             style={{
@@ -761,7 +764,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
               boxShadow: '0 4px 16px color-mix(in srgb, var(--waf-brand) 35%, transparent)',
             }}
           >
-            Run First Scan
+            {t('pages.phase3.restA.globalDashboard.runFirstScan')}
           </button>
         </div>
       </div>
@@ -817,7 +820,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
         <KpiTile
           label={t('pages.globaldashboard.totalProjects')}
           value={totalProjects}
-          subtext={passports.length > 0 ? 'From passports' : 'From scan runs'}
+          subtext={passports.length > 0 ? t('pages.phase3.restA.globalDashboard.fromPassports') : t('pages.phase3.restA.globalDashboard.fromScanRuns')}
           icon={<ProjectsIcon />}
           color="var(--waf-brand)"
           onClick={() => navigate('passports')}
@@ -825,7 +828,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
         <KpiTile
           label={t('pages.globaldashboard.avgScore')}
           value={`${avgScore}/100`}
-          subtext="Across all runs"
+          subtext={t('pages.phase3.restA.globalDashboard.acrossAllRuns')}
           icon={<ScoreIcon />}
           color={scoreColor(avgScore)}
         />
@@ -854,13 +857,13 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
         </div>
 
         <div className="gd-col-1">
-          <SectionCard title={t('pages.globaldashboard.maturityDistribution')} subtitle="Projects by maturity level">
+          <SectionCard title={t('pages.globaldashboard.maturityDistribution')} subtitle={t('pages.phase3.restA.globalDashboard.projectsByMaturity')}>
             <MaturityChart data={maturityChartData} />
           </SectionCard>
         </div>
 
         <div className="gd-col-1">
-          <SectionCard title={t('pages.globaldashboard.topProjects')} subtitle="Highest maturity scores">
+          <SectionCard title={t('pages.globaldashboard.topProjects')} subtitle={t('pages.phase3.restA.globalDashboard.highestMaturityScores')}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
               {topProjects.map((p, i) => {
                 const maturity = getMaturityForScore(p.score)
@@ -920,7 +923,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
               <PillarRadar data={pillarRadarData} />
             ) : (
               <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: '0.78rem' }}>
-                No pillar data available
+                {t('pages.phase3.restA.globalDashboard.noPillarData')}
               </div>
             )}
           </SectionCard>
@@ -992,23 +995,23 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
 
         {starProject && (
           <div className="gd-col-2">
-            <SectionCard title="Star of the Week" subtitle="Consistently high performer">
+            <SectionCard title={t('pages.phase3.restA.globalDashboard.starOfTheWeek')} subtitle={t('pages.phase3.restA.globalDashboard.consistentlyHighPerformer')}>
               <div className="gd-star">
                 <div className="gd-star-icon"><TrophyIcon /></div>
                 <div className="gd-star-main">
                   <div className="gd-star-name">{starProject.displayName}</div>
                   <div className="gd-star-meta">
-                    Last scan: {formatDate(getBestRunForProject(starProject.project, runs)?.created_at)} · {getMaturityForScore(starProject.score).label}
+                    {t('pages.phase3.restA.globalDashboard.lastScanMeta', { date: formatDate(getBestRunForProject(starProject.project, runs)?.created_at), label: getMaturityForScore(starProject.score).label })}
                   </div>
                 </div>
                 <div className="gd-star-stats">
                   <div className="gd-star-stat">
                     <div className="gd-star-value">{starProject.score}</div>
-                    <div className="gd-star-label">Score</div>
+                    <div className="gd-star-label">{t('pages.phase3.restA.globalDashboard.score')}</div>
                   </div>
                   <div className="gd-star-stat">
                     <div className="gd-star-value">L{getMaturityForScore(starProject.score).level}</div>
-                    <div className="gd-star-label">Level</div>
+                    <div className="gd-star-label">{t('pages.phase3.restA.globalDashboard.level')}</div>
                   </div>
                 </div>
               </div>
@@ -1019,7 +1022,7 @@ export default function GlobalDashboardPage({ run, runs, navigate }: GlobalDashb
 
       {/* Excellence standard row */}
       {topExcellenceProjects.length > 0 && (
-        <SectionCard title={t('pages.maturityJourney.excellenceStandard')} subtitle={`${topExcellenceProjects.length} project${topExcellenceProjects.length > 1 ? 's' : ''} at L4/L5`}>
+        <SectionCard title={t('pages.maturityJourney.excellenceStandard')} subtitle={t('pages.phase3.restA.globalDashboard.projectsAtL4L5', { count: topExcellenceProjects.length, s: topExcellenceProjects.length > 1 ? 's' : '' })}>
           <div className="gd-excellence-row">
             {topExcellenceProjects.map((p, i) => {
               const maturity = getMaturityForScore(p.score)
