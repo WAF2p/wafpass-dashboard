@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getApiBase } from '../api'
 import { useI18n } from '../i18n'
+import { PageHeader } from '../ui'
 import { SectionCard, SocStyles } from './shared/SocComponents'
 
 interface VersionInfo {
@@ -64,11 +65,11 @@ export default function AboutPage() {
       <SocStyles />
       <style>{aboutPageCss}</style>
 
-      <div className="about-hero">
-        <div className="about-hero__badge">Wombat</div>
-        <h1 className="about-hero__title">{t('about.title')}</h1>
-        <p className="about-hero__subtitle">{t('about.subtitle')}</p>
-      </div>
+      <PageHeader
+        eyebrow="Wombat"
+        title={t('about.title')}
+        description={t('about.subtitle')}
+      />
 
       <div className="about-grid">
         <div className="about-main">

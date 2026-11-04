@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useI18n } from '../i18n'
+import { PageHeader } from '../ui'
 import type { Page } from '../routing'
 import { PAGE_TITLE } from '../routing'
 import NineDotIcon from '../components/NineDotIcon'
@@ -305,21 +306,20 @@ export default function BetaFeaturesPage({
 
   return (
     <div className="beta-page">
-      <div className="beta-page-head">
-        <div>
-          <div className="beta-page-title-row">
-            <h1>{t('pages.betaFeatures.pageTitle')}</h1>
-            <span className="beta-pill">{t('pages.betaFeatures.experimental')}</span>
-          </div>
-          <p className="beta-page-subtitle">{t('pages.betaFeatures.pageSubtitle')}</p>
-        </div>
-        <button type="button" className="beta-secondary" onClick={onOpenSettings} aria-label={t('pages.betaFeatures.backToSettings')}>
-          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          {t('pages.betaFeatures.backToSettings')}
-        </button>
-      </div>
+      <style>{'.beta-page-header.ui-page-header { margin-bottom: 0; }'}</style>
+      <PageHeader
+        className="beta-page-header"
+        title={<>{t('pages.betaFeatures.pageTitle')}{' '}<span className="beta-pill">{t('pages.betaFeatures.experimental')}</span></>}
+        description={t('pages.betaFeatures.pageSubtitle')}
+        actions={
+          <button type="button" className="beta-secondary" onClick={onOpenSettings} aria-label={t('pages.betaFeatures.backToSettings')}>
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            {t('pages.betaFeatures.backToSettings')}
+          </button>
+        }
+      />
 
       <div className="beta-notice" role="note">
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { getGatewayRootCertificateUrl } from '../api'
 import { useI18n } from '../i18n'
-import { PageHeader, buttonClass } from '../ui'
+import { PageHeader, Tabs, buttonClass } from '../ui'
 import ShipRunPage from './ShipRunPage'
 import ValidationsPage from './ValidationsPage'
 
@@ -64,21 +64,12 @@ export default function ValidationCenterPage({ initialTab = 'registry' }: Valida
 
       <TeaserBanner />
 
-      <div className="ui-tabs" role="group" aria-label={t('pages.validationCenter.title')}>
-        {TABS.map(tab => {
-          const active = activeTab === tab.key
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              aria-pressed={active}
-              className="ui-tab"
-            >
-              {t(`pages.validationCenter.${tab.labelKey}`)}
-            </button>
-          )
-        })}
-      </div>
+      <Tabs
+        tabs={TABS.map(tab => ({ id: tab.key, label: t(`pages.validationCenter.${tab.labelKey}`) }))}
+        value={activeTab}
+        onChange={id => setActiveTab(id as TabKey)}
+        ariaLabel={t('pages.validationCenter.title')}
+      />
 
       {activeTab === 'registry' ? (
         <ValidationsPage mode="panel" />

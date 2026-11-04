@@ -251,6 +251,18 @@ Changes 58→7, RunsList 48→15, GroupMappings 34→0, Findings 27→0, Risk Ac
 
 **CI.** Added `.github/workflows/design.yml`: `npm ci` → `npm run design:lint -- --gate` → build → tests. The gate fails on accessibility/motion/dialog rules; hex stays advisory with inline `design-lint-disable` exemptions for generated/print output.
 
+### Phase 4b — design system, translations, visual regression
+
+**Design System 2.0 primitives.** Added `ui/Input`, `Select`, `Tabs`, `Toolbar`, `StatTile`, `ChartFrame` (+ chart palette/axis/tooltip/grid constants) with `.ui-*` styles and DESIGN.md entries.
+
+**Adoption.** 4 static tables moved to `DataTable` (API key usage log, revoked keys, user audit trail, journey recent scans); 6 pages moved to `PageHeader` (About, Audit Log, Beta Features, My Dashboard, Regions, Validations). Complex tables (selection, expandable rows, per-row actions, diff-cell tinting, heatmaps) were deliberately left and documented. `Tabs` adopted in Validation Center, `Toolbar` in Regions.
+
+**Translations.** All 431 Phase 3 keys translated into `de`, `fr`, `es`, `pt`, `br`, `el` (`src/i18n/locales/phase3/<lang>.ts`), merged per locale over the English base. Placeholder parity verified; brand names and code samples left untranslated.
+
+**Visual regression.** `scripts/visual-regression.mjs` (pixelmatch + pngjs) captures 6 routes × 2 themes, waits for content to settle and for two identical frames, and compares against `visual-baselines/`. Commands: `npm run visual:baseline` / `npm run visual:check`. Diffs land in `.visual/diffs/` (gitignored).
+
+**Secrets.** Root `.env` was migrated from `WAFPASS_*` to `WOMBAT_*` for every compose-consumed setting; JWT, API and internal signing secrets rotated. `.env.example` documents the internal key and sub-CA path.
+
 ---
 
 ## Per-page checklist

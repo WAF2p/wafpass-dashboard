@@ -6,6 +6,7 @@ import {
 import { RunSummary } from '../../api'
 import { useI18n } from '../../i18n'
 import { FilterState, Page, scoreColor } from '../../routing'
+import { DataTable, type Column } from '../../ui'
 import { controlsForLevel, MATURITY_META } from '../settingsUtils'
 import { nextStage, pointsToNextStage, runsForProject, stageFor } from '../journeyUtils'
 import JourneyCard from './components/JourneyCard'
@@ -102,6 +103,29 @@ export default function ProjectJourney({
   const earnedMaturityCount = maturityBadges.filter(b => b.earned).length
 
   const branchCount = new Set(projectRuns.map(r => r.branch).filter(Boolean)).size
+
+  const recentScanColumns: Column<RunSummary>[] = [
+    {
+      key: 'score',
+      header: t('pages.journey.colScore'),
+      render: r => <span style={{ fontWeight: 800, color: scoreColor(r.score) }}>{r.score}</span>,
+    },
+    {
+      key: 'branch',
+      header: t('pages.journey.colBranch'),
+      render: r => <span style={{ color: 'var(--muted)' }}>{r.branch || '—'}</span>,
+    },
+    {
+      key: 'stage',
+      header: t('pages.journey.colStage'),
+      render: r => <span style={{ color: 'var(--muted)' }}>{r.stage || '—'}</span>,
+    },
+    {
+      key: 'date',
+      header: t('pages.journey.colDate'),
+      render: r => <span style={{ color: 'var(--muted)' }}>{fmtFull(r.created_at)}</span>,
+    },
+  ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -312,25 +336,11 @@ export default function ProjectJourney({
         <JourneyCard>
           <div style={{ padding: '1.25rem' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>{t('pages.journey.recentScans')}</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg)' }}>
-                  {['Score', 'Branch', 'Stage', 'Date'].map(h => (
-                    <th key={h} style={{ padding: '0.55rem 1rem', textAlign: 'left', fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{t(`pages.journey.col${h}`)}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[...projectRuns].reverse().slice(0, 10).map((r, i, arr) => (
-                  <tr key={r.id} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                    <td style={{ padding: '0.65rem 1rem', fontWeight: 800, color: scoreColor(r.score) }}>{r.score}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{r.branch || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{r.stage || '—'}</td>
-                    <td style={{ padding: '0.65rem 1rem', color: 'var(--muted)' }}>{fmtFull(r.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              columns={recentScanColumns}
+              rows={[...projectRuns].reverse().slice(0, 10)}
+              rowKey={r => r.id}
+            />
           </div>
         </JourneyCard>
       )}

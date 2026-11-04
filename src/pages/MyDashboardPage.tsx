@@ -23,6 +23,7 @@ import {
   type WidgetType,
 } from '../widgets/types'
 import { safeImageUrl } from '../safeUrl'
+import { PageHeader } from '../ui'
 
 interface Props {
   run: RunDetail | null
@@ -350,29 +351,29 @@ export default function MyDashboardPage({
         <span className="wdg-rbac-chip">{roleLabel} · {scopeLabel}</span>
       </div>
 
-      <div className="wdg-page-head">
-        <div>
-          <h1>{displayName}</h1>
-          <p>{t('pages.myDashboard.subtitle')}</p>
-        </div>
-        <div className="wdg-page-actions">
-          {editing && (
-            <input
-              className="wdg-name-input"
-              value={prefs.dashboardName ?? ''}
-              placeholder={t('pages.myDashboard.defaultName')}
-              aria-label={t('pages.myDashboard.rename')}
-              onChange={event => onChange({ ...prefs, dashboardName: event.target.value })}
-            />
-          )}
-          <button type="button" className="wdg-btn" onClick={openShare}>
-            <Icon path={ICON.share} /> {t('pages.myDashboard.share')}
-          </button>
-          <button type="button" className={`wdg-btn${editing ? ' wdg-btn-primary' : ''}`} onClick={() => setEditing(value => !value)}>
-            <Icon path={editing ? ICON.check : ICON.edit} /> {editing ? t('pages.myDashboard.done') : t('pages.myDashboard.edit')}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title={displayName}
+        description={t('pages.myDashboard.subtitle')}
+        actions={
+          <div className="wdg-page-actions">
+            {editing && (
+              <input
+                className="wdg-name-input"
+                value={prefs.dashboardName ?? ''}
+                placeholder={t('pages.myDashboard.defaultName')}
+                aria-label={t('pages.myDashboard.rename')}
+                onChange={event => onChange({ ...prefs, dashboardName: event.target.value })}
+              />
+            )}
+            <button type="button" className="wdg-btn" onClick={openShare}>
+              <Icon path={ICON.share} /> {t('pages.myDashboard.share')}
+            </button>
+            <button type="button" className={`wdg-btn${editing ? ' wdg-btn-primary' : ''}`} onClick={() => setEditing(value => !value)}>
+              <Icon path={editing ? ICON.check : ICON.edit} /> {editing ? t('pages.myDashboard.done') : t('pages.myDashboard.edit')}
+            </button>
+          </div>
+        }
+      />
 
       {editing && (
         <div className="wdg-toolbar">

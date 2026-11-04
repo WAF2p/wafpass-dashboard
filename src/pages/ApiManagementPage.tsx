@@ -11,6 +11,7 @@ import {
 } from '../api'
 import { scoreBg, scoreColor as scoreColorToken } from '../severity';
 import { PAGE_TITLE } from '../routing'
+import { DataTable, type Column } from '../ui'
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -44,6 +45,82 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
   }, [keyId])
+
+  const columns: Column<ApiKeyUsageLogEntry>[] = [
+    {
+      key: 'timestamp',
+      header: t('pages.apikeys.colTimestamp'),
+      render: log => (
+        <>
+          <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.used_at)}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.used_at)}</div>
+        </>
+      ),
+    },
+    {
+      key: 'endpoint',
+      header: t('pages.apikeys.colEndpoint'),
+      render: log => (
+        <code style={{
+          background: 'color-mix(in srgb, var(--waf-info) 8%, transparent)', color: 'var(--waf-info)',
+          padding: '0.12rem 0.4rem', borderRadius: '6px', fontSize: '0.71rem', fontWeight: 600,
+        }}>
+          {log.endpoint}
+        </code>
+      ),
+    },
+    {
+      key: 'project',
+      header: t('pages.apikeys.colProject'),
+      render: log => (
+        <span style={{ fontWeight: 600, color: 'var(--text)', display: 'inline-block', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}>
+          {log.project || <span style={{ color: 'var(--muted)', fontWeight: 400 }}>—</span>}
+        </span>
+      ),
+    },
+    {
+      key: 'branch',
+      header: t('pages.apikeys.colBranch'),
+      render: log => (
+        <span style={{ color: 'var(--muted)', display: 'inline-block', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom', fontFamily: 'ui-monospace,monospace', fontSize: '0.72rem' }}>
+          {log.branch || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'score',
+      header: t('pages.apikeys.colScore'),
+      render: log => {
+        const sc = log.score === null
+          ? { color: 'var(--skip-ink)', bg: 'color-mix(in srgb, var(--skip) 9%, transparent)' }
+          : { color: scoreColorToken(log.score), bg: scoreBg(log.score, 9) }
+        return log.score !== null ? (
+          <span style={{
+            display: 'inline-flex', padding: '0.12rem 0.45rem', borderRadius: '6px',
+            background: sc.bg, color: sc.color,
+            fontWeight: 700, fontSize: '0.71rem',
+          }}>
+            {log.score}/100
+          </span>
+        ) : <span style={{ color: 'var(--muted)' }}>—</span>
+      },
+    },
+    {
+      key: 'run_id',
+      header: t('pages.apikeys.colRunId'),
+      render: log => log.run_id ? (
+        <code style={{ fontSize: '0.69rem', color: 'var(--muted)', background: 'var(--bg)', padding: '0.08rem 0.35rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
+          {log.run_id.slice(0, 8)}…
+        </code>
+      ) : <span style={{ color: 'var(--muted)' }}>—</span>,
+    },
+    {
+      key: 'ip',
+      header: t('pages.apikeys.colIp'),
+      mono: true,
+      render: log => <span style={{ color: 'var(--muted)', fontSize: '0.72rem' }}>{log.ip || '—'}</span>,
+    },
+  ]
 
   return (
     <tr>
@@ -93,69 +170,11 @@ function KeyLogPanel({ keyId, keyName }: { keyId: string; keyName: string }) {
               {t('pages.apikeys.noUsageYet')}
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.79rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {[t('pages.apikeys.colTimestamp'), t('pages.apikeys.colEndpoint'), t('pages.apikeys.colProject'), t('pages.apikeys.colBranch'), t('pages.apikeys.colScore'), t('pages.apikeys.colRunId'), t('pages.apikeys.colIp')].map(h => (
-                    <th key={h} style={{
-                      padding: '0.45rem 1.25rem', textAlign: 'left',
-                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
-                      textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log, i) => {
-                  const sc = log.score === null
-                    ? { color: 'var(--skip-ink)', bg: 'color-mix(in srgb, var(--skip) 9%, transparent)' }
-                    : { color: scoreColorToken(log.score), bg: scoreBg(log.score, 9) }
-                  return (
-                    <tr key={log.id} style={{ borderBottom: i < logs.length - 1 ? '1px solid var(--border)' : undefined }}>
-                      <td style={{ padding: '0.5rem 1.25rem', whiteSpace: 'nowrap' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.used_at)}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.used_at)}</div>
-                      </td>
-                      <td style={{ padding: '0.5rem 1.25rem' }}>
-                        <code style={{
-                          background: 'color-mix(in srgb, var(--waf-info) 8%, transparent)', color: 'var(--waf-info)',
-                          padding: '0.12rem 0.4rem', borderRadius: '6px', fontSize: '0.71rem', fontWeight: 600,
-                        }}>
-                          {log.endpoint}
-                        </code>
-                      </td>
-                      <td style={{ padding: '0.5rem 1.25rem', fontWeight: 600, color: 'var(--text)', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {log.project || <span style={{ color: 'var(--muted)', fontWeight: 400 }}>—</span>}
-                      </td>
-                      <td style={{ padding: '0.5rem 1.25rem', color: 'var(--muted)', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'ui-monospace,monospace', fontSize: '0.72rem' }}>
-                        {log.branch || '—'}
-                      </td>
-                      <td style={{ padding: '0.5rem 1.25rem' }}>
-                        {log.score !== null ? (
-                          <span style={{
-                            display: 'inline-flex', padding: '0.12rem 0.45rem', borderRadius: '6px',
-                            background: sc.bg, color: sc.color,
-                            fontWeight: 700, fontSize: '0.71rem',
-                          }}>
-                            {log.score}/100
-                          </span>
-                        ) : <span style={{ color: 'var(--muted)' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '0.5rem 1.25rem' }}>
-                        {log.run_id ? (
-                          <code style={{ fontSize: '0.69rem', color: 'var(--muted)', background: 'var(--bg)', padding: '0.08rem 0.35rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                            {log.run_id.slice(0, 8)}…
-                          </code>
-                        ) : <span style={{ color: 'var(--muted)' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '0.5rem 1.25rem', color: 'var(--muted)', fontSize: '0.72rem', fontFamily: 'ui-monospace,monospace' }}>
-                        {log.ip || '—'}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <DataTable
+              columns={columns}
+              rows={logs}
+              rowKey={log => log.id}
+            />
           )}
         </div>
       </td>
@@ -283,6 +302,33 @@ export default function ApiManagementPage() {
 
   const activeKeys  = keys.filter(k => k.is_active)
   const revokedKeys = keys.filter(k => !k.is_active)
+
+  const revokedColumns: Column<ApiKeyOut>[] = [
+    {
+      key: 'name',
+      header: t('pages.apikeys.colName'),
+      render: k => <span style={{ color: 'var(--muted)', textDecoration: 'line-through' }}>{k.name}</span>,
+    },
+    {
+      key: 'mandate',
+      header: t('pages.apikeys.colMandate'),
+      render: k => <span style={{ color: 'var(--muted)', fontSize: '0.78rem' }}>{mandateNameFor(k)}</span>,
+    },
+    {
+      key: 'prefix',
+      header: t('pages.apikeys.colPrefix'),
+      render: k => (
+        <code style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '0.1rem 0.4rem', borderRadius: '6px', fontSize: '0.72rem', color: 'var(--muted)' }}>
+          {k.key_prefix}…
+        </code>
+      ),
+    },
+    {
+      key: 'created',
+      header: t('pages.apikeys.colCreated'),
+      render: k => <span style={{ color: 'var(--muted)', fontSize: '0.75rem' }}>{timeAgo(k.created_at)}</span>,
+    },
+  ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -587,29 +633,11 @@ export default function ApiManagementPage() {
             {t('pages.apikeys.revokedKeysHeader', { count: revokedKeys.length })}
           </div>
           <div className="card" style={{ padding: 0, overflow: 'hidden', opacity: 0.55 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {[t('pages.apikeys.colName'), t('pages.apikeys.colMandate'), t('pages.apikeys.colPrefix'), t('pages.apikeys.colCreated')].map(h => (
-                    <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {revokedKeys.map((k, i) => (
-                  <tr key={k.id} style={{ borderBottom: i < revokedKeys.length - 1 ? '1px solid var(--border)' : undefined }}>
-                    <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', textDecoration: 'line-through' }}>{k.name}</td>
-                    <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', fontSize: '0.78rem' }}>{mandateNameFor(k)}</td>
-                    <td style={{ padding: '0.55rem 0.875rem' }}>
-                      <code style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '0.1rem 0.4rem', borderRadius: '6px', fontSize: '0.72rem', color: 'var(--muted)' }}>
-                        {k.key_prefix}…
-                      </code>
-                    </td>
-                    <td style={{ padding: '0.55rem 0.875rem', color: 'var(--muted)', fontSize: '0.75rem' }}>{timeAgo(k.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              columns={revokedColumns}
+              rows={revokedKeys}
+              rowKey={k => k.id}
+            />
           </div>
         </section>
       )}

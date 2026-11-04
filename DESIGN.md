@@ -344,6 +344,11 @@ Shared UI lives in `src/ui/`. New pages compose these; do not re-implement page 
 | `EmptyState` | Composed empty state with title, description and action |
 | `Skeleton` / `SkeletonText` / `SkeletonRows` | Layout-shaped loading placeholders |
 | `Button` / `buttonClass` | Variants (primary, secondary, ghost, danger) for buttons and links |
+| `Input` / `Select` | Labelled form controls with hint, error, required marker and generated id wiring |
+| `Tabs` | Controlled segmented tabs with optional counts and arrow-key focus movement |
+| `Toolbar` | Filter/action bar with left and right slots that wrap on narrow screens |
+| `StatTile` | KPI tile with tabular value and a semantic tone (neutral/pass/warn/fail/info) |
+| `ChartFrame` + `CHART_*` | Chart panel wrapper plus the shared token-based palette, axis, grid and tooltip styles |
 | `Modal` | `role="dialog"`, focus trap, Escape, scroll lock, focus restore |
 
 Rules: import from `src/ui`; style with the `.ui-*` classes in `src/index.css`; never restyle a primitive inline. Progress against this standard is tracked in [`DESIGN-AUDIT.md`](./DESIGN-AUDIT.md).

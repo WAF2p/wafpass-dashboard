@@ -13,6 +13,7 @@ import { useI18n } from '../i18n'
 import { PAGE_TITLE } from '../routing'
 import { safeImageUrl } from '../safeUrl'
 import { scoreColor, scoreBg } from '../severity'
+import { DataTable, type Column } from '../ui'
 
 const HOLDING_ROLES = ['', 'holding_admin', 'holding_viewer', 'group_admin', 'group_viewer'] as const
 
@@ -190,6 +191,39 @@ function UserDetailPanel({ user }: { user: UserOut }) {
       .finally(() => setLoading(false))
   }, [user.id])
 
+  const columns: Column<UserAuditLogEntry>[] = [
+    {
+      key: 'timestamp',
+      header: t('pages.users.colTimestamp'),
+      render: log => (
+        <>
+          <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.timestamp)}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.timestamp)}</div>
+        </>
+      ),
+    },
+    {
+      key: 'action',
+      header: t('pages.users.colAction'),
+      render: log => <ActionBadge action={log.action} />,
+    },
+    {
+      key: 'detail',
+      header: t('pages.users.colDetail'),
+      render: log => (
+        <div style={{ maxWidth: '360px' }}>
+          <ActionDetail action={log.action} detail={log.detail} />
+        </div>
+      ),
+    },
+    {
+      key: 'ip',
+      header: t('pages.users.colIp'),
+      mono: true,
+      render: log => <span style={{ color: 'var(--muted)', fontSize: '0.72rem' }}>{log.ip || '—'}</span>,
+    },
+  ]
+
   const roleC = ROLE_COLOR[user.role] ?? FALLBACK_ROLE
 
   return (
@@ -321,40 +355,11 @@ function UserDetailPanel({ user }: { user: UserOut }) {
               {t('pages.users.noAuditEvents')}
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.79rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                  {[t('pages.users.colTimestamp'), t('pages.users.colAction'), t('pages.users.colDetail'), t('pages.users.colIp')].map(h => (
-                    <th key={h} style={{
-                      padding: '0.45rem 1.25rem', textAlign: 'left',
-                      fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)',
-                      textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log, i) => (
-                  <tr key={log.id} style={{
-                    borderBottom: i < logs.length - 1 ? '1px solid var(--border)' : undefined,
-                  }}>
-                    <td style={{ padding: '0.5rem 1.25rem', whiteSpace: 'nowrap' }}>
-                      <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.76rem' }}>{timeAgo(log.timestamp)}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.1rem' }}>{fmtDate(log.timestamp)}</div>
-                    </td>
-                    <td style={{ padding: '0.5rem 1.25rem' }}>
-                      <ActionBadge action={log.action} />
-                    </td>
-                    <td style={{ padding: '0.5rem 1.25rem', maxWidth: '360px' }}>
-                      <ActionDetail action={log.action} detail={log.detail} />
-                    </td>
-                    <td style={{ padding: '0.5rem 1.25rem', color: 'var(--muted)', fontSize: '0.72rem', fontFamily: 'ui-monospace,monospace' }}>
-                      {log.ip || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              columns={columns}
+              rows={logs}
+              rowKey={log => log.id}
+            />
           )}
         </div>
       </td>

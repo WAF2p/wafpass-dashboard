@@ -8,10 +8,27 @@ import pt from './locales/pt'
 import br from './locales/br'
 import el from './locales/el'
 import phase3 from './locales/phase3'
+import p3de from './locales/phase3/de'
+import p3fr from './locales/phase3/fr'
+import p3es from './locales/phase3/es'
+import p3pt from './locales/phase3/pt'
+import p3br from './locales/phase3/br'
+import p3el from './locales/phase3/el'
 
 const EN = deepMerge(en as Translations, { pages: { phase3 } } as unknown as Partial<Translations>)
 
-export const LOCALES: Record<string, PartialTranslations> = { en: EN, de, fr, es, pt, br, el }
+const withPhase3 = (base: PartialTranslations, extra: unknown): PartialTranslations =>
+  deepMerge(base as object, { pages: { phase3: extra } } as object) as PartialTranslations
+
+export const LOCALES: Record<string, PartialTranslations> = {
+  en: EN,
+  de: withPhase3(de, p3de),
+  fr: withPhase3(fr, p3fr),
+  es: withPhase3(es, p3es),
+  pt: withPhase3(pt, p3pt),
+  br: withPhase3(br, p3br),
+  el: withPhase3(el, p3el),
+}
 
 function deepMerge<T extends object>(base: T, override: Partial<T>): T {
   const result = { ...base }

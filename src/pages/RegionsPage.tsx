@@ -7,6 +7,7 @@ import { REGION_COORDS, REGION_LABELS, PROVIDER_COLORS } from '../region-data'
 import { useI18n } from '../i18n'
 import { useTheme } from '../theme'
 import { useMemo, useState } from 'react'
+import { PageHeader, Toolbar } from '../ui'
 
 // MapLibre loads its Web Worker from a relative URL by default. In a Vite
 // production build the worker file is not emitted next to the bundle, so the
@@ -397,19 +398,18 @@ export default function RegionsPage({ run }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <style>{`
+.regions-page-header.ui-page-header { margin-bottom: 0; }
+.regions-map-toolbar.ui-toolbar { padding: 0.85rem 1rem; margin-bottom: 0; background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+`}</style>
 
       {/* ── Page header ── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.35rem' }}>
-            {t('pages.regions.pageTitle')}
-          </h1>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)', maxWidth: '520px', lineHeight: 1.5 }}>
-            {t('pages.regions.pageSubtitle')}
-          </div>
-        </div>
-        {run.source_paths && run.source_paths.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <PageHeader
+        className="regions-page-header"
+        title={t('pages.regions.pageTitle')}
+        description={t('pages.regions.pageSubtitle')}
+        actions={run.source_paths && run.source_paths.length > 0 ? (
+          <>
             <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 600 }}>{t('pages.regions.scannedPaths')}</span>
             {run.source_paths.map(p => (
               <code key={p} style={{
@@ -418,9 +418,9 @@ export default function RegionsPage({ run }: Props) {
               }}
               >{p}</code>
             ))}
-          </div>
-        )}
-      </div>
+          </>
+        ) : undefined}
+      />
 
       {/* ── KPI row ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.875rem' }}>
@@ -456,34 +456,36 @@ export default function RegionsPage({ run }: Props) {
       {/* ── Map ── */}
       {geojson.features.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <div style={{
-            padding: '0.85rem 1rem', borderBottom: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap',
-          }}
-          >
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {t('pages.regions.deploymentMap')}
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              {providers.map(p => (
-                <span
-                  key={p.provider}
-                  onMouseEnter={() => setHoveredProvider(p.provider)}
-                  onMouseLeave={() => setHoveredProvider(null)}
-                  onClick={() => setActiveProvider(prev => prev === p.provider ? null : p.provider)}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-                    fontSize: '0.72rem', color: displayedProvider === p.provider ? 'var(--text)' : 'var(--muted)',
-                    cursor: 'pointer', fontWeight: displayedProvider === p.provider ? 700 : 500,
-                    transition: 'color 0.2s',
-                  }}
-                >
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.color, display: 'inline-block' }} />
-                  {p.provider.toUpperCase()}
-                </span>
-              ))}
-            </div>
-          </div>
+          <Toolbar
+            className="regions-map-toolbar"
+            ariaLabel={t('pages.regions.deploymentMap')}
+            left={
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {t('pages.regions.deploymentMap')}
+              </div>
+            }
+            right={
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {providers.map(p => (
+                  <span
+                    key={p.provider}
+                    onMouseEnter={() => setHoveredProvider(p.provider)}
+                    onMouseLeave={() => setHoveredProvider(null)}
+                    onClick={() => setActiveProvider(prev => prev === p.provider ? null : p.provider)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                      fontSize: '0.72rem', color: displayedProvider === p.provider ? 'var(--text)' : 'var(--muted)',
+                      cursor: 'pointer', fontWeight: displayedProvider === p.provider ? 700 : 500,
+                      transition: 'color 0.2s',
+                    }}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.color, display: 'inline-block' }} />
+                    {p.provider.toUpperCase()}
+                  </span>
+                ))}
+              </div>
+            }
+          />
           <div style={{ height: '460px', width: '100%' }}>
             <MapGl
               initialViewState={{ latitude: 48, longitude: 15, zoom: 2.8 }}

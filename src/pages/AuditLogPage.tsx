@@ -18,7 +18,7 @@ import {
 } from './shared/SocComponents'
 import AdminLogPage from './AdminLogPage'
 import { severityBg, severityBorder, severityColor } from '../severity'
-import { DataTable, EmptyState, type Column } from '../ui'
+import { DataTable, EmptyState, PageHeader, type Column } from '../ui'
 
 // ─── Category metadata ──────────────────────────────────────────────────────────
 
@@ -307,14 +307,11 @@ export default function AuditLogPage() {
       <SocStyles />
       <style>{auditCss}</style>
 
-      {/* Hero */}
-      <div className="audit-hero">
-        <div className="audit-hero__main">
-          <div className="audit-hero__badge"><ShieldIcon /> AUDIT LOG</div>
-          <h1 className="audit-hero__title">{t('pages.audit.heroTitle')}</h1>
-          <p className="audit-hero__subtitle">{t('pages.audit.heroSubtitle')}</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={<><ShieldIcon /> AUDIT LOG</>}
+        title={t('pages.audit.heroTitle')}
+        description={t('pages.audit.heroSubtitle')}
+      />
 
       {/* KPI tiles */}
       <div className="scc-kpi-grid">
@@ -456,6 +453,7 @@ const auditCss = `
   padding-bottom: 2rem;
   animation: auditFadeIn 0.4s ease forwards;
 }
+.audit-root > .ui-page-header { margin-bottom: 0; }
 @keyframes auditFadeIn {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }

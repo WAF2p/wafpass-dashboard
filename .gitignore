@@ -9,3 +9,6 @@ licenses.json
 requirements.sbom.txt
 .sbom-venv/
 .tools-venv/
+
+# visual-regression artifacts (baselines are committed)
+.visual/

@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth, hasMinRole } from '../AuthContext'
 import { useI18n } from '../i18n'
 import { loadMaturityState, type ValidationMetadata } from './settingsUtils'
-import { EmptyState, Skeleton, SkeletonRows } from '../ui'
+import { EmptyState, PageHeader, Skeleton, SkeletonRows } from '../ui'
 import {
   checkApiReachable,
   checkValidationGatewayReachable,
@@ -820,19 +820,15 @@ export default function ValidationsPage({ mode = 'page' }: ValidationsPageProps)
       <ConnectionBanner />
 
       {!panel && (
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ margin: '0 0 0.35rem', fontSize: '1.5rem', color: 'var(--text)' }}>
-              {t('pages.validations.title')}
-            </h1>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)' }}>
-              {t('pages.validations.subtitle')}
-            </p>
-          </div>
-          <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
-            Download WOMBATpass Root CA
-          </a>
-        </div>
+        <PageHeader
+          title={t('pages.validations.title')}
+          description={t('pages.validations.subtitle')}
+          actions={
+            <a href={getGatewayRootCertificateUrl()} download style={linkBtnStyle()}>
+              Download WOMBATpass Root CA
+            </a>
+          }
+        />
       )}
 
       {canSubmit && (
