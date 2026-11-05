@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, type ReactNode } from 'react'
 import { Finding, RunDetail, upsertWaiver, fetchFindingComments, createFindingComment, deleteFindingComment, FindingComment } from '../api'
 import { appendAuditEvent } from '../audit'
 import { useI18n, type TFunction } from '../i18n'
@@ -14,6 +14,63 @@ import { DataTable, EmptyState, type Column } from '../ui'
 import { PAGE_TITLE } from '../routing'
 
 interface Props { run: RunDetail; onNavigate?: (page: Page) => void }
+
+const CODE_TOKEN = /("(?:\\.|[^"\\])*")|(#[^\n]*|\/\/[^\n]*)|(\b(?:resource|data|provider|variable|module|locals|output|terraform|true|false|null)\b)|(\b\d+(?:\.\d+)?\b)/g
+
+/** Lightweight HCL/JSON highlighting for example fixes. */
+function HighlightedCode({ code }: { code: string }) {
+  const token = new RegExp(CODE_TOKEN.source, 'g')
+  const parts: ReactNode[] = []
+  let last = 0
+  let match: RegExpExecArray | null
+  let key = 0
+  while ((match = token.exec(code)) !== null) {
+    if (match.index > last) parts.push(code.slice(last, match.index))
+    const cls = match[1] ? 'code-string' : match[2] ? 'code-comment' : match[3] ? 'code-keyword' : 'code-number'
+    parts.push(<span key={key++} className={cls}>{match[0]}</span>)
+    last = match.index + match[0].length
+  }
+  if (last < code.length) parts.push(code.slice(last))
+  return <code>{parts}</code>
+}
+
+/** Example payloads are stored JSON-escaped; turn them back into real code. */
+function decodeExampleString(value: string): string {
+  const decoded = /\\[nrt"\\]/.test(value)
+    ? value
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r')
+        .replace(/\\t/g, '\t')
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, '\\')
+    : value
+  // Some payloads prefix the snippet with a YAML block scalar marker.
+  return decoded
+    .replace(/^\s*\|[-+]?[ \t]*\r?\n/, '')
+    .replace(/^\r?\n+/, '')
+}
+
+/** Renders a finding example: one block per variant, with real newlines. */
+function ExampleFix({ example }: { example: unknown }) {
+  const blocks = example && typeof example === 'object' && !Array.isArray(example)
+    ? Object.entries(example as Record<string, unknown>).map(([label, value]) => ({
+        label: label.replace(/_/g, '-').replace(/^\w/, c => c.toUpperCase()),
+        code: typeof value === 'string' ? decodeExampleString(value) : JSON.stringify(value, null, 2),
+      }))
+    : [{ label: null as string | null, code: typeof example === 'string' ? decodeExampleString(example) : JSON.stringify(example, null, 2) }]
+
+  return (
+    <div className="finding-example">
+      {blocks.map((block, index) => (
+        <div key={index}>
+          {block.label && <div className="finding-example-label">{block.label}</div>}
+          <pre className="ui-code-block"><HighlightedCode code={block.code} /></pre>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 const STATUS_COLOR: Record<string, string> = {
   PASS:   'var(--pass)',
@@ -308,9 +365,7 @@ function DetailPanel({ finding, onClose, t }: { finding: Finding; onClose: () =>
         {finding.example && (
           <div>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>{t('pages.findings.detailExample')}</div>
-            <pre style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.75rem', overflowX: 'auto', margin: 0, color: 'var(--text)', lineHeight: 1.6 }}>
-              {JSON.stringify(finding.example, null, 2)}
-            </pre>
+            <ExampleFix example={finding.example} />
           </div>
         )}
         {finding.control_id && (

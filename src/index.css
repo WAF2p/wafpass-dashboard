@@ -661,6 +661,40 @@ body.has-impersonation-banner {
 }
 
 
+
+/* Code / example blocks: never wrap, scroll horizontally instead. */
+.ui-code-block {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+  tab-size: 2;
+}
+
+
+.finding-example { display: flex; flex-direction: column; gap: 0.6rem; }
+.finding-example-label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem;
+}
+.ui-code-block .code-string { color: var(--pass-ink); }
+.ui-code-block .code-comment { color: var(--muted); font-style: italic; }
+.ui-code-block .code-keyword { color: var(--waf-info); font-weight: 600; }
+.ui-code-block .code-number { color: var(--score-mid-ink); }
+
 /* ── Footer ──────────────────────────────────────────────────────────
  * A deliberately dark band in both themes: it closes the page and stands
  * apart from the working surface instead of blending into it. */
