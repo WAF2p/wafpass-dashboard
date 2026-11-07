@@ -1,16 +1,17 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import {
-  Notification,
-  fetchNotifications,
-  markAsRead as markAsReadApi,
-  triggerTestNotification,
-  markAllAsRead as markAllAsReadApi,
-  NotificationCreate,
-  triggerNotification,
-} from '../api'
-import { NotificationTargetRole } from './types'
+import { createContext, useCallback, useContext } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-// ─── Context ──────────────────────────────────────────────────────────────────
+import {
+  fetchNotifications,
+  markAllAsRead as markAllAsReadApi,
+  markAsRead as markAsReadApi,
+  triggerNotification,
+  triggerTestNotification,
+  type Notification,
+  type NotificationCreate,
+} from '../api'
+import { qk } from '../lib/queryKeys'
+import type { NotificationTargetRole } from './types'
 
 interface NotificationContextValue {
   notifications: Notification[]
@@ -31,63 +32,95 @@ export function useNotifications(): NotificationContextValue {
   return ctx
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
+/**
+ * Server state for the notification bell. TanStack Query owns fetching,
+ * caching, polling, and invalidation; mutations update the cache optimistically
+ * and reconcile on settle.
+ */
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(false)
+  const queryClient = useQueryClient()
+
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: qk.notifications,
+    queryFn: fetchNotifications,
+    refetchInterval: 60_000,
+  })
+
+  const notifications = data ?? []
+
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: string) => markAsReadApi(id),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: qk.notifications })
+      const previous = queryClient.getQueryData<Notification[]>(qk.notifications)
+      queryClient.setQueryData<Notification[]>(qk.notifications, old =>
+        old?.map(n => (n.id === id ? { ...n, is_read: true } : n)) ?? [],
+      )
+      return { previous }
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previous) queryClient.setQueryData(qk.notifications, context.previous)
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.notifications })
+    },
+  })
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: markAllAsReadApi,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: qk.notifications })
+      const previous = queryClient.getQueryData<Notification[]>(qk.notifications)
+      queryClient.setQueryData<Notification[]>(qk.notifications, old =>
+        old?.map(n => ({ ...n, is_read: true })) ?? [],
+      )
+      return { previous }
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(qk.notifications, context.previous)
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.notifications })
+    },
+  })
+
+  const triggerTestMutation = useMutation({
+    mutationFn: (payload: NotificationCreate) => triggerTestNotification(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.notifications })
+    },
+  })
+
+  const triggerForRoleMutation = useMutation({
+    mutationFn: ({ role, payload }: { role: NotificationTargetRole; payload: NotificationCreate }) =>
+      triggerNotification({ ...payload, target_role: role }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.notifications })
+    },
+  })
 
   const refreshNotifications = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await fetchNotifications()
-      setNotifications(data)
-    } catch {
-      // Silently fail - notifications are not critical
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  const markAsRead = useCallback(async (id: string) => {
-    await markAsReadApi(id)
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
-  }, [])
-
-  const markAllAsRead = useCallback(async () => {
-    await markAllAsReadApi()
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
-  }, [])
-
-  const triggerTest = useCallback(async (payload: NotificationCreate) => {
-    const notification = await triggerTestNotification(payload)
-    setNotifications(prev => [notification, ...prev])
-  }, [])
-
-  const triggerForRole = useCallback(async (role: NotificationTargetRole, payload: NotificationCreate) => {
-    const notification = await triggerNotification({ ...payload, target_role: role })
-    setNotifications(prev => [notification, ...prev])
-  }, [])
-
-  // Refresh on mount
-  useEffect(() => {
-    refreshNotifications()
-  }, [refreshNotifications])
+    await refetch()
+  }, [refetch])
 
   const value: NotificationContextValue = {
     notifications,
     unreadCount: notifications.filter(n => !n.is_read).length,
-    loading,
+    loading: isLoading || isFetching,
     refreshNotifications,
-    markAsRead,
-    markAllAsRead,
-    triggerTest,
-    triggerForRole,
+    markAsRead: async (id: string) => {
+      await markAsReadMutation.mutateAsync(id)
+    },
+    markAllAsRead: async () => {
+      await markAllAsReadMutation.mutateAsync()
+    },
+    triggerTest: async (payload: NotificationCreate) => {
+      await triggerTestMutation.mutateAsync(payload)
+    },
+    triggerForRole: async (role: NotificationTargetRole, payload: NotificationCreate) => {
+      await triggerForRoleMutation.mutateAsync({ role, payload })
+    },
   }
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  )
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>
 }

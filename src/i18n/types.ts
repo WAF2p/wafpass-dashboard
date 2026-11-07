@@ -98,6 +98,7 @@ export interface Translations {
       audit: string
       evidence: string
       settings: string
+      security: string
       runscan: string
       sandbox: string
       waivers: string
@@ -267,6 +268,7 @@ export interface Translations {
   }
 
   onboarding: {
+    checklistTitle: string
     stepNOfM: string
     skip: string
     next: string
@@ -421,6 +423,26 @@ export interface Translations {
       mandantLabel: string     // "Company ID"
       mandantPlaceholder: string // "e.g. acme (optional)"
       mandantHint: string      // "Only needed if your company has its own SSO connection."
+      mfaTitle: string
+      mfaHint: string
+      mfaCodeLabel: string
+      mfaVerify: string
+      mfaUseRecovery: string
+      mfaBack: string
+    }
+
+    forcePassword: {
+      title: string
+      subtitle: string
+      currentLabel: string
+      newLabel: string
+      confirmLabel: string
+      submit: string
+      updating: string
+      mismatch: string
+      tooShort: string
+      failed: string
+      signOut: string
     }
 
     findings: {
@@ -2422,6 +2444,20 @@ export interface Translations {
       catalogueLink: string
       singlePointTruth: string
       versionLoadError: string
+      driftTitle: string,
+      driftInSync: string,
+      driftOutOfSync: string,
+      driftDisk: string,
+      driftActive: string,
+      driftAdded: string,
+      driftRemoved: string,
+      driftChanged: string,
+      driftImport: string,
+      driftImporting: string,
+      driftImported: string,
+      driftCompareError: string,
+      driftActivePack: string,
+      driftNoPack: string,
     }
 
     notifications: {
@@ -2458,6 +2494,7 @@ export interface Translations {
 
     pipelines: {
       title: string
+      runs: string
       subtitle: string
       totalScans: string
       allTimeExecutions: string

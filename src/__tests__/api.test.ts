@@ -51,14 +51,16 @@ describe('pushAuditEvent', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => vi.restoreAllMocks())
 
-  it('does nothing and never throws when no access token is stored', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+  it('POSTs with cookie credentials even when no token is stored', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 201 }))
     await expect(pushAuditEvent(eventPayload)).resolves.toBeUndefined()
-    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(fetchSpy).toHaveBeenCalledOnce()
+    const init = fetchSpy.mock.calls[0][1] as RequestInit
+    expect(init.credentials).toBe('include')
+    expect(new Headers(init.headers).get('Authorization')).toBeNull()
   })
 
-  it('POSTs to /audit/events when a token is present', async () => {
-    localStorage.setItem(ACCESS_TOKEN_KEY, 'tok123')
+  it('POSTs to /audit/events with cookie credentials', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 201 }))
 
     await pushAuditEvent(eventPayload)
@@ -68,7 +70,8 @@ describe('pushAuditEvent', () => {
     expect(url).toContain('/audit/events')
     expect(init.method).toBe('POST')
     expect(JSON.parse(init.body as string)).toMatchObject({ client_id: 'cid-1', actor: 'alice' })
-    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer tok123')
+    expect(init.credentials).toBe('include')
+    expect(new Headers(init.headers).get('Authorization')).toBeNull()
   })
 
   it('never throws even when fetch rejects (fire-and-forget)', async () => {
@@ -134,14 +137,15 @@ describe('fetchServerAuditEvents', () => {
     expect(url).not.toContain('category')
   })
 
-  it('sends stored access token as Authorization header', async () => {
+  it('sends cookie credentials and no Authorization header', async () => {
     localStorage.setItem(ACCESS_TOKEN_KEY, 'mytoken')
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify([]), { status: 200 })
     )
     await fetchServerAuditEvents()
     const init = fetchSpy.mock.calls[0][1] as RequestInit
-    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer mytoken')
+    expect(init.credentials).toBe('include')
+    expect(new Headers(init.headers).get('Authorization')).toBeNull()
   })
 })
 
@@ -245,7 +249,8 @@ describe('fetchComplianceReadiness', () => {
     await fetchComplianceReadiness('run-123')
     const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('http://server:8000/api/v1/runs/run-123/compliance-readiness')
-    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer tok')
+    expect(init.credentials).toBe('include')
+    expect(new Headers(init.headers).get('Authorization')).toBeNull()
   })
 
   it('throws on non-ok response', async () => {

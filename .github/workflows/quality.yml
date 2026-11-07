@@ -1,48 +1,76 @@
 name: quality
 
-# Manual quality gate against a reachable deployment.
-# Visual baselines are environment-specific: run this against the same
-# environment the baselines were captured from.
+# Accessibility runs on every PR against a full local stack. Visual regression
+# stays manual because baselines are environment-specific; use
+# workflow_dispatch with a deployment URL to run it.
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       web_url:
-        description: Dashboard URL
-        required: true
-        default: http://localhost:3000
-      api_url:
-        description: wombat-server URL
-        required: true
-        default: http://localhost:8000
+        description: External dashboard URL (skip the local stack)
+        required: false
+        default: ""
+      admin_password:
+        description: Admin password for an external deployment
+        required: false
+        default: ""
+
+permissions:
+  contents: read
 
 jobs:
-  a11y-visual:
+  a11y:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout dashboard
+        uses: actions/checkout@v4
+        with:
+          path: dashboard
+
+      - name: Checkout server
+        uses: actions/checkout@v4
+        with:
+          repository: wombat-gov/wombat-server
+          path: wafpass-server
+
+      - name: Checkout wombat-core (controls and assets)
+        uses: actions/checkout@v4
+        with:
+          repository: wombat-gov/wombat-core
+          path: pass
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: dashboard/package-lock.json
 
-      - run: npm ci
+      - name: Install dashboard dependencies
+        working-directory: dashboard
+        run: npm ci
+
+      - name: Start local stack
+        if: ${{ !inputs.web_url }}
+        run: docker compose -f dashboard/e2e/docker-compose.e2e.yml up -d --build --wait
 
       - id: chrome
         uses: browser-actions/setup-chrome@v1
 
       - name: Accessibility (axe)
+        working-directory: dashboard
         env:
-          WAF_WEB_URL: ${{ inputs.web_url }}
-          WAF_API_URL: ${{ inputs.api_url }}
+          WAF_WEB_URL: ${{ inputs.web_url || 'http://localhost:3000' }}
+          WAF_ADMIN_PASSWORD: ${{ inputs.admin_password || 'e2e-admin-password' }}
           CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
         run: npm run a11y:check
 
-      - name: Visual regression
+      - name: Visual regression (manual external environments only)
+        if: ${{ inputs.web_url }}
+        working-directory: dashboard
         env:
           WAF_WEB_URL: ${{ inputs.web_url }}
-          WAF_API_URL: ${{ inputs.api_url }}
+          WAF_ADMIN_PASSWORD: ${{ inputs.admin_password }}
           CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
         run: npm run visual:check
 
@@ -52,6 +80,10 @@ jobs:
         with:
           name: quality-reports
           path: |
-            .a11y/report.json
-            .visual/diffs/
+            dashboard/.a11y/report.json
+            dashboard/.visual/diffs/
           if-no-files-found: ignore
+
+      - name: Stop local stack
+        if: always() && !inputs.web_url
+        run: docker compose -f dashboard/e2e/docker-compose.e2e.yml down -v

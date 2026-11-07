@@ -1,23 +1,57 @@
-const ENV_API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
-const ENV_VALIDATION_BASE = (import.meta.env.VITE_VALIDATION_URL as string | undefined) ?? ''
+import {
+  getApiBase,
+  getValidationGatewayBase,
+  getServerUrl,
+  SERVER_URL_KEY,
+  VALIDATION_URL_KEY,
+} from './lib/config'
+import { authFetch } from './lib/http'
+import {
+  changePassword,
+  fetchCurrentUser,
+  fetchMfaStatus,
+  fetchSessions,
+  loginUser,
+  logoutUser,
+  mfaChallenge,
+  mfaDisable,
+  mfaSetup,
+  mfaVerify,
+  refreshAccessToken,
+  revokeOtherSessions,
+  revokeSession,
+  type LoginResponse,
+  type MfaSetup,
+  type MfaStatus,
+  type SessionInfo,
+  type UserOut,
+} from './api/auth'
 
-export const SERVER_URL_KEY = 'wombat_server_url'
-export const VALIDATION_URL_KEY = 'wombat_validation_url'
-
-export function getApiBase(): string {
-  try {
-    const stored = localStorage.getItem(SERVER_URL_KEY)
-    if (stored?.trim()) return stored.trim().replace(/\/$/, '')
-  } catch {}
-  return ENV_API_BASE
-}
-
-export function getValidationGatewayBase(): string {
-  try {
-    const stored = localStorage.getItem(VALIDATION_URL_KEY)
-    if (stored?.trim()) return stored.trim().replace(/\/$/, '')
-  } catch {}
-  return ENV_VALIDATION_BASE
+export {
+  authFetch,
+  changePassword,
+  fetchCurrentUser,
+  fetchMfaStatus,
+  fetchSessions,
+  loginUser,
+  logoutUser,
+  mfaChallenge,
+  mfaDisable,
+  mfaSetup,
+  mfaVerify,
+  refreshAccessToken,
+  revokeOtherSessions,
+  revokeSession,
+  type LoginResponse,
+  type MfaSetup,
+  type MfaStatus,
+  type SessionInfo,
+  type UserOut,
+  getApiBase,
+  getValidationGatewayBase,
+  getServerUrl,
+  SERVER_URL_KEY,
+  VALIDATION_URL_KEY,
 }
 
 /** Probe whether the configured wombat-server API base is reachable.
@@ -26,7 +60,7 @@ export async function checkApiReachable(): Promise<boolean> {
   const base = getApiBase()
   if (!base) return false
   try {
-    const res = await fetch(`${base}/health`, { method: 'GET', cache: 'no-store' })
+    const res = await authFetch(`${base}/health`, { method: 'GET', cache: 'no-store' })
     return res.ok
   } catch {
     return false
@@ -39,18 +73,11 @@ export async function checkValidationGatewayReachable(): Promise<boolean> {
   const base = getValidationGatewayBase()
   if (!base) return false
   try {
-    const res = await fetch(`${base}/health`, { method: 'GET', cache: 'no-store' })
+    const res = await authFetch(`${base}/health`, { method: 'GET', cache: 'no-store' })
     return res.ok
   } catch {
     return false
   }
-}
-
-export function getServerUrl(): string {
-  const base = getApiBase()
-  if (base) return base
-  if (typeof window !== 'undefined') return window.location.origin
-  return ''
 }
 
 // ── Auth token helpers ────────────────────────────────────────────────────────
@@ -105,10 +132,9 @@ export function setMandantContext(mandantId: string | null, name?: string | null
   } catch {}
 }
 
-/** Returns Authorization / X-Mandant-Context headers for whatever is currently stored. */
+/** Returns the headers shared by API calls. Session auth is cookie-based. */
 function _authHeaders(): Record<string, string> {
-  const t = getAccessToken()
-  const headers: Record<string, string> = t ? { Authorization: `Bearer ${t}` } : {}
+  const headers: Record<string, string> = {}
   const mandantContext = getMandantContext()
   if (mandantContext) headers['X-Mandant-Context'] = mandantContext
   return headers
@@ -191,7 +217,7 @@ export interface PipelineTrends {
 export async function fetchPipelineMetrics(isCicd?: boolean): Promise<PipelineMetrics> {
   const url = new URL(`${getApiBase()}/api/v1/pipelines/metrics`, window.location.origin)
   if (isCicd !== undefined) url.searchParams.set('is_cicd', String(isCicd))
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch pipeline metrics: ${res.status}`)
   const json = await res.json() as ApiEnvelope<PipelineMetrics>
   return json.data
@@ -200,7 +226,7 @@ export async function fetchPipelineMetrics(isCicd?: boolean): Promise<PipelineMe
 export async function fetchPipelineTrends(isCicd?: boolean): Promise<PipelineTrends> {
   const url = new URL(`${getApiBase()}/api/v1/pipelines/trends`, window.location.origin)
   if (isCicd !== undefined) url.searchParams.set('is_cicd', String(isCicd))
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch pipeline trends: ${res.status}`)
   const json = await res.json() as ApiEnvelope<PipelineTrends>
   return json.data
@@ -208,7 +234,7 @@ export async function fetchPipelineTrends(isCicd?: boolean): Promise<PipelineTre
 
 export async function fetchProjectRuns(project: string): Promise<RunSummary[]> {
   const url = new URL(`${getApiBase()}/api/v1/runs?project=${encodeURIComponent(project)}`, window.location.origin)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch project runs: ${res.status}`)
   const json = await res.json() as ApiEnvelope<RunSummary[]>
   return json.data
@@ -298,14 +324,14 @@ export async function fetchRuns(params?: {
   if (params?.cursor) url.searchParams.set('cursor', params.cursor)
   if (params?.project) url.searchParams.set('project', params.project)
   if (params?.stage) url.searchParams.set('stage', params.stage)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch runs: ${res.status}`)
   const json = await res.json() as ApiEnvelope<RunSummary[]>
   return { items: json.data, nextCursor: json.meta?.next_cursor ?? null }
 }
 
 export async function fetchRun(id: string): Promise<RunDetail> {
-  const res = await fetch(`${getApiBase()}/api/v1/runs/${id}`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/runs/${id}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Run not found: ${id}`)
   const json = await res.json() as ApiEnvelope<RunDetail>
   return json.data
@@ -336,7 +362,7 @@ export interface ComplianceReadinessData {
 }
 
 export async function fetchComplianceReadiness(runId: string): Promise<ComplianceReadinessData> {
-  const res = await fetch(`${getApiBase()}/api/v1/runs/${encodeURIComponent(runId)}/compliance-readiness`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/runs/${encodeURIComponent(runId)}/compliance-readiness`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch compliance readiness: ${res.status}`)
   const json = await res.json() as ApiEnvelope<ComplianceReadinessData>
   return json.data
@@ -355,7 +381,7 @@ export interface ProjectAchievement {
 }
 
 export async function fetchProjectAchievements(project: string): Promise<ProjectAchievement[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/achievements/${encodeURIComponent(project)}`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/achievements/${encodeURIComponent(project)}`, { headers: _authHeaders() })
   if (!res.ok) return []
   const json = await res.json() as ApiEnvelope<ProjectAchievement[]>
   return json.data
@@ -378,13 +404,13 @@ export function badgeApiBasePath(mandantSlug?: string | null): string {
 }
 
 export async function fetchBadgeStatus(project: string, mandantSlug?: string | null): Promise<BadgeStatus | null> {
-  const res = await fetch(`${getApiBase()}${badgeApiBasePath(mandantSlug)}/${encodeURIComponent(project)}/json`)
+  const res = await authFetch(`${getApiBase()}${badgeApiBasePath(mandantSlug)}/${encodeURIComponent(project)}/json`)
   if (!res.ok) return null
   return res.json() as Promise<BadgeStatus>
 }
 
 export async function fetchControls(runId: string): Promise<ControlMeta[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/runs/${runId}/controls`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/runs/${runId}/controls`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch controls: ${res.status}`)
   const json = await res.json() as ApiEnvelope<ControlMeta[]>
   return json.data
@@ -398,7 +424,7 @@ export async function fetchFindings(
   if (filters?.severity) url.searchParams.set('severity', filters.severity)
   if (filters?.pillar) url.searchParams.set('pillar', filters.pillar)
   if (filters?.status) url.searchParams.set('status', filters.status)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch findings: ${res.status}`)
   const json = await res.json() as ApiEnvelope<Finding[]>
   return json.data
@@ -449,7 +475,7 @@ export async function fetchCatalogueControls(params?: {
   if (params?.severity) url.searchParams.set('severity', params.severity)
   if (params?.page !== undefined) url.searchParams.set('page', String(params.page))
   if (params?.per_page !== undefined) url.searchParams.set('per_page', String(params.per_page))
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch controls catalogue: ${res.status}`)
   const json = await res.json() as ApiEnvelope<CatalogueControl[]>
   return {
@@ -461,7 +487,7 @@ export async function fetchCatalogueControls(params?: {
 }
 
 export async function fetchCatalogueControl(id: string): Promise<CatalogueControl> {
-  const res = await fetch(`${getApiBase()}/api/v1/controls/${encodeURIComponent(id)}`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/controls/${encodeURIComponent(id)}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Control not found: ${id}`)
   const json = await res.json() as ApiEnvelope<CatalogueControl>
   return json.data
@@ -482,14 +508,14 @@ export interface WaiverRecord {
 export async function fetchWaivers(project?: string): Promise<WaiverRecord[]> {
   const url = new URL(`${getApiBase()}/api/v1/waivers`, window.location.origin)
   if (project) url.searchParams.set('project', project)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch waivers: ${res.status}`)
   const json = await res.json() as ApiEnvelope<WaiverRecord[]>
   return json.data
 }
 
 export async function upsertWaiver(id: string, payload: Omit<WaiverRecord, 'id' | 'created_at' | 'updated_at'>): Promise<WaiverRecord> {
-  const res = await fetch(`${getApiBase()}/api/v1/waivers/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/waivers/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -500,7 +526,7 @@ export async function upsertWaiver(id: string, payload: Omit<WaiverRecord, 'id' 
 }
 
 export async function deleteWaiver(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/waivers/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/waivers/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete waiver: ${res.status}`)
 }
 
@@ -527,14 +553,14 @@ export interface RiskRecord {
 export async function fetchRisks(project?: string): Promise<RiskRecord[]> {
   const url = new URL(`${getApiBase()}/api/v1/risks`, window.location.origin)
   if (project) url.searchParams.set('project', project)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch risks: ${res.status}`)
   const json = await res.json() as ApiEnvelope<RiskRecord[]>
   return json.data
 }
 
 export async function upsertRisk(id: string, payload: Omit<RiskRecord, 'id' | 'created_at' | 'updated_at'>): Promise<RiskRecord> {
-  const res = await fetch(`${getApiBase()}/api/v1/risks/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/risks/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -545,7 +571,7 @@ export async function upsertRisk(id: string, payload: Omit<RiskRecord, 'id' | 'c
 }
 
 export async function deleteRisk(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/risks/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/risks/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 404) throw new Error(`Failed to delete risk: ${res.status}`)
 }
 
@@ -583,7 +609,7 @@ export interface SandboxResponse {
 }
 
 export async function sandboxScan(hcl: string, iac = 'terraform'): Promise<SandboxResponse> {
-  const res = await fetch(`${getApiBase()}/api/v1/sandbox`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sandbox`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify({ hcl, iac }),
@@ -596,13 +622,13 @@ export async function sandboxScan(hcl: string, iac = 'terraform'): Promise<Sandb
 }
 
 export async function sandboxStatus(): Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }> {
-  const res = await fetch(`${getApiBase()}/api/v1/sandbox/status`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/sandbox/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<{ engine_available: boolean; controls_dir: string; controls_dir_exists: boolean }>
 }
 
 export async function createDemoRun(): Promise<RunSummary> {
-  const res = await fetch(`${getApiBase()}/api/v1/sandbox/demo-run`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sandbox/demo-run`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
   })
@@ -615,7 +641,7 @@ export async function createDemoRun(): Promise<RunSummary> {
 }
 
 export async function fetchServerHealth(): Promise<{ status: string }> {
-  const res = await fetch(`${getApiBase()}/health`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/health`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<{ status: string }>
 }
@@ -668,7 +694,7 @@ export interface AutoFixRequest {
 }
 
 export async function postAutoFix(payload: AutoFixRequest): Promise<AutoFixResponse> {
-  const res = await fetch(`${getApiBase()}/api/v1/auto-fix`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auto-fix`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -693,7 +719,7 @@ export interface AutoFixClassifyRequest {
 }
 
 export async function postAutoFixClassify(payload: AutoFixClassifyRequest): Promise<AutoFixResponse> {
-  const res = await fetch(`${getApiBase()}/api/v1/auto-fix/classify`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auto-fix/classify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -706,7 +732,7 @@ export async function postAutoFixClassify(payload: AutoFixClassifyRequest): Prom
 }
 
 export async function postAutoFixRollback(path: string): Promise<AutoFixRollbackResponse> {
-  const res = await fetch(`${getApiBase()}/api/v1/auto-fix/rollback`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auto-fix/rollback`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify({ path }),
@@ -739,7 +765,7 @@ export interface ScanRequest {
 }
 
 export async function fetchScanStatus(): Promise<ScanStatus> {
-  const res = await fetch(`${getApiBase()}/api/v1/scan/status`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/scan/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<ScanStatus>
 }
@@ -749,7 +775,7 @@ export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
   if (payload.is_cicd !== undefined) {
     body.run = { is_cicd: payload.is_cicd }
   }
-  const res = await fetch(`${getApiBase()}/api/v1/scan`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/scan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(body),
@@ -763,7 +789,7 @@ export async function triggerScan(payload: ScanRequest): Promise<RunSummary> {
 }
 
 export async function createCatalogueControl(payload: Omit<CatalogueControl, 'created_at' | 'updated_at'> & { source?: string }): Promise<CatalogueControl> {
-  const res = await fetch(`${getApiBase()}/api/v1/controls`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/controls`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -777,7 +803,7 @@ export async function createCatalogueControl(payload: Omit<CatalogueControl, 'cr
 }
 
 export async function deleteCatalogueControl(controlId: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/controls/${encodeURIComponent(controlId)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/controls/${encodeURIComponent(controlId)}`, {
     method: 'DELETE',
     headers: _authHeaders(),
   })
@@ -788,68 +814,16 @@ export async function deleteCatalogueControl(controlId: string): Promise<void> {
 }
 
 // ── Authentication API ────────────────────────────────────────────────────────
-
-export interface UserOut {
-  id: string
-  username: string
-  display_name: string
-  image_url: string
-  role: string
-  auth_provider: string
-  is_active: boolean
-  last_login_at: string | null
-  created_at: string | null
-  updated_at: string | null
-  mandant_id: string | null
-  holding_role: string | null // null | 'holding_admin' | 'holding_viewer' | 'group_admin' | 'group_viewer'
-}
-
-export interface LoginResponse {
-  access_token: string
-  refresh_token: string
-  token_type: string
-  user: UserOut
-}
-
-export async function loginUser(username: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: 'Login failed' })) as { detail?: string }
-    throw new Error(body.detail ?? 'Login failed')
-  }
-  return res.json() as Promise<LoginResponse>
-}
-
-export async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; refresh_token: string; token_type: string }> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  })
-  if (!res.ok) throw new Error('Token refresh failed')
-  return res.json() as Promise<{ access_token: string; refresh_token: string; token_type: string }>
-}
-
-export async function logoutUser(refreshToken: string): Promise<void> {
-  await fetch(`${getApiBase()}/api/v1/auth/logout`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  })
-}
+// Moved to ./api/auth.ts; re-exported above for compatibility.
 
 export async function fetchUsers(): Promise<UserOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<UserOut[]>
 }
 
 export async function createUser(payload: { username: string; password: string; display_name?: string; image_url?: string; role?: string; group?: string }): Promise<UserOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -875,7 +849,7 @@ export async function updateUser(id: string, payload: {
   // string ('holding_admin' | 'holding_viewer') to set it.
   holding_role?: string
 }): Promise<UserOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -888,7 +862,7 @@ export async function updateUser(id: string, payload: {
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
@@ -905,7 +879,7 @@ export interface InstanceModeOut {
 }
 
 export async function fetchInstanceMode(): Promise<InstanceModeOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/instance-mode`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/instance-mode`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch instance mode: ${res.status}`)
   const json = await res.json() as ApiEnvelope<InstanceModeOut>
   return json.data
@@ -921,7 +895,7 @@ export interface ActivationSummary {
 
 /** One-way. See SettingsPage's confirmation dialog — this call cannot be undone. */
 export async function activateMultiMandant(): Promise<ActivationSummary> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/activate-multi-mandant`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/activate-multi-mandant`, {
     method: 'POST',
     headers: _authHeaders(),
   })
@@ -1000,7 +974,7 @@ export interface MandantUpdatePayload {
  * holding-only account or while in single_tenant mode. See `GET
  * /my-mandate`'s docstring for why this can't just be `GET /mandants`. */
 export async function fetchMyMandate(): Promise<MandantOut | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/my-mandate`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/my-mandate`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch my mandate: ${res.status}`)
   const json = await res.json() as ApiEnvelope<MandantOut | null>
   return json.data
@@ -1008,7 +982,7 @@ export async function fetchMyMandate(): Promise<MandantOut | null> {
 
 /** holding_admin only — server returns 403 otherwise. */
 export async function fetchMandants(): Promise<MandantOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/mandants`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch mandants: ${res.status}`)
   const json = await res.json() as ApiEnvelope<MandantOut[]>
   return json.data
@@ -1022,14 +996,14 @@ export async function fetchMandants(): Promise<MandantOut[]> {
  * server returns 403 otherwise.
  */
 export async function fetchSwitchableMandants(): Promise<MandantOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants/switchable`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/mandants/switchable`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch switchable mandants: ${res.status}`)
   const json = await res.json() as ApiEnvelope<MandantOut[]>
   return json.data
 }
 
 export async function createMandant(payload: MandantCreatePayload): Promise<MandantOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/mandants`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -1043,7 +1017,7 @@ export async function createMandant(payload: MandantCreatePayload): Promise<Mand
 }
 
 export async function updateMandant(id: string, payload: MandantUpdatePayload): Promise<MandantOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/mandants/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -1059,7 +1033,7 @@ export async function updateMandant(id: string, payload: MandantUpdatePayload): 
 /** holding_admin only. Aggregated run/score counts for this mandate plus
  * every descendant mandate (Phase 6a) — see the server endpoint's docstring. */
 export async function fetchMandantRollup(id: string): Promise<MandantRollupOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/mandants/${encodeURIComponent(id)}/rollup`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/mandants/${encodeURIComponent(id)}/rollup`, {
     headers: _authHeaders(),
   })
   if (!res.ok) throw new Error(`Failed to fetch mandant rollup: ${res.status}`)
@@ -1077,7 +1051,7 @@ export interface UserAuditLogEntry {
 }
 
 export async function fetchUserLogs(userId: string, limit = 100): Promise<UserAuditLogEntry[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/logs?limit=${limit}`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/logs?limit=${limit}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<UserAuditLogEntry[]>
 }
@@ -1097,7 +1071,7 @@ export async function fetchAdminLogs(params?: { limit?: number; action?: string 
   const url = new URL(`${getApiBase()}/api/v1/admin/logs`, window.location.origin)
   if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
   if (params?.action) url.searchParams.set('action', params.action)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json() as ApiEnvelope<AdminAuditLogEntry[]>
   return json.data
@@ -1157,14 +1131,14 @@ export interface SyslogTestResult {
 }
 
 export async function fetchSyslogConfig(): Promise<SyslogConfig> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/syslog-config`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/syslog-config`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json() as ApiEnvelope<SyslogConfig>
   return json.data
 }
 
 export async function updateSyslogConfig(payload: SyslogConfigInput): Promise<SyslogConfig> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/syslog-config`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/syslog-config`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -1178,7 +1152,7 @@ export async function updateSyslogConfig(payload: SyslogConfigInput): Promise<Sy
 }
 
 export async function testSyslogConfig(): Promise<SyslogTestResult> {
-  const res = await fetch(`${getApiBase()}/api/v1/admin/syslog-config/test`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/admin/syslog-config/test`, {
     method: 'POST',
     headers: _authHeaders() },
   )
@@ -1208,7 +1182,7 @@ export interface ApiKeyCreateResponse extends ApiKeyOut {
 }
 
 export async function fetchApiKeys(): Promise<ApiKeyOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/api-keys`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/api-keys`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<ApiKeyOut[]>
 }
@@ -1222,7 +1196,7 @@ export async function fetchApiKeys(): Promise<ApiKeyOut[]> {
  * same as before this parameter existed.
  */
 export async function createApiKey(name: string, targetMandantId?: string | null): Promise<ApiKeyCreateResponse> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/api-keys`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/api-keys`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(targetMandantId ? { name, mandant_id: targetMandantId } : { name }),
@@ -1235,7 +1209,7 @@ export async function createApiKey(name: string, targetMandantId?: string | null
 }
 
 export async function revokeApiKey(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/api-keys/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/api-keys/${encodeURIComponent(id)}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
@@ -1251,7 +1225,7 @@ export interface ApiKeyUsageLogEntry {
 }
 
 export async function fetchApiKeyLogs(keyId: string, limit = 50): Promise<ApiKeyUsageLogEntry[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/api-keys/${encodeURIComponent(keyId)}/logs?limit=${limit}`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/api-keys/${encodeURIComponent(keyId)}/logs?limit=${limit}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<ApiKeyUsageLogEntry[]>
 }
@@ -1280,13 +1254,13 @@ export interface SsoProviderInfo {
 /** The instance-wide default configs only — see
  * fetchMandantSsoConfigs() for a specific mandate's overrides (ADR-005). */
 export async function fetchSsoConfigs(): Promise<SsoConfigOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/config`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/config`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<SsoConfigOut[]>
 }
 
 export async function upsertSsoConfig(provider: 'oidc' | 'saml2', enabled: boolean, config: Record<string, unknown>): Promise<SsoConfigOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/config/${provider}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/config/${provider}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify({ enabled, config }),
@@ -1299,7 +1273,7 @@ export async function upsertSsoConfig(provider: 'oidc' | 'saml2', enabled: boole
 }
 
 export async function deleteSsoConfig(provider: 'oidc' | 'saml2'): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/config/${provider}`, { method: 'DELETE', headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/config/${provider}`, { method: 'DELETE', headers: _authHeaders() })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
@@ -1309,7 +1283,7 @@ export async function deleteSsoConfig(provider: 'oidc' | 'saml2'): Promise<void>
  * returns 403 otherwise).
  */
 export async function fetchMandantSsoConfigs(mandantId: string): Promise<SsoConfigOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<SsoConfigOut[]>
 }
@@ -1317,7 +1291,7 @@ export async function fetchMandantSsoConfigs(mandantId: string): Promise<SsoConf
 export async function upsertMandantSsoConfig(
   mandantId: string, provider: 'oidc' | 'saml2', enabled: boolean, config: Record<string, unknown>,
 ): Promise<SsoConfigOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}/${provider}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}/${provider}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify({ enabled, config }),
@@ -1330,7 +1304,7 @@ export async function upsertMandantSsoConfig(
 }
 
 export async function deleteMandantSsoConfig(mandantId: string, provider: 'oidc' | 'saml2'): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}/${provider}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/config/mandant/${encodeURIComponent(mandantId)}/${provider}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
@@ -1341,7 +1315,7 @@ export async function deleteMandantSsoConfig(mandantId: string, provider: 'oidc'
  * the mandate isn't known yet (e.g. before the user picks one). */
 export async function fetchSsoProviders(mandant?: string): Promise<SsoProviderInfo[]> {
   const qs = mandant ? `?mandant=${encodeURIComponent(mandant)}` : ''
-  const res = await fetch(`${getApiBase()}/api/v1/sso/providers${qs}`)
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/providers${qs}`)
   if (!res.ok) return []
   return res.json() as Promise<SsoProviderInfo[]>
 }
@@ -1374,7 +1348,7 @@ export interface LeaderboardOut {
 }
 
 export async function fetchLeaderboard(): Promise<LeaderboardOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/leaderboard`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/leaderboard`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch leaderboard: ${res.status}`)
   const json = await res.json() as ApiEnvelope<LeaderboardOut>
   return json.data
@@ -1464,7 +1438,7 @@ export async function fetchValidation(id: string): Promise<ValidationRecord | nu
   const base = getApiBase()
   const url = `${base}/api/v1/validations/${encodeURIComponent(id)}`
   try {
-    const res = await fetch(url, { headers: _authHeaders() })
+    const res = await authFetch(url, { headers: _authHeaders() })
     if (res.status === 404) return null
     if (!res.ok) throw new Error(`Failed to fetch validation: ${res.status}`)
     const json = await res.json() as ApiEnvelope<ValidationRecord>
@@ -1555,7 +1529,7 @@ export async function fetchGatewayValidation(id: string): Promise<ValidationReco
   if (!base) return null
   const url = `${base}/api/v1/validations/${encodeURIComponent(id)}/verify`
   try {
-    const res = await fetch(url)
+    const res = await authFetch(url)
     if (res.status === 404) return null
     if (!res.ok) throw new Error(`Failed to fetch validation from gateway: ${res.status}`)
     const json = await res.json() as ApiEnvelope<ValidationRecord> | ValidationRecord
@@ -1569,7 +1543,7 @@ export async function fetchGatewayValidation(id: string): Promise<ValidationReco
 
 export async function fetchValidationVerify(id: string): Promise<ValidationRecord | null> {
   try {
-    const res = await fetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/verify`)
+    const res = await authFetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/verify`)
     if (res.status === 404) return null
     if (!res.ok) throw new Error(`Failed to verify validation: ${res.status}`)
     const json = await res.json() as ApiEnvelope<ValidationRecord>
@@ -1582,7 +1556,7 @@ export async function fetchValidationVerify(id: string): Promise<ValidationRecor
 
 export async function fetchValidationBadge(id: string): Promise<ValidationBadge | null> {
   try {
-    const res = await fetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/badge.json`)
+    const res = await authFetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/badge.json`)
     if (res.status === 404) return null
     if (!res.ok) throw new Error(`Failed to fetch badge: ${res.status}`)
     const json = await res.json() as ApiEnvelope<ValidationBadge>
@@ -1597,7 +1571,7 @@ export async function fetchGatewayValidationBadge(id: string): Promise<Validatio
   const base = getValidationGatewayBase()
   if (!base) return null
   try {
-    const res = await fetch(`${base}/api/v1/validations/${encodeURIComponent(id)}/badge.json`)
+    const res = await authFetch(`${base}/api/v1/validations/${encodeURIComponent(id)}/badge.json`)
     if (res.status === 404) return null
     if (!res.ok) throw new Error(`Failed to fetch badge from gateway: ${res.status}`)
     const json = await res.json() as ApiEnvelope<ValidationBadge> | ValidationBadge | Record<string, unknown>
@@ -1613,7 +1587,7 @@ export async function fetchServerCertificate(): Promise<string> {
   const base = getApiBase()
   const url = `${base}/api/v1/validations/server.crt`
   try {
-    const res = await fetch(url)
+    const res = await authFetch(url)
     if (!res.ok) throw new Error(`Failed to fetch server certificate: ${res.status}`)
     return res.text()
   } catch (e) {
@@ -1625,7 +1599,7 @@ export async function fetchServerCertificate(): Promise<string> {
 }
 
 export async function createRunAttestation(runId: string): Promise<LocalAttestation> {
-  const res = await fetch(`${getApiBase()}/api/v1/runs/${encodeURIComponent(runId)}/attestation`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/runs/${encodeURIComponent(runId)}/attestation`, {
     method: 'POST',
     headers: _authHeaders(),
   })
@@ -1644,7 +1618,7 @@ export async function submitValidation(payload: ValidationGatewaySubmit, apiKey:
   }
   const url = `${base}/api/v1/validations`
   try {
-    const res = await fetch(url, {
+    const res = await authFetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1669,7 +1643,7 @@ export async function submitValidation(payload: ValidationGatewaySubmit, apiKey:
 }
 
 export async function revokeValidation(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/revoke`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/validations/${encodeURIComponent(id)}/revoke`, {
     method: 'POST',
     headers: _authHeaders(),
   })
@@ -1745,13 +1719,13 @@ export interface GroupRoleMappingCreate {
 }
 
 export async function fetchGroupMappings(): Promise<GroupRoleMappingOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/group-mappings`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/group-mappings`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<GroupRoleMappingOut[]>
 }
 
 export async function createGroupMapping(payload: GroupRoleMappingCreate): Promise<GroupRoleMappingOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/group-mappings`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/group-mappings`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -1764,7 +1738,7 @@ export async function createGroupMapping(payload: GroupRoleMappingCreate): Promi
 }
 
 export async function updateGroupMapping(id: string, payload: Partial<GroupRoleMappingCreate>): Promise<GroupRoleMappingOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/group-mappings/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/group-mappings/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -1809,14 +1783,14 @@ export interface EvidenceCreate {
 export async function fetchEvidence(project?: string): Promise<EvidenceOut[]> {
   const url = new URL(`${getApiBase()}/api/v1/evidence`, window.location.origin)
   if (project) url.searchParams.set('project', project)
-  const res = await fetch(url.toString(), { headers: _authHeaders() })
+  const res = await authFetch(url.toString(), { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json() as ApiEnvelope<EvidenceOut[]>
   return json.data
 }
 
 export async function createEvidence(payload: EvidenceCreate): Promise<EvidenceOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/evidence`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/evidence`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -1830,7 +1804,7 @@ export async function createEvidence(payload: EvidenceCreate): Promise<EvidenceO
 }
 
 export async function deleteEvidence(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/evidence/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/evidence/${encodeURIComponent(id)}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
@@ -1873,14 +1847,14 @@ export interface ProjectPassport {
 export type ProjectPassportUpsert = Omit<ProjectPassport, 'project' | 'updated_by' | 'created_at' | 'updated_at'>
 
 export async function fetchProjectPassports(): Promise<ProjectPassport[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/passports`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/passports`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json() as ApiEnvelope<ProjectPassport[]>
   return json.data
 }
 
 export async function fetchProjectPassport(project: string): Promise<ProjectPassport | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/passport`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/passport`, { headers: _authHeaders() })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json() as ApiEnvelope<ProjectPassport>
@@ -1888,7 +1862,7 @@ export async function fetchProjectPassport(project: string): Promise<ProjectPass
 }
 
 export async function upsertProjectPassport(project: string, payload: ProjectPassportUpsert): Promise<ProjectPassport> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/passport`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/passport`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -1902,21 +1876,21 @@ export async function upsertProjectPassport(project: string, payload: ProjectPas
 }
 
 export async function deleteProjectPassport(project: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/passport`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/passport`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
 export async function deleteProject(project: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/delete`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/delete`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
 }
 
 export async function deleteGroupMapping(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/sso/group-mappings/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/sso/group-mappings/${encodeURIComponent(id)}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
@@ -1945,7 +1919,7 @@ export interface GroupOut {
 }
 
 export async function fetchAllGroups(): Promise<GroupOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/groups`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/groups`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const data = await res.json()
   console.log('Raw /groups API response:', data)
@@ -1953,13 +1927,13 @@ export async function fetchAllGroups(): Promise<GroupOut[]> {
 }
 
 export async function fetchProjectGroups(project: string): Promise<ProjectGroupOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/groups`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/groups`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<ProjectGroupOut[]>
 }
 
 export async function createProjectGroup(payload: ProjectGroupCreate): Promise<ProjectGroupOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(payload.project)}/groups`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(payload.project)}/groups`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify({ project: payload.project, group_name: payload.group_name }),
@@ -1972,7 +1946,7 @@ export async function createProjectGroup(payload: ProjectGroupCreate): Promise<P
 }
 
 export async function deleteProjectGroup(project: string, group_name: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/groups/${encodeURIComponent(group_name)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/projects/${encodeURIComponent(project)}/groups/${encodeURIComponent(group_name)}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
@@ -1994,13 +1968,13 @@ export interface UserGroupCreate {
 }
 
 export async function fetchUserGroups(userId: string): Promise<UserGroupOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/groups`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/groups`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<UserGroupOut[]>
 }
 
 export async function createUserGroup(userId: string, payload: UserGroupCreate): Promise<UserGroupOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/groups`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/groups`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -2013,7 +1987,7 @@ export async function createUserGroup(userId: string, payload: UserGroupCreate):
 }
 
 export async function deleteUserGroup(userId: string, group_name: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/groups/${encodeURIComponent(group_name)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/users/${encodeURIComponent(userId)}/groups/${encodeURIComponent(group_name)}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
@@ -2048,11 +2022,11 @@ export async function pushAuditEvent(event: {
   before?: unknown
   after?: unknown
 }): Promise<void> {
-  const token = getAccessToken()
-  if (!token) return  // unauthenticated — skip silently
-  await fetch(`${getApiBase()}/api/v1/audit/events`, {
+  // Cookie-authenticated: the browser sends the session automatically. If the
+  // user is signed out the request 401s; this is fire-and-forget by design.
+  await authFetch(`${getApiBase()}/api/v1/audit/events`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(event),
   }).catch(() => { /* fire-and-forget: never throw */ })
 }
@@ -2065,7 +2039,7 @@ export async function fetchServerAuditEvents(params?: {
     const url = new URL(`${getApiBase()}/api/v1/audit/events`, window.location.origin)
     if (params?.limit !== undefined) url.searchParams.set('limit', String(params.limit))
     if (params?.category) url.searchParams.set('category', params.category)
-    const res = await fetch(url.toString(), { headers: _authHeaders() })
+    const res = await authFetch(url.toString(), { headers: _authHeaders() })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const json = await res.json() as ApiEnvelope<ServerAuditEvent[]>
     return json.data
@@ -2088,21 +2062,43 @@ export interface ControlPackOut {
 }
 
 export async function fetchControlPacks(): Promise<ControlPackOut[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/control-packs`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/control-packs`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch control packs: ${res.status}`)
   const json = await res.json() as ApiEnvelope<ControlPackOut[]>
   return json.data
 }
 
+export interface ControlPackDrift {
+  in_sync: boolean
+  active_pack_version: string | null
+  disk_total: number
+  active_total: number
+  added: string[]
+  removed: string[]
+  changed: string[]
+  disk_by_pillar: Record<string, number>
+  active_by_pillar: Record<string, number>
+  disk_by_severity: Record<string, number>
+  active_by_severity: Record<string, number>
+}
+
+/** Compare WOMBAT_CONTROLS_DIR on disk with the active controls database (no import). */
+export async function fetchControlPackDrift(): Promise<ControlPackDrift> {
+  const res = await authFetch(`${getApiBase()}/api/v1/control-packs/drift`, { headers: _authHeaders() })
+  if (!res.ok) throw new Error(`Failed to compare control packs: ${res.status}`)
+  const json = await res.json() as ApiEnvelope<ControlPackDrift>
+  return json.data
+}
+
 export async function getActiveControlPack(): Promise<ControlPackOut | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/control-packs/active`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/control-packs/active`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch active pack: ${res.status}`)
   const json = await res.json() as ApiEnvelope<ControlPackOut | null>
   return json.data
 }
 
 export async function syncControlPack(version: string, description: string): Promise<ControlPackOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/control-packs/sync`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/control-packs/sync`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify({ version, description }),
@@ -2120,7 +2116,7 @@ export async function uploadControlPack(file: File, version: string, description
   form.append('file', file)
   form.append('version', version)
   form.append('description', description)
-  const res = await fetch(`${getApiBase()}/api/v1/control-packs/upload`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/control-packs/upload`, {
     method: 'POST',
     headers: _authHeaders(),
     body: form,
@@ -2134,7 +2130,7 @@ export async function uploadControlPack(file: File, version: string, description
 }
 
 export async function activateControlPack(version: string): Promise<ControlPackOut> {
-  const res = await fetch(`${getApiBase()}/api/v1/control-packs/${encodeURIComponent(version)}/activate`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/control-packs/${encodeURIComponent(version)}/activate`, {
     method: 'POST',
     headers: _authHeaders(),
   })
@@ -2147,7 +2143,7 @@ export async function activateControlPack(version: string): Promise<ControlPackO
 }
 
 export async function downloadControlsZip(): Promise<Blob> {
-  const res = await fetch(`${getApiBase()}/api/v1/controls/export`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/controls/export`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to download controls: ${res.status}`)
   return res.blob()
 }
@@ -2162,7 +2158,7 @@ export interface ActivePackInfo {
 }
 
 export async function fetchActivePackInfo(): Promise<ActivePackInfo | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/controls/active-pack`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/controls/active-pack`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch active pack: ${res.status}`)
   const json = await res.json() as ApiEnvelope<ActivePackInfo | null>
   return json.data
@@ -2187,14 +2183,14 @@ export interface FindingCommentCreate {
 }
 
 export async function fetchFindingComments(findingId: string): Promise<FindingComment[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/findings/${encodeURIComponent(findingId)}/comments`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/findings/${encodeURIComponent(findingId)}/comments`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch comments: ${res.status}`)
   const json = await res.json() as ApiEnvelope<FindingComment[]>
   return json.data
 }
 
 export async function createFindingComment(findingId: string, payload: FindingCommentCreate): Promise<FindingComment> {
-  const res = await fetch(`${getApiBase()}/api/v1/findings/${encodeURIComponent(findingId)}/comments`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/findings/${encodeURIComponent(findingId)}/comments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -2208,7 +2204,7 @@ export async function createFindingComment(findingId: string, payload: FindingCo
 }
 
 export async function deleteFindingComment(findingId: string, commentId: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/findings/${encodeURIComponent(findingId)}/comments/${encodeURIComponent(commentId)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/findings/${encodeURIComponent(findingId)}/comments/${encodeURIComponent(commentId)}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
@@ -2233,14 +2229,14 @@ export interface SecretFindingCommentCreate {
 }
 
 export async function fetchSecretFindingComments(secretFindingId: string): Promise<SecretFindingComment[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/secret-findings/${encodeURIComponent(secretFindingId)}/comments`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/secret-findings/${encodeURIComponent(secretFindingId)}/comments`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Failed to fetch secret finding comments: ${res.status}`)
   const json = await res.json() as ApiEnvelope<SecretFindingComment[]>
   return json.data
 }
 
 export async function createSecretFindingComment(secretFindingId: string, payload: SecretFindingCommentCreate): Promise<SecretFindingComment> {
-  const res = await fetch(`${getApiBase()}/api/v1/secret-findings/${encodeURIComponent(secretFindingId)}/comments`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/secret-findings/${encodeURIComponent(secretFindingId)}/comments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -2254,7 +2250,7 @@ export async function createSecretFindingComment(secretFindingId: string, payloa
 }
 
 export async function deleteSecretFindingComment(secretFindingId: string, commentId: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/secret-findings/${encodeURIComponent(secretFindingId)}/comments/${encodeURIComponent(commentId)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/secret-findings/${encodeURIComponent(secretFindingId)}/comments/${encodeURIComponent(commentId)}`, {
     method: 'DELETE', headers: _authHeaders(),
   })
   if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
@@ -2266,7 +2262,7 @@ export async function fetchUserPrefsFromServer(): Promise<Record<string, unknown
   const token = getAccessToken()
   if (!token) return null
   try {
-    const res = await fetch(`${getApiBase()}/api/v1/auth/me/prefs`, { headers: _authHeaders() })
+    const res = await authFetch(`${getApiBase()}/api/v1/auth/me/prefs`, { headers: _authHeaders() })
     if (!res.ok) return null
     return await res.json() as Record<string, unknown>
   } catch {
@@ -2277,7 +2273,7 @@ export async function fetchUserPrefsFromServer(): Promise<Record<string, unknown
 export async function pushUserPrefsToServer(prefs: Record<string, unknown>): Promise<void> {
   const token = getAccessToken()
   if (!token) return
-  await fetch(`${getApiBase()}/api/v1/auth/me/prefs`, {
+  await authFetch(`${getApiBase()}/api/v1/auth/me/prefs`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...(_authHeaders()) },
     body: JSON.stringify(prefs),
@@ -2287,7 +2283,7 @@ export async function pushUserPrefsToServer(prefs: Record<string, unknown>): Pro
 export async function updateMyProfile(payload: { display_name?: string; image_url?: string }): Promise<UserOut> {
   const token = getAccessToken()
   if (!token) throw new Error('Not authenticated')
-  const res = await fetch(`${getApiBase()}/api/v1/auth/me/profile`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/auth/me/profile`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
@@ -2302,7 +2298,7 @@ export async function updateMyProfile(payload: { display_name?: string; image_ur
 // ── Framework Update Info API ─────────────────────────────────────────────────
 
 export async function fetchUpdateInfo(): Promise<UpdateInfo> {
-  const res = await fetch(`${getApiBase()}/framework-update-info.yml`)
+  const res = await authFetch(`${getApiBase()}/framework-update-info.yml`)
   if (!res.ok) throw new Error(`Failed to fetch update info: ${res.status}`)
   const text = await res.text()
   return parseUpdateInfoYaml(text)
@@ -2458,14 +2454,14 @@ export interface NotificationUpdate {
 }
 
 export async function fetchNotifications(): Promise<Notification[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/notifications`, { headers: _authHeaders() })
+  const res = await authFetch(`${getApiBase()}/api/v1/notifications`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const json = await res.json() as ApiEnvelope<Notification[]>
   return json.data
 }
 
 export async function createNotification(payload: NotificationCreate): Promise<Notification> {
-  const res = await fetch(`${getApiBase()}/api/v1/notifications`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/notifications`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -2479,7 +2475,7 @@ export async function createNotification(payload: NotificationCreate): Promise<N
 }
 
 export async function triggerTestNotification(payload: NotificationCreate): Promise<Notification> {
-  const res = await fetch(`${getApiBase()}/api/v1/notifications/test`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/notifications/test`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -2493,7 +2489,7 @@ export async function triggerTestNotification(payload: NotificationCreate): Prom
 }
 
 export async function triggerNotification(payload: NotificationCreate & { target_role?: string }): Promise<Notification> {
-  const res = await fetch(`${getApiBase()}/api/v1/notifications/trigger`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/notifications/trigger`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
     body: JSON.stringify(payload),
@@ -2507,7 +2503,7 @@ export async function triggerNotification(payload: NotificationCreate & { target
 }
 
 export async function markAsRead(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/notifications/${encodeURIComponent(id)}/read`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/notifications/${encodeURIComponent(id)}/read`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
   })
@@ -2515,7 +2511,7 @@ export async function markAsRead(id: string): Promise<void> {
 }
 
 export async function markAllAsRead(): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/notifications/read-all`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/notifications/read-all`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
   })
@@ -2523,7 +2519,7 @@ export async function markAllAsRead(): Promise<void> {
 }
 
 export async function deleteNotification(id: string): Promise<void> {
-  const res = await fetch(`${getApiBase()}/api/v1/notifications/${encodeURIComponent(id)}`, {
+  const res = await authFetch(`${getApiBase()}/api/v1/notifications/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ..._authHeaders() },
   })

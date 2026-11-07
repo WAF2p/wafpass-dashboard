@@ -275,13 +275,6 @@ export default function RunDiffPage({ runs }: Props) {
     fetchRun(headId).then(setHeadRun).catch(() => setHeadRun(null)).finally(() => setLoadingHead(false))
   }, [headId])
 
-  if (runs.length === 0) {
-    return <EmptyState title={t('pages.diff.needTwoRuns')} />
-  }
-  if (runs.length === 1) {
-    return <EmptyState title={t('pages.diff.onlyOneRun')} />
-  }
-
   const diff = useMemo(() => {
     if (!baseRun || !headRun || baseId === headId) return null
     return computeDiff(baseRun, headRun)
@@ -325,6 +318,13 @@ export default function RunDiffPage({ runs }: Props) {
   }, [baseSummary, headSummary])
 
   const sameRun = baseId === headId
+
+  if (runs.length === 0) {
+    return <EmptyState title={t('pages.diff.needTwoRuns')} />
+  }
+  if (runs.length === 1) {
+    return <EmptyState title={t('pages.diff.onlyOneRun')} />
+  }
 
   const TAB_CONFIG: { status: Tab; label: string; color: string; bg: string }[] = [
     { status: 'newly_failed',  label: t('pages.diff.newlyFailed'),   color: 'var(--fail-ink)', bg: 'color-mix(in srgb, var(--fail) 10%, transparent)' },

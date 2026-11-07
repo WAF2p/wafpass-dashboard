@@ -472,17 +472,6 @@ export default function RunsListPage({ runs, onSelect }: Props) {
   const [stageFilter, setStageFilter] = useState('')
   const [displayLimit, setDisplayLimit] = useState(PAGE_SIZE)
 
-  if (runs.length === 0) {
-    return (
-      <Card padding="none">
-        <EmptyState
-          title={t('pages.runs.noRuns')}
-          description={<code>wombat check --push http://localhost:8000/api/v1/runs</code>}
-        />
-      </Card>
-    )
-  }
-
   const stages = useMemo(
     () => [...new Set(runs.map(r => r.stage).filter(Boolean))].sort(),
     [runs]
@@ -498,6 +487,17 @@ export default function RunsListPage({ runs, onSelect }: Props) {
     () => filteredRuns.slice(0, displayLimit),
     [filteredRuns, displayLimit]
   )
+
+  if (runs.length === 0) {
+    return (
+      <Card padding="none">
+        <EmptyState
+          title={t('pages.runs.noRuns')}
+          description={<code>wombat check --push http://localhost:8000/api/v1/runs</code>}
+        />
+      </Card>
+    )
+  }
 
   const hasMoreRuns = displayLimit < filteredRuns.length
 

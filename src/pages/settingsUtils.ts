@@ -61,7 +61,42 @@ export const PILLAR_COUNTS: Record<string, number> = {
 export const SEV_COUNTS = { critical: 8, high: 39, medium: 32, low: 4, informational: 1 }
 export const TOTAL_CONTROLS = 84
 
-export function controlsForLevel(level: number): number {
+export interface ControlCounts {
+  total: number
+  pillarCounts: Record<string, number>
+  severityCounts: Record<string, number>
+}
+
+// Deployed control packs use a few non-canonical pillar names. Normalise them
+// to the keys the dashboard renders so counts do not silently land in a bucket
+// that is never displayed.
+const PILLAR_ALIASES: Record<string, string> = {
+  excellence: 'operations',
+  efficiancy: 'performance',
+  efficiency: 'performance',
+  sovereignty: 'sovereign',
+}
+
+export function normalizePillar(pillar: string): string {
+  const key = pillar.trim().toLowerCase()
+  return PILLAR_ALIASES[key] ?? key
+}
+
+export function deriveControlCounts(
+  controls: Array<{ pillar: string; severity: string }>,
+): ControlCounts {
+  const pillarCounts: Record<string, number> = {}
+  const severityCounts: Record<string, number> = {}
+  for (const control of controls) {
+    const pillar = normalizePillar(control.pillar)
+    const severity = control.severity.trim().toLowerCase()
+    if (pillar) pillarCounts[pillar] = (pillarCounts[pillar] ?? 0) + 1
+    if (severity) severityCounts[severity] = (severityCounts[severity] ?? 0) + 1
+  }
+  return { total: controls.length, pillarCounts, severityCounts }
+}
+
+export function controlsForLevel(level: number, counts?: ControlCounts): number {
   const sevThresholds: Record<number, string[]> = {
     1: ['critical'],
     2: ['critical', 'high'],
@@ -77,11 +112,16 @@ export function controlsForLevel(level: number): number {
     5: ALL_PILLARS,
     6: ALL_PILLARS,
   }
+  const pillarCounts = counts?.pillarCounts ?? PILLAR_COUNTS
+  const severityCounts = counts?.severityCounts ?? SEV_COUNTS
+  const total = counts?.total ?? TOTAL_CONTROLS
   const sevs = new Set(sevThresholds[level] ?? [])
-  const sevFraction = Object.entries(SEV_COUNTS)
-    .filter(([s]) => sevs.has(s))
-    .reduce((n, [, c]) => n + c, 0) / TOTAL_CONTROLS
-  const pillarCount = pillarsForLevel[level].reduce((n, p) => n + PILLAR_COUNTS[p], 0)
+  const sevFraction = total === 0
+    ? 0
+    : Object.entries(severityCounts)
+      .filter(([s]) => sevs.has(s))
+      .reduce((n, [, c]) => n + c, 0) / total
+  const pillarCount = pillarsForLevel[level].reduce((n, p) => n + (pillarCounts[p] ?? 0), 0)
   return Math.round(pillarCount * sevFraction)
 }
 

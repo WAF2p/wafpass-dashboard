@@ -16,26 +16,24 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    // Suppress chunk size warnings for expected large chunks:
-    // - Recharts bundles D3 internally (~200KB), providing charts for 3 pages
-    // - Leaflet is a full mapping library (~150KB), only used in Regions page
-    // - index.html and main bundle (~500KB) includes all app logic
-    // These chunks are loaded on-demand and benefit from browser caching
-    chunkSizeWarningLimit: 700,
-  },
-  // Custom logger to suppress chunk size warnings
-  customLogger: {
-    warn(msg) {
-      if (msg.includes('larger than 500 kB after minification')) return
-    },
-    info(msg) {
-      if (msg.includes('larger than 500 kB after minification')) return
-    },
-    error(msg) {
-      if (msg.includes('larger than 500 kB after minification')) return
-    },
-    debug(msg) {
-      if (msg.includes('larger than 500 kB after minification')) return
+    // Emit source maps for error reporting. They are not referenced by the
+    // nginx-served app; upload them to the telemetry backend, not the CDN.
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        // Vite 8 / Rolldown requires the function form.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          // Keep the always-loaded framework/runtime code in stable vendor
+          // chunks. Charts and maps stay with their lazy routes so the initial
+          // HTML does not preload maplibre/recharts on the login screen.
+          if (id.includes('@tanstack/react-query')) return 'query'
+          if (id.includes('react-router') || id.includes('/react/') || id.includes('react-dom')) {
+            return 'react'
+          }
+          return undefined
+        },
+      },
     },
   },
 })

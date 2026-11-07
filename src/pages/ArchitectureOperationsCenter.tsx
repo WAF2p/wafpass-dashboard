@@ -99,7 +99,7 @@ export default function ArchitectureOperationsCenter({
   const criticalCount = useMemo(() => failed.filter(f => severityOf(f) === 'CRITICAL').length, [failed])
 
   const attackPaths = useMemo(() => {
-    const publicFacing = /0\.0\.0\.0|\:\:\/0|public|internet|ingress|0\.0\.0\.0\/0/i
+    const publicFacing = /0\.0\.0\.0|::\/0|public|internet|ingress|0\.0\.0\.0\/0/i
     return failed.filter(f => {
       const sev = severityOf(f)
       if (sev !== 'CRITICAL' && sev !== 'HIGH') return false
@@ -305,7 +305,7 @@ export default function ArchitectureOperationsCenter({
               {(() => {
                 const exposed = failed.filter(f => {
                   const text = `${f.resource ?? ''} ${f.message ?? ''} ${f.check_title ?? ''}`
-                  return /0\.0\.0\.|\:\:\/0|public|internet|ingress|0\.0\.0\.0\/0/i.test(text)
+                  return /0\.0\.0\.|::\/0|public|internet|ingress|0\.0\.0\.0\/0/i.test(text)
                 })
                 const byResource = new Map<string, number>()
                 for (const f of exposed) {

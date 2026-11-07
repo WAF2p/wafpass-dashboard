@@ -48,6 +48,19 @@ The dashboard requires login. On first visit you will be shown a sign-in form.
 
 The **admin** account is seeded automatically by `wombat-server` on its first startup — set `WOMBAT_ADMIN_PASSWORD` in the server's `.env` to enable this.
 
+### Session handling
+
+The dashboard uses `HttpOnly` session cookies set by `wombat-server`. Access
+and refresh tokens are **not** stored in `localStorage` and are never placed in
+the URL. Unsafe requests automatically send the `wombat_csrf` double-submit
+token.
+
+On the first login with the bootstrap admin — or after an administrator resets
+a password — every route is blocked behind a change-password screen until the
+password is rotated. Passwords must be at least 12 characters and mix letters
+with numbers or symbols. SSO callbacks set the same cookies; there is no token
+handoff in the URL.
+
 ### Roles
 
 | Role | Access |

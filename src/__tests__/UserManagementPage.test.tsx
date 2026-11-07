@@ -33,7 +33,7 @@ function makeUser(overrides: Partial<UserOut> = {}): UserOut {
   return {
     id: 'u1', username: 'carol', display_name: 'Carol', image_url: '', role: 'engineer',
     auth_provider: 'local', is_active: true, last_login_at: null, created_at: null, updated_at: null,
-    mandant_id: null, holding_role: null,
+    mandant_id: null, holding_role: null, must_change_password: false,
     ...overrides,
   }
 }

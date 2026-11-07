@@ -15,9 +15,9 @@ import {
   RunDetail, WaiverRecord, RiskRecord,
   fetchEvidence, createEvidence, deleteEvidence,
   getEvidenceQrUrl, getEvidenceReportUrl, getEvidencePublicUrl,
-  getAccessToken,
   type EvidenceOut,
 } from '../api'
+import { authFetch } from '../lib/http'
 import { loadAuditLog, AuditEvent } from '../audit'
 import { useAuth } from '../AuthContext'
 import { scoreColor, scoreBg, scoreBorder } from '../severity'
@@ -451,11 +451,7 @@ function QrCode({ evidenceId, size = 130 }: { evidenceId: string; size?: number 
     abortRef.current?.abort()
     const ctrl = new AbortController()
     abortRef.current = ctrl
-    const token = getAccessToken()
-    fetch(getEvidenceQrUrl(evidenceId), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      signal: ctrl.signal,
-    })
+    authFetch(getEvidenceQrUrl(evidenceId), { signal: ctrl.signal })
       .then(r => r.ok ? r.text() : null)
       .then(text => {
         if (text && !ctrl.signal.aborted) {
@@ -508,10 +504,7 @@ function LockerCard({
   async function handleDownloadHtml() {
     setDownloading(true)
     try {
-      const token = getAccessToken()
-      const res = await fetch(getEvidenceReportUrl(ev.id), {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
+      const res = await authFetch(getEvidenceReportUrl(ev.id))
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)

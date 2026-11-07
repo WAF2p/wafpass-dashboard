@@ -1,0 +1,32 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=4096"]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: npm run lint
+        language: system
+        pass_filenames: false
+      - id: typecheck
+        name: typecheck
+        entry: npm run typecheck
+        language: system
+        pass_filenames: false
+      - id: i18n
+        name: i18n check
+        entry: npm run i18n:check
+        language: system
+        pass_filenames: false

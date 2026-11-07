@@ -2,15 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import {
   SERVER_URL_KEY, VALIDATION_URL_KEY, getValidationGatewayBase,
 } from '../api'
+import { externalFetch } from '../lib/http'
 import { FRAMEWORKS } from '../controls-data'
 import { LOCALES, useI18n } from '../i18n'
 import Toggle from '../components/Toggle'
 import { Input, PageHeader, Select } from '../ui'
 import {
   ALL_PILLARS, controlsForLevel, DEFAULT_REPORT_SECTIONS,
-  getMaturityMeta, MATURITY_META, MATURITY_PRESETS, PILLAR_COUNTS, saveMaturityState, TOTAL_CONTROLS,
+  getMaturityMeta, MATURITY_META, MATURITY_PRESETS, PILLAR_COUNTS, saveMaturityState, SEV_COUNTS, TOTAL_CONTROLS,
   type ReportSections, type Settings,
 } from './settingsUtils'
+import { useControlCounts } from '../useControlCounts'
 export type { MaturityState, ReportSections, Settings } from './settingsUtils'
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -61,6 +63,13 @@ interface Props {
 
 export default function SettingsPage({ maturityLevel, settings, onChange }: Props) {
   const { t } = useI18n()
+  // Live counts from the deployed pack; static tables are the offline fallback.
+  const liveCounts = useControlCounts()
+  const pillarCounts = liveCounts?.pillarCounts ?? PILLAR_COUNTS
+  const totalControls = liveCounts?.total ?? TOTAL_CONTROLS
+  const severityCounts: Record<string, number> = liveCounts?.severityCounts ?? SEV_COUNTS
+  const pillarCount = (pillar: string) => pillarCounts[pillar] ?? 0
+  const sevCount = (severity: string) => severityCounts[severity] ?? 0
   const [level, setLevel] = useState(maturityLevel)
   const [s, setS] = useState<Settings>(settings)
   const [saved, setSaved] = useState(false)
@@ -94,7 +103,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
     setServerStatusMsg('')
     if (checkTimeout.current) clearTimeout(checkTimeout.current)
     checkTimeout.current = setTimeout(() => {
-      fetch(`${base}/health`)
+      externalFetch(`${base}/health`)
         .then(async res => {
           if (res.ok) {
             const json = await res.json().catch(() => ({})) as Record<string, unknown>
@@ -125,7 +134,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
     setValidationStatusMsg('')
     if (validationCheckTimeout.current) clearTimeout(validationCheckTimeout.current)
     validationCheckTimeout.current = setTimeout(() => {
-      fetch(`${base}/api/v1/validations/root.crt`)
+      externalFetch(`${base}/api/v1/validations/root.crt`)
         .then(async res => {
           if (res.ok) {
             const text = await res.text()
@@ -159,7 +168,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
   }
 
   const meta = getMaturityMeta(level)
-  const controlCount = controlsForLevel(level)
+  const controlCount = controlsForLevel(level, liveCounts ?? undefined)
 
   function togglePillar(pillar: string) {
     const current = s.activePillars ?? ALL_PILLARS
@@ -334,7 +343,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
             </div>
             <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: '0.35rem' }}>{t('pages.settingsPage.controlCoverage')}</div>
-              <ProgressBar value={controlCount} total={TOTAL_CONTROLS} color={meta.color} />
+              <ProgressBar value={controlCount} total={totalControls} color={meta.color} />
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>
               {t('pages.settingsPage.severityThreshold')}{' '}
@@ -361,7 +370,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                     </span>
                     {active && (
                       <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: 'auto' }}>
-                        {PILLAR_COUNTS[p]}
+                        {pillarCount(p)}
                       </span>
                     )}
                   </div>
@@ -432,10 +441,10 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
               value={s.defaultSeverity}
               onChange={e => setS({ ...s, defaultSeverity: e.target.value })}
             >
-              <option value="">{t('pages.phase3.restB.settings.severityAll')}</option>
-              <option value="critical">{t('pages.phase3.restB.settings.severityCritical')}</option>
-              <option value="high">{t('pages.phase3.restB.settings.severityHigh')}</option>
-              <option value="medium">{t('pages.phase3.restB.settings.severityMedium')}</option>
+              <option value="">{t('pages.phase3.restB.settings.severityAll', { count: totalControls })}</option>
+              <option value="critical">{t('pages.phase3.restB.settings.severityCritical', { count: sevCount('critical') })}</option>
+              <option value="high">{t('pages.phase3.restB.settings.severityHigh', { count: sevCount('critical') + sevCount('high') })}</option>
+              <option value="medium">{t('pages.phase3.restB.settings.severityMedium', { count: sevCount('critical') + sevCount('high') + sevCount('medium') })}</option>
             </Select>
           </div>
         </div>
@@ -457,7 +466,7 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
                       {PILLAR_ICONS[p]} {p.charAt(0).toUpperCase() + p.slice(1)}
                     </span>
                     <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginLeft: '0.5rem' }}>
-                      {t('pages.phase3.restB.settings.controlsCount', { count: PILLAR_COUNTS[p] })}
+                      {t('pages.phase3.restB.settings.controlsCount', { count: pillarCount(p) })}
                     </span>
                   </div>
                   {!active && (
@@ -470,9 +479,9 @@ export default function SettingsPage({ maturityLevel, settings, onChange }: Prop
           <div style={{ marginTop: '0.85rem', fontSize: '0.72rem', color: 'var(--muted)', padding: '0.5rem 0.7rem', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
             {t('pages.phase3.restB.settings.activeLabel')}{' '}
             <strong style={{ color: 'var(--text)' }}>
-              {(s.activePillars ?? ALL_PILLARS).reduce((n, p) => n + (PILLAR_COUNTS[p] ?? 0), 0)}
+              {(s.activePillars ?? ALL_PILLARS).reduce((n, p) => n + pillarCount(p), 0)}
             </strong>
-            {' '}/ {TOTAL_CONTROLS} {t('pages.phase3.restB.settings.controlsAcross')}{' '}
+            {' '}/ {totalControls} {t('pages.phase3.restB.settings.controlsAcross')}{' '}
             <strong style={{ color: 'var(--text)' }}>{(s.activePillars ?? ALL_PILLARS).length}</strong>
             {' '}/ {ALL_PILLARS.length} {t('pages.phase3.restB.settings.pillarsLabel')}
           </div>

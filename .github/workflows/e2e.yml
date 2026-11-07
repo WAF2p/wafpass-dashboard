@@ -1,0 +1,72 @@
+name: e2e
+
+# Full-stack smoke: build the server + dashboard, run Playwright against the
+# real API and database. The workspace is reconstructed from the component
+# repositories because the dashboard and server are separate repos.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dashboard
+        uses: actions/checkout@v4
+        with:
+          path: dashboard
+
+      - name: Checkout server
+        uses: actions/checkout@v4
+        with:
+          repository: wombat-gov/wombat-server
+          path: wafpass-server
+
+      - name: Checkout wombat-core (controls and assets)
+        uses: actions/checkout@v4
+        with:
+          repository: wombat-gov/wombat-core
+          path: pass
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dashboard dependencies
+        working-directory: dashboard
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: dashboard
+        run: npx playwright install --with-deps chromium
+
+      - name: Start stack
+        run: docker compose -f dashboard/e2e/docker-compose.e2e.yml up -d --build --wait
+
+      - name: Playwright
+        working-directory: dashboard
+        env:
+          E2E_BASE_URL: http://localhost:3000
+          E2E_ADMIN_PASSWORD: e2e-admin-password
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: dashboard/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Stop stack
+        if: always()
+        run: docker compose -f dashboard/e2e/docker-compose.e2e.yml down -v

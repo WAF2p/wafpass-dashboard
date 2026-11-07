@@ -5,7 +5,9 @@
  * user_audit_logs and renders them in the SOC visual family.
  */
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { AdminAuditLogEntry, fetchAdminLogs, fetchSyslogConfig, SyslogConfig } from '../api'
+import { qk } from '../lib/queryKeys'
 import { useI18n } from '../i18n'
 import { LockIcon, SettingsIcon } from './shared/SocComponents'
 import {
@@ -18,6 +20,10 @@ import { DataTable, EmptyState, Skeleton, type Column } from '../ui'
 
 const ACTION_META: Record<string, { label: string; color: string; bg: string }> = {
   login:    { label: 'Login',    color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)' },
+  login_failed: { label: 'Login failed', color: '#dc2626', bg: 'rgba(220,38,38,.10)' },
+  account_locked: { label: 'Account locked', color: '#dc2626', bg: 'rgba(220,38,38,.10)' },
+  login_unlocked: { label: 'Account unlocked', color: '#059669', bg: 'color-mix(in srgb, #059669 10%, transparent)' },
+  password_changed: { label: 'Password changed', color: '#d97706', bg: 'rgba(217,119,6,.10)' },
   logout:   { label: 'Logout',   color: '#2563eb', bg: 'color-mix(in srgb, #2563eb 10%, transparent)' },
   'user.create': { label: 'User created', color: '#7c3aed', bg: 'color-mix(in srgb, #7c3aed 10%, transparent)' },
   'user.update': { label: 'User updated', color: '#d97706', bg: 'rgba(217,119,6,.10)' },
@@ -141,25 +147,22 @@ function RawDetailsTable({ logs, t, loading = false }: { logs: AdminAuditLogEntr
 
 export default function AdminLogPage() {
   const { t } = useI18n()
-  const [logs, setLogs] = useState<AdminAuditLogEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data: logs = [],
+    isLoading: loading,
+    error: logsError,
+  } = useQuery({
+    queryKey: qk.adminLog,
+    queryFn: () => fetchAdminLogs({ limit: 500 }),
+  })
+  const error = logsError
+    ? logsError instanceof Error ? logsError.message : String(logsError)
+    : null
   const [subTab, setSubTab] = useState<'events' | 'details'>('events')
   const [actionFilter, setActionFilter] = useState('')
   const [search, setSearch] = useState('')
   const [syslogConfig, setSyslogConfig] = useState<SyslogConfig | null>(null)
   const [showModal, setShowModal] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
-    fetchAdminLogs({ limit: 500 })
-      .then(data => { if (!cancelled) setLogs(data) })
-      .catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : String(e)) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [])
 
   const refreshSyslogConfig = () => {
     fetchSyslogConfig()

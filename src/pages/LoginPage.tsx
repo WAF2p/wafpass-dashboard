@@ -10,12 +10,15 @@ import BrandLogo from '../components/BrandLogo'
 const MANDANT_STORAGE_KEY = 'wombat_login_mandant'
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, completeMfa } = useAuth()
   const { t } = useI18n()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState<string | null>(null)
   const [loading, setLoading]   = useState(false)
+  const [mfaToken, setMfaToken] = useState<string | null>(null)
+  const [mfaCode, setMfaCode]   = useState('')
+  const [mfaMethod, setMfaMethod] = useState<'totp' | 'recovery'>('totp')
   const [ssoProviders, setSsoProviders] = useState<SsoProviderInfo[]>([])
   const [mandant, setMandant] = useState(() => {
     try { return localStorage.getItem(MANDANT_STORAGE_KEY) ?? '' } catch { return '' }
@@ -45,9 +48,27 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
     try {
-      await login(username.trim(), password)
+      const outcome = await login(username.trim(), password)
+      if (outcome.mfaRequired && outcome.mfaToken) {
+        setMfaToken(outcome.mfaToken)
+        setMfaCode('')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleMfaSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!mfaToken || !mfaCode.trim()) return
+    setError(null)
+    setLoading(true)
+    try {
+      await completeMfa(mfaToken, mfaCode.trim(), mfaMethod)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'MFA verification failed')
     } finally {
       setLoading(false)
     }
@@ -84,6 +105,67 @@ export default function LoginPage() {
             {t('pages.login.title')}
           </h1>
 
+          {mfaToken ? (
+            <form onSubmit={handleMfaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
+                {t('pages.login.mfaHint')}
+              </p>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.35rem' }}>
+                  {t('pages.login.mfaCodeLabel')}
+                </label>
+                <input
+                  type="text"
+                  value={mfaCode}
+                  onChange={e => setMfaCode(e.target.value)}
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  autoFocus
+                  style={inputStyle}
+                  disabled={loading}
+                />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem', color: 'var(--muted)' }}>
+                <input
+                  type="checkbox"
+                  checked={mfaMethod === 'recovery'}
+                  onChange={e => setMfaMethod(e.target.checked ? 'recovery' : 'totp')}
+                  disabled={loading}
+                />
+                {t('pages.login.mfaUseRecovery')}
+              </label>
+              {error && (
+                <div style={{
+                  padding: '0.5rem 0.75rem', borderRadius: '6px',
+                  background: 'color-mix(in srgb, #ef4444 8%, transparent)', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)',
+                  fontSize: '0.78rem', color: '#ef4444',
+                }}>
+                  {error}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={loading || !mfaCode.trim()}
+                style={{
+                  padding: '0.6rem 1rem', borderRadius: '8px',
+                  background: loading || !mfaCode.trim() ? 'var(--bg)' : 'var(--waf-brand)',
+                  color: loading || !mfaCode.trim() ? 'var(--muted)' : '#fff',
+                  border: '1px solid',
+                  borderColor: loading || !mfaCode.trim() ? 'var(--border)' : 'var(--waf-brand)',
+                  fontWeight: 700, fontSize: '0.875rem', cursor: loading ? 'wait' : 'pointer',
+                }}
+              >
+                {loading ? t('pages.login.signingIn') : t('pages.login.mfaVerify')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMfaToken(null); setError(null) }}
+                style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.78rem', cursor: 'pointer' }}
+              >
+                {t('pages.login.mfaBack')}
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: 'var(--muted)', marginBottom: '0.35rem' }}>
@@ -142,6 +224,7 @@ export default function LoginPage() {
               {loading ? t('pages.login.signingIn') : t('pages.login.signIn')}
             </button>
           </form>
+          )}
         </div>
 
         {/* SSO providers */}

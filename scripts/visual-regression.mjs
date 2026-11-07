@@ -17,7 +17,6 @@ import { PNG } from 'pngjs'
 import pixelmatch from 'pixelmatch'
 
 const UPDATE = process.argv.includes('--update')
-const API = process.env.WAF_API_URL ?? 'http://localhost:8000'
 const WEB = process.env.WAF_WEB_URL ?? 'http://localhost:3000'
 const USER = process.env.WAF_ADMIN_USER ?? 'admin'
 const PASS = process.env.WAF_ADMIN_PASSWORD ?? 'admin'
@@ -46,14 +45,31 @@ if (!CHROME) {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-async function login() {
-  const res = await fetch(`${API}/api/v1/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: USER, password: PASS }),
-  })
-  if (!res.ok) throw new Error(`login failed: ${res.status}`)
-  return res.json()
+async function loginInBrowser(page, evaluate) {
+  // HttpOnly cookie sessions: log in through the real form so the browser
+  // receives the cookie. The old localStorage token injection no longer works.
+  await page.send('Page.navigate', { url: `${WEB}/#/login` })
+  await sleep(1500)
+  const submitted = await evaluate(`
+    (() => {
+      const inputs = Array.from(document.querySelectorAll('input'));
+      const text = inputs.find(i => i.type === 'text');
+      const pass = inputs.find(i => i.type === 'password');
+      const button = document.querySelector('button[type="submit"]');
+      if (!text || !pass || !button) return 'missing-form';
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      setter.call(text, ${JSON.stringify(USER)});
+      text.dispatchEvent(new Event('input', { bubbles: true }));
+      setter.call(pass, ${JSON.stringify(PASS)});
+      pass.dispatchEvent(new Event('input', { bubbles: true }));
+      button.click();
+      return 'submitted';
+    })()
+  `)
+  if (submitted !== 'submitted') throw new Error(`login form not found: ${submitted}`)
+  await sleep(2500)
+  const stillLogin = await evaluate(`!!document.querySelector('input[type="password"]')`)
+  if (stillLogin) throw new Error('login failed (still on the login/password-change screen)')
 }
 
 function launchChrome() {
@@ -117,7 +133,6 @@ function diff(aPath, bPath, outPath) {
 }
 
 async function main() {
-  const auth = await login()
   const { child, profile } = launchChrome()
   let page
   try {
@@ -131,14 +146,7 @@ async function main() {
       return out.result?.result?.value
     }
 
-    await page.send('Page.navigate', { url: WEB })
-    await sleep(1500)
-    await evaluate(`
-      localStorage.setItem('wombat_access_token', ${JSON.stringify(auth.access_token)});
-      localStorage.setItem('wombat_refresh_token', ${JSON.stringify(auth.refresh_token)});
-      localStorage.setItem('wombat_auth_user', ${JSON.stringify(JSON.stringify(auth.user))});
-      'ok'
-    `)
+    await loginInBrowser(page, evaluate)
 
     mkdirSync(BASELINE_DIR, { recursive: true })
     mkdirSync(join(WORK_DIR, 'current'), { recursive: true })

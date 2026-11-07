@@ -28,8 +28,17 @@ jobs:
         # tracked separately with documented exemptions (generated/print output).
         run: npm run design:lint -- --gate
 
+      - name: ESLint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
       - name: Type-check and build
         run: npm run build
+
+      - name: Bundle budget
+        run: npm run build:budget
 
       - name: Tests
         run: npm test

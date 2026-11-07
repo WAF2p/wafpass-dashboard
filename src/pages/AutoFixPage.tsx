@@ -91,18 +91,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
     if (controlIds.length && !controlId) setControlId(controlIds[0])
   }, [pillars, controlIds, pillar, controlId])
 
-  if (!run) {
-    return (
-      <EmptyState title={t('pages.phase3.autofix.selectRun')} />
-    )
-  }
-
-  const iacPath = run.path || run.source_paths?.[0]
-  if (!iacPath) {
-    return (
-      <EmptyState title={t('pages.phase3.autofix.noIacPath')} />
-    )
-  }
+  const iacPath = run?.path || run?.source_paths?.[0]
 
   const selectedControlIds = useMemo(() => {
     if (mode === 'all') return undefined
@@ -173,7 +162,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
         }
       } else {
         const payload: AutoFixRequest = {
-          path: iacPath,
+          path: iacPath!,
           iac: run?.iac_framework || 'terraform',
           control_ids: selectedControlIds,
           apply: false,
@@ -194,7 +183,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
     setRollbackResult(null)
     try {
       const payload: AutoFixRequest = {
-        path: iacPath,
+        path: iacPath!,
         iac: run?.iac_framework || 'terraform',
         control_ids: selectedControlIds,
         apply: true,
@@ -223,7 +212,7 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
     setLoading(true)
     setError(null)
     try {
-      const res = await postAutoFixRollback(iacPath)
+      const res = await postAutoFixRollback(iacPath!)
       setRollbackResult(res)
     } catch (e) {
       setError(e instanceof Error ? e.message : t('pages.phase3.autofix.rollbackFailed'))
@@ -257,6 +246,18 @@ export default function AutoFixPage({ run, onBack }: AutoFixPageProps) {
     if (!match) return null
     return { file: match[0], lines: match[1] }
   }, [selectedPatch, response])
+
+  if (!run) {
+    return (
+      <EmptyState title={t('pages.phase3.autofix.selectRun')} />
+    )
+  }
+
+  if (!iacPath) {
+    return (
+      <EmptyState title={t('pages.phase3.autofix.noIacPath')} />
+    )
+  }
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1600px', margin: '0 auto' }}>

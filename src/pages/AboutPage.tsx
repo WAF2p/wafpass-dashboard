@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getApiBase } from '../api'
+import { externalFetch } from '../lib/http'
 import { useI18n } from '../i18n'
 import { PageHeader } from '../ui'
 import { SectionCard, SocStyles } from './shared/SocComponents'
@@ -27,7 +28,7 @@ export default function AboutPage() {
     setError(null)
     try {
       const base = getApiBase() || window.location.origin
-      const res = await fetch(`${base}/version`)
+      const res = await externalFetch(`${base}/version`)
       if (res.ok) {
         const data = await res.json() as VersionInfo
         setVersionInfo(data)

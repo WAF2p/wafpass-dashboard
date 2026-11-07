@@ -1,0 +1,83 @@
+# End-to-end stack for Playwright and the a11y gate.
+#
+# Run from the monorepo root:
+#   docker compose -f wafpass-dashboard/e2e/docker-compose.e2e.yml up -d --build --wait
+#   cd wafpass-dashboard && E2E_ADMIN_PASSWORD=e2e-admin-password npx playwright test
+#   docker compose -f wafpass-dashboard/e2e/docker-compose.e2e.yml down -v
+#
+# In CI the dashboard, server, and wombat-core checkouts are placed in sibling
+# directories so the server build context (../..) has wafpass-server/ and pass/.
+name: wombat-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: e2e-postgres
+      POSTGRES_DB: wombat
+    volumes:
+      - e2e_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wombat"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [e2e]
+
+  wombat-server:
+    build:
+      context: ../..
+      dockerfile: wafpass-server/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:e2e-postgres@postgres:5432/wombat
+      RUNTIME_DATABASE_URL: postgresql+asyncpg://wombat_app:wombat_app@postgres:5432/wombat
+      WOMBAT_ENV: local
+      WOMBAT_JWT_SECRET: e2e-jwt-secret-not-for-production
+      WOMBAT_ENCRYPTION_KEY: e2e-encryption-key-not-for-production
+      WOMBAT_ADMIN_USERNAME: admin
+      WOMBAT_ADMIN_PASSWORD: e2e-admin-password
+      WOMBAT_FORCE_PASSWORD_ROTATION: "false"
+      WOMBAT_API_KEY: e2e-api-key
+      WOMBAT_COOKIE_SECURE: "false"
+      WOMBAT_ALLOWED_HOSTS: ""
+      WOMBAT_PUBLIC_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000
+      WOMBAT_CONTROLS_DIR: /app/controls
+      WOMBAT_SCAN_ENABLED: "false"
+      WOMBAT_UPDATE_INFO_PATH: /tmp/framework-update-info.yml
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks: [e2e]
+
+  wombat-dashboard:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "3000:8080"
+    depends_on:
+      wombat-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [e2e]
+
+networks:
+  e2e: {}
+
+volumes:
+  e2e_postgres_data:

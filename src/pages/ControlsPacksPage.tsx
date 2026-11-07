@@ -7,13 +7,16 @@ import { useEffect, useState } from 'react'
 import { useI18n } from '../i18n'
 import {
   fetchControlPacks,
+  fetchControlPackDrift,
   syncControlPack,
   uploadControlPack,
   activateControlPack,
   fetchUpdateInfo,
+  type ControlPackDrift,
   type ControlPackOut,
   type UpdateInfo,
 } from '../api'
+import { invalidateControlCounts } from '../useControlCounts'
 import { EmptyState, Skeleton, Toolbar } from '../ui'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -111,6 +114,12 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
   const [activating, setActivating]       = useState<string | null>(null)
   const [actionError, setActionError]     = useState<string | null>(null)
 
+  const [drift, setDrift]                 = useState<ControlPackDrift | null>(null)
+  const [driftLoading, setDriftLoading]   = useState(true)
+  const [driftError, setDriftError]       = useState<string | null>(null)
+  const [importing, setImporting]         = useState(false)
+  const [importMsg, setImportMsg]         = useState<string | null>(null)
+
   async function load() {
     setLoading(true)
     setError(null)
@@ -123,7 +132,19 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
     }
   }
 
-  useEffect(() => { load() }, [])
+  async function loadDrift() {
+    setDriftLoading(true)
+    setDriftError(null)
+    try {
+      setDrift(await fetchControlPackDrift())
+    } catch (e) {
+      setDriftError(String(e))
+    } finally {
+      setDriftLoading(false)
+    }
+  }
+
+  useEffect(() => { load(); loadDrift() }, [])
 
   useEffect(() => {
     setUpdateLoading(true)
@@ -177,6 +198,28 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
     }
   }
 
+  async function handleImport() {
+    if (!drift || drift.in_sync || importing) return
+    setImporting(true)
+    setImportMsg(null)
+    setDriftError(null)
+    try {
+      const version = `disk-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}`
+      const pack = await syncControlPack(version, 'Imported from WOMBAT_CONTROLS_DIR (one-click)')
+      invalidateControlCounts()
+      try { localStorage.removeItem('wombat_controls_cache') } catch { /* ignore */ }
+      setImportMsg(t('pages.controlspacks.driftImported', {
+        count: pack.control_count,
+        version: pack.version,
+      }))
+      await Promise.all([load(), loadDrift()])
+    } catch (e) {
+      setDriftError(String(e))
+    } finally {
+      setImporting(false)
+    }
+  }
+
   async function handleActivate(version: string) {
     setActivating(version)
     setActionError(null)
@@ -224,6 +267,80 @@ export default function ControlsPacksPage({ navigate }: ControlsPacksPageProps) 
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Disk vs active database ──────────────────────────────────── */}
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <span style={{
+              width: 10, height: 10, marginTop: 5, borderRadius: '50%', flexShrink: 0,
+              background: drift ? (drift.in_sync ? 'var(--pass)' : 'var(--waf-warn)') : 'var(--border)',
+            }} />
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text)' }}>
+                {t('pages.controlspacks.driftTitle')}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: '0.15rem' }}>
+                {drift?.active_pack_version
+                  ? t('pages.controlspacks.driftActivePack', { version: drift.active_pack_version })
+                  : t('pages.controlspacks.driftNoPack')}
+              </div>
+            </div>
+          </div>
+          {drift && !drift.in_sync && (
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing}
+              style={{
+                background: 'var(--waf-brand)', color: '#ffffff', border: 'none',
+                borderRadius: 10, padding: '0.55rem 0.9rem', fontSize: '0.8rem',
+                fontWeight: 700, cursor: importing ? 'wait' : 'pointer',
+                opacity: importing ? 0.7 : 1,
+              }}
+            >
+              {importing ? t('pages.controlspacks.driftImporting') : t('pages.controlspacks.driftImport')}
+            </button>
+          )}
+        </div>
+
+        {driftLoading ? (
+          <Skeleton width="55%" height={12} />
+        ) : driftError ? (
+          <div style={{ fontSize: '0.78rem', color: 'var(--fail-ink)' }}>
+            {t('pages.controlspacks.driftCompareError')}{' '}
+            <span style={{ color: 'var(--muted)' }}>{driftError}</span>
+          </div>
+        ) : drift ? (
+          <>
+            <div style={{
+              fontSize: '0.8rem',
+              color: drift.in_sync ? 'var(--pass-ink)' : 'var(--text)',
+              fontWeight: drift.in_sync ? 600 : 500,
+            }}>
+              {drift.in_sync
+                ? t('pages.controlspacks.driftInSync', { count: drift.disk_total })
+                : t('pages.controlspacks.driftOutOfSync')}
+            </div>
+            <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontSize: '0.78rem', color: 'var(--muted)' }}>
+              <span>{t('pages.controlspacks.driftDisk', { count: drift.disk_total })}</span>
+              <span>{t('pages.controlspacks.driftActive', { count: drift.active_total })}</span>
+              <span style={{ color: drift.added.length ? 'var(--pass-ink)' : undefined, fontWeight: drift.added.length ? 700 : 400 }}>
+                {t('pages.controlspacks.driftAdded', { count: drift.added.length })}
+              </span>
+              <span style={{ color: drift.removed.length ? 'var(--fail-ink)' : undefined, fontWeight: drift.removed.length ? 700 : 400 }}>
+                {t('pages.controlspacks.driftRemoved', { count: drift.removed.length })}
+              </span>
+              <span style={{ color: drift.changed.length ? 'var(--score-mid-ink)' : undefined, fontWeight: drift.changed.length ? 700 : 400 }}>
+                {t('pages.controlspacks.driftChanged', { count: drift.changed.length })}
+              </span>
+            </div>
+            {importMsg && (
+              <div style={{ fontSize: '0.78rem', color: 'var(--pass-ink)', fontWeight: 600 }}>{importMsg}</div>
+            )}
+          </>
+        ) : null}
       </div>
 
       {/* ── Status row: active pack + framework reference ─────────────── */}

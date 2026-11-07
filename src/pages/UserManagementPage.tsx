@@ -826,11 +826,11 @@ export default function UserManagementPage() {
               </div>
               <div>
                 <label style={labelStyle}>{editId ? t('pages.users.newPasswordLabel') : t('pages.users.passwordLabel')}</label>
-                <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 8 ? 'var(--fail)' : undefined }} type="password" value={form.password}
+                <input style={{ ...inputStyle, borderColor: form.password && form.password.length < 12 ? 'var(--fail)' : undefined }} type="password" value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   autoComplete="new-password"
                   placeholder={editId ? '••••••••' : t('pages.phase3.restB.userManagement.minChars')} />
-                {form.password && form.password.length < 8 && (
+                {form.password && form.password.length < 12 && (
                   <div style={{ fontSize: '0.7rem', color: 'var(--fail-ink)', marginTop: '0.2rem' }}>
                     {t('pages.users.passwordTooShort')}
                   </div>
@@ -855,7 +855,7 @@ export default function UserManagementPage() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={handleSave}
-                disabled={saving || (!editId && (!form.username || !form.password || form.password.length < 8)) || (!!form.password && form.password.length < 8)}
+                disabled={saving || (!editId && (!form.username || !form.password || form.password.length < 12)) || (!!form.password && form.password.length < 12)}
                 style={{
                   padding: '0.4rem 1rem', borderRadius: '8px',
                   background: saving ? 'color-mix(in srgb, var(--waf-brand-btn) 40%, transparent)' : 'var(--waf-brand-btn)', color: '#fff',

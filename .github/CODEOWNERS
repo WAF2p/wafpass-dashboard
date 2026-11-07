@@ -1,0 +1,16 @@
+# CODEOWNERS for wombat-dashboard.
+# Replace the example teams with your real GitHub teams; unresolved handles do
+# not protect anything. Keep the security-sensitive paths listed here.
+
+* @wombat-gov/platform
+
+/src/lib/http.ts                    @wombat-gov/security
+/src/AuthContext.tsx                @wombat-gov/security
+/src/pages/SecuritySettingsPage.tsx @wombat-gov/security
+/src/pages/LoginPage.tsx            @wombat-gov/security
+
+/src/router.tsx                     @wombat-gov/platform
+/Dockerfile                         @wombat-gov/platform
+/nginx.conf                         @wombat-gov/platform
+/vite.config.ts                     @wombat-gov/platform
+/.github/                           @wombat-gov/platform

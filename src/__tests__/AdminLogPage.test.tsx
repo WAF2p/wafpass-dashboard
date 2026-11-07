@@ -1,8 +1,20 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import AdminLogPage from '../pages/AdminLogPage'
 import type { AdminAuditLogEntry } from '../api'
+
+function renderPage() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={client}>
+      <AdminLogPage />
+    </QueryClientProvider>,
+  )
+}
 
 const mockLogs: AdminAuditLogEntry[] = [
   {
@@ -51,7 +63,7 @@ describe('AdminLogPage', () => {
   })
 
   it('renders the panel title and loads server-side audit events', async () => {
-    render(<AdminLogPage />)
+    renderPage()
 
     expect(screen.getByText('Admin Audit Log')).toBeInTheDocument()
 
@@ -68,7 +80,7 @@ describe('AdminLogPage', () => {
   })
 
   it('filters events by search term', async () => {
-    render(<AdminLogPage />)
+    renderPage()
     await waitFor(() => expect(screen.getByText('alice')).toBeInTheDocument())
 
     const searchInput = screen.getByPlaceholderText(/Search actions, actors, IPs/i)
@@ -81,7 +93,7 @@ describe('AdminLogPage', () => {
   })
 
   it('filters events by action type', async () => {
-    render(<AdminLogPage />)
+    renderPage()
     await waitFor(() => expect(screen.getByText('alice')).toBeInTheDocument())
 
     const actionSelect = screen.getByRole('combobox', { name: '' })
@@ -96,7 +108,7 @@ describe('AdminLogPage', () => {
   it('shows an access-denied message when the API returns 403', async () => {
     globalThis.fetch = makeFetch(mockLogs, false)
 
-    render(<AdminLogPage />)
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText(/Admin role required/i)).toBeInTheDocument()
@@ -104,7 +116,7 @@ describe('AdminLogPage', () => {
   })
 
   it('switches to the raw details sub-tab', async () => {
-    render(<AdminLogPage />)
+    renderPage()
     await waitFor(() => expect(screen.getByText('alice')).toBeInTheDocument())
 
     const detailsTab = screen.getByRole('button', { name: /Raw Details \(\d+\)/i })

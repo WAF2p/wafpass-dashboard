@@ -11,7 +11,8 @@
  */
 
 import { useState, useMemo, useEffect } from 'react'
-import { RunDetail, ControlMeta, getApiBase, getAccessToken } from '../api'
+import { RunDetail, ControlMeta, getApiBase, getMandantContext } from '../api'
+import { authFetch } from '../lib/http'
 import { useI18n } from '../i18n'
 import { PAGE_TITLE } from '../routing'
 import { severityBg, severityBorder, severityColor, scoreColor } from '../severity'
@@ -188,7 +189,10 @@ export default function RemediationSprintPage({ run }: Props) {
   const [isExporting, setIsExporting] = useState(false)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
   const apiBase = getApiBase()
-  const authHeaders: Record<string, string> = getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}
+  const mandantContext = getMandantContext()
+  const authHeaders: Record<string, string> = mandantContext
+    ? { 'X-Mandant-Context': mandantContext }
+    : {}
 
   const handleExportCsv = async () => {
     if (sprintIds.size === 0) return
@@ -197,7 +201,7 @@ export default function RemediationSprintPage({ run }: Props) {
     try {
       setIsExporting(true)
       setExportMessage(null)
-      const response = await fetch(url, { headers: authHeaders })
+      const response = await authFetch(url, { headers: authHeaders })
       if (!response.ok) throw new Error(`Export failed: ${response.status}`)
       const blob = await response.blob()
       const link = document.createElement('a')
@@ -218,7 +222,7 @@ export default function RemediationSprintPage({ run }: Props) {
     try {
       setIsExporting(true)
       setExportMessage(null)
-      const response = await fetch(url, { headers: authHeaders })
+      const response = await authFetch(url, { headers: authHeaders })
       if (!response.ok) throw new Error(`Export failed: ${response.status}`)
       const blob = await response.blob()
       const link = document.createElement('a')
@@ -239,7 +243,7 @@ export default function RemediationSprintPage({ run }: Props) {
     try {
       setIsExporting(true)
       setExportMessage(null)
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ sprint: sprintList }),

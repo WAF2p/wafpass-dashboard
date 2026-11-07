@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { RunSummary, fetchRuns } from './api'
 import { useI18n } from './i18n'
 import { buildHash } from './routing'
@@ -111,43 +111,42 @@ export default function PipelinesPage() {
   const [runs, setRuns] = useState<RunSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
   const [showManualRuns, setShowManualRuns] = useState(false)
   const PAGE_SIZE = 50
 
   // Fetch runs on mount
-  useMemo(async () => {
+  useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
 
-    try {
-      let allRuns: RunSummary[] = []
-      let cursor: string | null = null
+    ;(async () => {
+      try {
+        let allRuns: RunSummary[] = []
+        let cursor: string | null = null
 
-      // Fetch multiple pages
-      for (let i = 0; i < 3; i++) { // Up to 3 pages
-        const result = await fetchRuns({ limit: PAGE_SIZE, cursor: cursor ?? undefined })
-        if (cancelled) break
+        // Fetch multiple pages
+        for (let i = 0; i < 3; i++) { // Up to 3 pages
+          const result = await fetchRuns({ limit: PAGE_SIZE, cursor: cursor ?? undefined })
+          if (cancelled) break
 
-        allRuns = [...allRuns, ...result.items]
-        cursor = result.nextCursor
-        if (!cursor) break
-      }
+          allRuns = [...allRuns, ...result.items]
+          cursor = result.nextCursor
+          if (!cursor) break
+        }
 
-      if (!cancelled) {
-        console.log('PipelinesPage: fetched runs count:', allRuns.length)
-        setRuns(allRuns)
-        setPage(page + 1)
+        if (!cancelled) {
+          setRuns(allRuns)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load pipeline data')
+          setLoading(false)
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-    } catch (err) {
-      if (!cancelled) {
-        setError(err instanceof Error ? err.message : 'Failed to load pipeline data')
-        setLoading(false)
-      }
-    } finally {
-      if (!cancelled) setLoading(false)
-    }
+    })()
 
     return () => { cancelled = true }
   }, [])

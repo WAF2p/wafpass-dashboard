@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
-import { fetchRun, fetchRuns, RunDetail, RunSummary } from './api'
+import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { fetchRun, fetchRuns, type RunDetail, type RunSummary } from './api'
 import { emitScanReceived, recordFirstSeenFailures } from './audit'
+import { qk } from './lib/queryKeys'
 
 // Fetch up to this many runs total; each page is PAGE_SIZE rows.
 // Keyset pagination means each page is O(1) regardless of depth.
@@ -17,71 +20,70 @@ export interface RunLoaderResult {
   refetchRuns: () => Promise<void>
 }
 
-export function useRunLoader(initialRunId: string | null): RunLoaderResult {
-  const [runs, setRuns] = useState<RunSummary[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [run, setRun] = useState<RunDetail | null>(null)
-  const [loadingRun, setLoadingRun] = useState(false)
-  const [runsError, setRunsError] = useState<string | null>(null)
-  const [runsVersion, setRunsVersion] = useState(0)  // Increment to trigger reload
+async function fetchAllRuns(): Promise<RunSummary[]> {
+  let cursor: string | null = null
+  let total = 0
+  const all: RunSummary[] = []
+  do {
+    const { items, nextCursor } = await fetchRuns({ limit: PAGE_SIZE, cursor: cursor ?? undefined })
+    all.push(...items)
+    total += items.length
+    cursor = nextCursor
+  } while (cursor !== null && total < MAX_RUNS)
+  return all
+}
 
-  const savedInitialId = useRef(initialRunId)
+/**
+ * Run list + selected run detail, backed by TanStack Query.
+ *
+ * The public shape is unchanged so existing pages and AppShell do not care
+ * where the data comes from. Query owns deduplication, caching, and retry.
+ */
+export function useRunLoader(initialRunId: string | null): RunLoaderResult {
+  const queryClient = useQueryClient()
+  const [selectedId, setSelectedId] = useState<string | null>(initialRunId)
+
+  const runsQuery = useQuery({
+    queryKey: qk.runs.all,
+    queryFn: fetchAllRuns,
+    staleTime: 15_000,
+  })
+  const runs = runsQuery.data ?? []
+
+  // Auto-select the most recent run when there is no deep link.
+  useEffect(() => {
+    if (!selectedId && runs.length > 0) setSelectedId(runs[0].id)
+  }, [runs, selectedId])
+
+  const runQuery = useQuery({
+    queryKey: qk.runs.detail(selectedId ?? 'none'),
+    queryFn: () => fetchRun(selectedId as string),
+    enabled: !!selectedId,
+    staleTime: 30_000,
+  })
+  const run = selectedId ? (runQuery.data ?? null) : null
 
   useEffect(() => {
-    let cancelled = false
-
-    // If we have a deep-linked run ID, select it immediately so the detail
-    // load starts in parallel with the runs-list fetch.
-    if (savedInitialId.current) {
-      setSelectedId(savedInitialId.current)
-    }
-
-    async function loadPages() {
-      let cursor: string | null = null
-      let total = 0
-      let autoSelected = !!savedInitialId.current
-
-      do {
-        const { items, nextCursor } = await fetchRuns({ limit: PAGE_SIZE, cursor: cursor ?? undefined })
-        if (cancelled) return
-
-        setRuns(prev => [...prev, ...items])
-        total += items.length
-        cursor = nextCursor
-
-        // Auto-select the most recent run when there is no deep link
-        if (!autoSelected && items.length > 0) {
-          autoSelected = true
-          setSelectedId(items[0].id)
-        }
-      } while (cursor !== null && total < MAX_RUNS)
-    }
-
-    loadPages().catch((e: unknown) => {
-      if (!cancelled) setRunsError((e as Error).message)
-    })
-
-    return () => { cancelled = true }
-  }, [runsVersion])
+    if (!run) return
+    emitScanReceived(run)
+    recordFirstSeenFailures(run.findings, run)
+  }, [run])
 
   const refetchRuns = async () => {
-    setRuns([])  // Clear current runs first
-    setRunsVersion(v => v + 1)  // Trigger reload effect to re-fetch runs
+    await queryClient.invalidateQueries({ queryKey: qk.runs.all })
   }
 
-  useEffect(() => {
-    if (!selectedId) return
-    setLoadingRun(true)
-    setRun(null)
-    fetchRun(selectedId)
-      .then(r => {
-        setRun(r)
-        emitScanReceived(r)
-        recordFirstSeenFailures(r.findings, r)
-      })
-      .catch(() => setRun(null))
-      .finally(() => setLoadingRun(false))
-  }, [selectedId])
-
-  return { runs, selectedId, setSelectedId, run, loadingRun, runsError, refetchRuns }
+  return {
+    runs,
+    selectedId,
+    setSelectedId,
+    run,
+    loadingRun: !!selectedId && runQuery.isLoading,
+    runsError: runsQuery.error
+      ? runsQuery.error instanceof Error
+        ? runsQuery.error.message
+        : String(runsQuery.error)
+      : null,
+    refetchRuns,
+  }
 }

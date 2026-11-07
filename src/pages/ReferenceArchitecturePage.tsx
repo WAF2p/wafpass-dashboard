@@ -819,7 +819,7 @@ jobs:
         id: plan
         run: |
           terraform plan -input=false -detailed-exitcode > plan.out
-          echo "has_changes=\$?" >> \$GITHUB_OUTPUT
+          echo "has_changes=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Terraform plan summary

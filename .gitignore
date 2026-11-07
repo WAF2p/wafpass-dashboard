@@ -13,3 +13,13 @@ requirements.sbom.txt
 # visual-regression artifacts (baselines are committed)
 .visual/
 .a11y/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Coverage
+coverage/
+*.lcov

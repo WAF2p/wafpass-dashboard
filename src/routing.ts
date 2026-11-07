@@ -1,7 +1,7 @@
 export const ALL_PAGES = [
   'dashboard', 'globaldashboard', 'catalogue', 'findings', 'compliance', 'gapanalysis', 'regions',
   'exploitpath', 'blastradius', 'depgraph', 'remediation', 'secrets', 'modules',
-  'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'runscan', 'sandbox',
+  'cost', 'runs', 'diff', 'audit', 'evidence', 'settings', 'security', 'runscan', 'sandbox',
   'waivers', 'risk', 'changes', 'feedback', 'skipped', 'access', 'users', 'mandates', 'mandateadmin', 'apikeys', 'sso', 'groupmappings', 'controlspacks',
   'projectoverview', 'passports', 'badge', 'leaderboard', 'journey', 'userprefs',
   'reference', 'antipattern', 'notifications', 'legal', 'projectgroups', 'pipelines',
@@ -38,6 +38,7 @@ export const PAGE_TITLE: Record<Page, string> = {
   audit:           'Audit Log',
   evidence:        'Evidence Package',
   settings:        'Settings',
+  security:        'Security',
   runscan:         'Run Scan',
   sandbox:         'Architect Sandbox',
   waivers:         'Waivers Manager',
@@ -99,6 +100,7 @@ export const PAGE_SUBTITLE: Record<Page, string> = {
   audit:           'Tamper-evident record of every waiver, risk acceptance, and scan event — export for SOC2/ISO27001 evidence collection',
   evidence:        'Generate a timestamped, auditor-ready evidence package — passing controls, waivers, risk acceptances, and audit trail',
   settings:        'Configure scan defaults, maturity level, and feature toggles',
+  security:        'Multi-factor authentication and active session management',
   runscan:         'Trigger a WOMBATpass scan from the UI or generate a CLI command',
   sandbox:         'Evaluate HCL snippets against Wombat controls instantly',
   waivers:         'Suppress controls from failing · export as .wombat-skip.yml',
@@ -170,6 +172,12 @@ export function buildHash(page: Page, runId: string | null, filters: FilterState
   }
   const query = params.toString()
   return query ? `#/${page}?${query}` : `#/${page}`
+}
+
+/** Resolve a router pathname to a known page slug. */
+export function pageFromPath(pathname: string): Page {
+  const slug = pathname.replace(/^\/+/, '').replace(/\/+$/, '') || 'dashboard'
+  return PAGE_SET.has(slug) ? (slug as Page) : 'dashboard'
 }
 
 export { scoreColor } from './severity'

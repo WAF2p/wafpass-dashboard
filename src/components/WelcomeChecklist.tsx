@@ -511,7 +511,7 @@ export default function WelcomeChecklist({
         }}
       >
         <div style={{ padding: '0.75rem 0', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          {t('welcome.checklistTitle')}
+          {t('onboarding.checklistTitle')}
         </div>
         {steps.map((step, idx) => (
           <StepRow

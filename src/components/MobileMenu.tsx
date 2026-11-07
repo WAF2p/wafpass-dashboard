@@ -98,11 +98,11 @@ export default function MobileMenu({
 }: MobileMenuProps) {
   const { t } = useI18n()
   const { isEnabled } = useBetaFeatures()
+  const { isHoldingAdmin } = useAuth()
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
   if (!mobileMenuOpen) return null
 
-  const { isHoldingAdmin } = useAuth()
   const allSections = buildNavSections(run, runs, settings, waiverCount, riskCount, failCount, t, isHoldingAdmin)
   const effectiveRole = isHoldingAdmin ? 'admin' : role
   const visibleSections = allSections

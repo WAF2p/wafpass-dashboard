@@ -1,21 +1,23 @@
 /**
- * AuthContext — token storage, user state, login/logout/refresh.
+ * AuthContext — cookie-backed session state.
  *
- * Tokens are stored in localStorage (same pattern as the rest of the dashboard).
- * On mount we check if the stored access token is still valid; if not but a
- * refresh token exists we try a silent refresh before showing the login page.
+ * The server sets HttpOnly session cookies; the dashboard never stores an
+ * access or refresh token. On mount we ask /auth/me, and if the access cookie
+ * has expired we try a cookie-backed refresh once before showing the login
+ * page.
  */
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
-  loginUser, logoutUser, refreshAccessToken, fetchUsers,
+  fetchCurrentUser, loginUser, logoutUser, mfaChallenge, refreshAccessToken,
   getMandantContext, getMandantContextName, getMandantContextLogoUrl, setMandantContext, type UserOut,
 } from './api'
 
 // ── Role hierarchy (dashboard ordering) ───────────────────────────────────
-// Admin is the super-user and outranks every other role, so it sits at index 0.
-// Lower index == higher rank.  hasMinRole returns true when the user rank is
+// Mirrors the server's cumulative hierarchy:
+//   clevel < ciso < architect < engineer < admin
+// Lower index == higher rank. hasMinRole returns true when the user's rank is
 // at least as high as the required minimum.
-export const ROLE_HIERARCHY = ['admin', 'ciso', 'clevel', 'architect', 'engineer'] as const
+export const ROLE_HIERARCHY = ['admin', 'engineer', 'architect', 'ciso', 'clevel'] as const
 export type Role = typeof ROLE_HIERARCHY[number]
 
 export function roleIndex(role: string): number {
@@ -27,24 +29,15 @@ export function hasMinRole(userRole: string, minimum: string): boolean {
   return roleIndex(userRole) <= roleIndex(minimum)
 }
 
-// ── Storage keys ───────────────────────────────────────────────────────────
-const ACCESS_KEY  = 'wombat_access_token'
-const REFRESH_KEY = 'wombat_refresh_token'
-const USER_KEY    = 'wombat_auth_user'
-
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    // Treat as expired 30 s before actual expiry (clock-skew margin)
-    return payload.exp * 1000 - 30_000 < Date.now()
-  } catch {
-    return true
-  }
+export interface LoginOutcome {
+  mfaRequired?: boolean
+  mfaToken?: string
 }
 
 // ── Context type ───────────────────────────────────────────────────────────
 export interface AuthContextValue {
   user: UserOut | null
+  /** Deprecated: always null. Retained for one release for mocks/callers. */
   accessToken: string | null
   role: string | null
   isLoading: boolean
@@ -77,7 +70,9 @@ export interface AuthContextValue {
   // never-trusted-for-access-control caveat as the name above.
   effectiveMandantLogoUrl: string | null
   setEffectiveMandantId(mandantId: string | null, name?: string | null, logoUrl?: string | null): void
-  login(username: string, password: string): Promise<void>
+  login(username: string, password: string): Promise<LoginOutcome>
+  completeMfa(mfaToken: string, code: string, method?: string): Promise<void>
+  /** Deprecated: tokens are no longer stored. Kept for one release. */
   loginWithTokens(accessToken: string, refreshToken: string, userObj: UserOut): void
   logout(): Promise<void>
   // Re-fetches the current user's own profile and updates `user` in place —
@@ -100,7 +95,6 @@ export function useAuth(): AuthContextValue {
 // ── Provider ───────────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]               = useState<UserOut | null>(null)
-  const [accessToken, setAccessToken] = useState<string | null>(null)
   const [role, setRole]               = useState<string | null>(null)
   const [isLoading, setIsLoading]     = useState(true)
   const [effectiveMandantId, setEffectiveMandantIdState] = useState<string | null>(() => getMandantContext())
@@ -114,120 +108,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setEffectiveMandantLogoUrlState(mandantId ? (logoUrl ?? null) : null)
   }
 
-  function _applyTokens(access: string, userObj: UserOut) {
-    setAccessToken(access)
+  function _applyUser(userObj: UserOut) {
     setUser(userObj)
     setRole(userObj.role)
   }
 
-  function _fetchFullProfile(username: string): Promise<void> {
-    return fetchUsers()
-      .then(users => {
-        const fullUser = users.find(u => u.username === username)
-        if (fullUser) {
-          localStorage.setItem(USER_KEY, JSON.stringify(fullUser))
-          setUser(fullUser)
-        }
-      })
-      .catch(() => {})
-  }
-
   function _clearAll() {
-    localStorage.removeItem(ACCESS_KEY)
-    localStorage.removeItem(REFRESH_KEY)
-    localStorage.removeItem(USER_KEY)
-    setAccessToken(null)
     setUser(null)
     setRole(null)
     setEffectiveMandantId(null)
   }
 
-  // Restore session on mount — also handles SSO token handoff via query params
+  // Restore session on mount. The server may have set cookies via password
+  // login or an SSO callback; /auth/me is the single source of truth.
   useEffect(() => {
-    // Check for SSO callback: ?sso_ok=1&at=ACCESS&rt=REFRESH&u=USER_B64
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('sso_ok') === '1') {
-      const at  = urlParams.get('at')
-      const rt  = urlParams.get('rt')
-      const uB64 = urlParams.get('u')
-      if (at && rt && uB64) {
+    let cancelled = false
+    async function restore() {
+      try {
+        const current = await fetchCurrentUser()
+        if (!cancelled) _applyUser(current)
+      } catch {
         try {
-          const raw = uB64.replace(/-/g, '+').replace(/_/g, '/')
-          const u = JSON.parse(atob(raw)) as UserOut
-          localStorage.setItem(ACCESS_KEY, at)
-          localStorage.setItem(REFRESH_KEY, rt)
-          localStorage.setItem(USER_KEY, JSON.stringify(u))
-          _applyTokens(at, u)
-          window.history.replaceState(null, '', window.location.pathname + '#/dashboard')
-          setIsLoading(false)
-          return
+          await refreshAccessToken()
+          const current = await fetchCurrentUser()
+          if (!cancelled) _applyUser(current)
         } catch {
-          // fall through to normal session restore
+          if (!cancelled) _clearAll()
         }
+      } finally {
+        if (!cancelled) setIsLoading(false)
       }
     }
-
-    const access    = localStorage.getItem(ACCESS_KEY)
-    const refreshTk = localStorage.getItem(REFRESH_KEY)
-    const userStr   = localStorage.getItem(USER_KEY)
-
-    if (access && userStr && !isTokenExpired(access)) {
-      const u = JSON.parse(userStr) as UserOut
-      _applyTokens(access, u)
-      setIsLoading(false)
-      // Fetch full user profile to get image_url and other potentially missing fields
-      void _fetchFullProfile(u.username)
-      return
-    }
-
-    if (refreshTk && userStr) {
-      refreshAccessToken(refreshTk)
-        .then(({ access_token, refresh_token }) => {
-          localStorage.setItem(ACCESS_KEY, access_token)
-          localStorage.setItem(REFRESH_KEY, refresh_token)
-          const u = JSON.parse(userStr) as UserOut
-          _applyTokens(access_token, u)
-          // Fetch full user profile to get image_url and other potentially missing fields
-          void _fetchFullProfile(u.username)
-        })
-        .catch(() => _clearAll())
-        .finally(() => setIsLoading(false))
-    } else {
-      _clearAll()
-      setIsLoading(false)
-    }
+    void restore()
+    return () => { cancelled = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function login(username: string, password: string) {
+  async function login(username: string, password: string): Promise<LoginOutcome> {
     const resp = await loginUser(username, password)
-    localStorage.setItem(ACCESS_KEY, resp.access_token)
-    localStorage.setItem(REFRESH_KEY, resp.refresh_token)
-    localStorage.setItem(USER_KEY, JSON.stringify(resp.user))
-    _applyTokens(resp.access_token, resp.user)
-    // Fetch full user profile to get image_url and other potentially missing fields
-    void _fetchFullProfile(username)
+    if (resp.mfa_required && resp.mfa_token) {
+      return { mfaRequired: true, mfaToken: resp.mfa_token }
+    }
+    if (resp.user) {
+      _applyUser(resp.user)
+      try {
+        _applyUser(await fetchCurrentUser())
+      } catch {
+        /* keep the login response */
+      }
+    }
+    return {}
+  }
+
+  async function completeMfa(mfaToken: string, code: string, method = 'totp'): Promise<void> {
+    const resp = await mfaChallenge(mfaToken, code, method)
+    if (resp.user) {
+      _applyUser(resp.user)
+      try {
+        _applyUser(await fetchCurrentUser())
+      } catch {
+        /* keep the challenge response */
+      }
+    }
   }
 
   function refreshUser(): Promise<void> {
-    return user ? _fetchFullProfile(user.username) : Promise.resolve()
+    return fetchCurrentUser()
+      .then(_applyUser)
+      .catch(() => {})
   }
 
-  function loginWithTokens(accessToken: string, refreshToken: string, userObj: UserOut) {
-    localStorage.setItem(ACCESS_KEY, accessToken)
-    localStorage.setItem(REFRESH_KEY, refreshToken)
-    localStorage.setItem(USER_KEY, JSON.stringify(userObj))
-    _applyTokens(accessToken, userObj)
+  function loginWithTokens(_accessToken: string, _refreshToken: string, userObj: UserOut) {
+    // Deprecated: the server sets cookies; tokens are ignored here.
+    _applyUser(userObj)
   }
 
   async function logout() {
-    const refreshTk = localStorage.getItem(REFRESH_KEY)
-    if (refreshTk) await logoutUser(refreshTk).catch(() => {})
+    await logoutUser().catch(() => {})
     _clearAll()
   }
 
   return (
     <AuthContext.Provider value={{
-      user, accessToken, role, isLoading,
+      user, accessToken: null, role, isLoading,
       // Derived from `user` directly, not separate state — there is
       // nothing to keep in sync; whenever `user` updates (login, profile
       // refresh, a holding_admin elsewhere reassigning this account) these
@@ -238,7 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGroupAdmin: user?.holding_role === 'group_admin',
       isGroupViewer: user?.holding_role === 'group_viewer',
       effectiveMandantId, effectiveMandantName, effectiveMandantLogoUrl, setEffectiveMandantId,
-      login, loginWithTokens, logout, refreshUser,
+      login, completeMfa, loginWithTokens, logout, refreshUser,
     }}>
       {children}
     </AuthContext.Provider>

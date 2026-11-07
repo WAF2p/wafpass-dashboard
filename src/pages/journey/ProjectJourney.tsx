@@ -8,6 +8,7 @@ import { useI18n } from '../../i18n'
 import { FilterState, Page, scoreColor } from '../../routing'
 import { DataTable, type Column } from '../../ui'
 import { controlsForLevel, MATURITY_META } from '../settingsUtils'
+import { useControlCounts } from '../../useControlCounts'
 import { nextStage, pointsToNextStage, runsForProject, stageFor } from '../journeyUtils'
 import JourneyCard from './components/JourneyCard'
 import StageBadge from './components/StageBadge'
@@ -61,6 +62,7 @@ export default function ProjectJourney({
   project, runs, onSetFilters, onNavigate,
 }: ProjectJourneyProps) {
   const { t } = useI18n()
+  const controlCounts = useControlCounts()
   const projectRuns = useMemo(() => runsForProject(runs, project), [runs, project])
   const latestRun = projectRuns[projectRuns.length - 1] ?? null
   const prevRun = projectRuns[projectRuns.length - 2] ?? null
@@ -324,7 +326,7 @@ export default function ProjectJourney({
               <StageBadge score={next.min} size="sm" />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border)' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: next.color }}>{controlsForLevel(next.maturityLevel)}</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: next.color }}>{controlsForLevel(next.maturityLevel, controlCounts ?? undefined)}</span>
               <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{t('pages.journey.estimatedControls')}</span>
             </div>
           </div>
